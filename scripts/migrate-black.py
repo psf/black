@@ -51,7 +51,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
                 "diff",
                 "--binary",
                 "--find-copies",
-                f"{last_commit}-black..{commit}-black"
+                f"{last_commit}-black..{commit}-black",
             ],
             stdout=PIPE,
         )
