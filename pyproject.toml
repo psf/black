@@ -12,9 +12,10 @@ include = '\.pyi?$'
 extend-exclude = '''
 /(
   # The following are specific to Black, you probably don't want those.
-  tests/data
-  | profiling
-)/
+  tests/data/
+  | profiling/
+  | scripts/generate_schema.py  # Uses match syntax
+)
 '''
 # We use the unstable style for formatting Black itself. If you
 # want bug-free formatting, you should keep this off. If you want
