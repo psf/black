@@ -38,19 +38,19 @@ def replace_pr_numbers_with_links(content: str) -> str:
     base_url = "https://github.com/psf/black/pull/"
     pr_num_regex = re.compile(r"\(#(\d+)\)")
 
-    def num_to_link(match: re.Match) -> str:
-        full_match, number = match.group(0, 1)
+    def num_to_link(match: re.Match[str]) -> str:
+        number = match.group(1)
         url = f"{base_url}{number}"
-        return f"[{full_match}]({url})"
+        return f"([#{number}]({url}))"
 
     return pr_num_regex.sub(num_to_link, content)
 
 
 def handle_include_read(
-        app: Sphinx,
-        relative_path: Path,
-        parent_docname: str,
-        content: list[str],
+    app: Sphinx,
+    relative_path: Path,
+    parent_docname: str,
+    content: list[str],
 ) -> None:
     """Handler for the include-read sphinx event."""
     if parent_docname == "change_log":
