@@ -34,16 +34,7 @@ def make_pypi_svg(version: str) -> None:
 
 def replace_pr_numbers_with_links(content: str) -> str:
     """Replaces all PR numbers with the corresponding GitHub link."""
-
-    base_url = "https://github.com/psf/black/pull/"
-    pr_num_regex = re.compile(r"\(#(\d+)\)")
-
-    def num_to_link(match: re.Match[str]) -> str:
-        number = match.group(1)
-        url = f"{base_url}{number}"
-        return f"([#{number}]({url}))"
-
-    return pr_num_regex.sub(num_to_link, content)
+    return re.sub(r"#(\d+)", r"[#\1](https://github.com/psf/black/pull/\1)", content)
 
 
 def handle_include_read(
