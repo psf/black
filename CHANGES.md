@@ -42,7 +42,7 @@
 
 ### _Blackd_
 
-<!-- Changes to blackd -->
+- Fix blackd (and all extras installs) for docker container (#4357)
 
 ### Integrations
 
