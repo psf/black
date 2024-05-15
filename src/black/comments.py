@@ -185,10 +185,12 @@ def convert_one_fmt_off_pair(
         previous_consumed = 0
         for comment in list_comments(leaf.prefix, is_endmarker=False):
             is_fmt_off = comment.value in FMT_OFF
-            should_pass_fmt = is_fmt_off or _contains_fmt_skip_comment(
-                comment.value, mode
-            )
-            if not should_pass_fmt:
+            is_fmt_skip = _contains_fmt_skip_comment(comment.value, mode)
+            if (not is_fmt_off and not is_fmt_skip) or (
+                # Invalid use when `# fmt: off` is applied before a closing bracket.
+                is_fmt_off
+                and leaf.type in CLOSING_BRACKETS
+            ):
                 previous_consumed = comment.consumed
                 continue
             # We only want standalone comments. If there's no previous leaf or
@@ -199,14 +201,8 @@ def convert_one_fmt_off_pair(
                 if prev:
                     if is_fmt_off and prev.type not in WHITESPACE:
                         continue
-                    if (
-                        _contains_fmt_skip_comment(comment.value, mode)
-                        and prev.type in WHITESPACE
-                    ):
+                    if is_fmt_skip and prev.type in WHITESPACE:
                         continue
-            # It's an invalid use when `# fmt: off` is applied before a closing bracket.
-            if is_fmt_off and leaf.type in CLOSING_BRACKETS:
-                continue
 
             ignored_nodes = list(generate_ignored_nodes(leaf, comment, mode))
             if not ignored_nodes:
@@ -217,7 +213,7 @@ def convert_one_fmt_off_pair(
             prefix = first.prefix
             if comment.value in FMT_OFF:
                 first.prefix = prefix[comment.consumed :]
-            if _contains_fmt_skip_comment(comment.value, mode):
+            if is_fmt_skip:
                 first.prefix = ""
                 standalone_comment_prefix = prefix
             else:
@@ -237,7 +233,7 @@ def convert_one_fmt_off_pair(
                         fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
                 standalone_comment_prefix += fmt_off_prefix
                 hidden_value = comment.value + "\n" + hidden_value
-            if _contains_fmt_skip_comment(comment.value, mode):
+            if is_fmt_skip:
                 hidden_value += (
                     comment.leading_whitespace
                     if Preview.no_normalize_fmt_skip_whitespace in mode
