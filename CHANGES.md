@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when `# fmt: off` is used before a closing parenthesis or bracket. (#4363)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
