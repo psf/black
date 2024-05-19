@@ -1246,7 +1246,7 @@ def _format_str_once(
 
     context_manager_features = {
         feature
-        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
+        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS, Feature.FSTRING_PARSING}
         if supports_feature(versions, feature)
     }
     normalize_fmt_off(src_node, mode, lines)

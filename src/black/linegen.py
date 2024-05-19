@@ -499,7 +499,9 @@ class LineGenerator(Visitor[Line]):
 
         if self.mode.string_normalization and leaf.type == token.STRING:
             leaf.value = normalize_string_prefix(leaf.value)
-            leaf.value = normalize_string_quotes(leaf.value)
+            features_set = set(self.features)
+            if Feature.FSTRING_PARSING not in features_set:
+                leaf.value = normalize_string_quotes(leaf.value)
         yield from self.visit_default(leaf)
 
     def visit_NUMBER(self, leaf: Leaf) -> Iterator[Line]:
