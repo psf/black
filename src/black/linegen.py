@@ -66,6 +66,7 @@ from black.numerics import normalize_numeric_literal
 from black.strings import (
     fix_docstring,
     get_string_prefix,
+    normalize_fstring_quotes,
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
@@ -411,10 +412,70 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
+        leaf = self.visit_strings(leaf)
+        if self.mode.string_normalization and leaf.type == token.STRING:
+            leaf.value = normalize_string_prefix(leaf.value)
+            leaf.value = normalize_string_quotes(leaf.value)
+        yield from self.visit_default(leaf)
+
+    def visit_NUMBER(self, leaf: Leaf) -> Iterator[Line]:
+        normalize_numeric_literal(leaf)
+        yield from self.visit_default(leaf)
+
+    def visit_fstring(self, node: Node) -> Iterator[Line]:
+
+        fstring_start = node.children[0]
+        fstring_end = node.children[-1]
+        assert isinstance(fstring_start, Leaf)
+        assert isinstance(fstring_end, Leaf)
+
+        quote_char = fstring_end.value
+
+        quote_idx = fstring_start.value.index(quote_char)
+        prefix, quote = (
+            fstring_start.value[:quote_idx],
+            fstring_start.value[quote_idx:]
+        )
+
+        if not is_docstring(node, self.mode):
+            prefix = normalize_string_prefix(prefix)
+
+        assert quote == fstring_end.value
+
+        middles = []
+        leaf_strings = []
+        type_token = [
+            token.FSTRING_MIDDLE,
+            token.FSTRING_START,
+            token.FSTRING_END,
+            token.LBRACE,
+            token.RBRACE]
+        for leaf in node.leaves():
+            if leaf.type in type_token:
+                middles.append(leaf)
+            if leaf.type == token.STRING:
+                leaf_strings.append(leaf)
+
+        if self.mode.string_normalization:
+            prefix = normalize_string_prefix(prefix)
+            middles, quote = normalize_fstring_quotes(
+                prefix, quote, middles, leaf_strings)
+
+        fstring_start.value = prefix + quote
+        fstring_end.value = quote
+
+        string_leaf = fstring_to_string(node)
+        node.replace(string_leaf)
+        leaf = self.visit_strings(string_leaf)
+
+        yield from self.visit_default(leaf)
+
+    def visit_strings(self, leaf: Leaf) -> Leaf:
         if Preview.hex_codes_in_unicode_sequences in self.mode:
             normalize_unicode_escape_sequences(leaf)
 
-        if is_docstring(leaf, self.mode) and not re.search(r"\\\s*\n", leaf.value):
+        if is_docstring(leaf, self.mode) and not (
+                re.search(r"\\\s*\n", leaf.value)):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
@@ -491,59 +552,13 @@ class LineGenerator(Visitor[Line]):
                     ):
                         leaf.value = prefix + quote + docstring + quote
                     else:
-                        leaf.value = prefix + quote + docstring + "\n" + indent + quote
+                        leaf.value = (
+                            prefix + quote + docstring + "\n" + indent + quote)
                 else:
                     leaf.value = prefix + quote + docstring + quote
             else:
                 leaf.value = prefix + quote + docstring + quote
-
-        if self.mode.string_normalization and leaf.type == token.STRING:
-            leaf.value = normalize_string_prefix(leaf.value)
-            leaf.value = normalize_string_quotes(leaf.value)
-        yield from self.visit_default(leaf)
-
-    def visit_NUMBER(self, leaf: Leaf) -> Iterator[Line]:
-        normalize_numeric_literal(leaf)
-        yield from self.visit_default(leaf)
-
-    def visit_fstring(self, node: Node) -> Iterator[Line]:
-        # currently we don't want to format and split f-strings at all.
-        string_leaf = fstring_to_string(node)
-        node.replace(string_leaf)
-        yield from self.visit_STRING(string_leaf)
-
-        # TODO: Uncomment Implementation to format f-string children
-        # fstring_start = node.children[0]
-        # fstring_end = node.children[-1]
-        # assert isinstance(fstring_start, Leaf)
-        # assert isinstance(fstring_end, Leaf)
-
-        # quote_char = fstring_end.value[0]
-        # quote_idx = fstring_start.value.index(quote_char)
-        # prefix, quote = (
-        #     fstring_start.value[:quote_idx],
-        #     fstring_start.value[quote_idx:]
-        # )
-
-        # if not is_docstring(node, self.mode):
-        #     prefix = normalize_string_prefix(prefix)
-
-        # assert quote == fstring_end.value
-
-        # is_raw_fstring = "r" in prefix or "R" in prefix
-        # middles = [
-        #     leaf
-        #     for leaf in node.leaves()
-        #     if leaf.type == token.FSTRING_MIDDLE
-        # ]
-
-        # if self.mode.string_normalization:
-        #     middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
-
-        # fstring_start.value = prefix + quote
-        # fstring_end.value = quote
-
-        # yield from self.visit_default(node)
+        return leaf
 
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""

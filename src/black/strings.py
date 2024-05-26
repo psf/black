@@ -241,9 +241,10 @@ def normalize_string_quotes(s: str) -> str:
 
 
 def normalize_fstring_quotes(
+    prefix: str,
     quote: str,
     middles: List[Leaf],
-    is_raw_fstring: bool,
+    strings: List[Leaf],
 ) -> Tuple[List[Leaf], str]:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
@@ -262,7 +263,7 @@ def normalize_fstring_quotes(
     unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
     escaped_new_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
     escaped_orig_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){quote}")
-    if is_raw_fstring:
+    if "r" in prefix.casefold():
         for middle in middles:
             if unescaped_new_quote.search(middle.value):
                 # There's at least one unescaped new_quote in this raw string
@@ -285,17 +286,35 @@ def normalize_fstring_quotes(
         new_segment = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_segment)
         new_segments.append(new_segment)
 
+    new_string = ''.join(new_segments)
+    matches = re.findall(
+        r"""(?:(?<!\{)|^)\{  # start of the string or a non-{ followed by a single {
+            ([^{].*?)  # contents of the brackets except if begins with {{
+        \}(?:(?!\})|$)  # A } followed by end of the string or a non-}
+        """,
+        new_string,
+        re.VERBOSE,
+    )
+    for m in matches:
+        if "\\" in str(m):
+            # Do not introduce backslashes in interpolated expressions
+            return middles, quote
+
     if new_quote == '"""' and new_segments[-1].endswith('"'):
         # edge case:
         new_segments[-1] = new_segments[-1][:-1] + '\\"'
 
+    new_escape_count, orig_escape_count = 0, 0
     for middle, new_segment in zip(middles, new_segments):
-        orig_escape_count = middle.value.count("\\")
-        new_escape_count = new_segment.count("\\")
+        orig_escape_count += middle.value.count("\\")
+        new_escape_count += new_segment.count("\\")
 
     if new_escape_count > orig_escape_count:
         return middles, quote  # Do not introduce more escaping
 
+    for string in strings:
+        if new_quote in string.value:
+            return middles, quote
     if new_escape_count == orig_escape_count and quote == '"':
         return middles, quote  # Prefer double quotes
 

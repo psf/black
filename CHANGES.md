@@ -31,6 +31,7 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix f-string issue that comes into python 3.12 and new version (#4372)
 - Fix regression where Black failed to parse a multiline f-string containing another
   multiline string (#4339)
 
