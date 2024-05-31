@@ -434,7 +434,7 @@ class LineGenerator(Visitor[Line]):
         quote_idx = fstring_start.value.index(quote_char)
         prefix, quote = (
             fstring_start.value[:quote_idx],
-            fstring_start.value[quote_idx:]
+            fstring_start.value[quote_idx:],
         )
 
         if not is_docstring(node, self.mode):
@@ -449,7 +449,8 @@ class LineGenerator(Visitor[Line]):
             token.FSTRING_START,
             token.FSTRING_END,
             token.LBRACE,
-            token.RBRACE]
+            token.RBRACE,
+        ]
         for leaf in node.leaves():
             if leaf.type in type_token:
                 middles.append(leaf)
@@ -459,7 +460,8 @@ class LineGenerator(Visitor[Line]):
         if self.mode.string_normalization:
             prefix = normalize_string_prefix(prefix)
             middles, quote = normalize_fstring_quotes(
-                prefix, quote, middles, leaf_strings)
+                prefix, quote, middles, leaf_strings
+            )
 
         fstring_start.value = prefix + quote
         fstring_end.value = quote
@@ -474,8 +476,7 @@ class LineGenerator(Visitor[Line]):
         if Preview.hex_codes_in_unicode_sequences in self.mode:
             normalize_unicode_escape_sequences(leaf)
 
-        if is_docstring(leaf, self.mode) and not (
-                re.search(r"\\\s*\n", leaf.value)):
+        if is_docstring(leaf, self.mode) and not (re.search(r"\\\s*\n", leaf.value)):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
@@ -552,8 +553,7 @@ class LineGenerator(Visitor[Line]):
                     ):
                         leaf.value = prefix + quote + docstring + quote
                     else:
-                        leaf.value = (
-                            prefix + quote + docstring + "\n" + indent + quote)
+                        leaf.value = prefix + quote + docstring + "\n" + indent + quote
                 else:
                     leaf.value = prefix + quote + docstring + quote
             else:

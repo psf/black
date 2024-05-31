@@ -286,7 +286,7 @@ def normalize_fstring_quotes(
         new_segment = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_segment)
         new_segments.append(new_segment)
 
-    new_string = ''.join(new_segments)
+    new_string = "".join(new_segments)
     matches = re.findall(
         r"""(?:(?<!\{)|^)\{  # start of the string or a non-{ followed by a single {
             ([^{].*?)  # contents of the brackets except if begins with {{
