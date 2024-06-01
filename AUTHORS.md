@@ -181,6 +181,7 @@ Multiple contributions by:
 - [Tony Narlock](mailto:tony@git-pull.com)
 - [Tsuyoshi Hombashi](mailto:tsuyoshi.hombashi@gmail.com)
 - [Tushar Chandra](mailto:tusharchandra2018@u.northwestern.edu)
+- [Tushar Sadhwani](mailto:tushar.sadhwani000@gmail.com)
 - [Tzu-ping Chung](mailto:uranusjr@gmail.com)
 - [Utsav Shah](mailto:ukshah2@illinois.edu)
 - utsav-dbx

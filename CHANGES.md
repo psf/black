@@ -34,6 +34,8 @@
 - Fix regression where Black failed to parse a multiline f-string containing another
   multiline string (#4339)
 
+- Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
