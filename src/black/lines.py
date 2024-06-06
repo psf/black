@@ -954,6 +954,20 @@ def can_omit_invisible_parens(
         ):
             closing_bracket = leaf
 
+    if (
+        # Keep parenthesized dictionary values
+        len(rhs.head.leaves) >= 2
+        and rhs.head.leaves[-1].type == token.LPAR
+        and rhs.head.leaves[-2].type == token.COLON
+        # Unless key is a function call with trailing comma
+        and not(
+            len(rhs.head.leaves) >= 4
+            and rhs.head.leaves[-3].type == token.RPAR
+            and rhs.head.leaves[-4].type == token.COMMA
+        )
+    ):
+        return False
+
     bt = line.bracket_tracker
     if not bt.delimiters:
         # Without delimiters the optional parentheses are useless.
