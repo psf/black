@@ -27,7 +27,8 @@
           "py39",
           "py310",
           "py311",
-          "py312"
+          "py312",
+          "py313"
         ]
       },
       "description": "Python versions that should be supported by Black's output. You should include all versions that your code supports. By default, Black will infer target versions from the project metadata in pyproject.toml. If this does not yield conclusive results, Black will use per-file auto-detection."

@@ -6,13 +6,11 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
-- Add support for the new Python 3.12 f-string syntax introduced by PEP 701 (#3822)
-
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix crash involving indented dummy functions containing newlines (#4318)
+- Fix crash when `# fmt: off` is used before a closing parenthesis or bracket. (#4363)
 
 ### Preview style
 
@@ -28,9 +26,17 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Packaging metadata updated: docs are explictly linked, the issue tracker is now also
+  linked. This improves the PyPI listing for Black. (#4345)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
+
+- Fix regression where Black failed to parse a multiline f-string containing another
+  multiline string (#4339)
+
+- Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
 
 ### Performance
 
@@ -42,18 +48,48 @@
 
 ### _Blackd_
 
-<!-- Changes to blackd -->
+- Fix blackd (and all extras installs) for docker container (#4357)
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Github Action now works even when `git archive` is skipped (#4313)
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 24.4.2
+
+This is a bugfix release to fix two regressions in the new f-string parser introduced in
+24.4.1.
+
+### Parser
+
+- Fix regression where certain complex f-strings failed to parse (#4332)
+
+### Performance
+
+- Fix bad performance on certain complex string literals (#4331)
+
+## 24.4.1
+
+### Highlights
+
+- Add support for the new Python 3.12 f-string syntax introduced by PEP 701 (#3822)
+
+### Stable style
+
+- Fix crash involving indented dummy functions containing newlines (#4318)
+
+### Parser
+
+- Add support for type parameter defaults, a new syntactic feature added to Python 3.13
+  by PEP 696 (#4327)
+
+### Integrations
+
+- Github Action now works even when `git archive` is skipped (#4313)
 
 ## 24.4.0
 

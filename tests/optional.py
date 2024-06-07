@@ -119,13 +119,13 @@ def pytest_collection_modifyitems(config: "Config", items: "List[Node]") -> None
         item.add_marker(skip_mark(frozenset(optional_markers_on_test)))
 
 
-@lru_cache()
+@lru_cache
 def skip_mark(tests: FrozenSet[str]) -> "MarkDecorator":
     names = ", ".join(sorted(tests))
     return pytest.mark.skip(reason=f"Marked with disabled optional tests ({names})")
 
 
-@lru_cache()
+@lru_cache
 def no(name: str) -> str:
     if name.startswith("no_"):
         return name[len("no_") :]

@@ -12,9 +12,10 @@ include = '\.pyi?$'
 extend-exclude = '''
 /(
   # The following are specific to Black, you probably don't want those.
-  tests/data
-  | profiling
-)/
+  tests/data/
+  | profiling/
+  | scripts/generate_schema.py  # Uses match syntax
+)
 '''
 # We use the unstable style for formatting Black itself. If you
 # want bug-free formatting, you should keep this off. If you want
@@ -93,8 +94,10 @@ blackd = "blackd:patched_main [d]"
 black = "black.schema:get_schema"
 
 [project.urls]
+Documentation = "https://black.readthedocs.io/"
 Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
-Homepage = "https://github.com/psf/black"
+Repository = "https://github.com/psf/black"
+Issues = "https://github.com/psf/black/issues"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"

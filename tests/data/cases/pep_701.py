@@ -119,6 +119,15 @@ log(
     level=0,
 )
 
+f"{1:{f'{2}'}}"
+f'{1:{f'{2}'}}'
+f'{1:{2}d}'
+
+f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\":\\"cluster-info\\",\\"namespace\\":\\"amazon-cloudwatch\\"}}}}'
+
+f"""{'''
+'''}"""
+
 # output
 
 x = f"foo"
@@ -240,3 +249,12 @@ log(
     f"{self.writer._transport.get_extra_info('peername')}",  # type: ignore[attr-defined]
     level=0,
 )
+
+f"{1:{f'{2}'}}"
+f"{1:{f'{2}'}}"
+f"{1:{2}d}"
+
+f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\":\\"cluster-info\\",\\"namespace\\":\\"amazon-cloudwatch\\"}}}}'
+
+f"""{'''
+'''}"""
