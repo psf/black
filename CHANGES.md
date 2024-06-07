@@ -36,6 +36,8 @@
 
 - Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
 
+- Added Python and grammar version information to a parsing error message (#)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
