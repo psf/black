@@ -173,7 +173,7 @@ class Preview(Enum):
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    concise_nested_brackets = auto()
+    hug_parens_with_braces_and_square_brackets = auto()
     unify_docstring_detection = auto()
     no_normalize_fmt_skip_whitespace = auto()
     wrap_long_dict_values_in_parens = auto()
@@ -183,6 +183,9 @@ class Preview(Enum):
     docstring_check_for_newline = auto()
     remove_redundant_guard_parens = auto()
     parens_for_long_if_clauses_in_case_block = auto()
+    # NOTE: remove_lone_list_item_parens requires
+    # hug_parens_with_braces_and_square_brackets to remove parens in some cases
+    remove_lone_list_item_parens = auto()
 
 
 UNSTABLE_FEATURES: Set[Preview] = {
@@ -193,7 +196,9 @@ UNSTABLE_FEATURES: Set[Preview] = {
     # See issue #4159
     Preview.multiline_string_handling,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
-    Preview.concise_nested_brackets,
+    Preview.hug_parens_with_braces_and_square_brackets,
+    # Depends on hug_parens_with_braces_and_square_brackets
+    Preview.remove_lone_list_item_parens,
 }
 
 

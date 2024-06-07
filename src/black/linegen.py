@@ -509,7 +509,7 @@ class LineGenerator(Visitor[Line]):
     def visit_atom(self, node: Node) -> Iterator[Line]:
         """Visit any atom"""
         if (
-            Preview.concise_nested_brackets in self.mode
+            Preview.remove_lone_list_item_parens in self.mode
             and len(node.children) == 3
             and node.children[0].type == token.LSQB
             and node.children[-1].type == token.RSQB
@@ -868,7 +868,7 @@ def _first_right_hand_split(
 
     body: Optional[Line] = None
     if (
-        Preview.concise_nested_brackets in line.mode
+        Preview.hug_parens_with_braces_and_square_brackets in line.mode
         and tail_leaves[0].value
         and tail_leaves[0].opening_bracket is head_leaves[-1]
     ):

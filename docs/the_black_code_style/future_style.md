@@ -47,8 +47,10 @@ The unstable style additionally includes the following features:
   ([see below](labels/wrap-long-dict-values))
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
-- `concise_nested_brackets`: more compact formatting of nested brackets
-  ([see below](labels/hug-parens))
+- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
+  brackets ([see below](labels/hug-parens))
+- `remove_lone_list_item_parens`: remove redundant parenthesis around lone list items
+  ([see below](labels/lone-list-item-parens))
 
 (labels/hug-parens)=
 
@@ -124,7 +126,11 @@ foo(
 )
 ```
 
-Parenthesises around sole list items will also be removed for similar reasons. Trailing
+(labels/lone-list-item-parens)=
+
+### Remove keys around sole list item
+
+Parentheses around sole list items will also be removed for similar reasons. Trailing
 commas are respected here as well. For example:
 
 ```python
@@ -150,7 +156,7 @@ items = [
 ]
 ```
 
-will be changed to:
+will be formatted as:
 
 ```python
 items = [123]
@@ -172,6 +178,9 @@ items = [
     ),
 ]
 ```
+
+This style depends on `hug_parens_with_braces_and_square_brackets` to remove parenthesis
+in all cases.
 
 (labels/string-processing)=
 
