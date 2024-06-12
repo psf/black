@@ -954,13 +954,14 @@ def can_omit_invisible_parens(
         ):
             closing_bracket = leaf
 
+    bracket = rhs.opening_bracket
     if (
         # Keep parenthesized dictionary values
-        len(rhs.head.leaves) >= 2
-        and rhs.head.leaves[-1].type == token.LPAR
-        and rhs.head.leaves[-2].type == token.COLON
-        # Unless key is a function call with trailing comma
-        and not(
+        bracket.parent
+        and bracket.parent.parent
+        and bracket.parent.parent.type == syms.dictsetmaker
+        # Unless key is a multiline function call (aka, with trailing comma)
+        and not (
             len(rhs.head.leaves) >= 4
             and rhs.head.leaves[-3].type == token.RPAR
             and rhs.head.leaves[-4].type == token.COMMA
