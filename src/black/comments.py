@@ -12,7 +12,6 @@ from black.nodes import (
     first_leaf_of,
     make_simple_prefix,
     preceding_leaf,
-    syms,
 )
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
@@ -233,7 +232,7 @@ def convert_one_fmt_off_pair(
                         fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
                 standalone_comment_prefix += fmt_off_prefix
                 hidden_value = comment.value + "\n" + hidden_value
-            if is_fmt_skip:
+            if is_fmt_skip and comment.value not in hidden_value:
                 hidden_value += (
                     comment.leading_whitespace
                     if Preview.no_normalize_fmt_skip_whitespace in mode
@@ -315,42 +314,62 @@ def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment
 ) -> Iterator[LN]:
     """Generate all leaves that should be ignored by the `# fmt: skip` from `leaf`."""
+    prefix = leaf.prefix
+    leaf.prefix = ""
     prev_sibling = leaf.prev_sibling
-    parent = leaf.parent
+    # This is when the next thing after the "fmt: skip" comment is not a newline.
+    # Means it is inside of an node or previous_sibling is a node
+    if leaf.value != "\n" or prev_sibling is None:
+        prev_sibling = preceding_leaf(leaf)
     # Need to properly format the leaf prefix to compare it to comment.value,
     # which is also formatted
-    comments = list_comments(leaf.prefix, is_endmarker=False)
+    comments = list_comments(prefix, is_endmarker=False)
     if not comments or comment.value != comments[0].value:
         return
-    if prev_sibling is not None:
-        leaf.prefix = ""
+
+    if prev_sibling:
+        comment_line_no = prev_sibling.get_lineno()
         siblings = [prev_sibling]
-        while "\n" not in prev_sibling.prefix and prev_sibling.prev_sibling is not None:
+        while prev_sibling is not None and "\n" not in prev_sibling.prefix:
+            previous_sibling = preceding_leaf(prev_sibling)
             prev_sibling = prev_sibling.prev_sibling
-            siblings.insert(0, prev_sibling)
-        yield from siblings
-    elif (
-        parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
-    ):
-        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
-        # statements. The ignored nodes should be previous siblings of the
-        # parent suite node.
-        leaf.prefix = ""
-        ignored_nodes: List[LN] = []
-        parent_sibling = parent.prev_sibling
-        while parent_sibling is not None and parent_sibling.type != syms.suite:
-            ignored_nodes.insert(0, parent_sibling)
-            parent_sibling = parent_sibling.prev_sibling
-        # Special case for `async_stmt` where the ASYNC token is on the
-        # grandparent node.
-        grandparent = parent.parent
-        if (
-            grandparent is not None
-            and grandparent.prev_sibling is not None
-            and grandparent.prev_sibling.type == token.ASYNC
-        ):
-            ignored_nodes.insert(0, grandparent.prev_sibling)
-        yield from iter(ignored_nodes)
+            # prev_sibling can be non if the there is it is new line
+            # or preivous sibling is a node
+            if (
+                prev_sibling is None
+                and previous_sibling is not None
+                and previous_sibling.get_lineno() == comment_line_no
+            ):
+                parent_sibling = siblings[-1]
+                siblings = []
+                # insert parents Node if it on same line of comment
+                while (
+                    parent_sibling.get_lineno() == comment_line_no
+                    and parent_sibling.type != 256
+                ):
+                    parents_prev_siblings = preceding_leaf(parent_sibling)
+                    siblings = [parent_sibling]
+                    if parent_sibling.parent is None:
+                        break
+                    leaf.prefix = prefix
+                    parent_sibling = parent_sibling.parent
+
+                if previous_sibling and previous_sibling.type == token.INDENT:
+                    break
+                # if previous_sibling is on same line
+                # and its parents are't then insert previous_sibling from here
+                if (
+                    parents_prev_siblings == previous_sibling
+                    and previous_sibling.get_lineno() == comment_line_no
+                ):
+                    prev_sibling = previous_sibling
+                    siblings.insert(0, prev_sibling)
+
+            elif prev_sibling and prev_sibling.get_lineno() == comment_line_no:
+                siblings.insert(0, prev_sibling)
+            else:
+                break
+        yield from iter(siblings)
 
 
 def is_fmt_on(container: LN) -> bool:
