@@ -510,7 +510,18 @@ class LineGenerator(Visitor[Line]):
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_to_string(node)
         node.replace(string_leaf)
-        yield from self.visit_STRING(string_leaf)
+        if not (
+            "\\" in string_leaf.value
+            and any(
+                "\\" not in str(child)
+                for child in node.children
+                if node.type == syms.fstring_replacement_field
+            )
+        ):
+            yield from self.visit_STRING(string_leaf)
+            return
+        yield from self.visit_default(string_leaf)
+        return
 
         # TODO: Uncomment Implementation to format f-string children
         # fstring_start = node.children[0]
