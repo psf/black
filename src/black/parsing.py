@@ -58,6 +58,16 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
         src_txt += "\n"
 
     grammars = get_grammars(set(target_versions))
+
+    version_names = [version.name for version in target_versions]
+    grammar_names = [
+        f"{grammar.version[0]}.{grammar.version[1]}" for grammar in grammars
+    ]
+    error_string = (
+        f"The assigned grammars ({', '.join(sorted(grammar_names))}) for your Python"
+        f" versions ({', '.join(sorted(version_names))}) all failed to parse"
+    )
+
     errors = {}
     for grammar in grammars:
         drv = driver.Driver(grammar)
@@ -73,14 +83,14 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
             except IndexError:
                 faulty_line = "<line number missing in source>"
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse: {lineno}:{column}: {faulty_line}"
+                f"Cannot parse: {error_string} line: {lineno}:{column}: {faulty_line}"
             )
 
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse: {lineno}:{column}: {te.args[0]}"
+                f"Cannot parse: {error_string}: {lineno}:{column}: {te.args[0]}"
             )
 
     else:

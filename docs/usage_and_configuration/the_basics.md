@@ -427,7 +427,7 @@ plus a short summary.
 
 ```console
 $ black src/
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse: The assigned grammars (3.0, 3.7) for your Python versions (PY33, PY39) all failed to parse: 5:6: mport asyncio
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
