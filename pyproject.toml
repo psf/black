@@ -152,12 +152,14 @@ options = { debug_level = "0" }
 
 [tool.cibuildwheel]
 build-verbosity = 1
+
 # So these are the environments we target:
 # - Python: CPython 3.8+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp3*"
 skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*"]
+
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
@@ -172,11 +174,9 @@ test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
-# CPython 3.11 wheels aren't available for aiohttp and building a Cython extension
-# from source also doesn't work.
-AIOHTTP_NO_EXTENSIONS = "1"
 
 [tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
 before-build = [
     "yum install -y clang gcc",
 ]
@@ -185,7 +185,6 @@ before-build = [
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
-AIOHTTP_NO_EXTENSIONS = "1"
 
 # Black needs Clang to compile successfully on Linux.
 CC = "clang"
