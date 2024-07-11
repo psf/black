@@ -128,6 +128,9 @@ f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\
 f"""{'''
 '''}"""
 
+f"{'\''}"
+f"{f'\''}"
+
 # output
 
 x = f"foo"
@@ -258,3 +261,6 @@ f'{{\\"kind\\":\\"ConfigMap\\",\\"metadata\\":{{\\"annotations\\":{{}},\\"name\\
 
 f"""{'''
 '''}"""
+
+f"{'\''}"
+f"{f'\''}"
