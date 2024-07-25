@@ -309,6 +309,8 @@ def _path_is_ignored(
     for gitignore_path, pattern in gitignore_dict.items():
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
+            if path.is_dir():
+                relative_path = relative_path + "/"
         except ValueError:
             break
         if pattern.match_file(relative_path):
