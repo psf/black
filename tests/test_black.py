@@ -71,8 +71,7 @@ from tests.util import (
 
 THIS_FILE = Path(__file__)
 EMPTY_CONFIG = THIS_DIR / "data" / "empty_pyproject.toml"
-PY36_ARGS = [
-    f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
+PY36_ARGS = [f"--target-version={version.name.lower()}" for version in PY36_VERSIONS]
 DEFAULT_EXCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_EXCLUDES)
 DEFAULT_INCLUDE = black.re_compile_maybe_verbose(black.const.DEFAULT_INCLUDES)
 T = TypeVar("T")
@@ -302,8 +301,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         try:
             result = BlackRunner().invoke(
-                black.main, ["--diff", str(tmp_file),
-                             f"--config={EMPTY_CONFIG}"]
+                black.main, ["--diff", str(tmp_file), f"--config={EMPTY_CONFIG}"]
             )
             self.assertEqual(result.exit_code, 0)
         finally:
@@ -326,8 +324,7 @@ class BlackTestCase(BlackBaseTestCase):
         try:
             result = BlackRunner().invoke(
                 black.main,
-                ["--diff", "--color", str(tmp_file),
-                 f"--config={EMPTY_CONFIG}"],
+                ["--diff", "--color", str(tmp_file), f"--config={EMPTY_CONFIG}"],
             )
         finally:
             os.unlink(tmp_file)
@@ -413,8 +410,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
         try:
             result = BlackRunner().invoke(
-                black.main, ["-C", "--diff",
-                             str(tmp_file), f"--config={EMPTY_CONFIG}"]
+                black.main, ["-C", "--diff", str(tmp_file), f"--config={EMPTY_CONFIG}"]
             )
             self.assertEqual(result.exit_code, 0)
         finally:
@@ -445,8 +441,7 @@ class BlackTestCase(BlackBaseTestCase):
         # ensure black can parse this when the target is 3.6
         self.invokeBlack([str(source_path), "--target-version", "py36"])
         # but not on 3.7, because async/await is no longer an identifier
-        self.invokeBlack(
-            [str(source_path), "--target-version", "py37"], exit_code=123)
+        self.invokeBlack([str(source_path), "--target-version", "py37"], exit_code=123)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
@@ -461,8 +456,7 @@ class BlackTestCase(BlackBaseTestCase):
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
         # but not on 3.6, because we use async as a reserved keyword
-        self.invokeBlack(
-            [str(source_path), "--target-version", "py36"], exit_code=123)
+        self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -535,8 +529,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.done(Path("f1"), black.Changed.NO)
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 0)
-            self.assertEqual(
-                out_lines[-1], "f1 already well formatted, good job.")
+            self.assertEqual(out_lines[-1], "f1 already well formatted, good job.")
             self.assertEqual(unstyle(str(report)), "1 file left unchanged.")
             self.assertEqual(report.return_code, 0)
             report.done(Path("f2"), black.Changed.YES)
@@ -602,8 +595,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.done(Path("f4"), black.Changed.NO)
             self.assertEqual(len(out_lines), 6)
             self.assertEqual(len(err_lines), 2)
-            self.assertEqual(
-                out_lines[-1], "f4 already well formatted, good job.")
+            self.assertEqual(out_lines[-1], "f4 already well formatted, good job.")
             self.assertEqual(
                 unstyle(str(report)),
                 "2 files reformatted, 3 files left unchanged, 2 files failed to"
@@ -870,8 +862,7 @@ class BlackTestCase(BlackBaseTestCase):
             "def f(*, arg,): ...\n", {Feature.TRAILING_COMMA_IN_DEF}
         )
         self.check_features_used("f(*arg,)\n", {Feature.TRAILING_COMMA_IN_CALL})
-        self.check_features_used(
-            "def f(*, arg): f'string'\n", {Feature.F_STRINGS})
+        self.check_features_used("def f(*, arg): f'string'\n", {Feature.F_STRINGS})
         self.check_features_used("123_456\n", {Feature.NUMERIC_UNDERSCORES})
         self.check_features_used("123456\n", set())
 
@@ -888,15 +879,12 @@ class BlackTestCase(BlackBaseTestCase):
         self.check_features_used(source, set())
         self.check_features_used(expected, set())
 
-        self.check_features_used(
-            "lambda a, /, b: ...\n", {Feature.POS_ONLY_ARGUMENTS})
-        self.check_features_used("def fn(a, /, b): ...",
-                                 {Feature.POS_ONLY_ARGUMENTS})
+        self.check_features_used("lambda a, /, b: ...\n", {Feature.POS_ONLY_ARGUMENTS})
+        self.check_features_used("def fn(a, /, b): ...", {Feature.POS_ONLY_ARGUMENTS})
 
         self.check_features_used("def fn(): yield a, b", set())
         self.check_features_used("def fn(): return a, b", set())
-        self.check_features_used(
-            "def fn(): yield *b, c", {Feature.UNPACKING_ON_FLOW})
+        self.check_features_used("def fn(): yield *b, c", {Feature.UNPACKING_ON_FLOW})
         self.check_features_used(
             "def fn(): return a, *b, c", {Feature.UNPACKING_ON_FLOW}
         )
@@ -916,10 +904,8 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
         self.check_features_used("a[*b]", {Feature.VARIADIC_GENERICS})
-        self.check_features_used(
-            "a[x, *y(), z] = t", {Feature.VARIADIC_GENERICS})
-        self.check_features_used(
-            "def fn(*args: *T): pass", {Feature.VARIADIC_GENERICS})
+        self.check_features_used("a[x, *y(), z] = t", {Feature.VARIADIC_GENERICS})
+        self.check_features_used("def fn(*args: *T): pass", {Feature.VARIADIC_GENERICS})
 
         self.check_features_used("with a: pass", set())
         self.check_features_used("with a, b: pass", set())
@@ -941,8 +927,7 @@ class BlackTestCase(BlackBaseTestCase):
             "with (a, (b as c)): pass", {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         )
         self.check_features_used(
-            "with ((a, ((b as c)))): pass", {
-                Feature.PARENTHESIZED_CONTEXT_MANAGERS}
+            "with ((a, ((b as c)))): pass", {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         )
 
     def check_features_used(self, source: str, expected: Set[Feature]) -> None:
@@ -957,8 +942,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_get_features_used_for_future_flags(self) -> None:
         for src, features in [
-            ("from __future__ import annotations",
-             {Feature.FUTURE_ANNOTATIONS}),
+            ("from __future__ import annotations", {Feature.FUTURE_ANNOTATIONS}),
             (
                 "from __future__ import (other, annotations)",
                 {Feature.FUTURE_ANNOTATIONS},
@@ -970,8 +954,7 @@ class BlackTestCase(BlackBaseTestCase):
                 node = black.lib2to3_parse(src)
                 future_imports = black.get_future_imports(node)
                 self.assertEqual(
-                    black.get_features_used(
-                        node, future_imports=future_imports),
+                    black.get_features_used(node, future_imports=future_imports),
                     features,
                 )
 
@@ -981,24 +964,18 @@ class BlackTestCase(BlackBaseTestCase):
         node = black.lib2to3_parse("from __future__ import black\n")
         self.assertEqual({"black"}, black.get_future_imports(node))
         node = black.lib2to3_parse("from __future__ import multiple, imports\n")
-        self.assertEqual({"multiple", "imports"},
-                         black.get_future_imports(node))
-        node = black.lib2to3_parse(
-            "from __future__ import (parenthesized, imports)\n")
-        self.assertEqual({"parenthesized", "imports"},
-                         black.get_future_imports(node))
+        self.assertEqual({"multiple", "imports"}, black.get_future_imports(node))
+        node = black.lib2to3_parse("from __future__ import (parenthesized, imports)\n")
+        self.assertEqual({"parenthesized", "imports"}, black.get_future_imports(node))
         node = black.lib2to3_parse(
             "from __future__ import multiple\nfrom __future__ import imports\n"
         )
-        self.assertEqual({"multiple", "imports"},
-                         black.get_future_imports(node))
+        self.assertEqual({"multiple", "imports"}, black.get_future_imports(node))
         node = black.lib2to3_parse("# comment\nfrom __future__ import black\n")
         self.assertEqual({"black"}, black.get_future_imports(node))
-        node = black.lib2to3_parse(
-            '"""docstring"""\nfrom __future__ import black\n')
+        node = black.lib2to3_parse('"""docstring"""\nfrom __future__ import black\n')
         self.assertEqual({"black"}, black.get_future_imports(node))
-        node = black.lib2to3_parse(
-            "some(other, code)\nfrom __future__ import black\n")
+        node = black.lib2to3_parse("some(other, code)\nfrom __future__ import black\n")
         self.assertEqual(set(), black.get_future_imports(node))
         node = black.lib2to3_parse("from some.module import black\n")
         self.assertEqual(set(), black.get_future_imports(node))
@@ -1009,8 +986,7 @@ class BlackTestCase(BlackBaseTestCase):
         node = black.lib2to3_parse(
             "from __future__ import unicode_literals as _lol, print"
         )
-        self.assertEqual({"unicode_literals", "print"},
-                         black.get_future_imports(node))
+        self.assertEqual({"unicode_literals", "print"}, black.get_future_imports(node))
 
     @pytest.mark.incompatible_with_mypyc
     def test_debug_visitor(self) -> None:
@@ -1055,19 +1031,16 @@ class BlackTestCase(BlackBaseTestCase):
         invalid = "return if you can"
         with self.assertRaises(black.InvalidInput) as e:
             black.format_file_contents(invalid, mode=mode, fast=False)
-        self.assertEqual(str(e.exception),
-                         "Cannot parse: 1:7: return if you can")
+        self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
 
         just_crlf = "\r\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_crlf, mode=mode, fast=False)
         just_whitespace_nl = "\n\t\n \n\t \n \t\n\n"
-        actual = black.format_file_contents(
-            just_whitespace_nl, mode=mode, fast=False)
+        actual = black.format_file_contents(just_whitespace_nl, mode=mode, fast=False)
         self.assertEqual("\n", actual)
         just_whitespace_crlf = "\r\n\t\r\n \r\n\t \r\n \t\r\n\r\n"
-        actual = black.format_file_contents(
-            just_whitespace_crlf, mode=mode, fast=False)
+        actual = black.format_file_contents(just_whitespace_crlf, mode=mode, fast=False)
         self.assertEqual("\r\n", actual)
 
     def test_endmarker(self) -> None:
@@ -1142,8 +1115,7 @@ class BlackTestCase(BlackBaseTestCase):
             src2 = get_case_path("cases", "composition")
             self.invokeBlack([str(src2), "--diff", "--check"])
             # Multi file command.
-            self.invokeBlack(
-                [str(src1), str(src2), "--diff", "--check"], exit_code=1)
+            self.invokeBlack([str(src1), str(src2), "--diff", "--check"], exit_code=1)
 
     def test_no_src_fails(self) -> None:
         with cache_dir():
@@ -1428,13 +1400,11 @@ class BlackTestCase(BlackBaseTestCase):
             ["--enable-unstable-feature", "string_processing", "-c", "0"], exit_code=1
         )
         self.invokeBlack(
-            ["--preview", "--enable-unstable-feature",
-                "string_processing", "-c", "0"],
+            ["--preview", "--enable-unstable-feature", "string_processing", "-c", "0"],
             exit_code=0,
         )
         self.invokeBlack(
-            ["--unstable", "--enable-unstable-feature",
-                "string_processing", "-c", "0"],
+            ["--unstable", "--enable-unstable-feature", "string_processing", "-c", "0"],
             exit_code=0,
         )
 
@@ -1458,8 +1428,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_required_version_does_not_match_on_minor_version(self) -> None:
         self.invokeBlack(
-            ["--required-version",
-                black.__version__.split(".")[0] + ".999", "-c", "0"],
+            ["--required-version", black.__version__.split(".")[0] + ".999", "-c", "0"],
             exit_code=1,
             ignore_config=True,
         )
@@ -1665,8 +1634,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
         fake_ctx = FakeContext()
-        black.read_pyproject_toml(
-            fake_ctx, FakeParameter(), str(test_toml_file))
+        black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
         config = fake_ctx.default_map
         self.assertEqual(config["verbose"], "1")
         self.assertEqual(config["check"], "no")
@@ -1687,8 +1655,7 @@ class BlackTestCase(BlackBaseTestCase):
             src_pyproject = src_dir / "pyproject.toml"
             src_pyproject.touch()
 
-            test_toml_content = (
-                THIS_DIR / "test.toml").read_text(encoding="utf-8")
+            test_toml_content = (THIS_DIR / "test.toml").read_text(encoding="utf-8")
             src_pyproject.write_text(test_toml_content, encoding="utf-8")
 
             src_python = src_dir / "foo.py"
@@ -1743,8 +1710,7 @@ class BlackTestCase(BlackBaseTestCase):
 
             with change_directory(test_dir):
                 self.assertEqual(
-                    black.find_project_root(
-                        ("-",), stdin_filename="../src/a.py"),
+                    black.find_project_root(("-",), stdin_filename="../src/a.py"),
                     (src_dir.resolve(), "pyproject.toml"),
                 )
 
@@ -1833,8 +1799,7 @@ class BlackTestCase(BlackBaseTestCase):
             root = Path(workspace)
             junction_dir = root / "junction"
             junction_target_outside_of_root = root / ".."
-            os.system(
-                f"mklink /J {junction_dir} {junction_target_outside_of_root}")
+            os.system(f"mklink /J {junction_dir} {junction_target_outside_of_root}")
 
             report = black.Report(verbose=True)
             resolves_outside = black.resolves_outside_root_or_cannot_stat(
@@ -1999,8 +1964,7 @@ class BlackTestCase(BlackBaseTestCase):
                 args = ["--code", "print"]
                 CliRunner().invoke(black.main, args)
 
-                pyproject_path = Path(Path().cwd().parent,
-                                      "pyproject.toml").resolve()
+                pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
                 assert (
                     len(parse.mock_calls) >= 1
                 ), "Expected config parse to be called with the current directory."
@@ -2110,8 +2074,7 @@ class BlackTestCase(BlackBaseTestCase):
         tab = " " * 8
         assert lines_with_leading_tabs_expanded("\tx") == [f"{tab}x"]
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
-        assert lines_with_leading_tabs_expanded("\tx\n  y") == [
-            f"{tab}x", "  y"]
+        assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
 
 
 class TestCaching:
@@ -2292,8 +2255,7 @@ class TestCaching:
 
             with patch.object(black.Cache, "get_file_data", side_effect=wrapped_func):
                 cache.write([cached, cached_but_changed])
-            todo, done = cache.filtered_cached(
-                {uncached, cached, cached_but_changed})
+            todo, done = cache.filtered_cached({uncached, cached, cached_but_changed})
             assert todo == {uncached, cached_but_changed}
             assert done == {cached}
 
@@ -2394,13 +2356,11 @@ def assert_collected_sources(
     gs_src = tuple(str(Path(s)) for s in src)
     gs_expected = [Path(s) for s in expected]
     gs_exclude = None if exclude is None else compile_pattern(exclude)
-    gs_include = DEFAULT_INCLUDE if include is None else compile_pattern(
-        include)
+    gs_include = DEFAULT_INCLUDE if include is None else compile_pattern(include)
     gs_extend_exclude = (
         None if extend_exclude is None else compile_pattern(extend_exclude)
     )
-    gs_force_exclude = None if force_exclude is None else compile_pattern(
-        force_exclude)
+    gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
     collected = black.get_sources(
         root=root or THIS_DIR,
         src=gs_src,
@@ -2438,8 +2398,7 @@ class TestFileCollection:
             base / "b/.definitely_exclude/a.pyi",
         ]
         src = [base / "b/"]
-        assert_collected_sources(
-            src, expected, root=base, extend_exclude=r"/exclude/")
+        assert_collected_sources(src, expected, root=base, extend_exclude=r"/exclude/")
 
     def test_gitignore_used_on_multiple_sources(self) -> None:
         root = Path(DATA_DIR / "gitignore_used_on_multiple_sources")
@@ -2458,8 +2417,7 @@ class TestFileCollection:
         path = DATA_DIR / "include_exclude_tests"
         src = [path / "b/exclude/a.py"]
         expected = [path / "b/exclude/a.py"]
-        assert_collected_sources(
-            src, expected, include="", exclude=r"/exclude/|a\.py")
+        assert_collected_sources(src, expected, include="", exclude=r"/exclude/|a\.py")
 
     def test_gitignore_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
@@ -2657,8 +2615,7 @@ class TestFileCollection:
         outside_root_symlink.is_file.return_value = True
 
         ignored_symlink = MagicMock()
-        ignored_symlink.relative_to.return_value = Path(
-            ".mypy_cache") / "symlink.py"
+        ignored_symlink.relative_to.return_value = Path(".mypy_cache") / "symlink.py"
         ignored_symlink.is_dir.return_value = False
         ignored_symlink.is_file.return_value = True
 
@@ -2671,8 +2628,7 @@ class TestFileCollection:
 
         # A symlink that has an included name, but points to an excluded name
         symlink_included_name = MagicMock()
-        symlink_included_name.relative_to.return_value = Path(
-            "included_name.py")
+        symlink_included_name.relative_to.return_value = Path("included_name.py")
         symlink_included_name.resolve.return_value = root / "excluded_name"
         symlink_included_name.is_dir.return_value = False
         symlink_included_name.is_file.return_value = True
@@ -2770,8 +2726,7 @@ class TestFileCollection:
 
             root = tmp / "root"
             root.mkdir()
-            (root
-             / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
+            (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
 
             target = tmp / "outside_root" / "a.py"
             target.parent.mkdir()
@@ -2887,8 +2842,7 @@ class TestDeFactoAPI:
     def test_format_str(self) -> None:
         # format_str and Mode should keep working
         assert (
-            black.format_str("print('hello')", mode=black.Mode()
-                             ) == 'print("hello")\n'
+            black.format_str("print('hello')", mode=black.Mode()) == 'print("hello")\n'
         )
 
         # you can pass line length
@@ -2905,8 +2859,7 @@ class TestDeFactoAPI:
         # You probably should be using format_str() instead, but let's keep
         # this one around since people do use it
         assert (
-            black.format_file_contents(
-                "x=1", fast=True, mode=black.Mode()) == "x = 1\n"
+            black.format_file_contents("x=1", fast=True, mode=black.Mode()) == "x = 1\n"
         )
 
         with pytest.raises(black.NothingChanged):
@@ -3003,8 +2956,7 @@ class TestASTSafety(BlackBaseTestCase):
             ''',
         )
         self.check_ast_equivalence(r'def f(): r" \n "', r'def f(): "\\n"')
-        self.check_ast_equivalence(
-            'try: pass\nexcept: " x "', 'try: pass\nexcept: "x"')
+        self.check_ast_equivalence('try: pass\nexcept: " x "', 'try: pass\nexcept: "x"')
 
         self.check_ast_equivalence(
             'def foo(): return " x "', 'def foo(): return "x"', should_fail=True
