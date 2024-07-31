@@ -136,8 +136,8 @@ Triple = group(
 )
 
 # beginning of a single quoted f-string. must not end with `{{` or `\N{`
-SingleLbrace = r"(?:\\N{|\\.|{{|[^'\\{])*(?<!\\N){(?!{)"
-DoubleLbrace = r'(?:\\N{|\\.|{{|[^"\\{])*(?<!\\N){(?!{)'
+SingleLbrace = r"(?:\\N{|\\[^{]|{{|[^'\\{])*(?<!\\N){(?!{)"
+DoubleLbrace = r'(?:\\N{|\\[^{]|{{|[^"\\{])*(?<!\\N){(?!{)'
 
 # beginning of a triple quoted f-string. must not end with `{{` or `\N{`
 Single3Lbrace = r"(?:\\N{|\\[^{]|{{|'(?!'')|[^'{\\])*(?<!\\N){(?!{)"
