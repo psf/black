@@ -60,7 +60,7 @@ def test_fstring() -> None:
         'f"x"',
         [
             Token("FSTRING_START", 'f"', (1, 0), (1, 2)),
-            Token("FSTRING_MIDDLE", 'x', (1, 2), (1, 3)),
+            Token("FSTRING_MIDDLE", "x", (1, 2), (1, 3)),
             Token("FSTRING_END", '"', (1, 3), (1, 4)),
             Token("ENDMARKER", "", (2, 0), (2, 0)),
         ],
@@ -69,11 +69,11 @@ def test_fstring() -> None:
         'f"{x}"',
         [
             Token("FSTRING_START", 'f"', (1, 0), (1, 2)),
-            Token("FSTRING_MIDDLE", '', (1, 2), (1, 2)),
-            Token("LBRACE", '{', (1, 2), (1, 3)),
+            Token("FSTRING_MIDDLE", "", (1, 2), (1, 2)),
+            Token("LBRACE", "{", (1, 2), (1, 3)),
             Token("NAME", "x", (1, 3), (1, 4)),
-            Token("RBRACE", '}', (1, 4), (1, 5)),
-            Token("FSTRING_MIDDLE", '', (1, 5), (1, 5)),
+            Token("RBRACE", "}", (1, 4), (1, 5)),
+            Token("FSTRING_MIDDLE", "", (1, 5), (1, 5)),
             Token("FSTRING_END", '"', (1, 5), (1, 6)),
             Token("ENDMARKER", "", (2, 0), (2, 0)),
         ],
@@ -110,9 +110,10 @@ def test_fstring() -> None:
     )
 
 
+# Run "echo some code | python tests/test_tokenize.py" to generate test cases.
 if __name__ == "__main__":
     code = sys.stdin.read()
     tokens = get_tokens(code)
     text = f"assert_tokenizes({code!r}, {tokens!r})"
-    text = black.format_str(text, mode=black.FileMode())
+    text = black.format_str(text, mode=black.Mode())
     print(textwrap.indent(text, "    "))
