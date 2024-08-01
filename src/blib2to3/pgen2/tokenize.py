@@ -136,12 +136,12 @@ Triple = group(
 )
 
 # beginning of a single quoted f-string. must not end with `{{` or `\N{`
-SingleLbrace = r"(?:\\N{|\\[^{]|{{|[^\n'\\{])*(?<!\\N)({)(?!{)"
-DoubleLbrace = r'(?:\\N{|\\[^{]|{{|[^\n"\\{])*(?<!\\N)({)(?!{)'
+SingleLbrace = r"(?:\\N{|{{|\\'|[^\n'{])*(?<!\\N)({)(?!{)"
+DoubleLbrace = r'(?:\\N{|{{|\\"|[^\n"{])*(?<!\\N)({)(?!{)'
 
 # beginning of a triple quoted f-string. must not end with `{{` or `\N{`
-Single3Lbrace = r"(?:\\N{|\\[^{]|{{|'(?!'')|[^'{\\])*(?<!\\N){(?!{)"
-Double3Lbrace = r'(?:\\N{|\\[^{]|{{|"(?!"")|[^"{\\])*(?<!\\N){(?!{)'
+Single3Lbrace = r"(?:\\N{|{{|\\'|'(?!'')|[^'{])*(?<!\\N){(?!{)"
+Double3Lbrace = r'(?:\\N{|{{|\\"|"(?!"")|[^"{])*(?<!\\N){(?!{)'
 
 # ! format specifier inside an fstring brace, ensure it's not a `!=` token
 Bang = Whitespace + group("!") + r"(?!=)"
