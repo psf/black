@@ -4,6 +4,7 @@ import io
 import sys
 import textwrap
 from dataclasses import dataclass
+from typing import List
 
 import black
 from blib2to3.pgen2 import token, tokenize
@@ -17,10 +18,10 @@ class Token:
     end: tokenize.Coord
 
 
-def get_tokens(text: str) -> list[Token]:
+def get_tokens(text: str) -> List[Token]:
     """Return the tokens produced by the tokenizer."""
     readline = io.StringIO(text).readline
-    tokens: list[Token] = []
+    tokens: List[Token] = []
 
     def tokeneater(
         type: int, string: str, start: tokenize.Coord, end: tokenize.Coord, line: str
@@ -31,7 +32,7 @@ def get_tokens(text: str) -> list[Token]:
     return tokens
 
 
-def assert_tokenizes(text: str, tokens: list[Token]) -> None:
+def assert_tokenizes(text: str, tokens: List[Token]) -> None:
     """Assert that the tokenizer produces the expected tokens."""
     actual_tokens = get_tokens(text)
     assert actual_tokens == tokens
