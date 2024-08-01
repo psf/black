@@ -1,11 +1,12 @@
 """Tests for the blib2to3 tokenizer."""
 
 import io
-import black
 import sys
 import textwrap
-from blib2to3.pgen2 import tokenize, token
 from dataclasses import dataclass
+
+import black
+from blib2to3.pgen2 import token, tokenize
 
 
 @dataclass
