@@ -39,6 +39,9 @@
 
 - Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
 
+- Fix incorrect line numbers in the tokenizer for certain tokens within f-strings
+  (#4423)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
