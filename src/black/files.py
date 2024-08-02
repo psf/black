@@ -59,6 +59,9 @@ def find_project_root(
 ) -> Tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
+    pyproject.toml files are only considered if they contain a [tool.black]
+    section and are ignored otherwise.
+
     That directory will be a common parent of all files and directories
     passed in `srcs`.
 
