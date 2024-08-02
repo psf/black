@@ -39,6 +39,8 @@
 
 - Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
 
+- Fix bugs with Black's tokenizer not handling `\{` inside f-strings very well (#4422)
+
 - Fix incorrect line numbers in the tokenizer for certain tokens within f-strings
   (#4423)
 

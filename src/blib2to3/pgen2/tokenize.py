@@ -136,12 +136,12 @@ Triple = group(
 )
 
 # beginning of a single quoted f-string. must not end with `{{` or `\N{`
-SingleLbrace = r"(?:\\N{|\\.|{{|[^'\\{])*(?<!\\N){(?!{)"
-DoubleLbrace = r'(?:\\N{|\\.|{{|[^"\\{])*(?<!\\N){(?!{)'
+SingleLbrace = r"(?:\\N{|{{|\\'|[^\n'{])*(?<!\\N)({)(?!{)"
+DoubleLbrace = r'(?:\\N{|{{|\\"|[^\n"{])*(?<!\\N)({)(?!{)'
 
 # beginning of a triple quoted f-string. must not end with `{{` or `\N{`
-Single3Lbrace = r"(?:\\N{|\\[^{]|{{|'(?!'')|[^'{\\])*(?<!\\N){(?!{)"
-Double3Lbrace = r'(?:\\N{|\\[^{]|{{|"(?!"")|[^"{\\])*(?<!\\N){(?!{)'
+Single3Lbrace = r"(?:\\N{|{{|\\'|'(?!'')|[^'{])*(?<!\\N){(?!{)"
+Double3Lbrace = r'(?:\\N{|{{|\\"|"(?!"")|[^"{])*(?<!\\N){(?!{)'
 
 # ! format specifier inside an fstring brace, ensure it's not a `!=` token
 Bang = Whitespace + group("!") + r"(?!=)"
@@ -175,8 +175,8 @@ _string_middle_single = r"(?:[^\n'\\]|\\.)*"
 _string_middle_double = r'(?:[^\n"\\]|\\.)*'
 
 # FSTRING_MIDDLE and LBRACE, must not end with a `{{` or `\N{`
-_fstring_middle_single = r"(?:\\N{|\\[^{]|{{|[^\n'{\\])*(?<!\\N)({)(?!{)"
-_fstring_middle_double = r'(?:\\N{|\\[^{]|{{|[^\n"{\\])*(?<!\\N)({)(?!{)'
+_fstring_middle_single = SingleLbrace
+_fstring_middle_double = DoubleLbrace
 
 # First (or only) line of ' or " string.
 ContStr = group(
