@@ -1031,7 +1031,11 @@ class BlackTestCase(BlackBaseTestCase):
         invalid = "return if you can"
         with self.assertRaises(black.InvalidInput) as e:
             black.format_file_contents(invalid, mode=mode, fast=False)
-        self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
+        self.assertRegex(
+            str(e.exception),
+            r"Cannot parse: The assigned grammars \((.*?)\) for your Python versions"
+            r" \((.*?)\) all failed to parse line: 1:7: return if you can",
+        )
 
         just_crlf = "\r\n"
         with self.assertRaises(black.NothingChanged):
@@ -1981,7 +1985,10 @@ class BlackTestCase(BlackBaseTestCase):
         with pytest.raises(black.parsing.InvalidInput) as exc_info:
             black.lib2to3_parse("print(", {})
 
-        exc_info.match("Cannot parse: 2:0: EOF in multi-line statement")
+        exc_info.match(
+            r"Cannot parse: The assigned grammars \((.*?)\) for your Python versions"
+            r" \((.*?)\) all failed to parse: 2:0: EOF in multi-line statement"
+        )
 
     def test_line_ranges_with_code_option(self) -> None:
         code = textwrap.dedent("""\

@@ -22,6 +22,8 @@
 - Fix incorrect line numbers in the tokenizer for certain tokens within f-strings
   (#4423)
 
+- Added Python and grammar version information to a parsing error message (#4378)
+
 ### Performance
 
 - Improve performance when a large directory is listed in `.gitignore` (#4415)
