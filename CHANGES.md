@@ -1,71 +1,34 @@
 # Change Log
 
-## Unreleased
-
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
+## 24.8.0
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Fix crash when `# fmt: off` is used before a closing parenthesis or bracket. (#4363)
 
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
 ### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Packaging metadata updated: docs are explictly linked, the issue tracker is now also
   linked. This improves the PyPI listing for Black. (#4345)
 
 ### Parser
 
-<!-- Changes to the parser or to version autodetection -->
-
 - Fix regression where Black failed to parse a multiline f-string containing another
   multiline string (#4339)
-
 - Fix regression where Black failed to parse an escaped single quote inside an f-string
   (#4401)
-
 - Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
-
 - Fix bugs with Black's tokenizer not handling `\{` inside f-strings very well (#4422)
-
 - Fix incorrect line numbers in the tokenizer for certain tokens within f-strings
   (#4423)
 
 ### Performance
 
-<!-- Changes that improve Black's performance. -->
-
 - Improve performance when a large directory is listed in `.gitignore` (#4415)
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
 
 ### _Blackd_
 
 - Fix blackd (and all extras installs) for docker container (#4357)
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.4.2
 
