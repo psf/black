@@ -48,6 +48,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Improve performance when a large directory is listed in `.gitignore` (#4415)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->

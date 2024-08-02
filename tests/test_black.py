@@ -2537,6 +2537,12 @@ class TestFileCollection:
         expected = [target / "b.py"]
         assert_collected_sources([target], expected, root=root)
 
+    def test_gitignore_that_ignores_directory(self) -> None:
+        # If gitignore with a directory is in root
+        root = Path(DATA_DIR, "ignore_directory_gitignore_tests")
+        expected = [root / "z.py"]
+        assert_collected_sources([root], expected, root=root)
+
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
         src = [path]
