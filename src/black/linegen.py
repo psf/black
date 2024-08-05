@@ -506,6 +506,19 @@ class LineGenerator(Visitor[Line]):
         normalize_numeric_literal(leaf)
         yield from self.visit_default(leaf)
 
+    def visit_atom(self, node: Node) -> Iterator[Line]:
+        """Visit any atom"""
+        if (
+            Preview.remove_lone_list_item_parens in self.mode
+            and len(node.children) == 3
+            and node.children[0].type == token.LSQB
+            and node.children[-1].type == token.RSQB
+        ):
+            # Lists of one item
+            maybe_make_parens_invisible_in_atom(node.children[1], parent=node)
+
+        yield from self.visit_default(node)
+
     def visit_fstring(self, node: Node) -> Iterator[Line]:
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_to_string(node)

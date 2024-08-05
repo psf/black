@@ -49,6 +49,8 @@ The unstable style additionally includes the following features:
   multiline strings ([see below](labels/multiline-string-handling))
 - `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
   brackets ([see below](labels/hug-parens))
+- `remove_lone_list_item_parens`: remove redundant parenthesis around lone list items
+  ([see below](labels/lone-list-item-parens))
 
 (labels/hug-parens)=
 
@@ -123,6 +125,62 @@ foo(
     ],
 )
 ```
+
+(labels/lone-list-item-parens)=
+
+### Remove keys around sole list item
+
+Parentheses around sole list items will also be removed for similar reasons. Trailing
+commas are respected here as well. For example:
+
+```python
+items = [(123)]
+items = [(True)]
+items = [((True,))]
+items = [(())]
+
+items = [
+    (
+        long_variable_name
+        and even_longer_variable_name
+        and yet_another_very_long_variable_name
+    )
+]
+
+items = [
+    (
+        long_variable_name
+        and even_longer_variable_name
+        and yet_another_very_long_variable_name
+    ),
+]
+```
+
+will be formatted as:
+
+```python
+items = [123]
+items = [True]
+items = [(True,)]
+items = [()]
+
+items = [
+    long_variable_name
+    and even_longer_variable_name
+    and yet_another_very_long_variable_name
+]
+
+items = [
+    (
+        long_variable_name
+        and even_longer_variable_name
+        and yet_another_very_long_variable_name
+    ),
+]
+```
+
+This style depends on `hug_parens_with_braces_and_square_brackets` to remove parenthesis
+in all cases.
 
 (labels/string-processing)=
 
