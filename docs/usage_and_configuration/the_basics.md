@@ -296,10 +296,8 @@ recursive searches. An empty value means no paths are excluded. Use forward slas
 directories on all platforms (Windows, too). By default, Black also ignores all paths
 listed in `.gitignore`. Changing this value will override all default exclusions.
 
-Default Exclusions: `['.direnv', '.eggs', '.git', '.hg', '.ipynb_checkpoints', 
-'.mypy_cache', '.nox', '.pytest_cache', '.ruff_cache', '.tox', '.svn', '.venv', '.vscode', 
-'__pypackages__', '_build', 'buck-out', 'build', 'dist', 'venv']
-`
+Default Exclusions:
+`['.direnv', '.eggs', '.git', '.hg', '.ipynb_checkpoints',  '.mypy_cache', '.nox', '.pytest_cache', '.ruff_cache', '.tox', '.svn', '.venv', '.vscode',  '__pypackages__', '_build', 'buck-out', 'build', 'dist', 'venv'] `
 
 If the regular expression contains newlines, it is treated as a
 [verbose regular expression](https://docs.python.org/3/library/re.html#re.VERBOSE). This
