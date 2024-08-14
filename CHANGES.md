@@ -5,6 +5,7 @@
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
+
 - Black now officially supports Python 3.13 (#4436)
 
 ### Stable style
