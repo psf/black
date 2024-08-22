@@ -206,6 +206,7 @@ class Preview(Enum):
     docstring_check_for_newline = auto()
     remove_redundant_guard_parens = auto()
     parens_for_long_if_clauses_in_case_block = auto()
+    pep646_typed_star_arg_type_var_tuple = auto()
 
 
 UNSTABLE_FEATURES: Set[Preview] = {

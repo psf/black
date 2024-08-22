@@ -36,6 +36,8 @@ Currently, the following features are included in the preview style:
   `case` blocks.
 - `parens_for_long_if_clauses_in_case_block`: Adds parentheses to `if` clauses in `case`
   blocks when the line is too long
+- `pep646_typed_star_arg_type_var_tuple`: fix type annotation spacing between * and more
+  complex type variable tuple (i.e. `def fn(*args: *tuple[*Ts, T]) -> None: pass`)
 
 (labels/unstable-features)=
 
