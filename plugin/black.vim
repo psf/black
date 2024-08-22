@@ -19,15 +19,27 @@ if exists("g:load_black")
   finish
 endif
 
-if v:version < 700 || !has('python3')
-    func! __BLACK_MISSING()
-        echo "The black.vim plugin requires vim7.0+ with Python 3.6 support."
-    endfunc
-    command! Black :call __BLACK_MISSING()
-    command! BlackUpgrade :call __BLACK_MISSING()
-    command! BlackVersion :call __BLACK_MISSING()
+" check if vim version is too old
+if v:version < 700
+    echo "The black.vim plugin requires Vim 7.0+."
     finish
 endif
+
+" check if Vim has Python 3 support
+if !has('python3')
+    echo "The black.vim plugin requires Vim compiled with Python 3.8+ support."
+    finish
+endif
+
+" define commands inly if all checks are passed
+func! BlackNotSupported()
+    echo "The black.vim plugin cannot be used with this Vim executable."
+endfunc
+
+command! Black :call BlackNotSupported()
+command! BlackUpgrade :call BlackNotSupported()
+command! BlackVersion :call BlackNotSupported()
+
 
 let g:load_black = "py1.0"
 if !exists("g:black_virtualenv")
