@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     middleware: Callable[[F], F]
 else:
     try:
+        # Available in aiohttp 3.9 and newer
         from aiohttp.typedefs import Middleware
     except ImportError:
         Middleware = Callable[[Request, Handler], Awaitable[StreamResponse]]
