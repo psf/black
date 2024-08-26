@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
+  fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
