@@ -19,17 +19,16 @@ if exists("g:load_black")
   finish
 endif
 
-" check if vim version is too old
+" check if Vim version is too old or Python 3 support is missing
 if v:version < 700
     func! __BlackNotSupported()
-        echo "The black.vim plugin requires Vim 7.0+"
+        echo "Vim " . printf("%d.%02d", v:version / 100, v:version % 100) . " is too old."
+        echo "The black.vim plugin requires Vim 7.0+ with Python 3.8+ support."
     endfunc
-endif
-
-" check if Vim has Python 3 support
-if !has('python3')
+elseif !has('python3')
     func! __BlackNotSupported()
-        echo "The black.vim plugin requires Vim compiled with Python 3.8+ support."
+        echo "Python 3 support is not available."
+        echo "The black.vim plugin requires Vim 7.0+ with Python 3.8+ support."
     endfunc
 endif
 
@@ -39,6 +38,7 @@ if exists("*__BlackNotSupported")
     command! BlackUpgrade :call __BlackNotSupported()
     command! BlackVersion :call __BlackNotSupported()
 endif
+
 
 
 let g:load_black = "py1.0"
