@@ -906,6 +906,9 @@ class BlackTestCase(BlackBaseTestCase):
         self.check_features_used("a[*b]", {Feature.VARIADIC_GENERICS})
         self.check_features_used("a[x, *y(), z] = t", {Feature.VARIADIC_GENERICS})
         self.check_features_used("def fn(*args: *T): pass", {Feature.VARIADIC_GENERICS})
+        self.check_features_used(
+            "def fn(*args: *tuple[*T]): pass", {Feature.VARIADIC_GENERICS}
+        )
 
         self.check_features_used("with a: pass", set())
         self.check_features_used("with a, b: pass", set())
