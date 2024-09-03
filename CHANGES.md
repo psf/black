@@ -13,7 +13,7 @@
 <!-- Changes that affect Black's stable style -->
 
 Fix `ASTSafetyError` crash when return type contains one element and comments spanning
-multiple lines.
+multiple lines. (#4444)
 
 ### Preview style
 
