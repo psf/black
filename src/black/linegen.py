@@ -1116,6 +1116,14 @@ def bracket_split_build_line(
                 )
                 # Don't add one inside parenthesized return annotations
                 and get_annotation_type(leaves[0]) != "return"
+                # Don't add comment for single element return type with comments
+                and not (
+                    sum(leaf.type is not STANDALONE_COMMENT for leaf in leaves) < 2
+                    and any(
+                        leaf.parent is not None and leaf.parent.type != syms.parameters
+                        for leaf in leaves
+                    )
+                )
                 # Don't add one inside PEP 604 unions
                 and not (
                     leaves[0].parent
