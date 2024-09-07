@@ -30,7 +30,7 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Upgrade version of mypyc used to 1.11.2 (#4449)
+- Upgrade version of mypyc used to 1.11.2 (#4450)
 
 ### Parser
 
