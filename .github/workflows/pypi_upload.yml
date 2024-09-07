@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install cibuildwheel and pypyp
         run: |
-          pipx install cibuildwheel==2.19.2
+          pipx install cibuildwheel==2.20.0
           pipx install pypyp==1
       - name: generate matrix
         if: github.event_name != 'pull_request'
@@ -89,7 +89,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: pypa/cibuildwheel@v2.19.2
+      - uses: pypa/cibuildwheel@v2.20.0
         with:
           only: ${{ matrix.only }}
 

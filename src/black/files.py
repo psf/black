@@ -59,6 +59,9 @@ def find_project_root(
 ) -> Tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
+    pyproject.toml files are only considered if they contain a [tool.black]
+    section and are ignored otherwise.
+
     That directory will be a common parent of all files and directories
     passed in `srcs`.
 
@@ -309,6 +312,8 @@ def _path_is_ignored(
     for gitignore_path, pattern in gitignore_dict.items():
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
+            if path.is_dir():
+                relative_path = relative_path + "/"
         except ValueError:
             break
         if pattern.match_file(relative_path):
