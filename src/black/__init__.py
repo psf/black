@@ -551,8 +551,9 @@ def main(  # noqa: C901
 
     if sys.version_info[:3] == (3, 12, 5):
         out(
-            "Python 3.12.5 has a memory safety issue that can cause Black's AST safety checks "
-            "to fail. Please upgrade to Python 3.12.6 or downgrade to Python 3.12.4"
+            "Python 3.12.5 has a memory safety issue that can cause Black's "
+            "AST safety checks to fail. "
+            "Please upgrade to Python 3.12.6 or downgrade to Python 3.12.4"
         )
         ctx.exit(1)
 
