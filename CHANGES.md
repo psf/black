@@ -6,7 +6,10 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
-- Black now officially supports Python 3.13 (#4436)
+- Black is now officially tested with Python 3.13. Note that Black does not yet provide
+  mypyc-compiled wheels for Python 3.13, so performance may be slower than on other
+  versions of Python. We will provide 3.13 mypyc-compiled wheels in a future release.
+  (#4436)
 - Black will issue an error when used with Python 3.12.5, due to an upstream memory
   safety issue in Python 3.12.5 that can cause Black's AST safety checks to fail. Please
   use Python 3.12.6 or Python 3.12.4 instead. (#4447)
