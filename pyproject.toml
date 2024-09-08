@@ -60,6 +60,7 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Quality Assurance",
 ]
@@ -128,8 +129,8 @@ macos-max-compat = true
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
-  "mypy==1.7.1",
-  "click==8.1.3",  # avoid https://github.com/pallets/click/issues/2558
+  "mypy==1.11.2",
+  "click>=8.1.7",
 ]
 require-runtime-dependencies = true
 exclude = [
@@ -152,12 +153,14 @@ options = { debug_level = "0" }
 
 [tool.cibuildwheel]
 build-verbosity = 1
+
 # So these are the environments we target:
 # - Python: CPython 3.8+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp3*"
 skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*"]
+
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
@@ -172,11 +175,9 @@ test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
-# CPython 3.11 wheels aren't available for aiohttp and building a Cython extension
-# from source also doesn't work.
-AIOHTTP_NO_EXTENSIONS = "1"
 
 [tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
 before-build = [
     "yum install -y clang gcc",
 ]
@@ -185,7 +186,6 @@ before-build = [
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
-AIOHTTP_NO_EXTENSIONS = "1"
 
 # Black needs Clang to compile successfully on Linux.
 CC = "clang"
@@ -193,8 +193,10 @@ CC = "clang"
 [tool.cibuildwheel.macos]
 build-frontend = { name = "build", args = ["--no-isolation"] }
 # Unfortunately, hatch doesn't respect MACOSX_DEPLOYMENT_TARGET
+# Note we don't have a good test for this sed horror, so if you futz with it
+# make sure to test manually
 before-build = [
-    "python -m pip install 'hatchling==1.20.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy==1.7.1' 'click==8.1.3'",
+    "python -m pip install 'hatchling==1.20.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy==1.11.2' 'click>=8.1.7'",
     """sed -i '' -e "600,700s/'10_16'/os.environ['MACOSX_DEPLOYMENT_TARGET'].replace('.', '_')/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
 ]
 

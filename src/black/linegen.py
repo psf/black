@@ -510,6 +510,15 @@ class LineGenerator(Visitor[Line]):
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_to_string(node)
         node.replace(string_leaf)
+        if "\\" in string_leaf.value and any(
+            "\\" in str(child)
+            for child in node.children
+            if child.type == syms.fstring_replacement_field
+        ):
+            # string normalization doesn't account for nested quotes,
+            # causing breakages. skip normalization when nested quotes exist
+            yield from self.visit_default(string_leaf)
+            return
         yield from self.visit_STRING(string_leaf)
 
         # TODO: Uncomment Implementation to format f-string children

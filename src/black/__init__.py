@@ -549,6 +549,14 @@ def main(  # noqa: C901
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
 
+    if sys.version_info[:3] == (3, 12, 5):
+        out(
+            "Python 3.12.5 has a memory safety issue that can cause Black's "
+            "AST safety checks to fail. "
+            "Please upgrade to Python 3.12.6 or downgrade to Python 3.12.4"
+        )
+        ctx.exit(1)
+
     if src and code is not None:
         out(
             main.get_usage(ctx)

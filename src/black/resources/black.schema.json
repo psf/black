@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/psf/black/blob/main/black/resources/black.schema.json",
+  "$id": "https://github.com/psf/black/blob/main/src/black/resources/black.schema.json",
   "$comment": "tool.black table in pyproject.toml",
   "type": "object",
   "additionalProperties": false,
@@ -90,7 +90,8 @@
           "is_simple_lookup_for_doublestar_expression",
           "docstring_check_for_newline",
           "remove_redundant_guard_parens",
-          "parens_for_long_if_clauses_in_case_block"
+          "parens_for_long_if_clauses_in_case_block",
+          "pep646_typed_star_arg_type_var_tuple"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
