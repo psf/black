@@ -139,8 +139,7 @@ class Cache:
             with tempfile.NamedTemporaryFile(
                 dir=str(self.cache_file.parent), delete=False
             ) as f:
-                # We store raw tuples in the cache because pickling NamedTuples
-                # doesn't work with mypyc on Python 3.8, and because it's faster.
+                # We store raw tuples in the cache because it's faster.
                 data: Dict[str, Tuple[float, int, str]] = {
                     k: (*v,) for k, v in self.file_data.items()
                 }
