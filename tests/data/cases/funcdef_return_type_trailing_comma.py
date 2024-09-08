@@ -142,6 +142,31 @@ def SimplePyFn(
     Buffer[UInt8, 2],
     Buffer[UInt8, 2],
 ]: ...
+
+def foo() -> (
+    # comment inside parenthesised return type
+    int
+):
+    ...
+
+def foo() -> (
+    # comment inside parenthesised return type
+    # more
+    int
+    # another
+):
+    ...
+
+def foo() -> (
+    # comment inside parenthesised new union return type
+    int | str | bytes
+):
+    ...
+
+def foo() -> (
+    # comment inside plain tuple
+):
+    pass
 # output
 # normal, short, function definition
 def foo(a, b) -> tuple[int, float]: ...
@@ -299,3 +324,31 @@ def SimplePyFn(
     Buffer[UInt8, 2],
     Buffer[UInt8, 2],
 ]: ...
+
+
+def foo() -> (
+    # comment inside parenthesised return type
+    int
+): ...
+
+
+def foo() -> (
+    # comment inside parenthesised return type
+    # more
+    int
+    # another
+): ...
+
+
+def foo() -> (
+    # comment inside parenthesised new union return type
+    int
+    | str
+    | bytes
+): ...
+
+
+def foo() -> (
+    # comment inside plain tuple
+):
+    pass

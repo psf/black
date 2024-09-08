@@ -1079,7 +1079,9 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
             )
 
 
-def _ensure_trailing_comma(leaves: List[Leaf], original: Line, opening_bracket: Leaf) -> bool:
+def _ensure_trailing_comma(
+    leaves: List[Leaf], original: Line, opening_bracket: Leaf
+) -> bool:
     if not leaves:
         return False
     # Ensure a trailing comma for imports
@@ -1100,14 +1102,19 @@ def _ensure_trailing_comma(leaves: List[Leaf], original: Line, opening_bracket: 
         for leaf in leaves
     ):
         return False
+
+    # Find a leaf with a parent (comments don't have parents)
+    leaf_with_parent = next((leaf for leaf in leaves if leaf.parent), None)
+    if leaf_with_parent is None:
+        return True
     # Don't add commas inside parenthesized return annotations
-    if get_annotation_type(leaves[0]) == "return":
+    if get_annotation_type(leaf_with_parent) == "return":
         return False
     # Don't add commas inside PEP 604 unions
     if (
-        leaves[0].parent
-        and leaves[0].parent.next_sibling
-        and leaves[0].parent.next_sibling.type == token.VBAR
+        leaf_with_parent.parent
+        and leaf_with_parent.parent.next_sibling
+        and leaf_with_parent.parent.next_sibling.type == token.VBAR
     ):
         return False
     return True
