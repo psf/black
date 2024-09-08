@@ -87,7 +87,4 @@ def test_patma_invalid() -> None:
     with pytest.raises(black.parsing.InvalidInput) as exc_info:
         assert_format(source, expected, mode, minimum_version=(3, 10))
 
-    exc_info.match(
-        "Cannot parse: The assigned grammars \\(3.10\\) for your Python versions"
-        " \\(PY310\\) all failed to parse line: 10:11:     case a := b:"
-    )
+    exc_info.match("Cannot parse for target version Python 3.10: 10:11:     case a := b:")
