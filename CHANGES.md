@@ -46,6 +46,7 @@
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
 - Added Python target version information on parse error (#4378)
 
 ### _Blackd_
