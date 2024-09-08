@@ -34,6 +34,7 @@
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Upgrade version of mypyc used to 1.11.2 (#4450)
+- `blackd` now requires a newer version of aiohttp. (#4451)
 
 ### Parser
 
