@@ -1529,6 +1529,13 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
+def _black_info() -> str:
+    return (
+        f"Black {__version__} on "
+        f"Python ({platform.python_implementation()}) {platform.python_version()}"
+    )
+
+
 def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
     try:
@@ -1546,7 +1553,7 @@ def assert_equivalent(src: str, dst: str) -> None:
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise ASTSafetyError(
-            f"INTERNAL ERROR: Black produced invalid code: {exc}. "
+            f"INTERNAL ERROR: {_black_info()} produced invalid code: {exc}. "
             "Please report a bug on https://github.com/psf/black/issues.  "
             f"This invalid output might be helpful: {log}"
         ) from None
@@ -1556,9 +1563,9 @@ def assert_equivalent(src: str, dst: str) -> None:
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise ASTSafetyError(
-            "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            " source.  Please report a bug on "
-            f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
+            f"INTERNAL ERROR: {_black_info()} produced code that is not equivalent to"
+            " the source.  Please report a bug on https://github.com/psf/black/issues."
+            f"  This diff might be helpful: {log}"
         ) from None
 
 
@@ -1584,9 +1591,9 @@ def assert_stable(
             diff(dst, newdst, "first pass", "second pass"),
         )
         raise AssertionError(
-            "INTERNAL ERROR: Black produced different code on the second pass of the"
-            " formatter.  Please report a bug on https://github.com/psf/black/issues."
-            f"  This diff might be helpful: {log}"
+            f"INTERNAL ERROR: {_black_info()} produced different code on the second"
+            " pass of the formatter.  Please report a bug on"
+            f" https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
 
