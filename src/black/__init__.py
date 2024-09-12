@@ -1563,9 +1563,9 @@ def assert_equivalent(src: str, dst: str) -> None:
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise ASTSafetyError(
-            f"INTERNAL ERROR: {_black_info()} produced code that is not equivalent to the"
-            " source.  Please report a bug on "
-            f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
+            f"INTERNAL ERROR: {_black_info()} produced code that is not equivalent to"
+            " the source.  Please report a bug on https://github.com/psf/black/issues."
+            f"  This diff might be helpful: {log}"
         ) from None
 
 
@@ -1591,9 +1591,9 @@ def assert_stable(
             diff(dst, newdst, "first pass", "second pass"),
         )
         raise AssertionError(
-            f"INTERNAL ERROR: {_black_info()} produced different code on the second pass of the"
-            " formatter.  Please report a bug on https://github.com/psf/black/issues."
-            f"  This diff might be helpful: {log}"
+            f"INTERNAL ERROR: {_black_info()} produced different code on the second"
+            " pass of the formatter.  Please report a bug on"
+            f" https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
 
