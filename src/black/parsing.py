@@ -5,7 +5,7 @@ Parse Python code and perform AST validation.
 import ast
 import sys
 import warnings
-from typing import Collection, Iterator, List, Set, Tuple
+from typing import Collection, Iterator
 
 from black.mode import VERSION_TO_FEATURES, Feature, TargetVersion, supports_feature
 from black.nodes import syms
@@ -21,7 +21,7 @@ class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
 
-def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
+def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
     if not target_versions:
         # No target_version specified, so try all grammars.
         return [
@@ -123,7 +123,7 @@ class ASTSafetyError(Exception):
 
 
 def _parse_single_version(
-    src: str, version: Tuple[int, int], *, type_comments: bool
+    src: str, version: tuple[int, int], *, type_comments: bool
 ) -> ast.AST:
     filename = "<unknown>"
     with warnings.catch_warnings():
@@ -159,7 +159,7 @@ def parse_ast(src: str) -> ast.AST:
 def _normalize(lineend: str, value: str) -> str:
     # To normalize, we strip any leading and trailing space from
     # each line...
-    stripped: List[str] = [i.strip() for i in value.splitlines()]
+    stripped: list[str] = [i.strip() for i in value.splitlines()]
     normalized = lineend.join(stripped)
     # ...and remove any blank lines at the beginning and end of
     # the whole string
@@ -172,14 +172,14 @@ def stringify_ast(node: ast.AST) -> Iterator[str]:
 
 
 def _stringify_ast_with_new_parent(
-    node: ast.AST, parent_stack: List[ast.AST], new_parent: ast.AST
+    node: ast.AST, parent_stack: list[ast.AST], new_parent: ast.AST
 ) -> Iterator[str]:
     parent_stack.append(new_parent)
     yield from _stringify_ast(node, parent_stack)
     parent_stack.pop()
 
 
-def _stringify_ast(node: ast.AST, parent_stack: List[ast.AST]) -> Iterator[str]:
+def _stringify_ast(node: ast.AST, parent_stack: list[ast.AST]) -> Iterator[str]:
     if (
         isinstance(node, ast.Constant)
         and isinstance(node.value, str)

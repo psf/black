@@ -13,7 +13,7 @@ import traceback
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any, Iterable, Optional, Set
+from typing import Any, Iterable, Optional
 
 from mypy_extensions import mypyc_attr
 
@@ -69,7 +69,7 @@ def shutdown(loop: asyncio.AbstractEventLoop) -> None:
 # not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
 @mypyc_attr(patchable=True)
 def reformat_many(
-    sources: Set[Path],
+    sources: set[Path],
     fast: bool,
     write_back: WriteBack,
     mode: Mode,
@@ -119,7 +119,7 @@ def reformat_many(
 
 
 async def schedule_formatting(
-    sources: Set[Path],
+    sources: set[Path],
     fast: bool,
     write_back: WriteBack,
     mode: Mode,

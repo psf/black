@@ -4,9 +4,9 @@
 """Safely evaluate Python string literals without using eval()."""
 
 import re
-from typing import Dict, Match
+from typing import Match
 
-simple_escapes: Dict[str, str] = {
+simple_escapes: dict[str, str] = {
     "a": "\a",
     "b": "\b",
     "f": "\f",

@@ -12,18 +12,7 @@ There's also a pattern matching implementation here.
 
 # mypy: allow-untyped-defs, allow-incomplete-defs
 
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Iterable, Iterator, Optional, TypeVar, Union
 
 from blib2to3.pgen2.grammar import Grammar
 
@@ -34,7 +23,7 @@ from io import StringIO
 
 HUGE: int = 0x7FFFFFFF  # maximum repeat count, default max
 
-_type_reprs: Dict[int, Union[str, int]] = {}
+_type_reprs: dict[int, Union[str, int]] = {}
 
 
 def type_repr(type_num: int) -> Union[str, int]:
@@ -57,8 +46,8 @@ def type_repr(type_num: int) -> Union[str, int]:
 _P = TypeVar("_P", bound="Base")
 
 NL = Union["Node", "Leaf"]
-Context = Tuple[str, Tuple[int, int]]
-RawNode = Tuple[int, Optional[str], Optional[Context], Optional[List[NL]]]
+Context = tuple[str, tuple[int, int]]
+RawNode = tuple[int, Optional[str], Optional[Context], Optional[list[NL]]]
 
 
 class Base:
@@ -74,7 +63,7 @@ class Base:
     # Default values for instance variables
     type: int  # int: token number (< 256) or symbol number (>= 256)
     parent: Optional["Node"] = None  # Parent node pointer, or None
-    children: List[NL]  # List of subnodes
+    children: list[NL]  # List of subnodes
     was_changed: bool = False
     was_checked: bool = False
 
@@ -135,7 +124,7 @@ class Base:
         """
         raise NotImplementedError
 
-    def replace(self, new: Union[NL, List[NL]]) -> None:
+    def replace(self, new: Union[NL, list[NL]]) -> None:
         """Replace this node with a new one in the parent."""
         assert self.parent is not None, str(self)
         assert new is not None
@@ -242,16 +231,16 @@ class Base:
 class Node(Base):
     """Concrete implementation for interior nodes."""
 
-    fixers_applied: Optional[List[Any]]
-    used_names: Optional[Set[str]]
+    fixers_applied: Optional[list[Any]]
+    used_names: Optional[set[str]]
 
     def __init__(
         self,
         type: int,
-        children: List[NL],
+        children: list[NL],
         context: Optional[Any] = None,
         prefix: Optional[str] = None,
-        fixers_applied: Optional[List[Any]] = None,
+        fixers_applied: Optional[list[Any]] = None,
     ) -> None:
         """
         Initializer.
@@ -363,12 +352,12 @@ class Node(Base):
         self.invalidate_sibling_maps()
 
     def invalidate_sibling_maps(self) -> None:
-        self.prev_sibling_map: Optional[Dict[int, Optional[NL]]] = None
-        self.next_sibling_map: Optional[Dict[int, Optional[NL]]] = None
+        self.prev_sibling_map: Optional[dict[int, Optional[NL]]] = None
+        self.next_sibling_map: Optional[dict[int, Optional[NL]]] = None
 
     def update_sibling_maps(self) -> None:
-        _prev: Dict[int, Optional[NL]] = {}
-        _next: Dict[int, Optional[NL]] = {}
+        _prev: dict[int, Optional[NL]] = {}
+        _next: dict[int, Optional[NL]] = {}
         self.prev_sibling_map = _prev
         self.next_sibling_map = _next
         previous: Optional[NL] = None
@@ -384,11 +373,11 @@ class Leaf(Base):
 
     # Default values for instance variables
     value: str
-    fixers_applied: List[Any]
+    fixers_applied: list[Any]
     bracket_depth: int
     # Changed later in brackets.py
     opening_bracket: Optional["Leaf"] = None
-    used_names: Optional[Set[str]]
+    used_names: Optional[set[str]]
     _prefix = ""  # Whitespace and comments preceding this token in the input
     lineno: int = 0  # Line where this token starts in the input
     column: int = 0  # Column where this token starts in the input
@@ -403,7 +392,7 @@ class Leaf(Base):
         value: str,
         context: Optional[Context] = None,
         prefix: Optional[str] = None,
-        fixers_applied: List[Any] = [],
+        fixers_applied: list[Any] = [],
         opening_bracket: Optional["Leaf"] = None,
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
     ) -> None:
@@ -421,7 +410,7 @@ class Leaf(Base):
         self.value = value
         if prefix is not None:
             self._prefix = prefix
-        self.fixers_applied: Optional[List[Any]] = fixers_applied[:]
+        self.fixers_applied: Optional[list[Any]] = fixers_applied[:]
         self.children = []
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
@@ -503,7 +492,7 @@ def convert(gr: Grammar, raw_node: RawNode) -> NL:
         return Leaf(type, value or "", context=context)
 
 
-_Results = Dict[str, NL]
+_Results = dict[str, NL]
 
 
 class BasePattern:
@@ -576,7 +565,7 @@ class BasePattern:
             results[self.name] = node
         return True
 
-    def match_seq(self, nodes: List[NL], results: Optional[_Results] = None) -> bool:
+    def match_seq(self, nodes: list[NL], results: Optional[_Results] = None) -> bool:
         """
         Does this pattern exactly match a sequence of nodes?
 
@@ -586,7 +575,7 @@ class BasePattern:
             return False
         return self.match(nodes[0], results)
 
-    def generate_matches(self, nodes: List[NL]) -> Iterator[Tuple[int, _Results]]:
+    def generate_matches(self, nodes: list[NL]) -> Iterator[tuple[int, _Results]]:
         """
         Generator yielding all matches for this pattern.
 
@@ -816,7 +805,7 @@ class WildcardPattern(BasePattern):
                 return True
         return False
 
-    def generate_matches(self, nodes) -> Iterator[Tuple[int, _Results]]:
+    def generate_matches(self, nodes) -> Iterator[tuple[int, _Results]]:
         """
         Generator yielding matches for a sequence of nodes.
 
@@ -861,7 +850,7 @@ class WildcardPattern(BasePattern):
                 if hasattr(sys, "getrefcount"):
                     sys.stderr = save_stderr
 
-    def _iterative_matches(self, nodes) -> Iterator[Tuple[int, _Results]]:
+    def _iterative_matches(self, nodes) -> Iterator[tuple[int, _Results]]:
         """Helper to iteratively yield the matches."""
         nodelen = len(nodes)
         if 0 >= self.min:
@@ -890,7 +879,7 @@ class WildcardPattern(BasePattern):
                                 new_results.append((c0 + c1, r))
             results = new_results
 
-    def _bare_name_matches(self, nodes) -> Tuple[int, _Results]:
+    def _bare_name_matches(self, nodes) -> tuple[int, _Results]:
         """Special optimized matcher for bare_name."""
         count = 0
         r = {}  # type: _Results
@@ -907,7 +896,7 @@ class WildcardPattern(BasePattern):
         r[self.name] = nodes[:count]
         return count, r
 
-    def _recursive_matches(self, nodes, count) -> Iterator[Tuple[int, _Results]]:
+    def _recursive_matches(self, nodes, count) -> Iterator[tuple[int, _Results]]:
         """Helper to recursively yield the matches."""
         assert self.content is not None
         if count >= self.min:
@@ -944,7 +933,7 @@ class NegatedPattern(BasePattern):
         # We only match an empty sequence of nodes in its entirety
         return len(nodes) == 0
 
-    def generate_matches(self, nodes: List[NL]) -> Iterator[Tuple[int, _Results]]:
+    def generate_matches(self, nodes: list[NL]) -> Iterator[tuple[int, _Results]]:
         if self.content is None:
             # Return a match if there is an empty sequence
             if len(nodes) == 0:
@@ -957,8 +946,8 @@ class NegatedPattern(BasePattern):
 
 
 def generate_matches(
-    patterns: List[BasePattern], nodes: List[NL]
-) -> Iterator[Tuple[int, _Results]]:
+    patterns: list[BasePattern], nodes: list[NL]
+) -> Iterator[tuple[int, _Results]]:
     """
     Generator yielding matches for a sequence of patterns and nodes.
 

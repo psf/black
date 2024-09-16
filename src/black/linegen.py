@@ -7,7 +7,7 @@ import sys
 from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
-from typing import Collection, Iterator, List, Optional, Set, Union, cast
+from typing import Collection, Iterator, Optional, Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
@@ -197,7 +197,7 @@ class LineGenerator(Visitor[Line]):
         yield from self.line(-1)
 
     def visit_stmt(
-        self, node: Node, keywords: Set[str], parens: Set[str]
+        self, node: Node, keywords: set[str], parens: set[str]
     ) -> Iterator[Line]:
         """Visit a statement.
 
@@ -559,7 +559,7 @@ class LineGenerator(Visitor[Line]):
         self.current_line = Line(mode=self.mode)
 
         v = self.visit_stmt
-        Ø: Set[str] = set()
+        Ø: set[str] = set()
         self.visit_assert_stmt = partial(v, keywords={"assert"}, parens={"assert", ","})
         self.visit_if_stmt = partial(
             v, keywords={"if", "else", "elif"}, parens={"if", "elif"}
@@ -626,7 +626,7 @@ def transform_line(
     string_split = StringSplitter(ll, sn)
     string_paren_wrap = StringParenWrapper(ll, sn)
 
-    transformers: List[Transformer]
+    transformers: list[Transformer]
     if (
         not line.contains_uncollapsable_type_comments()
         and not line.should_split_rhs
@@ -726,7 +726,7 @@ def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
     """If a funcdef has a magic trailing comma in the return type, then we should first
     split the line with rhs to respect the comma.
     """
-    return_type_leaves: List[Leaf] = []
+    return_type_leaves: list[Leaf] = []
     in_return_type = False
 
     for leaf in line.leaves:
@@ -768,9 +768,9 @@ def left_hand_split(
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
-    tail_leaves: List[Leaf] = []
-    body_leaves: List[Leaf] = []
-    head_leaves: List[Leaf] = []
+    tail_leaves: list[Leaf] = []
+    body_leaves: list[Leaf] = []
+    head_leaves: list[Leaf] = []
     current_leaves = head_leaves
     matching_bracket: Optional[Leaf] = None
     for leaf in line.leaves:
@@ -836,9 +836,9 @@ def _first_right_hand_split(
     _maybe_split_omitting_optional_parens to get an opinion whether to prefer
     splitting on the right side of an assignment statement.
     """
-    tail_leaves: List[Leaf] = []
-    body_leaves: List[Leaf] = []
-    head_leaves: List[Leaf] = []
+    tail_leaves: list[Leaf] = []
+    body_leaves: list[Leaf] = []
+    head_leaves: list[Leaf] = []
     current_leaves = tail_leaves
     opening_bracket: Optional[Leaf] = None
     closing_bracket: Optional[Leaf] = None
@@ -869,8 +869,8 @@ def _first_right_hand_split(
         and tail_leaves[0].opening_bracket is head_leaves[-1]
     ):
         inner_body_leaves = list(body_leaves)
-        hugged_opening_leaves: List[Leaf] = []
-        hugged_closing_leaves: List[Leaf] = []
+        hugged_opening_leaves: list[Leaf] = []
+        hugged_closing_leaves: list[Leaf] = []
         is_unpacking = body_leaves[0].type in [token.STAR, token.DOUBLESTAR]
         unpacking_offset: int = 1 if is_unpacking else 0
         while (
@@ -1080,7 +1080,7 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
 
 
 def _ensure_trailing_comma(
-    leaves: List[Leaf], original: Line, opening_bracket: Leaf
+    leaves: list[Leaf], original: Line, opening_bracket: Leaf
 ) -> bool:
     if not leaves:
         return False
@@ -1121,7 +1121,7 @@ def _ensure_trailing_comma(
 
 
 def bracket_split_build_line(
-    leaves: List[Leaf],
+    leaves: list[Leaf],
     original: Line,
     opening_bracket: Leaf,
     *,
@@ -1150,7 +1150,7 @@ def bracket_split_build_line(
                     leaves.insert(i + 1, new_comma)
                 break
 
-    leaves_to_track: Set[LeafID] = set()
+    leaves_to_track: set[LeafID] = set()
     if component is _BracketSplitComponent.head:
         leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
@@ -1342,7 +1342,7 @@ def standalone_comment_split(
 
 
 def normalize_invisible_parens(  # noqa: C901
-    node: Node, parens_after: Set[str], *, mode: Mode, features: Collection[Feature]
+    node: Node, parens_after: set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
 
@@ -1692,7 +1692,7 @@ def should_split_line(line: Line, opening_bracket: Leaf) -> bool:
     )
 
 
-def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[LeafID]]:
+def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[LeafID]]:
     """Generate sets of closing bracket IDs that should be omitted in a RHS.
 
     Brackets can be omitted if the entire trailer up to and including
@@ -1703,14 +1703,14 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[Set[Leaf
     the one that needs to explode are omitted.
     """
 
-    omit: Set[LeafID] = set()
+    omit: set[LeafID] = set()
     if not line.magic_trailing_comma:
         yield omit
 
     length = 4 * line.depth
     opening_bracket: Optional[Leaf] = None
     closing_bracket: Optional[Leaf] = None
-    inner_brackets: Set[LeafID] = set()
+    inner_brackets: set[LeafID] = set()
     for index, leaf, leaf_length in line.enumerate_with_length(is_reversed=True):
         length += leaf_length
         if length > line_length:
@@ -1775,10 +1775,10 @@ def run_transformer(
     features: Collection[Feature],
     *,
     line_str: str = "",
-) -> List[Line]:
+) -> list[Line]:
     if not line_str:
         line_str = line_to_string(line)
-    result: List[Line] = []
+    result: list[Line] = []
     for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
             raise CannotTransform("Line transformer returned an unchanged result")

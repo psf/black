@@ -29,18 +29,7 @@ each time a new token is found."""
 
 import builtins
 import sys
-from typing import (
-    Callable,
-    Final,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Pattern,
-    Set,
-    Tuple,
-    Union,
-)
+from typing import Callable, Final, Iterable, Iterator, Optional, Pattern, Union
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
@@ -93,7 +82,7 @@ def maybe(*choices: str) -> str:
     return group(*choices) + "?"
 
 
-def _combinations(*l: str) -> Set[str]:
+def _combinations(*l: str) -> set[str]:
     return {x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()}
 
 
@@ -248,7 +237,7 @@ class StopTokenizing(Exception):
     pass
 
 
-Coord = Tuple[int, int]
+Coord = tuple[int, int]
 
 
 def printtoken(
@@ -289,12 +278,12 @@ def tokenize_loop(readline: Callable[[], str], tokeneater: TokenEater) -> None:
         tokeneater(*token_info)
 
 
-GoodTokenInfo = Tuple[int, str, Coord, Coord, str]
-TokenInfo = Union[Tuple[int, str], GoodTokenInfo]
+GoodTokenInfo = tuple[int, str, Coord, Coord, str]
+TokenInfo = Union[tuple[int, str], GoodTokenInfo]
 
 
 class Untokenizer:
-    tokens: List[str]
+    tokens: list[str]
     prev_row: int
     prev_col: int
 
@@ -324,7 +313,7 @@ class Untokenizer:
                 self.prev_col = 0
         return "".join(self.tokens)
 
-    def compat(self, token: Tuple[int, str], iterable: Iterable[TokenInfo]) -> None:
+    def compat(self, token: tuple[int, str], iterable: Iterable[TokenInfo]) -> None:
         startline = False
         indents = []
         toks_append = self.tokens.append
@@ -370,7 +359,7 @@ def _get_normal_name(orig_enc: str) -> str:
     return orig_enc
 
 
-def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
+def detect_encoding(readline: Callable[[], bytes]) -> tuple[str, list[bytes]]:
     """
     The detect_encoding() function is used to detect the encoding that should
     be used to decode a Python source file. It requires one argument, readline,
@@ -471,7 +460,7 @@ def is_fstring_start(token: str) -> bool:
     return builtins.any(token.startswith(prefix) for prefix in fstring_prefix)
 
 
-def _split_fstring_start_and_middle(token: str) -> Tuple[str, str]:
+def _split_fstring_start_and_middle(token: str) -> tuple[str, str]:
     for prefix in fstring_prefix:
         _, prefix, rest = token.partition(prefix)
         if prefix != "":
@@ -525,7 +514,7 @@ class FStringState:
     """
 
     def __init__(self) -> None:
-        self.stack: List[int] = [STATE_NOT_FSTRING]
+        self.stack: list[int] = [STATE_NOT_FSTRING]
 
     def is_in_fstring_expression(self) -> bool:
         return self.stack[-1] not in (STATE_MIDDLE, STATE_NOT_FSTRING)
@@ -581,7 +570,7 @@ def generate_tokens(
     logical line; continuation lines are included.
     """
     lnum = parenlev = continued = 0
-    parenlev_stack: List[int] = []
+    parenlev_stack: list[int] = []
     fstring_state = FStringState()
     formatspec = ""
     numchars: Final[str] = "0123456789"
@@ -598,9 +587,9 @@ def generate_tokens(
     async_def_indent = 0
     async_def_nl = False
 
-    strstart: Tuple[int, int]
-    endprog_stack: List[Pattern[str]] = []
-    formatspec_start: Tuple[int, int]
+    strstart: tuple[int, int]
+    endprog_stack: list[Pattern[str]] = []
+    formatspec_start: tuple[int, int]
 
     while 1:  # loop over lines in stream
         try:

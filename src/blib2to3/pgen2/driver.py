@@ -24,7 +24,7 @@ import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import IO, Any, Iterable, Iterator, List, Optional, Tuple, Union, cast
+from typing import IO, Any, Iterable, Iterator, Optional, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.tokenize import GoodTokenInfo
@@ -40,7 +40,7 @@ Path = Union[str, "os.PathLike[str]"]
 class ReleaseRange:
     start: int
     end: Optional[int] = None
-    tokens: List[Any] = field(default_factory=list)
+    tokens: list[Any] = field(default_factory=list)
 
     def lock(self) -> None:
         total_eaten = len(self.tokens)
@@ -51,7 +51,7 @@ class TokenProxy:
     def __init__(self, generator: Any) -> None:
         self._tokens = generator
         self._counter = 0
-        self._release_ranges: List[ReleaseRange] = []
+        self._release_ranges: list[ReleaseRange] = []
 
     @contextmanager
     def release(self) -> Iterator["TokenProxy"]:
@@ -121,7 +121,7 @@ class Driver:
 
         lineno = 1
         column = 0
-        indent_columns: List[int] = []
+        indent_columns: list[int] = []
         type = value = start = end = line_text = None
         prefix = ""
 
@@ -202,8 +202,8 @@ class Driver:
         )
         return self.parse_tokens(tokens, debug)
 
-    def _partially_consume_prefix(self, prefix: str, column: int) -> Tuple[str, str]:
-        lines: List[str] = []
+    def _partially_consume_prefix(self, prefix: str, column: int) -> tuple[str, str]:
+        lines: list[str] = []
         current_line = ""
         current_column = 0
         wait_for_nl = False
