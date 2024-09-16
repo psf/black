@@ -85,6 +85,22 @@ def foo() -> (
 ):
     pass
 
+def foo(arg: (# comment with non-return annotation
+        int
+        # comment with non-return annotation
+)):
+    pass
+
+variable: ( # annotation
+    because
+    # why not
+)
+
+variable: (
+    because
+    # why not
+)
+
 # output
 
 def f(
@@ -229,3 +245,23 @@ def foo() -> (
     # comment inside plain tuple
 ):
     pass
+
+
+def foo(
+    arg: (  # comment with non-return annotation
+        int
+        # comment with non-return annotation
+    ),
+):
+    pass
+
+
+variable: (  # annotation
+    because
+    # why not
+)
+
+variable: (
+    because
+    # why not
+)
