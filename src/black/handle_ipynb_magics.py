@@ -7,7 +7,7 @@ import secrets
 import sys
 from functools import lru_cache
 from importlib.util import find_spec
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
@@ -64,7 +64,7 @@ def jupyter_dependencies_are_installed(*, warn: bool) -> bool:
     return installed
 
 
-def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
+def remove_trailing_semicolon(src: str) -> tuple[str, bool]:
     """Remove trailing semicolon from Jupyter notebook cell.
 
     For example,
@@ -120,7 +120,7 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
     return str(tokens_to_src(tokens))
 
 
-def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
+def mask_cell(src: str) -> tuple[str, list[Replacement]]:
     """Mask IPython magics so content becomes parseable Python code.
 
     For example,
@@ -135,7 +135,7 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
 
     The replacements are returned, along with the transformed code.
     """
-    replacements: List[Replacement] = []
+    replacements: list[Replacement] = []
     try:
         ast.parse(src)
     except SyntaxError:
@@ -186,7 +186,7 @@ def get_token(src: str, magic: str) -> str:
     return f'"{token}"'
 
 
-def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
+def replace_cell_magics(src: str) -> tuple[str, list[Replacement]]:
     """Replace cell magic with token.
 
     Note that 'src' will already have been processed by IPython's
@@ -203,7 +203,7 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
 
     The replacement, along with the transformed code, is returned.
     """
-    replacements: List[Replacement] = []
+    replacements: list[Replacement] = []
 
     tree = ast.parse(src)
 
@@ -217,7 +217,7 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
     return f"{mask}\n{cell_magic_finder.cell_magic.body}", replacements
 
 
-def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
+def replace_magics(src: str) -> tuple[str, list[Replacement]]:
     """Replace magics within body of cell.
 
     Note that 'src' will already have been processed by IPython's
@@ -258,7 +258,7 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
     return "\n".join(new_srcs), replacements
 
 
-def unmask_cell(src: str, replacements: List[Replacement]) -> str:
+def unmask_cell(src: str, replacements: list[Replacement]) -> str:
     """Remove replacements from cell.
 
     For example
@@ -291,7 +291,7 @@ def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
     )
 
 
-def _get_str_args(args: List[ast.expr]) -> List[str]:
+def _get_str_args(args: list[ast.expr]) -> list[str]:
     str_args = []
     for arg in args:
         assert isinstance(arg, ast.Constant) and isinstance(arg.value, str)
@@ -375,7 +375,7 @@ class MagicFinder(ast.NodeVisitor):
     """
 
     def __init__(self) -> None:
-        self.magics: Dict[int, List[OffsetAndMagic]] = collections.defaultdict(list)
+        self.magics: dict[int, list[OffsetAndMagic]] = collections.defaultdict(list)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         """Look for system assign magics.

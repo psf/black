@@ -2,7 +2,7 @@
 
 import difflib
 from dataclasses import dataclass
-from typing import Collection, Iterator, List, Sequence, Set, Tuple, Union
+from typing import Collection, Iterator, Sequence, Union
 
 from black.nodes import (
     LN,
@@ -18,8 +18,8 @@ from black.nodes import (
 from blib2to3.pgen2.token import ASYNC, NEWLINE
 
 
-def parse_line_ranges(line_ranges: Sequence[str]) -> List[Tuple[int, int]]:
-    lines: List[Tuple[int, int]] = []
+def parse_line_ranges(line_ranges: Sequence[str]) -> list[tuple[int, int]]:
+    lines: list[tuple[int, int]] = []
     for lines_str in line_ranges:
         parts = lines_str.split("-")
         if len(parts) != 2:
@@ -40,14 +40,14 @@ def parse_line_ranges(line_ranges: Sequence[str]) -> List[Tuple[int, int]]:
     return lines
 
 
-def is_valid_line_range(lines: Tuple[int, int]) -> bool:
+def is_valid_line_range(lines: tuple[int, int]) -> bool:
     """Returns whether the line range is valid."""
     return not lines or lines[0] <= lines[1]
 
 
 def sanitized_lines(
-    lines: Collection[Tuple[int, int]], src_contents: str
-) -> Collection[Tuple[int, int]]:
+    lines: Collection[tuple[int, int]], src_contents: str
+) -> Collection[tuple[int, int]]:
     """Returns the valid line ranges for the given source.
 
     This removes ranges that are entirely outside the valid lines.
@@ -74,10 +74,10 @@ def sanitized_lines(
 
 
 def adjusted_lines(
-    lines: Collection[Tuple[int, int]],
+    lines: Collection[tuple[int, int]],
     original_source: str,
     modified_source: str,
-) -> List[Tuple[int, int]]:
+) -> list[tuple[int, int]]:
     """Returns the adjusted line ranges based on edits from the original code.
 
     This computes the new line ranges by diffing original_source and
@@ -153,7 +153,7 @@ def adjusted_lines(
     return new_lines
 
 
-def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]) -> None:
+def convert_unchanged_lines(src_node: Node, lines: Collection[tuple[int, int]]) -> None:
     """Converts unchanged lines to STANDALONE_COMMENT.
 
     The idea is similar to how `# fmt: on/off` is implemented. It also converts the
@@ -177,7 +177,7 @@ def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]) 
     more formatting to pass (1). However, it's hard to get it correct when
     incorrect indentations are used. So we defer this to future optimizations.
     """
-    lines_set: Set[int] = set()
+    lines_set: set[int] = set()
     for start, end in lines:
         lines_set.update(range(start, end + 1))
     visitor = _TopLevelStatementsVisitor(lines_set)
@@ -205,7 +205,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
     classes/functions/statements.
     """
 
-    def __init__(self, lines_set: Set[int]):
+    def __init__(self, lines_set: set[int]):
         self._lines_set = lines_set
 
     def visit_simple_stmt(self, node: Node) -> Iterator[None]:
@@ -249,7 +249,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
             _convert_node_to_standalone_comment(semantic_parent)
 
 
-def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]) -> None:
+def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
     """Converts unchanged to STANDALONE_COMMENT line by line."""
     for leaf in node.leaves():
         if leaf.type != NEWLINE:
@@ -261,7 +261,7 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]) -> None:
             #   match_stmt: "match" subject_expr ':' NEWLINE INDENT case_block+ DEDENT
             # Here we need to check `subject_expr`. The `case_block+` will be
             # checked by their own NEWLINEs.
-            nodes_to_ignore: List[LN] = []
+            nodes_to_ignore: list[LN] = []
             prev_sibling = leaf.prev_sibling
             while prev_sibling:
                 nodes_to_ignore.insert(0, prev_sibling)
@@ -382,7 +382,7 @@ def _leaf_line_end(leaf: Leaf) -> int:
         return leaf.lineno + str(leaf).count("\n")
 
 
-def _get_line_range(node_or_nodes: Union[LN, List[LN]]) -> Set[int]:
+def _get_line_range(node_or_nodes: Union[LN, list[LN]]) -> set[int]:
     """Returns the line range of this node or list of nodes."""
     if isinstance(node_or_nodes, list):
         nodes = node_or_nodes
@@ -463,7 +463,7 @@ def _calculate_lines_mappings(
         modified_source.splitlines(keepends=True),
     )
     matching_blocks = matcher.get_matching_blocks()
-    lines_mappings: List[_LinesMapping] = []
+    lines_mappings: list[_LinesMapping] = []
     # matching_blocks is a sequence of "same block of code ranges", see
     # https://docs.python.org/3/library/difflib.html#difflib.SequenceMatcher.get_matching_blocks
     # Each block corresponds to a _LinesMapping with is_changed_block=False,

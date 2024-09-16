@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Collection, Final, Iterator, List, Optional, Tuple, Union
+from typing import Collection, Final, Iterator, Optional, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (
@@ -77,9 +77,9 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
 
 
 @lru_cache(maxsize=4096)
-def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
+def list_comments(prefix: str, *, is_endmarker: bool) -> list[ProtoComment]:
     """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
-    result: List[ProtoComment] = []
+    result: list[ProtoComment] = []
     if not prefix or "#" not in prefix:
         return result
 
@@ -166,7 +166,7 @@ def make_comment(content: str) -> str:
 
 
 def normalize_fmt_off(
-    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+    node: Node, mode: Mode, lines: Collection[tuple[int, int]]
 ) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
     try_again = True
@@ -175,7 +175,7 @@ def normalize_fmt_off(
 
 
 def convert_one_fmt_off_pair(
-    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+    node: Node, mode: Mode, lines: Collection[tuple[int, int]]
 ) -> bool:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
@@ -336,7 +336,7 @@ def _generate_ignored_nodes_from_fmt_skip(
         # statements. The ignored nodes should be previous siblings of the
         # parent suite node.
         leaf.prefix = ""
-        ignored_nodes: List[LN] = []
+        ignored_nodes: list[LN] = []
         parent_sibling = parent.prev_sibling
         while parent_sibling is not None and parent_sibling.type != syms.suite:
             ignored_nodes.insert(0, parent_sibling)
@@ -376,7 +376,7 @@ def children_contains_fmt_on(container: LN) -> bool:
     return False
 
 
-def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
+def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
     """
     Returns:
         True iff one of the comments in @comment_list is a pragma used by one

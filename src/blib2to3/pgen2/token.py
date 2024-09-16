@@ -1,6 +1,6 @@
 """Token constants (from "token.h")."""
 
-from typing import Dict, Final
+from typing import Final
 
 #  Taken from Python (r53757) and modified to include some tokens
 #   originally monkeypatched in by pgen2.tokenize
@@ -74,7 +74,7 @@ N_TOKENS: Final = 64
 NT_OFFSET: Final = 256
 # --end constants--
 
-tok_name: Final[Dict[int, str]] = {}
+tok_name: Final[dict[int, str]] = {}
 for _name, _value in list(globals().items()):
     if type(_value) is int:
         tok_name[_value] = _name

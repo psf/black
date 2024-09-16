@@ -7,11 +7,8 @@ from typing import (
     Final,
     Generic,
     Iterator,
-    List,
     Literal,
     Optional,
-    Set,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -462,7 +459,7 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     return None
 
 
-def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> bool:
+def prev_siblings_are(node: Optional[LN], tokens: list[Optional[NodeType]]) -> bool:
     """Return if the `node` and its previous siblings match types against the provided
     list of tokens; the provided `node`has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
@@ -634,8 +631,8 @@ def is_tuple_containing_walrus(node: LN) -> bool:
 def is_one_sequence_between(
     opening: Leaf,
     closing: Leaf,
-    leaves: List[Leaf],
-    brackets: Tuple[int, int] = (token.LPAR, token.RPAR),
+    leaves: list[Leaf],
+    brackets: tuple[int, int] = (token.LPAR, token.RPAR),
 ) -> bool:
     """Return True if content between `opening` and `closing` is a one-sequence."""
     if (opening.type, closing.type) != brackets:
@@ -745,7 +742,7 @@ def is_yield(node: LN) -> bool:
     return False
 
 
-def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
+def is_vararg(leaf: Leaf, within: set[NodeType]) -> bool:
     """Return True if `leaf` is a star or double star in a vararg or kwarg.
 
     If `within` includes VARARGS_PARENTS, this applies to function signatures.

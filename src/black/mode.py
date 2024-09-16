@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Dict, Final, Set
+from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -64,7 +64,7 @@ FUTURE_FLAG_TO_FEATURE: Final = {
 }
 
 
-VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
+VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
     TargetVersion.PY33: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY34: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY35: {Feature.TRAILING_COMMA_IN_CALL, Feature.ASYNC_IDENTIFIERS},
@@ -189,7 +189,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
 }
 
 
-def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
+def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
@@ -213,7 +213,7 @@ class Preview(Enum):
     pep646_typed_star_arg_type_var_tuple = auto()
 
 
-UNSTABLE_FEATURES: Set[Preview] = {
+UNSTABLE_FEATURES: set[Preview] = {
     # Many issues, see summary in https://github.com/psf/black/issues/4042
     Preview.string_processing,
     # See issues #3452 and #4158
@@ -234,17 +234,17 @@ _MAX_CACHE_KEY_PART_LENGTH: Final = 32
 
 @dataclass
 class Mode:
-    target_versions: Set[TargetVersion] = field(default_factory=set)
+    target_versions: set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    python_cell_magics: Set[str] = field(default_factory=set)
+    python_cell_magics: set[str] = field(default_factory=set)
     preview: bool = False
     unstable: bool = False
-    enabled_features: Set[Preview] = field(default_factory=set)
+    enabled_features: set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
