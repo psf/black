@@ -142,6 +142,7 @@ def SimplePyFn(
     Buffer[UInt8, 2],
     Buffer[UInt8, 2],
 ]: ...
+
 # output
 # normal, short, function definition
 def foo(a, b) -> tuple[int, float]: ...

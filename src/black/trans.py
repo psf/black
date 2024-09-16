@@ -488,7 +488,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                         break
                     i += 1
 
-                if not is_part_of_annotation(leaf) and not contains_comment:
+                if not contains_comment and not is_part_of_annotation(leaf):
                     string_indices.append(idx)
 
                 # Advance to the next non-STRING leaf.

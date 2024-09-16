@@ -1012,6 +1012,7 @@ def get_annotation_type(leaf: Leaf) -> Literal["return", "param", None]:
 
 def is_part_of_annotation(leaf: Leaf) -> bool:
     """Returns whether this leaf is part of a type annotation."""
+    assert leaf.parent is not None
     return get_annotation_type(leaf) is not None
 
 

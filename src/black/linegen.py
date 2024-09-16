@@ -1079,6 +1079,47 @@ def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None
             )
 
 
+def _ensure_trailing_comma(
+    leaves: List[Leaf], original: Line, opening_bracket: Leaf
+) -> bool:
+    if not leaves:
+        return False
+    # Ensure a trailing comma for imports
+    if original.is_import:
+        return True
+    # ...and standalone function arguments
+    if not original.is_def:
+        return False
+    if opening_bracket.value != "(":
+        return False
+    # Don't add commas if we already have any commas
+    if any(
+        leaf.type == token.COMMA
+        and (
+            Preview.typed_params_trailing_comma not in original.mode
+            or not is_part_of_annotation(leaf)
+        )
+        for leaf in leaves
+    ):
+        return False
+
+    # Find a leaf with a parent (comments don't have parents)
+    leaf_with_parent = next((leaf for leaf in leaves if leaf.parent), None)
+    if leaf_with_parent is None:
+        return True
+    # Don't add commas inside parenthesized return annotations
+    if get_annotation_type(leaf_with_parent) == "return":
+        return False
+    # Don't add commas inside PEP 604 unions
+    if (
+        leaf_with_parent.parent
+        and leaf_with_parent.parent.next_sibling
+        and leaf_with_parent.parent.next_sibling.type == token.VBAR
+    ):
+        return False
+    return True
+
+
 def bracket_split_build_line(
     leaves: List[Leaf],
     original: Line,
@@ -1099,40 +1140,15 @@ def bracket_split_build_line(
     if component is _BracketSplitComponent.body:
         result.inside_brackets = True
         result.depth += 1
-        if leaves:
-            no_commas = (
-                # Ensure a trailing comma for imports and standalone function arguments
-                original.is_def
-                # Don't add one after any comments or within type annotations
-                and opening_bracket.value == "("
-                # Don't add one if there's already one there
-                and not any(
-                    leaf.type == token.COMMA
-                    and (
-                        Preview.typed_params_trailing_comma not in original.mode
-                        or not is_part_of_annotation(leaf)
-                    )
-                    for leaf in leaves
-                )
-                # Don't add one inside parenthesized return annotations
-                and get_annotation_type(leaves[0]) != "return"
-                # Don't add one inside PEP 604 unions
-                and not (
-                    leaves[0].parent
-                    and leaves[0].parent.next_sibling
-                    and leaves[0].parent.next_sibling.type == token.VBAR
-                )
-            )
+        if _ensure_trailing_comma(leaves, original, opening_bracket):
+            for i in range(len(leaves) - 1, -1, -1):
+                if leaves[i].type == STANDALONE_COMMENT:
+                    continue
 
-            if original.is_import or no_commas:
-                for i in range(len(leaves) - 1, -1, -1):
-                    if leaves[i].type == STANDALONE_COMMENT:
-                        continue
-
-                    if leaves[i].type != token.COMMA:
-                        new_comma = Leaf(token.COMMA, ",")
-                        leaves.insert(i + 1, new_comma)
-                    break
+                if leaves[i].type != token.COMMA:
+                    new_comma = Leaf(token.COMMA, ",")
+                    leaves.insert(i + 1, new_comma)
+                break
 
     leaves_to_track: Set[LeafID] = set()
     if component is _BracketSplitComponent.head:
