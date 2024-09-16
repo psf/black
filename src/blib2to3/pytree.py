@@ -12,14 +12,7 @@ There's also a pattern matching implementation here.
 
 # mypy: allow-untyped-defs, allow-incomplete-defs
 
-from typing import (
-    Any,
-    Iterable,
-    Iterator,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import Any, Iterable, Iterator, Optional, TypeVar, Union
 
 from blib2to3.pgen2.grammar import Grammar
 

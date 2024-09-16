@@ -2,15 +2,7 @@
 # Licensed to PSF under a Contributor Agreement.
 
 import os
-from typing import (
-    IO,
-    Any,
-    Iterator,
-    NoReturn,
-    Optional,
-    Sequence,
-    Union,
-)
+from typing import IO, Any, Iterator, NoReturn, Optional, Sequence, Union
 
 from blib2to3.pgen2 import grammar, token, tokenize
 from blib2to3.pgen2.tokenize import GoodTokenInfo

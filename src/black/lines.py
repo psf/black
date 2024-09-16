@@ -1,15 +1,7 @@
 import itertools
 import math
 from dataclasses import dataclass, field
-from typing import (
-    Callable,
-    Iterator,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Callable, Iterator, Optional, Sequence, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
 from black.mode import Mode, Preview

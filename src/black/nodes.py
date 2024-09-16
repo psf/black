@@ -3,15 +3,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import (
-    Final,
-    Generic,
-    Iterator,
-    Literal,
-    Optional,
-    TypeVar,
-    Union,
-)
+from typing import Final, Generic, Iterator, Literal, Optional, TypeVar, Union
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard

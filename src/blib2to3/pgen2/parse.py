@@ -10,15 +10,7 @@ how this parsing engine works.
 
 """
 from contextlib import contextmanager
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Iterator,
-    Optional,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Optional, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert

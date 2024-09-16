@@ -29,15 +29,7 @@ each time a new token is found."""
 
 import builtins
 import sys
-from typing import (
-    Callable,
-    Final,
-    Iterable,
-    Iterator,
-    Optional,
-    Pattern,
-    Union,
-)
+from typing import Callable, Final, Iterable, Iterator, Optional, Pattern, Union
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
