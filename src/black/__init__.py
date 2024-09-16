@@ -549,6 +549,7 @@ def main(  # noqa: C901
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
 
+    assert sys.version_info >= (3, 9), "Black requires Python 3.9+"
     if sys.version_info[:3] == (3, 12, 5):
         out(
             "Python 3.12.5 has a memory safety issue that can cause Black's "

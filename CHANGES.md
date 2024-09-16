@@ -13,6 +13,7 @@
 - Black will issue an error when used with Python 3.12.5, due to an upstream memory
   safety issue in Python 3.12.5 that can cause Black's AST safety checks to fail. Please
   use Python 3.12.6 or Python 3.12.4 instead. (#4447)
+- Black no longer supports running with Python 3.8 (#4452)
 
 ### Stable style
 

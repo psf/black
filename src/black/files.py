@@ -272,8 +272,6 @@ def resolves_outside_root_or_cannot_stat(
     root directory. Also returns True if we failed to resolve the path.
     """
     try:
-        if sys.version_info < (3, 8, 6):
-            path = path.absolute()  # https://bugs.python.org/issue33660
         resolved_path = _cached_resolve(path)
     except OSError as e:
         if report:

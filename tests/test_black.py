@@ -2157,8 +2157,9 @@ class TestCaching:
     @event_loop()
     def test_cache_multiple_files(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir() as workspace, patch(
-            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
+        with (
+            cache_dir() as workspace,
+            patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor),
         ):
             one = (workspace / "one.py").resolve()
             one.write_text("print('hello')", encoding="utf-8")
@@ -2180,9 +2181,10 @@ class TestCaching:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            with patch.object(black.Cache, "read") as read_cache, patch.object(
-                black.Cache, "write"
-            ) as write_cache:
+            with (
+                patch.object(black.Cache, "read") as read_cache,
+                patch.object(black.Cache, "write") as write_cache,
+            ):
                 cmd = [str(src), "--diff"]
                 if color:
                     cmd.append("--color")
@@ -2311,8 +2313,9 @@ class TestCaching:
     @event_loop()
     def test_failed_formatting_does_not_get_cached(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir() as workspace, patch(
-            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
+        with (
+            cache_dir() as workspace,
+            patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor),
         ):
             failing = (workspace / "failing.py").resolve()
             failing.write_text("not actually python", encoding="utf-8")
