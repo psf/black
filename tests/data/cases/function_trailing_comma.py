@@ -60,6 +60,31 @@ some_module.some_function(
     argument1, (one, two,), argument4, argument5, argument6
 )
 
+def foo() -> (
+    # comment inside parenthesised return type
+    int
+):
+    ...
+
+def foo() -> (
+    # comment inside parenthesised return type
+    # more
+    int
+    # another
+):
+    ...
+
+def foo() -> (
+    # comment inside parenthesised new union return type
+    int | str | bytes
+):
+    ...
+
+def foo() -> (
+    # comment inside plain tuple
+):
+    pass
+
 # output
 
 def f(
@@ -176,3 +201,31 @@ some_module.some_function(
     argument5,
     argument6,
 )
+
+
+def foo() -> (
+    # comment inside parenthesised return type
+    int
+): ...
+
+
+def foo() -> (
+    # comment inside parenthesised return type
+    # more
+    int
+    # another
+): ...
+
+
+def foo() -> (
+    # comment inside parenthesised new union return type
+    int
+    | str
+    | bytes
+): ...
+
+
+def foo() -> (
+    # comment inside plain tuple
+):
+    pass
