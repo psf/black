@@ -91,6 +91,23 @@ def foo(arg: (# comment with non-return annotation
 )):
     pass
 
+def foo(arg: (# comment with non-return annotation
+        int | range | memoryview
+        # comment with non-return annotation
+)):
+    pass
+
+def foo(arg: (# only before
+        int
+)):
+    pass
+
+def foo(arg: (
+        int
+        # only after
+)):
+    pass
+
 variable: ( # annotation
     because
     # why not
@@ -251,6 +268,30 @@ def foo(
     arg: (  # comment with non-return annotation
         int
         # comment with non-return annotation
+    ),
+):
+    pass
+
+
+def foo(
+    arg: (  # comment with non-return annotation
+        int
+        | range
+        | memoryview
+        # comment with non-return annotation
+    ),
+):
+    pass
+
+
+def foo(arg: int):  # only before
+    pass
+
+
+def foo(
+    arg: (
+        int
+        # only after
     ),
 ):
     pass
