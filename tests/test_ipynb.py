@@ -208,6 +208,22 @@ def test_cell_magic_with_custom_python_magic(
         assert result == expected_output
 
 
+@pytest.mark.parametrize(
+    "src",
+    (
+        "   %%custom_magic \nx=2",
+        "\n\n%%custom_magic\nx=2",
+        "# comment\n%%custom_magic\nx=2",
+        "\n  \n # comment with %%time\n\t\n %%custom_magic # comment \nx=2",
+    ),
+)
+def test_cell_magic_with_custom_python_magic_after_spaces_and_comments_noop(
+    src: str,
+) -> None:
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
 def test_cell_magic_nested() -> None:
     src = "%%time\n%%time\n2+2"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)

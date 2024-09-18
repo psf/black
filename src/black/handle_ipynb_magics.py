@@ -3,6 +3,7 @@
 import ast
 import collections
 import dataclasses
+import re
 import secrets
 import sys
 from functools import lru_cache
@@ -14,6 +15,7 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeGuard
 
+from black.mode import Mode
 from black.output import out
 from black.report import NothingChanged
 
@@ -62,6 +64,34 @@ def jupyter_dependencies_are_installed(*, warn: bool) -> bool:
         )
         out(msg)
     return installed
+
+
+def validate_cell(src: str, mode: Mode) -> None:
+    """Check that cell does not already contain TransformerManager transformations,
+    or non-Python cell magics, which might cause tokenizer_rt to break because of
+    indentations.
+
+    If a cell contains ``!ls``, then it'll be transformed to
+    ``get_ipython().system('ls')``. However, if the cell originally contained
+    ``get_ipython().system('ls')``, then it would get transformed in the same way:
+
+        >>> TransformerManager().transform_cell("get_ipython().system('ls')")
+        "get_ipython().system('ls')\n"
+        >>> TransformerManager().transform_cell("!ls")
+        "get_ipython().system('ls')\n"
+
+    Due to the impossibility of safely roundtripping in such situations, cells
+    containing transformed magics will be ignored.
+    """
+    if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
+        raise NothingChanged
+
+    line = _get_code_start(src)
+    if line.startswith("%%") and (
+        line.split(maxsplit=1)[0][2:]
+        not in PYTHON_CELL_MAGICS | mode.python_cell_magics
+    ):
+        raise NothingChanged
 
 
 def remove_trailing_semicolon(src: str) -> tuple[str, bool]:
@@ -274,6 +304,21 @@ def unmask_cell(src: str, replacements: list[Replacement]) -> str:
     for replacement in replacements:
         src = src.replace(replacement.mask, replacement.src)
     return src
+
+
+def _get_code_start(src: str) -> str:
+    """Provides the first line where the code starts.
+
+    Iterates over lines of code until it finds the first line that doesn't
+    contain only empty spaces and comments. It removes any empty spaces at the
+    start of the line and returns it. If such line doesn't exist, it returns an
+    empty string.
+    """
+    for match in re.finditer(".+", src):
+        line = match.group(0).lstrip()
+        if line and not line.startswith("#"):
+            return line
+    return ""
 
 
 def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
