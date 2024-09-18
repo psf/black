@@ -21,6 +21,7 @@
 
 - Fix crashes involving comments in parenthesised return types or `X | Y` style unions.
   (#4453)
+- Fix skipping Jupyter cells with unknown `%%` magic (#4462)
 
 ### Preview style
 
