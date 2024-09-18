@@ -53,7 +53,6 @@ from black.files import (
 )
 from black.handle_ipynb_magics import (
     PYTHON_CELL_MAGICS,
-    TRANSFORMED_MAGICS,
     jupyter_dependencies_are_installed,
     mask_cell,
     put_trailing_semicolon_back,
