@@ -53,12 +53,12 @@ from black.files import (
 )
 from black.handle_ipynb_magics import (
     PYTHON_CELL_MAGICS,
-    TRANSFORMED_MAGICS,
     jupyter_dependencies_are_installed,
     mask_cell,
     put_trailing_semicolon_back,
     remove_trailing_semicolon,
     unmask_cell,
+    validate_cell,
 )
 from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
@@ -1082,32 +1082,6 @@ def format_file_contents(
             src_contents, dst_contents, mode=mode, lines=lines
         )
     return dst_contents
-
-
-def validate_cell(src: str, mode: Mode) -> None:
-    """Check that cell does not already contain TransformerManager transformations,
-    or non-Python cell magics, which might cause tokenizer_rt to break because of
-    indentations.
-
-    If a cell contains ``!ls``, then it'll be transformed to
-    ``get_ipython().system('ls')``. However, if the cell originally contained
-    ``get_ipython().system('ls')``, then it would get transformed in the same way:
-
-        >>> TransformerManager().transform_cell("get_ipython().system('ls')")
-        "get_ipython().system('ls')\n"
-        >>> TransformerManager().transform_cell("!ls")
-        "get_ipython().system('ls')\n"
-
-    Due to the impossibility of safely roundtripping in such situations, cells
-    containing transformed magics will be ignored.
-    """
-    if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
-        raise NothingChanged
-    if (
-        src[:2] == "%%"
-        and src.split()[0][2:] not in PYTHON_CELL_MAGICS | mode.python_cell_magics
-    ):
-        raise NothingChanged
 
 
 def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
