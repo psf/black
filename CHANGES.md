@@ -21,8 +21,7 @@
 
 ### Caching
 
-- Fix bug where the cache was shared between runs with and without
-  `--unstable` (#4466)
+- Fix bug where the cache was shared between runs with and without `--unstable` (#4466)
 
 ### Configuration
 
