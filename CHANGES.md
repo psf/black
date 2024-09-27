@@ -30,6 +30,10 @@
 - Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
   fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
 
+### Caching
+
+- Fix bug where the cache was shared between runs with and without `--unstable` (#4466)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

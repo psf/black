@@ -1,3 +1,4 @@
+import gc
 import re
 from unittest.mock import patch
 
@@ -17,6 +18,11 @@ except ImportError as e:
 
 @pytest.mark.blackd
 class BlackDTestCase(AioHTTPTestCase):
+    def tearDown(self) -> None:
+        # Work around https://github.com/python/cpython/issues/124706
+        gc.collect()
+        super().tearDown()
+
     def test_blackd_main(self) -> None:
         with patch("blackd.web.run_app"):
             result = CliRunner().invoke(blackd.main, [])

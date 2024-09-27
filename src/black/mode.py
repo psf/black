@@ -290,6 +290,7 @@ class Mode:
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
             str(int(self.preview)),
+            str(int(self.unstable)),
             features_and_magics,
         ]
         return ".".join(parts)
