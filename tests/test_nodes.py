@@ -2,7 +2,7 @@
 
 import pytest
 
-from black import Leaf, token
+from black import Leaf, Mode, token
 from black.nodes import is_type_comment
 
 
@@ -25,4 +25,5 @@ from black.nodes import is_type_comment
 )
 def test_is_type_comment(comment_text: str, expected: bool) -> None:
     leaf = Leaf(token.COMMENT, comment_text)
-    assert is_type_comment(leaf) == expected
+    mode = Mode(preview=True)
+    assert is_type_comment(leaf=leaf, mode=mode) == expected

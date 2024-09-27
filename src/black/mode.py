@@ -211,6 +211,7 @@ class Preview(Enum):
     remove_redundant_guard_parens = auto()
     parens_for_long_if_clauses_in_case_block = auto()
     pep646_typed_star_arg_type_var_tuple = auto()
+    type_comments_standardization = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
@@ -247,13 +248,6 @@ class Mode:
     enabled_features: set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
-        """
-        Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
-
-        In unstable mode, all features are enabled. In preview mode, all features
-        except those in UNSTABLE_FEATURES are enabled. Any features in
-        `self.enabled_features` are also enabled.
-        """
         if self.unstable:
             return True
         if feature in self.enabled_features:
@@ -294,3 +288,18 @@ class Mode:
             features_and_magics,
         ]
         return ".".join(parts)
+
+    def __hash__(self) -> int:
+        return hash((
+            frozenset(self.target_versions),
+            self.line_length,
+            self.string_normalization,
+            self.is_pyi,
+            self.is_ipynb,
+            self.skip_source_first_line,
+            self.magic_trailing_comma,
+            frozenset(self.python_cell_magics),
+            self.preview,
+            self.unstable,
+            frozenset(self.enabled_features),
+        ))

@@ -905,16 +905,19 @@ def is_async_stmt_or_funcdef(leaf: Leaf) -> bool:
     )
 
 
-def is_type_comment(leaf: Leaf) -> bool:
+def is_type_comment(leaf: Leaf, mode: Mode) -> bool:
     """Return True if the given leaf is a type comment. This function should only
     be used for general type comments (excluding ignore annotations, which should
     use `is_type_ignore_comment`). Note that general type comments are no longer
     used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
     v = leaf.value
-    return (
-        t in {token.COMMENT, STANDALONE_COMMENT}
-        and bool(re.match(r"#\s*type:", v))
+
+    type_comment_with_extra_spaces = bool(re.match(r"#\s*type:", v))
+
+    return t in {token.COMMENT, STANDALONE_COMMENT} and (
+        v.startswith("# type:")
+        or (Preview.type_comments_standardization and type_comment_with_extra_spaces)
     )
 
 

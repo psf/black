@@ -29,6 +29,7 @@
 
 - Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
   fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
+- Standardize type comments to always have one space (#4467)
 
 ### Caching
 

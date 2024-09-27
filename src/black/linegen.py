@@ -135,7 +135,7 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node):
+            for comment in generate_comments(node, mode=self.mode):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -1352,7 +1352,7 @@ def normalize_invisible_parens(  # noqa: C901
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False):
+    for pc in list_comments(node.prefix, is_endmarker=False, mode=mode):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return

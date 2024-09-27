@@ -287,7 +287,7 @@ class Line:
         comment_seen = False
         for leaf_id, comments in self.comments.items():
             for comment in comments:
-                if is_type_comment(comment):
+                if is_type_comment(comment, mode=self.mode):
                     if comment_seen or (
                         not is_type_ignore_comment(comment)
                         and leaf_id not in ignored_ids
@@ -401,7 +401,7 @@ class Line:
             and not last_leaf.value
             and last_leaf.parent
             and len(list(last_leaf.parent.leaves())) <= 3
-            and not is_type_comment(comment)
+            and not is_type_comment(comment, self.mode)
         ):
             # Comments on an optional parens wrapping a single leaf should belong to
             # the wrapped node except if it's a type comment. Pinning the comment like
