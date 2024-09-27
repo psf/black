@@ -1,3 +1,4 @@
+import gc
 import re
 from typing import TYPE_CHECKING, Any, Callable, TypeVar
 from unittest.mock import patch
@@ -32,6 +33,10 @@ else:
 
 @pytest.mark.blackd
 class BlackDTestCase(AioHTTPTestCase):
+    def tearDown(self) -> None:
+        gc.collect()
+        super().tearDown()
+
     def test_blackd_main(self) -> None:
         with patch("blackd.web.run_app"):
             result = CliRunner().invoke(blackd.main, [])
