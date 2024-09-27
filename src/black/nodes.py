@@ -2,6 +2,7 @@
 blib2to3 Node/Leaf transformation-related utility functions.
 """
 
+import re
 import sys
 from typing import Final, Generic, Iterator, Literal, Optional, TypeVar, Union
 
@@ -911,7 +912,10 @@ def is_type_comment(leaf: Leaf) -> bool:
     used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
+    return (
+        t in {token.COMMENT, STANDALONE_COMMENT}
+        and bool(re.match(r"#\s*type:", v))
+    )
 
 
 def is_type_ignore_comment(leaf: Leaf) -> bool:
