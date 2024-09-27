@@ -34,6 +34,7 @@ else:
 @pytest.mark.blackd
 class BlackDTestCase(AioHTTPTestCase):
     def tearDown(self) -> None:
+        # Work around https://github.com/python/cpython/issues/124706
         gc.collect()
         super().tearDown()
 
