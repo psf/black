@@ -63,7 +63,7 @@ jobs:
         if:
           github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
           !startsWith(matrix.python-version, 'pypy')
-        uses: AndreMiras/coveralls-python-action@65c1672f0b8a201702d86c81b79187df74072505
+        uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel: true
@@ -78,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Send finished signal to Coveralls
-        uses: AndreMiras/coveralls-python-action@65c1672f0b8a201702d86c81b79187df74072505
+        uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
           parallel-finished: true
           debug: true
