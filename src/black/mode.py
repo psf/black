@@ -225,8 +225,6 @@ UNSTABLE_FEATURES: set[Preview] = {
     Preview.multiline_string_handling,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,
-    # Depends on hug_parens_with_braces_and_square_brackets
-    Preview.remove_lone_list_item_parens,
 }
 
 
