@@ -39,7 +39,8 @@ Currently, the following features are included in the preview style:
 - `pep646_typed_star_arg_type_var_tuple`: fix type annotation spacing between * and more
   complex type variable tuple (i.e. `def fn(*args: *tuple[*Ts, T]) -> None: pass`)
 - `remove_lone_list_item_parens`: remove redundant parenthesis around lone list items
-  (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some cases)
+  (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some
+  cases)
 
 (labels/unstable-features)=
 
