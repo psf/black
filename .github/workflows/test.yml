@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.9"]
+        python-version: ["3.9", "3.10", "3.11", "3.12.4", "3.13", "pypy-3.9"]
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
@@ -41,6 +41,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
       - name: Install tox
         run: |
@@ -62,7 +63,7 @@ jobs:
         if:
           github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
           !startsWith(matrix.python-version, 'pypy')
-        uses: AndreMiras/coveralls-python-action@65c1672f0b8a201702d86c81b79187df74072505
+        uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel: true
@@ -77,7 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Send finished signal to Coveralls
-        uses: AndreMiras/coveralls-python-action@65c1672f0b8a201702d86c81b79187df74072505
+        uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
           parallel-finished: true
           debug: true
@@ -98,7 +99,7 @@ jobs:
       - name: Set up latest Python
         uses: actions/setup-python@v5
         with:
-          python-version: "*"
+          python-version: "3.12.4"
 
       - name: Install black with uvloop
         run: |

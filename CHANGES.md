@@ -6,17 +6,34 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Black is now officially tested with Python 3.13. Note that Black does not yet provide
+  mypyc-compiled wheels for Python 3.13, so performance may be slower than on other
+  versions of Python. We will provide 3.13 mypyc-compiled wheels in a future release.
+  (#4436)
+- Black will issue an error when used with Python 3.12.5, due to an upstream memory
+  safety issue in Python 3.12.5 that can cause Black's AST safety checks to fail. Please
+  use Python 3.12.6 or Python 3.12.4 instead. (#4447)
+- Black no longer supports running with Python 3.8 (#4452)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix crash when `# fmt: off` is used before a closing parenthesis or bracket. (#4363)
+- Fix crashes involving comments in parenthesised return types or `X | Y` style unions.
+  (#4453)
+- Fix skipping Jupyter cells with unknown `%%` magic (#4462)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
+  fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
 - Remove parenthesis around sole list items (#4312)
+
+### Caching
+
+- Fix bug where the cache was shared between runs with and without `--unstable` (#4466)
 
 ### Configuration
 
@@ -26,17 +43,12 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Packaging metadata updated: docs are explictly linked, the issue tracker is now also
-  linked. This improves the PyPI listing for Black. (#4345)
+- Upgrade version of mypyc used to 1.11.2 (#4450)
+- `blackd` now requires a newer version of aiohttp. (#4451)
 
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
-
-- Fix regression where Black failed to parse a multiline f-string containing another
-  multiline string (#4339)
-
-- Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
 
 ### Performance
 
@@ -46,9 +58,12 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Added Python target version information on parse error (#4378)
+- Add information about Black version to internal error messages (#4457)
+
 ### _Blackd_
 
-- Fix blackd (and all extras installs) for docker container (#4357)
+<!-- Changes to blackd -->
 
 ### Integrations
 
@@ -58,6 +73,36 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 24.8.0
+
+### Stable style
+
+- Fix crash when `# fmt: off` is used before a closing parenthesis or bracket. (#4363)
+
+### Packaging
+
+- Packaging metadata updated: docs are explictly linked, the issue tracker is now also
+  linked. This improves the PyPI listing for Black. (#4345)
+
+### Parser
+
+- Fix regression where Black failed to parse a multiline f-string containing another
+  multiline string (#4339)
+- Fix regression where Black failed to parse an escaped single quote inside an f-string
+  (#4401)
+- Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
+- Fix bugs with Black's tokenizer not handling `\{` inside f-strings very well (#4422)
+- Fix incorrect line numbers in the tokenizer for certain tokens within f-strings
+  (#4423)
+
+### Performance
+
+- Improve performance when a large directory is listed in `.gitignore` (#4415)
+
+### _Blackd_
+
+- Fix blackd (and all extras installs) for docker container (#4357)
 
 ## 24.4.2
 

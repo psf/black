@@ -10,19 +10,7 @@ how this parsing engine works.
 
 """
 from contextlib import contextmanager
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, Iterator, Optional, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
@@ -34,10 +22,10 @@ if TYPE_CHECKING:
     from blib2to3.pgen2.driver import TokenProxy
 
 
-Results = Dict[str, NL]
+Results = dict[str, NL]
 Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]
-DFA = List[List[Tuple[int, int]]]
-DFAS = Tuple[DFA, Dict[int, int]]
+DFA = list[list[tuple[int, int]]]
+DFAS = tuple[DFA, dict[int, int]]
 
 
 def lam_sub(grammar: Grammar, node: RawNode) -> NL:
@@ -50,24 +38,24 @@ DUMMY_NODE = (-1, None, None, None)
 
 
 def stack_copy(
-    stack: List[Tuple[DFAS, int, RawNode]],
-) -> List[Tuple[DFAS, int, RawNode]]:
+    stack: list[tuple[DFAS, int, RawNode]],
+) -> list[tuple[DFAS, int, RawNode]]:
     """Nodeless stack copy."""
     return [(dfa, label, DUMMY_NODE) for dfa, label, _ in stack]
 
 
 class Recorder:
-    def __init__(self, parser: "Parser", ilabels: List[int], context: Context) -> None:
+    def __init__(self, parser: "Parser", ilabels: list[int], context: Context) -> None:
         self.parser = parser
         self._ilabels = ilabels
         self.context = context  # not really matter
 
-        self._dead_ilabels: Set[int] = set()
+        self._dead_ilabels: set[int] = set()
         self._start_point = self.parser.stack
         self._points = {ilabel: stack_copy(self._start_point) for ilabel in ilabels}
 
     @property
-    def ilabels(self) -> Set[int]:
+    def ilabels(self) -> set[int]:
         return self._dead_ilabels.symmetric_difference(self._ilabels)
 
     @contextmanager
@@ -233,9 +221,9 @@ class Parser:
         # where children is a list of nodes or None, and context may be None.
         newnode: RawNode = (start, None, None, [])
         stackentry = (self.grammar.dfas[start], 0, newnode)
-        self.stack: List[Tuple[DFAS, int, RawNode]] = [stackentry]
+        self.stack: list[tuple[DFAS, int, RawNode]] = [stackentry]
         self.rootnode: Optional[NL] = None
-        self.used_names: Set[str] = set()
+        self.used_names: set[str] = set()
         self.proxy = proxy
         self.last_token = None
 
@@ -333,7 +321,7 @@ class Parser:
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
 
-    def classify(self, type: int, value: str, context: Context) -> List[int]:
+    def classify(self, type: int, value: str, context: Context) -> list[int]:
         """Turn a token into a label.  (Internal)
 
         Depending on whether the value is a soft-keyword or not,

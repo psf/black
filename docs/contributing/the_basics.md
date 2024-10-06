@@ -16,7 +16,7 @@ $ source .venv/bin/activate # activation for linux and mac
 $ .venv\Scripts\activate # activation for windows
 
 (.venv)$ pip install -r test_requirements.txt
-(.venv)$ pip install -e .[d]
+(.venv)$ pip install -e ".[d]"
 (.venv)$ pre-commit install
 ```
 

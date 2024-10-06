@@ -6,7 +6,7 @@ The double calls are for patching purposes in tests.
 import json
 import re
 import tempfile
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from click import echo, style
 from mypy_extensions import mypyc_attr
@@ -59,7 +59,7 @@ def ipynb_diff(a: str, b: str, a_name: str, b_name: str) -> str:
 _line_pattern = re.compile(r"(.*?(?:\r\n|\n|\r|$))")
 
 
-def _splitlines_no_ff(source: str) -> List[str]:
+def _splitlines_no_ff(source: str) -> list[str]:
     """Split a string into lines ignoring form feed and other chars.
 
     This mimics how the Python parser splits source code.

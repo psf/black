@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Any, Iterator, List, TypeVar, Union
+from typing import Any, Iterator, TypeVar, Union
 
 from black.nodes import Visitor
 from black.output import out
@@ -14,7 +14,7 @@ T = TypeVar("T")
 @dataclass
 class DebugVisitor(Visitor[T]):
     tree_depth: int = 0
-    list_output: List[str] = field(default_factory=list)
+    list_output: list[str] = field(default_factory=list)
     print_output: bool = True
 
     def out(self, message: str, *args: Any, **kwargs: Any) -> None:

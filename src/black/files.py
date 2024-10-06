@@ -6,14 +6,11 @@ from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Iterable,
     Iterator,
-    List,
     Optional,
     Pattern,
     Sequence,
-    Tuple,
     Union,
 )
 
@@ -43,7 +40,7 @@ if TYPE_CHECKING:
 
 
 @lru_cache
-def _load_toml(path: Union[Path, str]) -> Dict[str, Any]:
+def _load_toml(path: Union[Path, str]) -> dict[str, Any]:
     with open(path, "rb") as f:
         return tomllib.load(f)
 
@@ -56,8 +53,11 @@ def _cached_resolve(path: Path) -> Path:
 @lru_cache
 def find_project_root(
     srcs: Sequence[str], stdin_filename: Optional[str] = None
-) -> Tuple[Path, str]:
+) -> tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
+
+    pyproject.toml files are only considered if they contain a [tool.black]
+    section and are ignored otherwise.
 
     That directory will be a common parent of all files and directories
     passed in `srcs`.
@@ -103,7 +103,7 @@ def find_project_root(
 
 
 def find_pyproject_toml(
-    path_search_start: Tuple[str, ...], stdin_filename: Optional[str] = None
+    path_search_start: tuple[str, ...], stdin_filename: Optional[str] = None
 ) -> Optional[str]:
     """Find the absolute filepath to a pyproject.toml if it exists"""
     path_project_root, _ = find_project_root(path_search_start, stdin_filename)
@@ -125,13 +125,13 @@ def find_pyproject_toml(
 
 
 @mypyc_attr(patchable=True)
-def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
+def parse_pyproject_toml(path_config: str) -> dict[str, Any]:
     """Parse a pyproject toml file, pulling out relevant parts for Black.
 
     If parsing fails, will raise a tomllib.TOMLDecodeError.
     """
     pyproject_toml = _load_toml(path_config)
-    config: Dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
+    config: dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
     config = {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
     if "target_version" not in config:
@@ -143,8 +143,8 @@ def parse_pyproject_toml(path_config: str) -> Dict[str, Any]:
 
 
 def infer_target_version(
-    pyproject_toml: Dict[str, Any],
-) -> Optional[List[TargetVersion]]:
+    pyproject_toml: dict[str, Any],
+) -> Optional[list[TargetVersion]]:
     """Infer Black's target version from the project metadata in pyproject.toml.
 
     Supports the PyPA standard format (PEP 621):
@@ -167,7 +167,7 @@ def infer_target_version(
     return None
 
 
-def parse_req_python_version(requires_python: str) -> Optional[List[TargetVersion]]:
+def parse_req_python_version(requires_python: str) -> Optional[list[TargetVersion]]:
     """Parse a version string (i.e. ``"3.7"``) to a list of TargetVersion.
 
     If parsing fails, will raise a packaging.version.InvalidVersion error.
@@ -182,7 +182,7 @@ def parse_req_python_version(requires_python: str) -> Optional[List[TargetVersio
         return None
 
 
-def parse_req_python_specifier(requires_python: str) -> Optional[List[TargetVersion]]:
+def parse_req_python_specifier(requires_python: str) -> Optional[list[TargetVersion]]:
     """Parse a specifier string (i.e. ``">=3.7,<3.10"``) to a list of TargetVersion.
 
     If parsing fails, will raise a packaging.specifiers.InvalidSpecifier error.
@@ -193,7 +193,7 @@ def parse_req_python_specifier(requires_python: str) -> Optional[List[TargetVers
         return None
 
     target_version_map = {f"3.{v.value}": v for v in TargetVersion}
-    compatible_versions: List[str] = list(specifier_set.filter(target_version_map))
+    compatible_versions: list[str] = list(specifier_set.filter(target_version_map))
     if compatible_versions:
         return [target_version_map[v] for v in compatible_versions]
     return None
@@ -248,7 +248,7 @@ def find_user_pyproject_toml() -> Path:
 def get_gitignore(root: Path) -> PathSpec:
     """Return a PathSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"
-    lines: List[str] = []
+    lines: list[str] = []
     if gitignore.is_file():
         with gitignore.open(encoding="utf-8") as gf:
             lines = gf.readlines()
@@ -269,8 +269,6 @@ def resolves_outside_root_or_cannot_stat(
     root directory. Also returns True if we failed to resolve the path.
     """
     try:
-        if sys.version_info < (3, 8, 6):
-            path = path.absolute()  # https://bugs.python.org/issue33660
         resolved_path = _cached_resolve(path)
     except OSError as e:
         if report:
@@ -301,7 +299,7 @@ def best_effort_relative_path(path: Path, root: Path) -> Path:
 def _path_is_ignored(
     root_relative_path: str,
     root: Path,
-    gitignore_dict: Dict[Path, PathSpec],
+    gitignore_dict: dict[Path, PathSpec],
 ) -> bool:
     path = root / root_relative_path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
@@ -309,6 +307,8 @@ def _path_is_ignored(
     for gitignore_path, pattern in gitignore_dict.items():
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
+            if path.is_dir():
+                relative_path = relative_path + "/"
         except ValueError:
             break
         if pattern.match_file(relative_path):
@@ -332,7 +332,7 @@ def gen_python_files(
     extend_exclude: Optional[Pattern[str]],
     force_exclude: Optional[Pattern[str]],
     report: Report,
-    gitignore_dict: Optional[Dict[Path, PathSpec]],
+    gitignore_dict: Optional[dict[Path, PathSpec]],
     *,
     verbose: bool,
     quiet: bool,

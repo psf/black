@@ -7,7 +7,7 @@ import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, NamedTuple, Set, Tuple
+from typing import Iterable, NamedTuple
 
 from platformdirs import user_cache_dir
 
@@ -55,7 +55,7 @@ def get_cache_file(mode: Mode) -> Path:
 class Cache:
     mode: Mode
     cache_file: Path
-    file_data: Dict[str, FileData] = field(default_factory=dict)
+    file_data: dict[str, FileData] = field(default_factory=dict)
 
     @classmethod
     def read(cls, mode: Mode) -> Self:
@@ -76,7 +76,7 @@ class Cache:
 
         with cache_file.open("rb") as fobj:
             try:
-                data: Dict[str, Tuple[float, int, str]] = pickle.load(fobj)
+                data: dict[str, tuple[float, int, str]] = pickle.load(fobj)
                 file_data = {k: FileData(*v) for k, v in data.items()}
             except (pickle.UnpicklingError, ValueError, IndexError):
                 return cls(mode, cache_file)
@@ -114,14 +114,14 @@ class Cache:
                 return True
         return False
 
-    def filtered_cached(self, sources: Iterable[Path]) -> Tuple[Set[Path], Set[Path]]:
+    def filtered_cached(self, sources: Iterable[Path]) -> tuple[set[Path], set[Path]]:
         """Split an iterable of paths in `sources` into two sets.
 
         The first contains paths of files that modified on disk or are not in the
         cache. The other contains paths to non-modified files.
         """
-        changed: Set[Path] = set()
-        done: Set[Path] = set()
+        changed: set[Path] = set()
+        done: set[Path] = set()
         for src in sources:
             if self.is_changed(src):
                 changed.add(src)
@@ -139,9 +139,8 @@ class Cache:
             with tempfile.NamedTemporaryFile(
                 dir=str(self.cache_file.parent), delete=False
             ) as f:
-                # We store raw tuples in the cache because pickling NamedTuples
-                # doesn't work with mypyc on Python 3.8, and because it's faster.
-                data: Dict[str, Tuple[float, int, str]] = {
+                # We store raw tuples in the cache because it's faster.
+                data: dict[str, tuple[float, int, str]] = {
                     k: (*v,) for k, v in self.file_data.items()
                 }
                 pickle.dump(data, f, protocol=4)

@@ -14,17 +14,13 @@ from pathlib import Path
 from typing import (
     Any,
     Collection,
-    Dict,
     Generator,
     Iterator,
-    List,
     MutableMapping,
     Optional,
     Pattern,
     Sequence,
-    Set,
     Sized,
-    Tuple,
     Union,
 )
 
@@ -57,12 +53,12 @@ from black.files import (
 )
 from black.handle_ipynb_magics import (
     PYTHON_CELL_MAGICS,
-    TRANSFORMED_MAGICS,
     jupyter_dependencies_are_installed,
     mask_cell,
     put_trailing_semicolon_back,
     remove_trailing_semicolon,
     unmask_cell,
+    validate_cell,
 )
 from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
@@ -176,7 +172,7 @@ def read_pyproject_toml(
             "line-ranges", "Cannot use line-ranges in the pyproject.toml file."
         )
 
-    default_map: Dict[str, Any] = {}
+    default_map: dict[str, Any] = {}
     if ctx.default_map:
         default_map.update(ctx.default_map)
     default_map.update(config)
@@ -186,9 +182,9 @@ def read_pyproject_toml(
 
 
 def spellcheck_pyproject_toml_keys(
-    ctx: click.Context, config_keys: List[str], config_file_path: str
+    ctx: click.Context, config_keys: list[str], config_file_path: str
 ) -> None:
-    invalid_keys: List[str] = []
+    invalid_keys: list[str] = []
     available_config_options = {param.name for param in ctx.command.params}
     for key in config_keys:
         if key not in available_config_options:
@@ -202,8 +198,8 @@ def spellcheck_pyproject_toml_keys(
 
 
 def target_version_option_callback(
-    c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
-) -> List[TargetVersion]:
+    c: click.Context, p: Union[click.Option, click.Parameter], v: tuple[str, ...]
+) -> list[TargetVersion]:
     """Compute the target versions from a --target-version flag.
 
     This is its own function because mypy couldn't infer the type correctly
@@ -213,8 +209,8 @@ def target_version_option_callback(
 
 
 def enable_unstable_feature_callback(
-    c: click.Context, p: Union[click.Option, click.Parameter], v: Tuple[str, ...]
-) -> List[Preview]:
+    c: click.Context, p: Union[click.Option, click.Parameter], v: tuple[str, ...]
+) -> list[Preview]:
     """Compute the features from an --enable-unstable-feature flag."""
     return [Preview[val] for val in v]
 
@@ -519,7 +515,7 @@ def main(  # noqa: C901
     ctx: click.Context,
     code: Optional[str],
     line_length: int,
-    target_version: List[TargetVersion],
+    target_version: list[TargetVersion],
     check: bool,
     diff: bool,
     line_ranges: Sequence[str],
@@ -533,7 +529,7 @@ def main(  # noqa: C901
     skip_magic_trailing_comma: bool,
     preview: bool,
     unstable: bool,
-    enable_unstable_feature: List[Preview],
+    enable_unstable_feature: list[Preview],
     quiet: bool,
     verbose: bool,
     required_version: Optional[str],
@@ -543,11 +539,20 @@ def main(  # noqa: C901
     force_exclude: Optional[Pattern[str]],
     stdin_filename: Optional[str],
     workers: Optional[int],
-    src: Tuple[str, ...],
+    src: tuple[str, ...],
     config: Optional[str],
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
+
+    assert sys.version_info >= (3, 9), "Black requires Python 3.9+"
+    if sys.version_info[:3] == (3, 12, 5):
+        out(
+            "Python 3.12.5 has a memory safety issue that can cause Black's "
+            "AST safety checks to fail. "
+            "Please upgrade to Python 3.12.6 or downgrade to Python 3.12.4"
+        )
+        ctx.exit(1)
 
     if src and code is not None:
         out(
@@ -634,7 +639,7 @@ def main(  # noqa: C901
         enabled_features=set(enable_unstable_feature),
     )
 
-    lines: List[Tuple[int, int]] = []
+    lines: list[tuple[int, int]] = []
     if line_ranges:
         if ipynb:
             err("Cannot use --line-ranges with ipynb files.")
@@ -724,7 +729,7 @@ def main(  # noqa: C901
 def get_sources(
     *,
     root: Path,
-    src: Tuple[str, ...],
+    src: tuple[str, ...],
     quiet: bool,
     verbose: bool,
     include: Pattern[str],
@@ -733,14 +738,14 @@ def get_sources(
     force_exclude: Optional[Pattern[str]],
     report: "Report",
     stdin_filename: Optional[str],
-) -> Set[Path]:
+) -> set[Path]:
     """Compute the set of files to be formatted."""
-    sources: Set[Path] = set()
+    sources: set[Path] = set()
 
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
-    gitignore: Optional[Dict[Path, PathSpec]] = None
+    gitignore: Optional[dict[Path, PathSpec]] = None
     root_gitignore = get_gitignore(root)
 
     for s in src:
@@ -832,7 +837,7 @@ def reformat_code(
     mode: Mode,
     report: Report,
     *,
-    lines: Collection[Tuple[int, int]] = (),
+    lines: Collection[tuple[int, int]] = (),
 ) -> None:
     """
     Reformat and print out `content` without spawning child processes.
@@ -865,7 +870,7 @@ def reformat_one(
     mode: Mode,
     report: "Report",
     *,
-    lines: Collection[Tuple[int, int]] = (),
+    lines: Collection[tuple[int, int]] = (),
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -921,7 +926,7 @@ def format_file_in_place(
     write_back: WriteBack = WriteBack.NO,
     lock: Any = None,  # multiprocessing.Manager().Lock() is some crazy proxy
     *,
-    lines: Collection[Tuple[int, int]] = (),
+    lines: Collection[tuple[int, int]] = (),
 ) -> bool:
     """Format file under `src` path. Return True if changed.
 
@@ -988,7 +993,7 @@ def format_stdin_to_stdout(
     content: Optional[str] = None,
     write_back: WriteBack = WriteBack.NO,
     mode: Mode,
-    lines: Collection[Tuple[int, int]] = (),
+    lines: Collection[tuple[int, int]] = (),
 ) -> bool:
     """Format file on stdin. Return True if changed.
 
@@ -1039,7 +1044,7 @@ def check_stability_and_equivalence(
     dst_contents: str,
     *,
     mode: Mode,
-    lines: Collection[Tuple[int, int]] = (),
+    lines: Collection[tuple[int, int]] = (),
 ) -> None:
     """Perform stability and equivalence checks.
 
@@ -1056,7 +1061,7 @@ def format_file_contents(
     *,
     fast: bool,
     mode: Mode,
-    lines: Collection[Tuple[int, int]] = (),
+    lines: Collection[tuple[int, int]] = (),
 ) -> FileContent:
     """Reformat contents of a file and return new contents.
 
@@ -1077,32 +1082,6 @@ def format_file_contents(
             src_contents, dst_contents, mode=mode, lines=lines
         )
     return dst_contents
-
-
-def validate_cell(src: str, mode: Mode) -> None:
-    """Check that cell does not already contain TransformerManager transformations,
-    or non-Python cell magics, which might cause tokenizer_rt to break because of
-    indentations.
-
-    If a cell contains ``!ls``, then it'll be transformed to
-    ``get_ipython().system('ls')``. However, if the cell originally contained
-    ``get_ipython().system('ls')``, then it would get transformed in the same way:
-
-        >>> TransformerManager().transform_cell("get_ipython().system('ls')")
-        "get_ipython().system('ls')\n"
-        >>> TransformerManager().transform_cell("!ls")
-        "get_ipython().system('ls')\n"
-
-    Due to the impossibility of safely roundtripping in such situations, cells
-    containing transformed magics will be ignored.
-    """
-    if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
-        raise NothingChanged
-    if (
-        src[:2] == "%%"
-        and src.split()[0][2:] not in PYTHON_CELL_MAGICS | mode.python_cell_magics
-    ):
-        raise NothingChanged
 
 
 def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
@@ -1187,7 +1166,7 @@ def format_ipynb_string(src_contents: str, *, fast: bool, mode: Mode) -> FileCon
 
 
 def format_str(
-    src_contents: str, *, mode: Mode, lines: Collection[Tuple[int, int]] = ()
+    src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
     """Reformat a string and return new contents.
 
@@ -1234,10 +1213,10 @@ def format_str(
 
 
 def _format_str_once(
-    src_contents: str, *, mode: Mode, lines: Collection[Tuple[int, int]] = ()
+    src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
     src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
-    dst_blocks: List[LinesBlock] = []
+    dst_blocks: list[LinesBlock] = []
     if mode.target_versions:
         versions = mode.target_versions
     else:
@@ -1287,7 +1266,7 @@ def _format_str_once(
     return "".join(dst_contents)
 
 
-def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
+def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
     """Return a tuple of (decoded_contents, encoding, newline).
 
     `newline` is either CRLF or LF but `decoded_contents` is decoded with
@@ -1305,8 +1284,8 @@ def decode_bytes(src: bytes) -> Tuple[FileContent, Encoding, NewLine]:
 
 
 def get_features_used(  # noqa: C901
-    node: Node, *, future_imports: Optional[Set[str]] = None
-) -> Set[Feature]:
+    node: Node, *, future_imports: Optional[set[str]] = None
+) -> set[Feature]:
     """Return a set of (relatively) new Python features used in this file.
 
     Currently looking for:
@@ -1324,7 +1303,7 @@ def get_features_used(  # noqa: C901
     - except* clause;
     - variadic generics;
     """
-    features: Set[Feature] = set()
+    features: set[Feature] = set()
     if future_imports:
         features |= {
             FUTURE_FLAG_TO_FEATURE[future_import]
@@ -1462,8 +1441,8 @@ def _contains_asexpr(node: Union[Node, Leaf]) -> bool:
 
 
 def detect_target_versions(
-    node: Node, *, future_imports: Optional[Set[str]] = None
-) -> Set[TargetVersion]:
+    node: Node, *, future_imports: Optional[set[str]] = None
+) -> set[TargetVersion]:
     """Detect the version to target based on the nodes used."""
     features = get_features_used(node, future_imports=future_imports)
     return {
@@ -1471,11 +1450,11 @@ def detect_target_versions(
     }
 
 
-def get_future_imports(node: Node) -> Set[str]:
+def get_future_imports(node: Node) -> set[str]:
     """Return a set of __future__ imports in the file."""
-    imports: Set[str] = set()
+    imports: set[str] = set()
 
-    def get_imports_from_children(children: List[LN]) -> Generator[str, None, None]:
+    def get_imports_from_children(children: list[LN]) -> Generator[str, None, None]:
         for child in children:
             if isinstance(child, Leaf):
                 if child.type == token.NAME:
@@ -1521,6 +1500,13 @@ def get_future_imports(node: Node) -> Set[str]:
     return imports
 
 
+def _black_info() -> str:
+    return (
+        f"Black {__version__} on "
+        f"Python ({platform.python_implementation()}) {platform.python_version()}"
+    )
+
+
 def assert_equivalent(src: str, dst: str) -> None:
     """Raise AssertionError if `src` and `dst` aren't equivalent."""
     try:
@@ -1538,7 +1524,7 @@ def assert_equivalent(src: str, dst: str) -> None:
     except Exception as exc:
         log = dump_to_file("".join(traceback.format_tb(exc.__traceback__)), dst)
         raise ASTSafetyError(
-            f"INTERNAL ERROR: Black produced invalid code: {exc}. "
+            f"INTERNAL ERROR: {_black_info()} produced invalid code: {exc}. "
             "Please report a bug on https://github.com/psf/black/issues.  "
             f"This invalid output might be helpful: {log}"
         ) from None
@@ -1548,14 +1534,14 @@ def assert_equivalent(src: str, dst: str) -> None:
     if src_ast_str != dst_ast_str:
         log = dump_to_file(diff(src_ast_str, dst_ast_str, "src", "dst"))
         raise ASTSafetyError(
-            "INTERNAL ERROR: Black produced code that is not equivalent to the"
-            " source.  Please report a bug on "
-            f"https://github.com/psf/black/issues.  This diff might be helpful: {log}"
+            f"INTERNAL ERROR: {_black_info()} produced code that is not equivalent to"
+            " the source.  Please report a bug on https://github.com/psf/black/issues."
+            f"  This diff might be helpful: {log}"
         ) from None
 
 
 def assert_stable(
-    src: str, dst: str, mode: Mode, *, lines: Collection[Tuple[int, int]] = ()
+    src: str, dst: str, mode: Mode, *, lines: Collection[tuple[int, int]] = ()
 ) -> None:
     """Raise AssertionError if `dst` reformats differently the second time."""
     if lines:
@@ -1576,9 +1562,9 @@ def assert_stable(
             diff(dst, newdst, "first pass", "second pass"),
         )
         raise AssertionError(
-            "INTERNAL ERROR: Black produced different code on the second pass of the"
-            " formatter.  Please report a bug on https://github.com/psf/black/issues."
-            f"  This diff might be helpful: {log}"
+            f"INTERNAL ERROR: {_black_info()} produced different code on the second"
+            " pass of the formatter.  Please report a bug on"
+            f" https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
 
 

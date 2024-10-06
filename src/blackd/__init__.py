@@ -4,7 +4,6 @@ from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime, timezone
 from functools import partial
 from multiprocessing import freeze_support
-from typing import Set, Tuple
 
 try:
     from aiohttp import web
@@ -191,7 +190,7 @@ def parse_mode(headers: MultiMapping[str]) -> black.Mode:
 
     preview = bool(headers.get(PREVIEW, False))
     unstable = bool(headers.get(UNSTABLE, False))
-    enable_features: Set[black.Preview] = set()
+    enable_features: set[black.Preview] = set()
     enable_unstable_features = headers.get(ENABLE_UNSTABLE_FEATURE, "").split(",")
     for piece in enable_unstable_features:
         piece = piece.strip()
@@ -216,7 +215,7 @@ def parse_mode(headers: MultiMapping[str]) -> black.Mode:
     )
 
 
-def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
+def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersion]]:
     if value == "pyi":
         return True, set()
     else:

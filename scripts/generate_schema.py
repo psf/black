@@ -53,7 +53,7 @@ def main(schemastore: bool, outfile: IO[str]) -> None:
     schema: dict[str, Any] = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$id": (
-            "https://github.com/psf/black/blob/main/black/resources/black.schema.json"
+            "https://github.com/psf/black/blob/main/src/black/resources/black.schema.json"
         ),
         "$comment": "tool.black table in pyproject.toml",
         "type": "object",

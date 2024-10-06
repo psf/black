@@ -3,17 +3,19 @@
 import ast
 import collections
 import dataclasses
+import re
 import secrets
 import sys
 from functools import lru_cache
 from importlib.util import find_spec
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
 else:
     from typing_extensions import TypeGuard
 
+from black.mode import Mode
 from black.output import out
 from black.report import NothingChanged
 
@@ -64,7 +66,35 @@ def jupyter_dependencies_are_installed(*, warn: bool) -> bool:
     return installed
 
 
-def remove_trailing_semicolon(src: str) -> Tuple[str, bool]:
+def validate_cell(src: str, mode: Mode) -> None:
+    """Check that cell does not already contain TransformerManager transformations,
+    or non-Python cell magics, which might cause tokenizer_rt to break because of
+    indentations.
+
+    If a cell contains ``!ls``, then it'll be transformed to
+    ``get_ipython().system('ls')``. However, if the cell originally contained
+    ``get_ipython().system('ls')``, then it would get transformed in the same way:
+
+        >>> TransformerManager().transform_cell("get_ipython().system('ls')")
+        "get_ipython().system('ls')\n"
+        >>> TransformerManager().transform_cell("!ls")
+        "get_ipython().system('ls')\n"
+
+    Due to the impossibility of safely roundtripping in such situations, cells
+    containing transformed magics will be ignored.
+    """
+    if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
+        raise NothingChanged
+
+    line = _get_code_start(src)
+    if line.startswith("%%") and (
+        line.split(maxsplit=1)[0][2:]
+        not in PYTHON_CELL_MAGICS | mode.python_cell_magics
+    ):
+        raise NothingChanged
+
+
+def remove_trailing_semicolon(src: str) -> tuple[str, bool]:
     """Remove trailing semicolon from Jupyter notebook cell.
 
     For example,
@@ -120,7 +150,7 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
     return str(tokens_to_src(tokens))
 
 
-def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
+def mask_cell(src: str) -> tuple[str, list[Replacement]]:
     """Mask IPython magics so content becomes parseable Python code.
 
     For example,
@@ -135,7 +165,7 @@ def mask_cell(src: str) -> Tuple[str, List[Replacement]]:
 
     The replacements are returned, along with the transformed code.
     """
-    replacements: List[Replacement] = []
+    replacements: list[Replacement] = []
     try:
         ast.parse(src)
     except SyntaxError:
@@ -186,7 +216,7 @@ def get_token(src: str, magic: str) -> str:
     return f'"{token}"'
 
 
-def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
+def replace_cell_magics(src: str) -> tuple[str, list[Replacement]]:
     """Replace cell magic with token.
 
     Note that 'src' will already have been processed by IPython's
@@ -203,7 +233,7 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
 
     The replacement, along with the transformed code, is returned.
     """
-    replacements: List[Replacement] = []
+    replacements: list[Replacement] = []
 
     tree = ast.parse(src)
 
@@ -217,7 +247,7 @@ def replace_cell_magics(src: str) -> Tuple[str, List[Replacement]]:
     return f"{mask}\n{cell_magic_finder.cell_magic.body}", replacements
 
 
-def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
+def replace_magics(src: str) -> tuple[str, list[Replacement]]:
     """Replace magics within body of cell.
 
     Note that 'src' will already have been processed by IPython's
@@ -258,7 +288,7 @@ def replace_magics(src: str) -> Tuple[str, List[Replacement]]:
     return "\n".join(new_srcs), replacements
 
 
-def unmask_cell(src: str, replacements: List[Replacement]) -> str:
+def unmask_cell(src: str, replacements: list[Replacement]) -> str:
     """Remove replacements from cell.
 
     For example
@@ -276,6 +306,21 @@ def unmask_cell(src: str, replacements: List[Replacement]) -> str:
     return src
 
 
+def _get_code_start(src: str) -> str:
+    """Provides the first line where the code starts.
+
+    Iterates over lines of code until it finds the first line that doesn't
+    contain only empty spaces and comments. It removes any empty spaces at the
+    start of the line and returns it. If such line doesn't exist, it returns an
+    empty string.
+    """
+    for match in re.finditer(".+", src):
+        line = match.group(0).lstrip()
+        if line and not line.startswith("#"):
+            return line
+    return ""
+
+
 def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
     """Check if attribute is IPython magic.
 
@@ -291,11 +336,11 @@ def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
     )
 
 
-def _get_str_args(args: List[ast.expr]) -> List[str]:
+def _get_str_args(args: list[ast.expr]) -> list[str]:
     str_args = []
     for arg in args:
-        assert isinstance(arg, ast.Str)
-        str_args.append(arg.s)
+        assert isinstance(arg, ast.Constant) and isinstance(arg.value, str)
+        str_args.append(arg.value)
     return str_args
 
 
@@ -375,7 +420,7 @@ class MagicFinder(ast.NodeVisitor):
     """
 
     def __init__(self) -> None:
-        self.magics: Dict[int, List[OffsetAndMagic]] = collections.defaultdict(list)
+        self.magics: dict[int, list[OffsetAndMagic]] = collections.defaultdict(list)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         """Look for system assign magics.

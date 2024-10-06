@@ -16,15 +16,15 @@ fallback token code OP, but the parser needs the actual token code.
 import os
 import pickle
 import tempfile
-from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Optional, TypeVar, Union
 
 # Local imports
 from . import token
 
 _P = TypeVar("_P", bound="Grammar")
-Label = Tuple[int, Optional[str]]
-DFA = List[List[Tuple[int, int]]]
-DFAS = Tuple[DFA, Dict[int, int]]
+Label = tuple[int, Optional[str]]
+DFA = list[list[tuple[int, int]]]
+DFAS = tuple[DFA, dict[int, int]]
 Path = Union[str, "os.PathLike[str]"]
 
 
@@ -83,16 +83,16 @@ class Grammar:
     """
 
     def __init__(self) -> None:
-        self.symbol2number: Dict[str, int] = {}
-        self.number2symbol: Dict[int, str] = {}
-        self.states: List[DFA] = []
-        self.dfas: Dict[int, DFAS] = {}
-        self.labels: List[Label] = [(0, "EMPTY")]
-        self.keywords: Dict[str, int] = {}
-        self.soft_keywords: Dict[str, int] = {}
-        self.tokens: Dict[int, int] = {}
-        self.symbol2label: Dict[str, int] = {}
-        self.version: Tuple[int, int] = (0, 0)
+        self.symbol2number: dict[str, int] = {}
+        self.number2symbol: dict[int, str] = {}
+        self.states: list[DFA] = []
+        self.dfas: dict[int, DFAS] = {}
+        self.labels: list[Label] = [(0, "EMPTY")]
+        self.keywords: dict[str, int] = {}
+        self.soft_keywords: dict[str, int] = {}
+        self.tokens: dict[int, int] = {}
+        self.symbol2label: dict[str, int] = {}
+        self.version: tuple[int, int] = (0, 0)
         self.start = 256
         # Python 3.7+ parses async as a keyword, not an identifier
         self.async_keywords = False
@@ -114,7 +114,7 @@ class Grammar:
             pickle.dump(d, f, pickle.HIGHEST_PROTOCOL)
         os.replace(f.name, filename)
 
-    def _update(self, attrs: Dict[str, Any]) -> None:
+    def _update(self, attrs: dict[str, Any]) -> None:
         for k, v in attrs.items():
             setattr(self, k, v)
 

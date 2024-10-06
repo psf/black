@@ -1,7 +1,7 @@
 """Builds on top of nodes.py to track brackets."""
 
 from dataclasses import dataclass, field
-from typing import Dict, Final, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import Final, Iterable, Optional, Sequence, Union
 
 from black.nodes import (
     BRACKET,
@@ -60,12 +60,12 @@ class BracketTracker:
     """Keeps track of brackets on a line."""
 
     depth: int = 0
-    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = field(default_factory=dict)
-    delimiters: Dict[LeafID, Priority] = field(default_factory=dict)
+    bracket_match: dict[tuple[Depth, NodeType], Leaf] = field(default_factory=dict)
+    delimiters: dict[LeafID, Priority] = field(default_factory=dict)
     previous: Optional[Leaf] = None
-    _for_loop_depths: List[int] = field(default_factory=list)
-    _lambda_argument_depths: List[int] = field(default_factory=list)
-    invisible: List[Leaf] = field(default_factory=list)
+    _for_loop_depths: list[int] = field(default_factory=list)
+    _lambda_argument_depths: list[int] = field(default_factory=list)
+    invisible: list[Leaf] = field(default_factory=list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -353,7 +353,7 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
         return 0
 
 
-def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> Set[LeafID]:
+def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> set[LeafID]:
     """Return leaves that are inside matching brackets.
 
     The input `leaves` can have non-matching brackets at the head or tail parts.

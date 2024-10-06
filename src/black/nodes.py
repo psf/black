@@ -3,18 +3,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import (
-    Final,
-    Generic,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Final, Generic, Iterator, Literal, Optional, TypeVar, Union
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
@@ -254,9 +243,15 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
         elif (
             prevp.type == token.STAR
             and parent_type(prevp) == syms.star_expr
-            and parent_type(prevp.parent) == syms.subscriptlist
+            and (
+                parent_type(prevp.parent) == syms.subscriptlist
+                or (
+                    Preview.pep646_typed_star_arg_type_var_tuple in mode
+                    and parent_type(prevp.parent) == syms.tname_star
+                )
+            )
         ):
-            # No space between typevar tuples.
+            # No space between typevar tuples or unpacking them.
             return NO
 
         elif prevp.type in VARARGS_SPECIALS:
@@ -456,7 +451,7 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     return None
 
 
-def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> bool:
+def prev_siblings_are(node: Optional[LN], tokens: list[Optional[NodeType]]) -> bool:
     """Return if the `node` and its previous siblings match types against the provided
     list of tokens; the provided `node`has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
@@ -628,8 +623,8 @@ def is_tuple_containing_walrus(node: LN) -> bool:
 def is_one_sequence_between(
     opening: Leaf,
     closing: Leaf,
-    leaves: List[Leaf],
-    brackets: Tuple[int, int] = (token.LPAR, token.RPAR),
+    leaves: list[Leaf],
+    brackets: tuple[int, int] = (token.LPAR, token.RPAR),
 ) -> bool:
     """Return True if content between `opening` and `closing` is a one-sequence."""
     if (opening.type, closing.type) != brackets:
@@ -739,7 +734,7 @@ def is_yield(node: LN) -> bool:
     return False
 
 
-def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
+def is_vararg(leaf: Leaf, within: set[NodeType]) -> bool:
     """Return True if `leaf` is a star or double star in a vararg or kwarg.
 
     If `within` includes VARARGS_PARENTS, this applies to function signatures.
@@ -1006,6 +1001,7 @@ def get_annotation_type(leaf: Leaf) -> Literal["return", "param", None]:
 
 def is_part_of_annotation(leaf: Leaf) -> bool:
     """Returns whether this leaf is part of a type annotation."""
+    assert leaf.parent is not None
     return get_annotation_type(leaf) is not None
 
 
