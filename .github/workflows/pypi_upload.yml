@@ -90,7 +90,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: pypa/cibuildwheel@v2.20.0
+      - uses: pypa/cibuildwheel@v2.21.2
         with:
           only: ${{ matrix.only }}
 
