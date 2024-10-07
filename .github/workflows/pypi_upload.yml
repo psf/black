@@ -47,9 +47,10 @@ jobs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@v4
+      # Keep cibuildwheel version in sync with below
       - name: Install cibuildwheel and pypyp
         run: |
-          pipx install cibuildwheel==2.20.0
+          pipx install cibuildwheel==2.21.2
           pipx install pypyp==1
       - name: generate matrix
         if: github.event_name != 'pull_request'
@@ -74,7 +75,7 @@ jobs:
             | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
           } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
-          CIBW_BUILD: "cp39-* cp312-*"
+          CIBW_BUILD: "cp39-* cp313-*"
           CIBW_ARCHS_LINUX: x86_64
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
@@ -90,7 +91,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: pypa/cibuildwheel@v2.20.0
+      # Keep cibuildwheel version in sync with above
+      - uses: pypa/cibuildwheel@v2.21.2
         with:
           only: ${{ matrix.only }}
 
