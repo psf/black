@@ -1,15 +1,11 @@
 # Change Log
 
-## Unreleased
+## 24.10.0
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
-
-- Black is now officially tested with Python 3.13. Note that Black does not yet provide
-  mypyc-compiled wheels for Python 3.13, so performance may be slower than on other
-  versions of Python. We will provide 3.13 mypyc-compiled wheels in a future release.
-  (#4436)
+- Black is now officially tested with Python 3.13 and provides Python 3.13
+  mypyc-compiled wheels. (#4436) (#4449)
 - Black will issue an error when used with Python 3.12.5, due to an upstream memory
   safety issue in Python 3.12.5 that can cause Black's AST safety checks to fail. Please
   use Python 3.12.6 or Python 3.12.4 instead. (#4447)
@@ -17,15 +13,11 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Fix crashes involving comments in parenthesised return types or `X | Y` style unions.
   (#4453)
 - Fix skipping Jupyter cells with unknown `%%` magic (#4462)
 
 ### Preview style
-
-<!-- Changes that affect Black's preview style -->
 
 - Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
   fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
@@ -35,44 +27,15 @@
 
 - Fix bug where the cache was shared between runs with and without `--unstable` (#4466)
 
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-- Upgrade version of mypyc used to 1.11.2 (#4450)
+- Upgrade version of mypyc used to 1.12 beta (#4450) (#4449)
 - `blackd` now requires a newer version of aiohttp. (#4451)
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
-
 - Added Python target version information on parse error (#4378)
 - Add information about Black version to internal error messages (#4457)
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.8.0
 
