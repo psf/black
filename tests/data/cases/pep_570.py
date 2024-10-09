@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.8
 def positional_only_arg(a, /):
     pass
 

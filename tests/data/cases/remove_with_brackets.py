@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.9
 with (open("bla.txt")):
     pass
 

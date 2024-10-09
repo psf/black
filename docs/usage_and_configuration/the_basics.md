@@ -70,17 +70,17 @@ See also [the style documentation](labels/line-length).
 
 Python versions that should be supported by Black's output. You can run `black --help`
 and look for the `--target-version` option to see the full list of supported versions.
-You should include all versions that your code supports. If you support Python 3.8
-through 3.11, you should write:
+You should include all versions that your code supports. If you support Python 3.11
+through 3.13, you should write:
 
 ```console
-$ black -t py38 -t py39 -t py310 -t py311
+$ black -t py311 -t py312 -t py313
 ```
 
 In a [configuration file](#configuration-via-a-file), you can write:
 
 ```toml
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py311", "py312", "py313"]
 ```
 
 By default, Black will infer target versions from the project metadata in
