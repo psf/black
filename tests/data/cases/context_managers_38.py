@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.8
 with \
      make_context_manager1() as cm1, \
      make_context_manager2() as cm2, \
