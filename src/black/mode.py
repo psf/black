@@ -210,6 +210,9 @@ class Preview(Enum):
     docstring_check_for_newline = auto()
     remove_redundant_guard_parens = auto()
     parens_for_long_if_clauses_in_case_block = auto()
+    # NOTE: remove_lone_list_item_parens requires
+    # hug_parens_with_braces_and_square_brackets to remove parens in some cases
+    remove_lone_list_item_parens = auto()
     pep646_typed_star_arg_type_var_tuple = auto()
 
 
