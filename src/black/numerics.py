@@ -9,7 +9,7 @@ def format_hex(text: str) -> str:
     """
     Formats a hexadecimal string like "0x12B3"
     """
-   
+
     return text[:2] + text[2:].upper()
 
 def format_scientific_notation(text: str) -> str:
