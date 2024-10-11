@@ -1,5 +1,12 @@
 # Change Log
 
+# Unreleased
+
+### Packaging
+
+- Store license identifier inside the `License-Expression` metadata field, see
+  [PEP 639](https://peps.python.org/pep-0639/). (#4479)
+
 ## 24.10.0
 
 ### Highlights
