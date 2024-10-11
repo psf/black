@@ -2,10 +2,53 @@
 
 ## Unreleased
 
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Stable style
+
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
 ### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Store license identifier inside the `License-Expression` metadata field, see
   [PEP 639](https://peps.python.org/pep-0639/). (#4479)
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
 
 ## 24.10.0
 
