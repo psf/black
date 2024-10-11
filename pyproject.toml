@@ -33,7 +33,7 @@ build-backend = "hatchling.build"
 [project]
 name = "black"
 description = "The uncompromising code formatter."
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.9"
 authors = [
   { name = "Łukasz Langa", email = "lukasz@langa.pl" },

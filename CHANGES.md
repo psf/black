@@ -22,6 +22,9 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Store license identifier inside the `License-Expression` metadata field, see
+  [PEP 639](https://peps.python.org/pep-0639/). (#4479)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
