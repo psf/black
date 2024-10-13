@@ -517,9 +517,9 @@ class LineGenerator(Visitor[Line]):
                 break
         total_len = len("".join([c.value for c in node.leaves()]))
         if (
-                len(node.children) > 0
-                and is_all_fstring
-                and total_len < self.mode.line_length
+            len(node.children) > 0
+            and is_all_fstring
+            and total_len < self.mode.line_length
         ):
             new_node = Node(syms.fstring, [])
             # remove all FSTRING_START but first and all FSTRING_END but last
@@ -530,8 +530,7 @@ class LineGenerator(Visitor[Line]):
                 if (
                     not (gc.type == token.FSTRING_START and i != 0)
                     and not (
-                        gc.type == token.FSTRING_END
-                        and i != len(node.children) - 1
+                        gc.type == token.FSTRING_END and i != len(node.children) - 1
                     )
                 )
             ]
