@@ -10,7 +10,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Combine multiple f-strings into a single f-string when appropriate
+- Combine multiple f-strings into a single f-string when appropriate (#4480)
 
 ### Preview style
 
