@@ -506,6 +506,42 @@ class LineGenerator(Visitor[Line]):
         normalize_numeric_literal(leaf)
         yield from self.visit_default(leaf)
 
+    def visit_atom(self, node: Node) -> Iterator[Line]:
+        # Addressing https://github.com/psf/black/issues/4389
+        # turn an atom with only f-strings into a single f-string
+        # but only if doing so won't go over the line limit
+        is_all_fstring = True
+        for c in node.children:
+            if c.type != syms.fstring:
+                is_all_fstring = False
+                break
+        total_len = len("".join([c.value for c in node.leaves()]))
+        if (
+                len(node.children) > 0
+                and is_all_fstring
+                and total_len < self.mode.line_length
+        ):
+            new_node = Node(syms.fstring, [])
+            # remove all FSTRING_START but first and all FSTRING_END but last
+            new_children = [
+                gc
+                for i, c in enumerate(node.children)
+                for gc in c.children
+                if (
+                    not (gc.type == token.FSTRING_START and i != 0)
+                    and not (
+                        gc.type == token.FSTRING_END
+                        and i != len(node.children) - 1
+                    )
+                )
+            ]
+            for c in new_children:
+                new_node.append_child(c)
+            node.replace(new_node)
+            yield from self.visit_fstring(new_node)
+        else:
+            yield from self.visit_default(node)
+
     def visit_fstring(self, node: Node) -> Iterator[Line]:
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_to_string(node)

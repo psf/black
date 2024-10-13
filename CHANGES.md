@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Combine multiple f-strings into a single f-string when appropriate
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
