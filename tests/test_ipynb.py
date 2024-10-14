@@ -174,6 +174,22 @@ def test_cell_magic_with_magic() -> None:
 
 
 @pytest.mark.parametrize(
+    "src, expected",
+    (
+        ("\n\n\n%time \n\n", "%time"),
+        ("  \n\t\n%%timeit -n4 \t \nx=2  \n\r\n", "%%timeit -n4\nx = 2"),
+        (
+            "  \t\n\n%%capture \nx=2 \n%config \n\n%env\n\t  \n \n\n",
+            "%%capture\nx = 2\n%config\n\n%env",
+        ),
+    ),
+)
+def test_cell_magic_with_empty_lines(src: str, expected: str) -> None:
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    assert result == expected
+
+
+@pytest.mark.parametrize(
     "mode, expected_output, expectation",
     [
         pytest.param(

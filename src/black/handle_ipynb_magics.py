@@ -178,12 +178,14 @@ def mask_cell(src: str) -> tuple[str, list[Replacement]]:
     from IPython.core.inputtransformer2 import TransformerManager
 
     transformer_manager = TransformerManager()
+    # A side effect of the following transformation is that it also removes any
+    # empty lines at the beginning of the cell.
     transformed = transformer_manager.transform_cell(src)
     transformed, cell_magic_replacements = replace_cell_magics(transformed)
     replacements += cell_magic_replacements
     transformed = transformer_manager.transform_cell(transformed)
     transformed, magic_replacements = replace_magics(transformed)
-    if len(transformed.splitlines()) != len(src.splitlines()):
+    if len(transformed.strip().splitlines()) != len(src.strip().splitlines()):
         # Multi-line magic, not supported.
         raise NothingChanged
     replacements += magic_replacements
@@ -269,7 +271,7 @@ def replace_magics(src: str) -> tuple[str, list[Replacement]]:
     magic_finder = MagicFinder()
     magic_finder.visit(ast.parse(src))
     new_srcs = []
-    for i, line in enumerate(src.splitlines(), start=1):
+    for i, line in enumerate(src.split("\n"), start=1):
         if i in magic_finder.magics:
             offsets_and_magics = magic_finder.magics[i]
             if len(offsets_and_magics) != 1:  # pragma: nocover
