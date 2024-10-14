@@ -18,7 +18,7 @@ import itertools
 import logging
 import re
 from functools import lru_cache
-from typing import TYPE_CHECKING, FrozenSet
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -46,8 +46,8 @@ if TYPE_CHECKING:
     from _pytest.nodes import Node
 
 
-ALL_POSSIBLE_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
-ENABLED_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
+ALL_POSSIBLE_OPTIONAL_MARKERS = StashKey[frozenset[str]]()
+ENABLED_OPTIONAL_MARKERS = StashKey[frozenset[str]]()
 
 
 def pytest_addoption(parser: "Parser") -> None:
@@ -120,7 +120,7 @@ def pytest_collection_modifyitems(config: "Config", items: "list[Node]") -> None
 
 
 @lru_cache
-def skip_mark(tests: FrozenSet[str]) -> "MarkDecorator":
+def skip_mark(tests: frozenset[str]) -> "MarkDecorator":
     names = ", ".join(sorted(tests))
     return pytest.mark.skip(reason=f"Marked with disabled optional tests ({names})")
 
