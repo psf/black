@@ -7,7 +7,7 @@ Test that the docs are up to date.
 import re
 from itertools import islice
 from pathlib import Path
-from typing import Optional, Sequence, Set
+from typing import Optional, Sequence
 
 import pytest
 
@@ -17,7 +17,7 @@ DOCS_PATH = Path("docs/the_black_code_style/future_style.md")
 
 
 def check_feature_list(
-    lines: Sequence[str], expected_feature_names: Set[str], label: str
+    lines: Sequence[str], expected_feature_names: set[str], label: str
 ) -> Optional[str]:
     start_index = lines.index(f"(labels/{label}-features)=\n")
     if start_index == -1:
