@@ -17,15 +17,7 @@ from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
-from typing import (
-    Any,
-    Callable,
-    Iterator,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Iterator, Optional, Sequence, TypeVar, Union
 from unittest.mock import MagicMock, patch
 
 import click
