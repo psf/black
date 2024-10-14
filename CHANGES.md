@@ -10,6 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix formatting cells in IPython notebooks with magic methods and starting or trailing
+  empty lines (#4484)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
