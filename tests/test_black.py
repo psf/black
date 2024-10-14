@@ -17,19 +17,7 @@ from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Iterator, Optional, Sequence, TypeVar, Union
 from unittest.mock import MagicMock, patch
 
 import click
@@ -107,11 +95,11 @@ class FakeContext(click.Context):
     """A fake click Context for when calling functions that need it."""
 
     def __init__(self) -> None:
-        self.default_map: Dict[str, Any] = {}
-        self.params: Dict[str, Any] = {}
+        self.default_map: dict[str, Any] = {}
+        self.params: dict[str, Any] = {}
         self.command: click.Command = black.main
         # Dummy root, since most of the tests don't care about it
-        self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
+        self.obj: dict[str, Any] = {"root": PROJECT_ROOT}
 
 
 class FakeParameter(click.Parameter):
@@ -129,7 +117,7 @@ class BlackRunner(CliRunner):
 
 
 def invokeBlack(
-    args: List[str], exit_code: int = 0, ignore_config: bool = True
+    args: list[str], exit_code: int = 0, ignore_config: bool = True
 ) -> None:
     runner = BlackRunner()
     if ignore_config:
@@ -933,7 +921,7 @@ class BlackTestCase(BlackBaseTestCase):
             "with ((a, ((b as c)))): pass", {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         )
 
-    def check_features_used(self, source: str, expected: Set[Feature]) -> None:
+    def check_features_used(self, source: str, expected: set[Feature]) -> None:
         node = black.lib2to3_parse(source)
         actual = black.get_features_used(node)
         msg = f"Expected {expected} but got {actual} for {source!r}"
@@ -1365,7 +1353,7 @@ class BlackTestCase(BlackBaseTestCase):
         ]
 
         def _new_wrapper(
-            output: io.StringIO, io_TextIOWrapper: Type[io.TextIOWrapper]
+            output: io.StringIO, io_TextIOWrapper: type[io.TextIOWrapper]
         ) -> Callable[[Any, Any], io.TextIOWrapper]:
             def get_output(*args: Any, **kwargs: Any) -> io.TextIOWrapper:
                 if args == (sys.stdout.buffer,):
@@ -2350,7 +2338,7 @@ class TestCaching:
     def test_cache_key(self) -> None:
         # Test that all members of the mode enum affect the cache key.
         for field in fields(Mode):
-            values: List[Any]
+            values: list[Any]
             if field.name == "target_versions":
                 values = [
                     {TargetVersion.PY312},
@@ -2463,7 +2451,7 @@ class TestFileCollection:
         gitignore = PathSpec.from_lines(
             "gitwildmatch", ["exclude/", ".definitely_exclude"]
         )
-        sources: List[Path] = []
+        sources: list[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
@@ -2491,7 +2479,7 @@ class TestFileCollection:
         exclude = re.compile(r"")
         root_gitignore = black.files.get_gitignore(path)
         report = black.Report()
-        expected: List[Path] = [
+        expected: list[Path] = [
             Path(path / "x.py"),
             Path(path / "root/b.py"),
             Path(path / "root/c.py"),

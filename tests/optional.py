@@ -18,7 +18,7 @@ import itertools
 import logging
 import re
 from functools import lru_cache
-from typing import TYPE_CHECKING, FrozenSet, List, Set
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -46,8 +46,8 @@ if TYPE_CHECKING:
     from _pytest.nodes import Node
 
 
-ALL_POSSIBLE_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
-ENABLED_OPTIONAL_MARKERS = StashKey[FrozenSet[str]]()
+ALL_POSSIBLE_OPTIONAL_MARKERS = StashKey[frozenset[str]]()
+ENABLED_OPTIONAL_MARKERS = StashKey[frozenset[str]]()
 
 
 def pytest_addoption(parser: "Parser") -> None:
@@ -69,7 +69,7 @@ def pytest_configure(config: "Config") -> None:
     """
     ot_ini = config.inicfg.get("optional-tests") or []
     ot_markers = set()
-    ot_run: Set[str] = set()
+    ot_run: set[str] = set()
     if isinstance(ot_ini, str):
         ot_ini = ot_ini.strip().split("\n")
     marker_re = re.compile(r"^\s*(?P<no>no_)?(?P<marker>\w+)(:\s*(?P<description>.*))?")
@@ -103,7 +103,7 @@ def pytest_configure(config: "Config") -> None:
     store[ENABLED_OPTIONAL_MARKERS] = frozenset(ot_run)
 
 
-def pytest_collection_modifyitems(config: "Config", items: "List[Node]") -> None:
+def pytest_collection_modifyitems(config: "Config", items: "list[Node]") -> None:
     store = config._store
     all_possible_optional_markers = store[ALL_POSSIBLE_OPTIONAL_MARKERS]
     enabled_optional_markers = store[ENABLED_OPTIONAL_MARKERS]
@@ -120,7 +120,7 @@ def pytest_collection_modifyitems(config: "Config", items: "List[Node]") -> None
 
 
 @lru_cache
-def skip_mark(tests: FrozenSet[str]) -> "MarkDecorator":
+def skip_mark(tests: frozenset[str]) -> "MarkDecorator":
     names = ", ".join(sorted(tests))
     return pytest.mark.skip(reason=f"Marked with disabled optional tests ({names})")
 
