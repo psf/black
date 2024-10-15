@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from dataclasses import replace
-from typing import Any, Iterator
+from typing import Any
 from unittest.mock import patch
 
 import pytest

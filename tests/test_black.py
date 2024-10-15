@@ -10,6 +10,7 @@ import re
 import sys
 import textwrap
 import types
+from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import fields, replace
@@ -17,7 +18,7 @@ from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
-from typing import Any, Callable, Iterator, Optional, Sequence, TypeVar, Union
+from typing import Any, Optional, TypeVar, Union
 from unittest.mock import MagicMock, patch
 
 import click
