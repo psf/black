@@ -13,6 +13,13 @@ def f():
 with long_context_manager_name1(), long_context_manager_name2(), long_context_manager_name3():
     ...
 
+with (
+    long_context_manager_name1(),
+    long_context_manager_name2(),
+    long_context_manager_name3(),
+):
+    ...
+
 # output
 
 @relaxed_decorator[0]
@@ -32,4 +39,12 @@ def f(): ...
 
 
 with long_context_manager_name1(), long_context_manager_name2(), long_context_manager_name3():
+    ...
+
+
+with (
+    long_context_manager_name1(),
+    long_context_manager_name2(),
+    long_context_manager_name3(),
+):
     ...
