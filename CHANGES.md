@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Collapse multiple lines into 1 after import (#4488)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
