@@ -1,7 +1,5 @@
 """Test the black.ranges module."""
 
-from typing import List, Tuple
-
 import pytest
 
 from black.ranges import adjusted_lines, sanitized_lines
@@ -11,7 +9,7 @@ from black.ranges import adjusted_lines, sanitized_lines
     "lines",
     [[(1, 1)], [(1, 3)], [(1, 1), (3, 4)]],
 )
-def test_no_diff(lines: List[Tuple[int, int]]) -> None:
+def test_no_diff(lines: list[tuple[int, int]]) -> None:
     source = """\
 import re
 
@@ -32,7 +30,7 @@ pass
         [(0, 8), (3, 1)],
     ],
 )
-def test_invalid_lines(lines: List[Tuple[int, int]]) -> None:
+def test_invalid_lines(lines: list[tuple[int, int]]) -> None:
     original_source = """\
 import re
 def foo(arg):
@@ -83,7 +81,7 @@ pass
     ],
 )
 def test_removals(
-    lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]
+    lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]
 ) -> None:
     original_source = """\
 1. first line
@@ -118,7 +116,7 @@ def test_removals(
     ],
 )
 def test_additions(
-    lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]
+    lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]
 ) -> None:
     original_source = """\
 1. first line
@@ -154,7 +152,7 @@ this is added
         ([(9, 10), (1, 1)], [(1, 1), (9, 9)]),
     ],
 )
-def test_diffs(lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]) -> None:
+def test_diffs(lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]) -> None:
     original_source = """\
  1. import re
  2. def foo(arg):
@@ -231,7 +229,7 @@ def test_diffs(lines: List[Tuple[int, int]], adjusted: List[Tuple[int, int]]) ->
     ],
 )
 def test_sanitize(
-    lines: List[Tuple[int, int]], sanitized: List[Tuple[int, int]]
+    lines: list[tuple[int, int]], sanitized: list[tuple[int, int]]
 ) -> None:
     source = """\
 1. import re

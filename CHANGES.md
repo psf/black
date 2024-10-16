@@ -11,6 +11,8 @@
 <!-- Changes that affect Black's stable style -->
 
 - Collapse multiple lines into 1 after import (#4488)
+- Fix formatting cells in IPython notebooks with magic methods and starting or trailing
+  empty lines (#4484)
 
 ### Preview style
 
