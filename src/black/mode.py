@@ -109,7 +109,6 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
-        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,

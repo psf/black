@@ -10,6 +10,9 @@ def f():
 def f():
     ...
 
+with long_context_manager_name1(), long_context_manager_name2(), long_context_manager_name3():
+    ...
+
 # output
 
 @relaxed_decorator[0]
@@ -26,3 +29,7 @@ def f(): ...
     with_long="arguments_value_that_wont_fit_at_the_end_of_the_line"
 )
 def f(): ...
+
+
+with long_context_manager_name1(), long_context_manager_name2(), long_context_manager_name3():
+    ...
