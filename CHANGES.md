@@ -12,6 +12,8 @@
 
 - Fix formatting cells in IPython notebooks with magic methods and starting or trailing
   empty lines (#4484)
+- Stop parenthesizing context managers on Python 3.9. Python 3.10+ is unaffected.
+  (#4488)
 
 ### Preview style
 
