@@ -3,7 +3,7 @@
 Glued together by [Łukasz Langa](mailto:lukasz@langa.pl).
 
 Maintained with:
-
+_ [David okeamah](mailto:whitneykiss741@gmail.com)
 - [Carol Willing](mailto:carolcode@willingconsulting.com)
 - [Carl Meyer](mailto:carl@oddbird.net)
 - [Jelle Zijlstra](mailto:jelle.zijlstra@gmail.com)
