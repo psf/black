@@ -806,7 +806,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
                 - The string group consists of raw strings.
-                - The string group would merge f-strings with different quote tyes.
+                - The string group would merge f-strings with different quote types.
                 - The string group is stringified type annotations. We don't want to
                   process stringified type annotations since pyright doesn't support
                   them spanning multiple string values. (NOTE: mypy, pytype, pyre do
