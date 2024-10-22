@@ -1,0 +1,53 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Python application
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      run: |
+        pytest
+            - name: Algorithmia test-algo
+  # You may pin to the exact commit or the version.
+  # uses: algorithmiaio/test-algo-action@cbfe0b98066531ff84d2a367c733a25e09ab7b8d
+  uses: algorithmiaio/test-algo-action@v0.1.1-rc6
+  with:
+    # your typical Algorithmia API key
+    regular_api_key: 
+    # The API address for the Algorithmia Cluster you wish to connect to
+    api_address: # optional, default is https://api.algorithmia.com
+    # The name of the Algorithm you want to test
+    algorithm_name: 
+    # A list of Json Case objects that describe the desired test cases
+    cases: 
+          
