@@ -132,10 +132,11 @@ foo(
 
 _Black_ will split long string literals and merge short ones. Parentheses are used where
 appropriate. When split, parts of f-strings that don't need formatting are converted to
-plain strings. User-made splits are respected when they do not exceed the line length
-limit. Line continuation backslashes are converted into parenthesized strings.
-Unnecessary parentheses are stripped. The stability and status of this feature is
-tracked in [this issue](https://github.com/psf/black/issues/2188).
+plain strings. f-strings will not be merged if it would change their quotation mark
+style. User-made splits are respected when they do not exceed the line length limit.
+Line continuation backslashes are converted into parenthesized strings. Unnecessary
+parentheses are stripped. The stability and status of this feature istracked in
+[this issue](https://github.com/psf/black/issues/2188).
 
 (labels/wrap-long-dict-values)=
 

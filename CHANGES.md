@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix/remove string merging changing f-string quotes (#4498)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
