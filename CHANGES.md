@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Collapse multiple lines into 1 after import (#4489)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

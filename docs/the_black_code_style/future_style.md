@@ -38,6 +38,8 @@ Currently, the following features are included in the preview style:
   blocks when the line is too long
 - `pep646_typed_star_arg_type_var_tuple`: fix type annotation spacing between * and more
   complex type variable tuple (i.e. `def fn(*args: *tuple[*Ts, T]) -> None: pass`)
+- `always_one_newline_after_import`: Always force one newline after import statements
+  except for when the line after the import is a comment or an import statement
 
 (labels/unstable-features)=
 
