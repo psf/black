@@ -74,6 +74,7 @@
 
 - Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
   fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
+- Remove parenthesis around sole list items (#4312)
 
 ### Caching
 
