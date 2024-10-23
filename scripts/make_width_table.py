@@ -17,8 +17,8 @@ You can do this by running:
 """
 
 import sys
+from collections.abc import Iterable
 from os.path import basename, dirname, join
-from typing import Iterable
 
 import wcwidth  # type: ignore[import-not-found]
 
