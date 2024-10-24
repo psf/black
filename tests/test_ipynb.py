@@ -1,9 +1,9 @@
 import contextlib
 import pathlib
 import re
+from contextlib import AbstractContextManager
 from contextlib import ExitStack as does_not_raise
 from dataclasses import replace
-from typing import ContextManager
 
 import pytest
 from _pytest.monkeypatch import MonkeyPatch
@@ -213,7 +213,7 @@ def test_cell_magic_with_empty_lines(src: str, expected: str) -> None:
     ],
 )
 def test_cell_magic_with_custom_python_magic(
-    mode: Mode, expected_output: str, expectation: ContextManager[object]
+    mode: Mode, expected_output: str, expectation: AbstractContextManager[object]
 ) -> None:
     with expectation:
         result = format_cell(

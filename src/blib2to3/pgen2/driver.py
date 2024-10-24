@@ -21,10 +21,11 @@ import logging
 import os
 import pkgutil
 import sys
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import IO, Any, Iterable, Iterator, Optional, Union, cast
+from typing import IO, Any, Optional, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.tokenize import GoodTokenInfo

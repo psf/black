@@ -4,11 +4,12 @@ import os
 import shlex
 import sys
 import unittest
+from collections.abc import Collection, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Collection, Iterator, Optional
+from typing import Any, Optional
 
 import black
 from black.const import DEFAULT_LINE_LENGTH

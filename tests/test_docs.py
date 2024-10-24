@@ -5,9 +5,10 @@ Test that the docs are up to date.
 """
 
 import re
+from collections.abc import Sequence
 from itertools import islice
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 import pytest
 
