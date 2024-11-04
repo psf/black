@@ -1,7 +1,8 @@
 import re
+from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Collection, Final, Iterator, Optional, Union
+from typing import Final, Optional, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (

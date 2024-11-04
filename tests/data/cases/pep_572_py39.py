@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.9
 # Unparenthesized walruses are now allowed in set literals & set comprehensions
 # since Python 3.9
 {x := 1, 2, 3}

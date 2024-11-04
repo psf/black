@@ -4,10 +4,11 @@ Generating lines of code.
 
 import re
 import sys
+from collections.abc import Collection, Iterator
 from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
-from typing import Collection, Iterator, Optional, Union, cast
+from typing import Optional, Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
