@@ -55,7 +55,7 @@ Further examples of invoking the tests
 # Run tests on a specific python version
 (.venv)$ tox -e py39
 
-# Run an individial test
+# Run an individual test
 (.venv)$ pytest -k <test name>
 
 # Pass arguments to pytest
