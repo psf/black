@@ -4,7 +4,6 @@
 """Safely evaluate Python string literals without using eval()."""
 
 import re
-from typing import Match
 
 simple_escapes: dict[str, str] = {
     "a": "\a",
@@ -20,7 +19,7 @@ simple_escapes: dict[str, str] = {
 }
 
 
-def escape(m: Match[str]) -> str:
+def escape(m: re.Match[str]) -> str:
     all, tail = m.group(0, 1)
     assert all.startswith("\\")
     esc = simple_escapes.get(tail)

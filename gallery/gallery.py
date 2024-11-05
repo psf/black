@@ -7,10 +7,11 @@ import traceback
 import venv
 import zipfile
 from argparse import ArgumentParser, Namespace
+from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Generator, NamedTuple, Optional, Union, cast
+from typing import NamedTuple, Optional, Union, cast
 from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"

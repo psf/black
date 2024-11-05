@@ -1,18 +1,11 @@
 import io
 import os
 import sys
+from collections.abc import Iterable, Iterator, Sequence
 from functools import lru_cache
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Iterable,
-    Iterator,
-    Optional,
-    Pattern,
-    Sequence,
-    Union,
-)
+from re import Pattern
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from mypy_extensions import mypyc_attr
 from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
