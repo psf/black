@@ -17,7 +17,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix/remove string merging changing f-string quotes (#4498)
+- Fix/remove string merging changing f-string quotes on f-strings with internal quotes
+  (#4498)
 
 ### Configuration
 

@@ -806,7 +806,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
                 - The string group consists of raw strings.
-                - The string group would merge f-strings with different quote types.
+                - The string group would merge f-strings with different quote types
+                  and internal quotes.
                 - The string group is stringified type annotations. We don't want to
                   process stringified type annotations since pyright doesn't support
                   them spanning multiple string values. (NOTE: mypy, pytype, pyre do
@@ -857,9 +858,17 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             set_of_prefixes.add(prefix)
 
-            if "f" in prefix and leaf.value[-1] != QUOTE:
+            if (
+                "f" in prefix
+                and leaf.value[-1] != QUOTE
+                and (
+                    "'" in leaf.value[len(prefix) + 1 : -1]
+                    or '"' in leaf.value[len(prefix) + 1 : -1]
+                )
+            ):
                 return TErr(
-                    "StringMerger does NOT merge f-strings with different quote types."
+                    "StringMerger does NOT merge f-strings with different quote types"
+                    "and internal quotes."
                 )
 
             if id(leaf) in line.comments:
