@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove parentheses around sole list items (#4312)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
@@ -74,7 +76,6 @@
 
 - Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
   fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
-- Remove parenthesis around sole list items (#4312)
 
 ### Caching
 
