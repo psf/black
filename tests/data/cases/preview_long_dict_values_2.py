@@ -34,6 +34,7 @@ tasks = {
     for src in sources
 }
 tasks = {key_name: foobar for src in sources}
+tasks = {get_key_name(src,): "foo" for src in sources}
 tasks = {get_key_name(foo, bar, baz,): src for src in sources}
 tasks = {
     get_key_name(): xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
@@ -61,6 +62,11 @@ def foo():
             "foobar": (
                 123 + 456
             ),
+        }
+        x = {
+            "foobar": (
+                123
+            ) + 456,
         }
 
 
@@ -97,7 +103,7 @@ tasks = {
     loop.run_in_executor(): src,
     loop.run_in_executor(xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx): src,
     loop.run_in_executor(
-        xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxx
+        xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxx,
     ): src,
     loop.run_in_executor(): (
         xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
@@ -112,6 +118,12 @@ tasks = {
     for src in sources
 }
 tasks = {key_name: foobar for src in sources}
+tasks = {
+    get_key_name(
+        src,
+    ): "foo"
+    for src in sources
+}
 tasks = {
     get_key_name(
         foo,
@@ -144,4 +156,7 @@ def foo():
         }
         x = {
             "foobar": 123 + 456,
+        }
+        x = {
+            "foobar": (123) + 456,
         }
