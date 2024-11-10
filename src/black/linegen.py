@@ -1659,6 +1659,7 @@ def maybe_make_parens_invisible_in_atom(
             if first.prefix.strip():
                 # Preserve comments before first paren
                 middle.prefix = first.prefix + middle.prefix
+                first.prefix = ""
             last.value = ""
         maybe_make_parens_invisible_in_atom(
             middle,
