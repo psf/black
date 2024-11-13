@@ -5,9 +5,10 @@ import os
 import pickle
 import sys
 import tempfile
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, NamedTuple
+from typing import NamedTuple
 
 from platformdirs import user_cache_dir
 

@@ -7,7 +7,14 @@ An overview on contributing to the _Black_ project.
 Development on the latest version of Python is preferred. You can use any operating
 system.
 
-Install development dependencies inside a virtual environment of your choice, for
+First clone the _Black_ repository:
+
+```console
+$ git clone https://github.com/psf/black.git
+$ cd black
+```
+
+Then install development dependencies inside a virtual environment of your choice, for
 example:
 
 ```console
@@ -48,13 +55,16 @@ Further examples of invoking the tests
 # Run tests on a specific python version
 (.venv)$ tox -e py39
 
-# pass arguments to pytest
+# Run an individual test
+(.venv)$ pytest -k <test name>
+
+# Pass arguments to pytest
 (.venv)$ tox -e py -- --no-cov
 
-# print full tree diff, see documentation below
+# Print full tree diff, see documentation below
 (.venv)$ tox -e py -- --print-full-tree
 
-# disable diff printing, see documentation below
+# Disable diff printing, see documentation below
 (.venv)$ tox -e py -- --print-tree-diff=False
 ```
 
@@ -99,16 +109,22 @@ default. To turn it off pass `--print-tree-diff=False`.
 `Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
 you feel this PR does not require a changelog entry please state that in a comment and a
 maintainer can add a `skip news` label to make the CI pass. Otherwise, please ensure you
-have a line in the following format:
+have a line in the following format added below the appropriate header:
 
 ```md
 - `Black` is now more awesome (#X)
 ```
 
+<!---
+The Next PR Number link uses HTML because of a bug in MyST-Parser that double-escapes the ampersand, causing the query parameters to not be processed.
+MyST-Parser issue: https://github.com/executablebooks/MyST-Parser/issues/760
+MyST-Parser stalled fix PR: https://github.com/executablebooks/MyST-Parser/pull/929
+-->
+
 Note that X should be your PR number, not issue number! To workout X, please use
-[Next PR Number](https://ichard26.github.io/next-pr-number/?owner=psf&name=black). This
-is not perfect but saves a lot of release overhead as now the releaser does not need to
-go back and workout what to add to the `CHANGES.md` for each release.
+<a href="https://ichard26.github.io/next-pr-number/?owner=psf&name=black">Next PR
+Number</a>. This is not perfect but saves a lot of release overhead as now the releaser
+does not need to go back and workout what to add to the `CHANGES.md` for each release.
 
 ### Style Changes
 
@@ -116,7 +132,7 @@ If a change would affect the advertised code style, please modify the documentat
 _Black_ code style) to reflect that change. Patches that fix unintended bugs in
 formatting don't need to be mentioned separately though. If the change is implemented
 with the `--preview` flag, please include the change in the future style document
-instead and write the changelog entry under a dedicated "Preview changes" heading.
+instead and write the changelog entry under the dedicated "Preview style" heading.
 
 ### Docs Testing
 
@@ -124,17 +140,17 @@ If you make changes to docs, you can test they still build locally too.
 
 ```console
 (.venv)$ pip install -r docs/requirements.txt
-(.venv)$ pip install -e .[d]
+(.venv)$ pip install -e ".[d]"
 (.venv)$ sphinx-build -a -b html -W docs/ docs/_build/
 ```
 
 ## Hygiene
 
 If you're fixing a bug, add a test. Run it first to confirm it fails, then fix the bug,
-run it again to confirm it's really fixed.
+and run the test again to confirm it's really fixed.
 
-If adding a new feature, add a test. In fact, always add a test. But wait, before adding
-any large feature, first open an issue for us to discuss the idea first.
+If adding a new feature, add a test. In fact, always add a test. If adding a large
+feature, please first open an issue to discuss it beforehand.
 
 ## Finally
 

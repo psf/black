@@ -1,7 +1,8 @@
 """Builds on top of nodes.py to track brackets."""
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Final, Iterable, Optional, Sequence, Union
+from typing import Final, Optional, Union
 
 from black.nodes import (
     BRACKET,
