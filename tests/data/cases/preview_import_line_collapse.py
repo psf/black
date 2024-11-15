@@ -73,6 +73,23 @@ def func():
     a = 1
     print()
 
+
+def func():
+    import os
+
+
+    a = 1
+    print()
+
+
+def func():
+    import os
+
+
+
+    a = 1
+    print()
+
 # output
 
 
@@ -139,6 +156,20 @@ def func():
     def func():
         pass
 
+    print()
+
+
+def func():
+    import os
+
+    a = 1
+    print()
+
+
+def func():
+    import os
+
+    a = 1
     print()
 
 
