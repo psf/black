@@ -74,9 +74,14 @@ If you want to match versions covered by Black's
     version: "~= 22.0"
 ```
 
-If you want to read the version from `pyproject.toml`, set `use_pyproject` to `true`:
+If you want to read the version from `pyproject.toml`, set `use_pyproject` to `true`.
+Note that this requires Python >= 3.11, so using the setup-python action may be
+required, for example:
 
 ```yaml
+- uses: actions/setup-python@v5
+  with:
+    python-version: "3.13"
 - uses: psf/black@stable
   with:
     options: "--check --verbose"

@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.8
 if (foo := 0):
     pass
 
