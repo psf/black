@@ -82,7 +82,7 @@ items = [
 ]
 items = [{"key1": "val1", "key2": "val2"} if some_var == "" else {"key": "val"}]
 
-# Shouldn't crash with commas
+# Shouldn't crash with comments
 items = [
     (  # comment
         {"key1": "val1", "key2": "val2", "key3": "val3"}
@@ -205,7 +205,7 @@ items = [
 ]
 items = [{"key1": "val1", "key2": "val2"} if some_var == "" else {"key": "val"}]
 
-# Shouldn't crash with commas
+# Shouldn't crash with comments
 items = [  # comment
     {"key1": "val1", "key2": "val2", "key3": "val3"}
     if some_var == "long strings"
