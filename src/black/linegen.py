@@ -512,11 +512,14 @@ class LineGenerator(Visitor[Line]):
         if (
             Preview.remove_lone_list_item_parens in self.mode
             and len(node.children) == 3
-            and node.children[0].type == token.LSQB
-            and node.children[-1].type == token.RSQB
         ):
-            # Lists of one item
-            maybe_make_parens_invisible_in_atom(node.children[1], parent=node)
+            first = node.children[0]
+            last = node.children[-1]
+            if (first.type == token.LSQB and last.type == token.RSQB) or (
+                first.type == token.LBRACE and last.type == token.RBRACE
+            ):
+                # Lists or sets of one item
+                maybe_make_parens_invisible_in_atom(node.children[1], parent=node)
 
         yield from self.visit_default(node)
 

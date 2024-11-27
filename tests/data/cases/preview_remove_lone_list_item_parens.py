@@ -5,6 +5,9 @@ items = [(((((True)))))]
 items = [(((((True,)))))]
 items = [((((()))))]
 items = [(x for x in [1])]
+items = {(123)}
+items = {(True)}
+items = {(((((True)))))}
 
 # Requires `hug_parens_with_braces_and_square_brackets` unstable style to remove parentheses
 # around multiline values
@@ -85,6 +88,9 @@ items = [True]
 items = [(True,)]
 items = [()]
 items = [(x for x in [1])]
+items = {123}
+items = {True}
+items = {True}
 
 # Requires `hug_parens_with_braces_and_square_brackets` unstable style to remove parentheses
 # around multiline values
