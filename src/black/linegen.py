@@ -507,6 +507,22 @@ class LineGenerator(Visitor[Line]):
         normalize_numeric_literal(leaf)
         yield from self.visit_default(leaf)
 
+    def visit_atom(self, node: Node) -> Iterator[Line]:
+        """Visit any atom"""
+        if (
+            Preview.remove_lone_list_item_parens in self.mode
+            and len(node.children) == 3
+        ):
+            first = node.children[0]
+            last = node.children[-1]
+            if (first.type == token.LSQB and last.type == token.RSQB) or (
+                first.type == token.LBRACE and last.type == token.RBRACE
+            ):
+                # Lists or sets of one item
+                maybe_make_parens_invisible_in_atom(node.children[1], parent=node)
+
+        yield from self.visit_default(node)
+
     def visit_fstring(self, node: Node) -> Iterator[Line]:
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_to_string(node)
@@ -1643,9 +1659,6 @@ def maybe_make_parens_invisible_in_atom(
             not is_type_ignore_comment_string(middle.prefix.strip())
         ):
             first.value = ""
-            if first.prefix.strip():
-                # Preserve comments before first paren
-                middle.prefix = first.prefix + middle.prefix
             last.value = ""
         maybe_make_parens_invisible_in_atom(
             middle,
@@ -1657,6 +1670,13 @@ def maybe_make_parens_invisible_in_atom(
             # Strip the invisible parens from `middle` by replacing
             # it with the child in-between the invisible parens
             middle.replace(middle.children[1])
+
+            if middle.children[0].prefix.strip():
+                # Preserve comments before first paren
+                middle.children[1].prefix = (
+                    middle.children[0].prefix + middle.children[1].prefix
+                )
+
             if middle.children[-1].prefix.strip():
                 # Preserve comments before last paren
                 last.prefix = middle.children[-1].prefix + last.prefix

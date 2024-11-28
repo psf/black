@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove parentheses around sole list items (#4312)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
