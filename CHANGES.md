@@ -19,6 +19,7 @@
 
 - Fix/remove string merging changing f-string quotes on f-strings with internal quotes
   (#4498)
+- Remove parentheses around sole list items (#4312)
 
 ### Configuration
 

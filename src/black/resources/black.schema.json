@@ -91,6 +91,7 @@
           "docstring_check_for_newline",
           "remove_redundant_guard_parens",
           "parens_for_long_if_clauses_in_case_block",
+          "remove_lone_list_item_parens",
           "pep646_typed_star_arg_type_var_tuple"
         ]
       },
