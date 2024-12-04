@@ -214,6 +214,7 @@ class Preview(Enum):
     # hug_parens_with_braces_and_square_brackets to remove parens in some cases
     remove_lone_list_item_parens = auto()
     pep646_typed_star_arg_type_var_tuple = auto()
+    always_one_newline_after_import = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
