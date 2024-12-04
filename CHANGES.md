@@ -19,6 +19,7 @@
 
 - Standardize type comments to always have one space (#4467)
 - Remove parentheses around sole list items (#4312)
+- Collapse multiple empty lines after an import into one (#4489)
 
 ### Configuration
 

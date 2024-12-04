@@ -44,6 +44,8 @@ Currently, the following features are included in the preview style:
 - `remove_lone_list_item_parens`: remove redundant parentheses around lone list items
   (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some
   cases)
+- `always_one_newline_after_import`: Always force one blank line after import
+  statements, except when the line after the import is a comment or an import statement
 
 (labels/unstable-features)=
 
