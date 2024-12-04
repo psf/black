@@ -18,7 +18,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Remove parentheses around sole list items (#4312)
-- Collapse multiple lines into 1 after import (#4489)
+- Collapse multiple empty lines after an import into one (#4489)
 
 ### Configuration
 
