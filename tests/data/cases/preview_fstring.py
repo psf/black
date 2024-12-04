@@ -1,0 +1,2 @@
+# flags: --unstable
+f"{''=}" f'{""=}'
