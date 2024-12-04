@@ -5,21 +5,9 @@ String transformers that can split and merge strings.
 import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Collection,
-    Final,
-    Iterable,
-    Iterator,
-    Literal,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-)
+from typing import Any, ClassVar, Final, Literal, Optional, TypeVar, Union
 
 from mypy_extensions import trait
 

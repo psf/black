@@ -33,7 +33,7 @@ build-backend = "hatchling.build"
 [project]
 name = "black"
 description = "The uncompromising code formatter."
-license = { text = "MIT" }
+license = "MIT"
 requires-python = ">=3.9"
 authors = [
   { name = "Łukasz Langa", email = "lukasz@langa.pl" },
@@ -125,7 +125,7 @@ macos-max-compat = true
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
-  "mypy==1.11.2",
+  "mypy>=1.12",
   "click>=8.1.7",
 ]
 require-runtime-dependencies = true
@@ -192,7 +192,7 @@ build-frontend = { name = "build", args = ["--no-isolation"] }
 # Note we don't have a good test for this sed horror, so if you futz with it
 # make sure to test manually
 before-build = [
-    "python -m pip install 'hatchling==1.20.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy==1.11.2' 'click>=8.1.7'",
+    "python -m pip install 'hatchling==1.20.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy>=1.12' 'click>=8.1.7'",
     """sed -i '' -e "600,700s/'10_16'/os.environ['MACOSX_DEPLOYMENT_TARGET'].replace('.', '_')/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
 ]
 

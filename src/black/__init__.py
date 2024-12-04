@@ -5,24 +5,22 @@ import re
 import sys
 import tokenize
 import traceback
+from collections.abc import (
+    Collection,
+    Generator,
+    Iterator,
+    MutableMapping,
+    Sequence,
+    Sized,
+)
 from contextlib import contextmanager
 from dataclasses import replace
 from datetime import datetime, timezone
 from enum import Enum
 from json.decoder import JSONDecodeError
 from pathlib import Path
-from typing import (
-    Any,
-    Collection,
-    Generator,
-    Iterator,
-    MutableMapping,
-    Optional,
-    Pattern,
-    Sequence,
-    Sized,
-    Union,
-)
+from re import Pattern
+from typing import Any, Optional, Union
 
 import click
 from click.core import ParameterSource

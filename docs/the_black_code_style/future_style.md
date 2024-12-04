@@ -41,6 +41,9 @@ Currently, the following features are included in the preview style:
 - `type_comments_standardization`: type comments with zero or more empty spaces between
   `#` and `type:`, or between `type:` and the type itself will be formatted to
   `# type: (type itself)`.
+- `remove_lone_list_item_parens`: remove redundant parentheses around lone list items
+  (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some
+  cases)
 
 (labels/unstable-features)=
 

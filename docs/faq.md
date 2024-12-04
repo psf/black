@@ -84,16 +84,17 @@ See [Using _Black_ with other tools](labels/why-pycodestyle-warnings).
 
 ## Which Python versions does Black support?
 
-Currently the runtime requires Python 3.8-3.11. Formatting is supported for files
-containing syntax from Python 3.3 to 3.11. We promise to support at least all Python
-versions that have not reached their end of life. This is the case for both running
-_Black_ and formatting code.
+_Black_ generally supports all Python versions supported by CPython (see
+[the Python devguide](https://devguide.python.org/versions/) for current information).
+We promise to support at least all Python versions that have not reached their end of
+life. This is the case for both running _Black_ and formatting code.
 
 Support for formatting Python 2 code was removed in version 22.0. While we've made no
 plans to stop supporting older Python 3 minor versions immediately, their support might
 also be removed some time in the future without a deprecation period.
 
-Runtime support for 3.7 was removed in version 23.7.0.
+Runtime support for 3.6 was removed in version 22.10.0, for 3.7 in version 23.7.0, and
+for 3.8 in version 24.10.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 

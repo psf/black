@@ -1,4 +1,4 @@
-from typing import Awaitable, Callable, Iterable
+from collections.abc import Awaitable, Callable, Iterable
 
 from aiohttp.typedefs import Middleware
 from aiohttp.web_middlewares import middleware
