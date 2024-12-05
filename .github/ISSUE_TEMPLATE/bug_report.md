@@ -64,3 +64,20 @@ The resulting error is:
 **Additional context**
 
 <!-- Add any other context about the problem here. -->
+
+## Playground
+
+> **Warning**
+> The playground feature is experimental and may contain bugs. Use with caution and report any issues you encounter.
+
+This section of the project allows you to experiment with new features. Please keep in mind that as these features are still under development, they may not be fully stable.
+
+- **Feature 1**: Description
+- **Feature 2**: Description
+
+### How to use the Playground
+
+1. Step 1
+2. Step 2
+3. Step 3
+
