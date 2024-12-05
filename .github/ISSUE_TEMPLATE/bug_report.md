@@ -67,10 +67,11 @@ The resulting error is:
 
 ## Playground
 
-> **Warning**
-> The playground feature is experimental and may contain bugs. Use with caution and report any issues you encounter.
+> **Warning** The playground feature is experimental and may contain bugs. Use with
+> caution and report any issues you encounter.
 
-This section of the project allows you to experiment with new features. Please keep in mind that as these features are still under development, they may not be fully stable.
+This section of the project allows you to experiment with new features. Please keep in
+mind that as these features are still under development, they may not be fully stable.
 
 - **Feature 1**: Description
 - **Feature 2**: Description
@@ -80,4 +81,3 @@ This section of the project allows you to experiment with new features. Please k
 1. Step 1
 2. Step 2
 3. Step 3
-

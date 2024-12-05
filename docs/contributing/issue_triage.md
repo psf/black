@@ -32,10 +32,10 @@ More specifically, to triage an issue means to:
 - link related issues
 - provide the first initial feedback / support
 
-Note that triage is typically the first response to an issue, so don't freak if the issue
-doesn't make much progress after initial triage. The main goal of triaging to prepare
-the issue for future more specific development or discussion, so _eventually_ it will be
-resolved.
+Note that triage is typically the first response to an issue, so don't freak if the
+issue doesn't make much progress after initial triage. The main goal of triaging to
+prepare the issue for future more specific development or discussion, so _eventually_ it
+will be resolved.
 
 The lifecycle of a bug report or user support issue typically goes something like this:
 
