@@ -41,6 +41,8 @@ Currently, the following features are included in the preview style:
 - `remove_lone_list_item_parens`: remove redundant parentheses around lone list items
   (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some
   cases)
+- `always_one_newline_after_import`: Always force one blank line after import
+  statements, except when the line after the import is a comment or an import statement
 
 (labels/unstable-features)=
 
@@ -135,10 +137,11 @@ foo(
 
 _Black_ will split long string literals and merge short ones. Parentheses are used where
 appropriate. When split, parts of f-strings that don't need formatting are converted to
-plain strings. User-made splits are respected when they do not exceed the line length
-limit. Line continuation backslashes are converted into parenthesized strings.
-Unnecessary parentheses are stripped. The stability and status of this feature is
-tracked in [this issue](https://github.com/psf/black/issues/2188).
+plain strings. f-strings will not be merged if they contain internal quotes and it would
+change their quotation mark style. User-made splits are respected when they do not
+exceed the line length limit. Line continuation backslashes are converted into
+parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
+this feature istracked in [this issue](https://github.com/psf/black/issues/2188).
 
 (labels/wrap-long-dict-values)=
 
