@@ -1930,3 +1930,10 @@ and the first release covered by our new
 - alpha quality
 
 - date-versioned (see: <https://calver.org/>)
+- 
+
+## tool for doctest formatting
+- Documented the tool used for doctest formatting.
+- The tool used is 'isort'.
+- The full documentation is in file names 'tool_for_doctest_formatting.
+- fixes the minor doctest faults.
