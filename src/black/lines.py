@@ -1,18 +1,8 @@
 import itertools
 import math
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
-from typing import (
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Optional, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
 from black.mode import Mode, Preview
@@ -52,9 +42,9 @@ class Line:
 
     mode: Mode = field(repr=False)
     depth: int = 0
-    leaves: List[Leaf] = field(default_factory=list)
+    leaves: list[Leaf] = field(default_factory=list)
     # keys ordered like `leaves`
-    comments: Dict[LeafID, List[Leaf]] = field(default_factory=dict)
+    comments: dict[LeafID, list[Leaf]] = field(default_factory=dict)
     bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
     should_split_rhs: bool = False
@@ -72,7 +62,12 @@ class Line:
 
         Inline comments are put aside.
         """
-        has_value = leaf.type in BRACKETS or bool(leaf.value.strip())
+        has_value = (
+            leaf.type in BRACKETS
+            # empty fstring-middles must not be truncated
+            or leaf.type == token.FSTRING_MIDDLE
+            or bool(leaf.value.strip())
+        )
         if not has_value:
             return
 
@@ -421,7 +416,7 @@ class Line:
         self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
 
-    def comments_after(self, leaf: Leaf) -> List[Leaf]:
+    def comments_after(self, leaf: Leaf) -> list[Leaf]:
         """Generate comments that should appear directly after `leaf`."""
         return self.comments.get(id(leaf), [])
 
@@ -454,13 +449,13 @@ class Line:
 
     def enumerate_with_length(
         self, is_reversed: bool = False
-    ) -> Iterator[Tuple[Index, Leaf, int]]:
+    ) -> Iterator[tuple[Index, Leaf, int]]:
         """Return an enumeration of leaves with their length.
 
         Stops prematurely on multiline strings and standalone comments.
         """
         op = cast(
-            Callable[[Sequence[Leaf]], Iterator[Tuple[Index, Leaf]]],
+            Callable[[Sequence[Leaf]], Iterator[tuple[Index, Leaf]]],
             enumerate_reversed if is_reversed else enumerate,
         )
         for index, leaf in op(self.leaves):
@@ -526,11 +521,11 @@ class LinesBlock:
     previous_block: Optional["LinesBlock"]
     original_line: Line
     before: int = 0
-    content_lines: List[str] = field(default_factory=list)
+    content_lines: list[str] = field(default_factory=list)
     after: int = 0
     form_feed: bool = False
 
-    def all_lines(self) -> List[str]:
+    def all_lines(self) -> list[str]:
         empty_line = str(Line(mode=self.mode))
         prefix = make_simple_prefix(self.before, self.form_feed, empty_line)
         return [prefix] + self.content_lines + [empty_line * self.after]
@@ -549,7 +544,7 @@ class EmptyLineTracker:
     mode: Mode
     previous_line: Optional[Line] = None
     previous_block: Optional[LinesBlock] = None
-    previous_defs: List[Line] = field(default_factory=list)
+    previous_defs: list[Line] = field(default_factory=list)
     semantic_leading_comment: Optional[LinesBlock] = None
 
     def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
@@ -602,7 +597,7 @@ class EmptyLineTracker:
         self.previous_block = block
         return block
 
-    def _maybe_empty_lines(self, current_line: Line) -> Tuple[int, int]:  # noqa: C901
+    def _maybe_empty_lines(self, current_line: Line) -> tuple[int, int]:  # noqa: C901
         max_allowed = 1
         if current_line.depth == 0:
             max_allowed = 1 if self.mode.is_pyi else 2
@@ -678,6 +673,15 @@ class EmptyLineTracker:
 
         if (
             self.previous_line.is_import
+            and self.previous_line.depth == 0
+            and current_line.depth == 0
+            and not current_line.is_import
+            and Preview.always_one_newline_after_import in self.mode
+        ):
+            return 1, 0
+
+        if (
+            self.previous_line.is_import
             and not current_line.is_import
             and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and depth == self.previous_line.depth
@@ -688,7 +692,7 @@ class EmptyLineTracker:
 
     def _maybe_empty_lines_for_class_or_def(  # noqa: C901
         self, current_line: Line, before: int, user_had_newline: bool
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         assert self.previous_line is not None
 
         if self.previous_line.is_decorator:
@@ -767,7 +771,7 @@ class EmptyLineTracker:
         return newlines, 0
 
 
-def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:
+def enumerate_reversed(sequence: Sequence[T]) -> Iterator[tuple[Index, T]]:
     """Like `reversed(enumerate(sequence))` if that were possible."""
     index = len(sequence) - 1
     for element in reversed(sequence):
@@ -776,7 +780,7 @@ def enumerate_reversed(sequence: Sequence[T]) -> Iterator[Tuple[Index, T]]:
 
 
 def append_leaves(
-    new_line: Line, old_line: Line, leaves: List[Leaf], preformatted: bool = False
+    new_line: Line, old_line: Line, leaves: list[Leaf], preformatted: bool = False
 ) -> None:
     """
     Append leaves (taken from @old_line) to @new_line, making sure to fix the
@@ -833,10 +837,10 @@ def is_line_short_enough(  # noqa: C901
     # Depth (which is based on the existing bracket_depth concept)
     # is needed to determine nesting level of the MLS.
     # Includes special case for trailing commas.
-    commas: List[int] = []  # tracks number of commas per depth level
+    commas: list[int] = []  # tracks number of commas per depth level
     multiline_string: Optional[Leaf] = None
     # store the leaves that contain parts of the MLS
-    multiline_string_contexts: List[LN] = []
+    multiline_string_contexts: list[LN] = []
 
     max_level_to_update: Union[int, float] = math.inf  # track the depth of the MLS
     for i, leaf in enumerate(line.leaves):
@@ -860,7 +864,7 @@ def is_line_short_enough(  # noqa: C901
         if leaf.bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
             # Inside brackets, ignore trailing comma
             # directly after MLS/MLS-containing expression
-            ignore_ctxs: List[Optional[LN]] = [None]
+            ignore_ctxs: list[Optional[LN]] = [None]
             ignore_ctxs += multiline_string_contexts
             if (line.inside_brackets or leaf.bracket_depth > 0) and (
                 i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs

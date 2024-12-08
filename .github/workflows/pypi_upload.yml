@@ -23,7 +23,8 @@ jobs:
       - name: Set up latest Python
         uses: actions/setup-python@v5
         with:
-          python-version: "*"
+          python-version: "3.13"
+          allow-prereleases: true
 
       - name: Install latest pip, build, twine
         run: |
@@ -46,9 +47,10 @@ jobs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@v4
+      # Keep cibuildwheel version in sync with below
       - name: Install cibuildwheel and pypyp
         run: |
-          pipx install cibuildwheel==2.15.0
+          pipx install cibuildwheel==2.21.2
           pipx install pypyp==1
       - name: generate matrix
         if: github.event_name != 'pull_request'
@@ -73,7 +75,7 @@ jobs:
             | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
           } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
-          CIBW_BUILD: "cp38-* cp312-*"
+          CIBW_BUILD: "cp39-* cp313-*"
           CIBW_ARCHS_LINUX: x86_64
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
@@ -89,14 +91,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: pypa/cibuildwheel@v2.17.0
+      # Keep cibuildwheel version in sync with above
+      - uses: pypa/cibuildwheel@v2.22.0
         with:
           only: ${{ matrix.only }}
 
       - name: Upload wheels as workflow artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}-mypyc-wheels
+          name: ${{ matrix.only }}-mypyc-wheels
           path: ./wheelhouse/*.whl
 
       - if: github.event_name == 'release'

@@ -19,6 +19,7 @@ USE_PYPROJECT = os.getenv("INPUT_USE_PYPROJECT") == "true"
 
 BLACK_VERSION_RE = re.compile(r"^black([^A-Z0-9._-]+.*)$", re.IGNORECASE)
 EXTRAS_RE = re.compile(r"\[.*\]")
+EXPORT_SUBST_FAIL_RE = re.compile(r"\$Format:.*\$")
 
 
 def determine_version_specifier() -> str:
@@ -135,7 +136,11 @@ else:
     # expected format is one of:
     # - 23.1.0
     # - 23.1.0-51-g448bba7
-    if describe_name.count("-") < 2:
+    # - $Format:%(describe:tags=true,match=*[0-9]*)$ (if export-subst fails)
+    if (
+        describe_name.count("-") < 2
+        and EXPORT_SUBST_FAIL_RE.match(describe_name) is None
+    ):
         # the action's commit matches a tag exactly, install exact version from PyPI
         req = f"black{extra_deps}=={describe_name}"
     else:

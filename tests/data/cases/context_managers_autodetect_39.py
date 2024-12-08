@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.9
 # This file uses parenthesized context managers introduced in Python 3.9.
 
 

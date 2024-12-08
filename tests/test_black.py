@@ -10,26 +10,15 @@ import re
 import sys
 import textwrap
 import types
+from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
-from dataclasses import replace
+from dataclasses import fields, replace
 from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterator,
-    List,
-    Optional,
-    Sequence,
-    Set,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, Optional, TypeVar, Union
 from unittest.mock import MagicMock, patch
 
 import click
@@ -107,11 +96,11 @@ class FakeContext(click.Context):
     """A fake click Context for when calling functions that need it."""
 
     def __init__(self) -> None:
-        self.default_map: Dict[str, Any] = {}
-        self.params: Dict[str, Any] = {}
+        self.default_map: dict[str, Any] = {}
+        self.params: dict[str, Any] = {}
         self.command: click.Command = black.main
         # Dummy root, since most of the tests don't care about it
-        self.obj: Dict[str, Any] = {"root": PROJECT_ROOT}
+        self.obj: dict[str, Any] = {"root": PROJECT_ROOT}
 
 
 class FakeParameter(click.Parameter):
@@ -129,7 +118,7 @@ class BlackRunner(CliRunner):
 
 
 def invokeBlack(
-    args: List[str], exit_code: int = 0, ignore_config: bool = True
+    args: list[str], exit_code: int = 0, ignore_config: bool = True
 ) -> None:
     runner = BlackRunner()
     if ignore_config:
@@ -263,6 +252,21 @@ class BlackTestCase(BlackBaseTestCase):
             versions = black.detect_target_versions(root)
             self.assertIn(black.TargetVersion.PY312, versions)
 
+    def test_pep_696_version_detection(self) -> None:
+        source, _ = read_data("cases", "type_param_defaults")
+        samples = [
+            source,
+            "type X[T=int] = float",
+            "type X[T:int=int]=int",
+            "type X[*Ts=int]=int",
+            "type X[*Ts=*int]=int",
+            "type X[**P=int]=int",
+        ]
+        for sample in samples:
+            root = black.lib2to3_parse(sample)
+            features = black.get_features_used(root)
+            self.assertIn(black.Feature.TYPE_PARAM_DEFAULTS, features)
+
     def test_expression_ff(self) -> None:
         source, expected = read_data("cases", "expression.py")
         tmp_file = Path(black.dump_to_file(source))
@@ -343,12 +347,11 @@ class BlackTestCase(BlackBaseTestCase):
         features = black.get_features_used(root)
         self.assertNotIn(black.Feature.DEBUG_F_STRINGS, features)
 
-        # We don't yet support feature version detection in nested f-strings
         root = black.lib2to3_parse(
             """f"heard a rumour that { f'{1+1=}' } ... seems like it could be true" """
         )
         features = black.get_features_used(root)
-        self.assertNotIn(black.Feature.DEBUG_F_STRINGS, features)
+        self.assertIn(black.Feature.DEBUG_F_STRINGS, features)
 
     @patch("black.dump_to_file", dump_to_stderr)
     def test_string_quotes(self) -> None:
@@ -892,6 +895,9 @@ class BlackTestCase(BlackBaseTestCase):
         self.check_features_used("a[*b]", {Feature.VARIADIC_GENERICS})
         self.check_features_used("a[x, *y(), z] = t", {Feature.VARIADIC_GENERICS})
         self.check_features_used("def fn(*args: *T): pass", {Feature.VARIADIC_GENERICS})
+        self.check_features_used(
+            "def fn(*args: *tuple[*T]): pass", {Feature.VARIADIC_GENERICS}
+        )
 
         self.check_features_used("with a: pass", set())
         self.check_features_used("with a, b: pass", set())
@@ -916,7 +922,7 @@ class BlackTestCase(BlackBaseTestCase):
             "with ((a, ((b as c)))): pass", {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         )
 
-    def check_features_used(self, source: str, expected: Set[Feature]) -> None:
+    def check_features_used(self, source: str, expected: set[Feature]) -> None:
         node = black.lib2to3_parse(source)
         actual = black.get_features_used(node)
         msg = f"Expected {expected} but got {actual} for {source!r}"
@@ -1348,7 +1354,7 @@ class BlackTestCase(BlackBaseTestCase):
         ]
 
         def _new_wrapper(
-            output: io.StringIO, io_TextIOWrapper: Type[io.TextIOWrapper]
+            output: io.StringIO, io_TextIOWrapper: type[io.TextIOWrapper]
         ) -> Callable[[Any, Any], io.TextIOWrapper]:
             def get_output(*args: Any, **kwargs: Any) -> io.TextIOWrapper:
                 if args == (sys.stdout.buffer,):
@@ -1532,16 +1538,34 @@ class BlackTestCase(BlackBaseTestCase):
         for version, expected in [
             ("3.6", [TargetVersion.PY36]),
             ("3.11.0rc1", [TargetVersion.PY311]),
-            (">=3.10", [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312]),
+            (
+                ">=3.10",
+                [
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                    TargetVersion.PY313,
+                ],
+            ),
             (
                 ">=3.10.6",
-                [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312],
+                [
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                    TargetVersion.PY313,
+                ],
             ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
             (">3.7,<3.10", [TargetVersion.PY38, TargetVersion.PY39]),
             (
                 ">3.7,!=3.8,!=3.9",
-                [TargetVersion.PY310, TargetVersion.PY311, TargetVersion.PY312],
+                [
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                    TargetVersion.PY313,
+                ],
             ),
             (
                 "> 3.9.4, != 3.10.3",
@@ -1550,6 +1574,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY310,
                     TargetVersion.PY311,
                     TargetVersion.PY312,
+                    TargetVersion.PY313,
                 ],
             ),
             (
@@ -1563,6 +1588,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY310,
                     TargetVersion.PY311,
                     TargetVersion.PY312,
+                    TargetVersion.PY313,
                 ],
             ),
             (
@@ -1578,6 +1604,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY310,
                     TargetVersion.PY311,
                     TargetVersion.PY312,
+                    TargetVersion.PY313,
                 ],
             ),
             ("==3.8.*", [TargetVersion.PY38]),
@@ -2119,8 +2146,9 @@ class TestCaching:
     @event_loop()
     def test_cache_multiple_files(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir() as workspace, patch(
-            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
+        with (
+            cache_dir() as workspace,
+            patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor),
         ):
             one = (workspace / "one.py").resolve()
             one.write_text("print('hello')", encoding="utf-8")
@@ -2142,9 +2170,10 @@ class TestCaching:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            with patch.object(black.Cache, "read") as read_cache, patch.object(
-                black.Cache, "write"
-            ) as write_cache:
+            with (
+                patch.object(black.Cache, "read") as read_cache,
+                patch.object(black.Cache, "write") as write_cache,
+            ):
                 cmd = [str(src), "--diff"]
                 if color:
                     cmd.append("--color")
@@ -2273,8 +2302,9 @@ class TestCaching:
     @event_loop()
     def test_failed_formatting_does_not_get_cached(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir() as workspace, patch(
-            "concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor
+        with (
+            cache_dir() as workspace,
+            patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor),
         ):
             failing = (workspace / "failing.py").resolve()
             failing.write_text("not actually python", encoding="utf-8")
@@ -2305,6 +2335,36 @@ class TestCaching:
             assert not one.is_changed(path)
             two = black.Cache.read(short_mode)
             assert two.is_changed(path)
+
+    def test_cache_key(self) -> None:
+        # Test that all members of the mode enum affect the cache key.
+        for field in fields(Mode):
+            values: list[Any]
+            if field.name == "target_versions":
+                values = [
+                    {TargetVersion.PY312},
+                    {TargetVersion.PY313},
+                ]
+            elif field.name == "python_cell_magics":
+                values = [{"magic1"}, {"magic2"}]
+            elif field.name == "enabled_features":
+                # If you are looking to remove one of these features, just
+                # replace it with any other feature.
+                values = [
+                    {Preview.docstring_check_for_newline},
+                    {Preview.hex_codes_in_unicode_sequences},
+                ]
+            elif field.type is bool:
+                values = [True, False]
+            elif field.type is int:
+                values = [1, 2]
+            else:
+                raise AssertionError(
+                    f"Unhandled field type: {field.type} for field {field.name}"
+                )
+            modes = [replace(DEFAULT_MODE, **{field.name: value}) for value in values]
+            keys = [mode.get_cache_key() for mode in modes]
+            assert len(set(keys)) == len(modes)
 
 
 def assert_collected_sources(
@@ -2392,7 +2452,7 @@ class TestFileCollection:
         gitignore = PathSpec.from_lines(
             "gitwildmatch", ["exclude/", ".definitely_exclude"]
         )
-        sources: List[Path] = []
+        sources: list[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
@@ -2420,7 +2480,7 @@ class TestFileCollection:
         exclude = re.compile(r"")
         root_gitignore = black.files.get_gitignore(path)
         report = black.Report()
-        expected: List[Path] = [
+        expected: list[Path] = [
             Path(path / "x.py"),
             Path(path / "root/b.py"),
             Path(path / "root/c.py"),
@@ -2501,6 +2561,12 @@ class TestFileCollection:
         target = root / "subdir"
         expected = [target / "b.py"]
         assert_collected_sources([target], expected, root=root)
+
+    def test_gitignore_that_ignores_directory(self) -> None:
+        # If gitignore with a directory is in root
+        root = Path(DATA_DIR, "ignore_directory_gitignore_tests")
+        expected = [root / "z.py"]
+        assert_collected_sources([root], expected, root=root)
 
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
@@ -2949,7 +3015,7 @@ class TestASTSafety(BlackBaseTestCase):
 
 
 try:
-    with open(black.__file__, "r", encoding="utf-8") as _bf:
+    with open(black.__file__, encoding="utf-8") as _bf:
         black_source_lines = _bf.readlines()
 except UnicodeDecodeError:
     if not black.COMPILED:

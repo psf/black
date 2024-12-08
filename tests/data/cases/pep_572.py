@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.8
 (a := 1)
 (a := a)
 if (match := pattern.search(data)) is None:

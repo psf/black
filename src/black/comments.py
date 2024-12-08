@@ -1,7 +1,8 @@
 import re
+from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Collection, Final, Iterator, List, Optional, Tuple, Union
+from typing import Final, Optional, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (
@@ -77,9 +78,9 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
 
 
 @lru_cache(maxsize=4096)
-def list_comments(prefix: str, *, is_endmarker: bool) -> List[ProtoComment]:
+def list_comments(prefix: str, *, is_endmarker: bool) -> list[ProtoComment]:
     """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
-    result: List[ProtoComment] = []
+    result: list[ProtoComment] = []
     if not prefix or "#" not in prefix:
         return result
 
@@ -166,7 +167,7 @@ def make_comment(content: str) -> str:
 
 
 def normalize_fmt_off(
-    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+    node: Node, mode: Mode, lines: Collection[tuple[int, int]]
 ) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
     try_again = True
@@ -175,7 +176,7 @@ def normalize_fmt_off(
 
 
 def convert_one_fmt_off_pair(
-    node: Node, mode: Mode, lines: Collection[Tuple[int, int]]
+    node: Node, mode: Mode, lines: Collection[tuple[int, int]]
 ) -> bool:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
@@ -184,24 +185,24 @@ def convert_one_fmt_off_pair(
     for leaf in node.leaves():
         previous_consumed = 0
         for comment in list_comments(leaf.prefix, is_endmarker=False):
-            should_pass_fmt = comment.value in FMT_OFF or _contains_fmt_skip_comment(
-                comment.value, mode
-            )
-            if not should_pass_fmt:
+            is_fmt_off = comment.value in FMT_OFF
+            is_fmt_skip = _contains_fmt_skip_comment(comment.value, mode)
+            if (not is_fmt_off and not is_fmt_skip) or (
+                # Invalid use when `# fmt: off` is applied before a closing bracket.
+                is_fmt_off
+                and leaf.type in CLOSING_BRACKETS
+            ):
                 previous_consumed = comment.consumed
                 continue
             # We only want standalone comments. If there's no previous leaf or
             # the previous leaf is indentation, it's a standalone comment in
             # disguise.
-            if should_pass_fmt and comment.type != STANDALONE_COMMENT:
+            if comment.type != STANDALONE_COMMENT:
                 prev = preceding_leaf(leaf)
                 if prev:
-                    if comment.value in FMT_OFF and prev.type not in WHITESPACE:
+                    if is_fmt_off and prev.type not in WHITESPACE:
                         continue
-                    if (
-                        _contains_fmt_skip_comment(comment.value, mode)
-                        and prev.type in WHITESPACE
-                    ):
+                    if is_fmt_skip and prev.type in WHITESPACE:
                         continue
 
             ignored_nodes = list(generate_ignored_nodes(leaf, comment, mode))
@@ -213,7 +214,7 @@ def convert_one_fmt_off_pair(
             prefix = first.prefix
             if comment.value in FMT_OFF:
                 first.prefix = prefix[comment.consumed :]
-            if _contains_fmt_skip_comment(comment.value, mode):
+            if is_fmt_skip:
                 first.prefix = ""
                 standalone_comment_prefix = prefix
             else:
@@ -233,7 +234,7 @@ def convert_one_fmt_off_pair(
                         fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
                 standalone_comment_prefix += fmt_off_prefix
                 hidden_value = comment.value + "\n" + hidden_value
-            if _contains_fmt_skip_comment(comment.value, mode):
+            if is_fmt_skip:
                 hidden_value += (
                     comment.leading_whitespace
                     if Preview.no_normalize_fmt_skip_whitespace in mode
@@ -336,7 +337,7 @@ def _generate_ignored_nodes_from_fmt_skip(
         # statements. The ignored nodes should be previous siblings of the
         # parent suite node.
         leaf.prefix = ""
-        ignored_nodes: List[LN] = []
+        ignored_nodes: list[LN] = []
         parent_sibling = parent.prev_sibling
         while parent_sibling is not None and parent_sibling.type != syms.suite:
             ignored_nodes.insert(0, parent_sibling)
@@ -376,7 +377,7 @@ def children_contains_fmt_on(container: LN) -> bool:
     return False
 
 
-def contains_pragma_comment(comment_list: List[Leaf]) -> bool:
+def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
     """
     Returns:
         True iff one of the comments in @comment_list is a pragma used by one

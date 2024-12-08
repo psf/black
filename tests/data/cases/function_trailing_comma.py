@@ -60,6 +60,64 @@ some_module.some_function(
     argument1, (one, two,), argument4, argument5, argument6
 )
 
+def foo() -> (
+    # comment inside parenthesised return type
+    int
+):
+    ...
+
+def foo() -> (
+    # comment inside parenthesised return type
+    # more
+    int
+    # another
+):
+    ...
+
+def foo() -> (
+    # comment inside parenthesised new union return type
+    int | str | bytes
+):
+    ...
+
+def foo() -> (
+    # comment inside plain tuple
+):
+    pass
+
+def foo(arg: (# comment with non-return annotation
+        int
+        # comment with non-return annotation
+)):
+    pass
+
+def foo(arg: (# comment with non-return annotation
+        int | range | memoryview
+        # comment with non-return annotation
+)):
+    pass
+
+def foo(arg: (# only before
+        int
+)):
+    pass
+
+def foo(arg: (
+        int
+        # only after
+)):
+    pass
+
+variable: ( # annotation
+    because
+    # why not
+)
+
+variable: (
+    because
+    # why not
+)
+
 # output
 
 def f(
@@ -175,4 +233,76 @@ some_module.some_function(
     argument4,
     argument5,
     argument6,
+)
+
+
+def foo() -> (
+    # comment inside parenthesised return type
+    int
+): ...
+
+
+def foo() -> (
+    # comment inside parenthesised return type
+    # more
+    int
+    # another
+): ...
+
+
+def foo() -> (
+    # comment inside parenthesised new union return type
+    int
+    | str
+    | bytes
+): ...
+
+
+def foo() -> (
+    # comment inside plain tuple
+):
+    pass
+
+
+def foo(
+    arg: (  # comment with non-return annotation
+        int
+        # comment with non-return annotation
+    ),
+):
+    pass
+
+
+def foo(
+    arg: (  # comment with non-return annotation
+        int
+        | range
+        | memoryview
+        # comment with non-return annotation
+    ),
+):
+    pass
+
+
+def foo(arg: int):  # only before
+    pass
+
+
+def foo(
+    arg: (
+        int
+        # only after
+    ),
+):
+    pass
+
+
+variable: (  # annotation
+    because
+    # why not
+)
+
+variable: (
+    because
+    # why not
 )

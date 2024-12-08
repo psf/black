@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Dict, Final, Set
+from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -24,6 +24,11 @@ class TargetVersion(Enum):
     PY310 = 10
     PY311 = 11
     PY312 = 12
+    PY313 = 13
+
+    def pretty(self) -> str:
+        assert self.name[:2] == "PY"
+        return f"Python {self.name[2]}.{self.name[3:]}"
 
 
 class Feature(Enum):
@@ -46,6 +51,8 @@ class Feature(Enum):
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
     TYPE_PARAMS = 18
+    FSTRING_PARSING = 19
+    TYPE_PARAM_DEFAULTS = 20
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -57,7 +64,7 @@ FUTURE_FLAG_TO_FEATURE: Final = {
 }
 
 
-VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
+VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
     TargetVersion.PY33: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY34: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY35: {Feature.TRAILING_COMMA_IN_CALL, Feature.ASYNC_IDENTIFIERS},
@@ -156,11 +163,33 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
+        Feature.FSTRING_PARSING,
+    },
+    TargetVersion.PY313: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.FSTRING_PARSING,
+        Feature.TYPE_PARAM_DEFAULTS,
     },
 }
 
 
-def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
+def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
@@ -181,9 +210,14 @@ class Preview(Enum):
     docstring_check_for_newline = auto()
     remove_redundant_guard_parens = auto()
     parens_for_long_if_clauses_in_case_block = auto()
+    # NOTE: remove_lone_list_item_parens requires
+    # hug_parens_with_braces_and_square_brackets to remove parens in some cases
+    remove_lone_list_item_parens = auto()
+    pep646_typed_star_arg_type_var_tuple = auto()
+    always_one_newline_after_import = auto()
 
 
-UNSTABLE_FEATURES: Set[Preview] = {
+UNSTABLE_FEATURES: set[Preview] = {
     # Many issues, see summary in https://github.com/psf/black/issues/4042
     Preview.string_processing,
     # See issues #3452 and #4158
@@ -204,17 +238,17 @@ _MAX_CACHE_KEY_PART_LENGTH: Final = 32
 
 @dataclass
 class Mode:
-    target_versions: Set[TargetVersion] = field(default_factory=set)
+    target_versions: set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    python_cell_magics: Set[str] = field(default_factory=set)
+    python_cell_magics: set[str] = field(default_factory=set)
     preview: bool = False
     unstable: bool = False
-    enabled_features: Set[Preview] = field(default_factory=set)
+    enabled_features: set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
@@ -260,6 +294,7 @@ class Mode:
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
             str(int(self.preview)),
+            str(int(self.unstable)),
             features_and_magics,
         ]
         return ".".join(parts)

@@ -882,7 +882,7 @@ log.info(
 
 log.info(
     "Skipping:"
-    f" {desc['db_id']} {foo('bar',x=123)} {'foo' != 'bar'} {(x := 'abc=')} {pos_share=} {desc['status']} {desc['exposure_max']}"
+    f' {desc["db_id"]} {foo("bar",x=123)} {"foo" != "bar"} {(x := "abc=")} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
@@ -902,7 +902,7 @@ log.info(
 
 log.info(
     "Skipping:"
-    f" {'a' == 'b' == 'c' == 'd'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"
+    f' {"a" == "b" == "c" == "d"} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(

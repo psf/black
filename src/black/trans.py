@@ -5,25 +5,9 @@ String transformers that can split and merge strings.
 import re
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Collection,
-    Dict,
-    Final,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, ClassVar, Final, Literal, Optional, TypeVar, Union
 
 from mypy_extensions import trait
 
@@ -68,7 +52,7 @@ NodeType = int
 ParserState = int
 StringID = int
 TResult = Result[T, CannotTransform]  # (T)ransform Result
-TMatchResult = TResult[List[Index]]
+TMatchResult = TResult[list[Index]]
 
 SPLIT_SAFE_CHARS = frozenset(["\u3001", "\u3002", "\uff0c"])  # East Asian stops
 
@@ -179,7 +163,7 @@ def original_is_simple_lookup_func(
     return True
 
 
-def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) -> bool:
+def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: set[int]) -> bool:
     """
     Handling the determination of is_simple_lookup for the lines prior to the doublestar
     token. This is required because of the need to isolate the chained expression
@@ -202,7 +186,7 @@ def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: Set[int]) 
 
 
 def handle_is_simple_lookup_forward(
-    line: Line, index: int, disallowed: Set[int]
+    line: Line, index: int, disallowed: set[int]
 ) -> bool:
     """
     Handling decision is_simple_lookup for the lines behind the doublestar token.
@@ -227,7 +211,7 @@ def handle_is_simple_lookup_forward(
     return True
 
 
-def is_expression_chained(chained_leaves: List[Leaf]) -> bool:
+def is_expression_chained(chained_leaves: list[Leaf]) -> bool:
     """
     Function to determine if the variable is a chained call.
     (e.g., foo.lookup, foo().lookup, (foo.lookup())) will be recognized as chained call)
@@ -298,7 +282,7 @@ class StringTransformer(ABC):
 
     @abstractmethod
     def do_transform(
-        self, line: Line, string_indices: List[int]
+        self, line: Line, string_indices: list[int]
     ) -> Iterator[TResult[Line]]:
         """
         Yields:
@@ -388,8 +372,8 @@ class CustomSplitMapMixin:
     the resultant substrings go over the configured max line length.
     """
 
-    _Key: ClassVar = Tuple[StringID, str]
-    _CUSTOM_SPLIT_MAP: ClassVar[Dict[_Key, Tuple[CustomSplit, ...]]] = defaultdict(
+    _Key: ClassVar = tuple[StringID, str]
+    _CUSTOM_SPLIT_MAP: ClassVar[dict[_Key, tuple[CustomSplit, ...]]] = defaultdict(
         tuple
     )
 
@@ -413,7 +397,7 @@ class CustomSplitMapMixin:
         key = self._get_key(string)
         self._CUSTOM_SPLIT_MAP[key] = tuple(custom_splits)
 
-    def pop_custom_splits(self, string: str) -> List[CustomSplit]:
+    def pop_custom_splits(self, string: str) -> list[CustomSplit]:
         """Custom Split Map Getter Method
 
         Returns:
@@ -488,7 +472,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                         break
                     i += 1
 
-                if not is_part_of_annotation(leaf) and not contains_comment:
+                if not contains_comment and not is_part_of_annotation(leaf):
                     string_indices.append(idx)
 
                 # Advance to the next non-STRING leaf.
@@ -512,7 +496,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             return TErr("This line has no strings that need merging.")
 
     def do_transform(
-        self, line: Line, string_indices: List[int]
+        self, line: Line, string_indices: list[int]
     ) -> Iterator[TResult[Line]]:
         new_line = line
 
@@ -543,7 +527,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
     @staticmethod
     def _remove_backslash_line_continuation_chars(
-        line: Line, string_indices: List[int]
+        line: Line, string_indices: list[int]
     ) -> TResult[Line]:
         """
         Merge strings that were split across multiple lines using
@@ -584,7 +568,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         return Ok(new_line)
 
     def _merge_string_group(
-        self, line: Line, string_indices: List[int]
+        self, line: Line, string_indices: list[int]
     ) -> TResult[Line]:
         """
         Merges string groups (i.e. set of adjacent strings).
@@ -603,7 +587,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         is_valid_index = is_valid_index_factory(LL)
 
         # A dict of {string_idx: tuple[num_of_strings, string_leaf]}.
-        merged_string_idx_dict: Dict[int, Tuple[int, Leaf]] = {}
+        merged_string_idx_dict: dict[int, tuple[int, Leaf]] = {}
         for string_idx in string_indices:
             vresult = self._validate_msg(line, string_idx)
             if isinstance(vresult, Err):
@@ -639,8 +623,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         return Ok(new_line)
 
     def _merge_one_string_group(
-        self, LL: List[Leaf], string_idx: int, is_valid_index: Callable[[int], bool]
-    ) -> Tuple[int, Leaf]:
+        self, LL: list[Leaf], string_idx: int, is_valid_index: Callable[[int], bool]
+    ) -> tuple[int, Leaf]:
         """
         Merges one string group where the first string in the group is
         `LL[string_idx]`.
@@ -810,6 +794,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
                 - The string group consists of raw strings.
+                - The string group would merge f-strings with different quote types
+                  and internal quotes.
                 - The string group is stringified type annotations. We don't want to
                   process stringified type annotations since pyright doesn't support
                   them spanning multiple string values. (NOTE: mypy, pytype, pyre do
@@ -836,6 +822,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
                 i += inc
 
+        QUOTE = line.leaves[string_idx].value[-1]
+
         num_of_inline_string_comments = 0
         set_of_prefixes = set()
         num_of_strings = 0
@@ -857,6 +845,19 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 return TErr("StringMerger does NOT merge raw strings.")
 
             set_of_prefixes.add(prefix)
+
+            if (
+                "f" in prefix
+                and leaf.value[-1] != QUOTE
+                and (
+                    "'" in leaf.value[len(prefix) + 1 : -1]
+                    or '"' in leaf.value[len(prefix) + 1 : -1]
+                )
+            ):
+                return TErr(
+                    "StringMerger does NOT merge f-strings with different quote types"
+                    "and internal quotes."
+                )
 
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
@@ -1008,11 +1009,11 @@ class StringParenStripper(StringTransformer):
         return TErr("This line has no strings wrapped in parens.")
 
     def do_transform(
-        self, line: Line, string_indices: List[int]
+        self, line: Line, string_indices: list[int]
     ) -> Iterator[TResult[Line]]:
         LL = line.leaves
 
-        string_and_rpar_indices: List[int] = []
+        string_and_rpar_indices: list[int] = []
         for string_idx in string_indices:
             string_parser = StringParser()
             rpar_idx = string_parser.parse(LL, string_idx)
@@ -1035,7 +1036,7 @@ class StringParenStripper(StringTransformer):
             )
 
     def _transform_to_new_line(
-        self, line: Line, string_and_rpar_indices: List[int]
+        self, line: Line, string_and_rpar_indices: list[int]
     ) -> Line:
         LL = line.leaves
 
@@ -1288,7 +1289,7 @@ class BaseStringSplitter(StringTransformer):
         return max_string_length
 
     @staticmethod
-    def _prefer_paren_wrap_match(LL: List[Leaf]) -> Optional[int]:
+    def _prefer_paren_wrap_match(LL: list[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -1333,14 +1334,14 @@ class BaseStringSplitter(StringTransformer):
         return None
 
 
-def iter_fexpr_spans(s: str) -> Iterator[Tuple[int, int]]:
+def iter_fexpr_spans(s: str) -> Iterator[tuple[int, int]]:
     """
     Yields spans corresponding to expressions in a given f-string.
     Spans are half-open ranges (left inclusive, right exclusive).
     Assumes the input string is a valid f-string, but will not crash if the input
     string is invalid.
     """
-    stack: List[int] = []  # our curly paren stack
+    stack: list[int] = []  # our curly paren stack
     i = 0
     while i < len(s):
         if s[i] == "{":
@@ -1503,7 +1504,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         return Ok([string_idx])
 
     def do_transform(
-        self, line: Line, string_indices: List[int]
+        self, line: Line, string_indices: list[int]
     ) -> Iterator[TResult[Line]]:
         LL = line.leaves
         assert len(string_indices) == 1, (
@@ -1605,7 +1606,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             else:
                 return str_width(rest_value) > max_last_string_column()
 
-        string_line_results: List[Ok[Line]] = []
+        string_line_results: list[Ok[Line]] = []
         while more_splits_should_be_made():
             if use_custom_breakpoints:
                 # Custom User Split (manual)
@@ -1734,7 +1735,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
-    def _iter_nameescape_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
+    def _iter_nameescape_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
         """
         Yields:
             All ranges of @string which, if @string were to be split there,
@@ -1765,7 +1766,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
             yield begin, end
 
-    def _iter_fexpr_slices(self, string: str) -> Iterator[Tuple[Index, Index]]:
+    def _iter_fexpr_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
         """
         Yields:
             All ranges of @string which, if @string were to be split there,
@@ -1776,8 +1777,8 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             return
         yield from iter_fexpr_spans(string)
 
-    def _get_illegal_split_indices(self, string: str) -> Set[Index]:
-        illegal_indices: Set[Index] = set()
+    def _get_illegal_split_indices(self, string: str) -> set[Index]:
+        illegal_indices: set[Index] = set()
         iterators = [
             self._iter_fexpr_slices(string),
             self._iter_nameescape_slices(string),
@@ -1903,7 +1904,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         else:
             return string
 
-    def _get_string_operator_leaves(self, leaves: Iterable[Leaf]) -> List[Leaf]:
+    def _get_string_operator_leaves(self, leaves: Iterable[Leaf]) -> list[Leaf]:
         LL = list(leaves)
 
         string_op_leaves = []
@@ -2012,7 +2013,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return TErr("This line does not contain any non-atomic strings.")
 
     @staticmethod
-    def _return_match(LL: List[Leaf]) -> Optional[int]:
+    def _return_match(LL: list[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2037,7 +2038,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _else_match(LL: List[Leaf]) -> Optional[int]:
+    def _else_match(LL: list[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2064,7 +2065,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _assert_match(LL: List[Leaf]) -> Optional[int]:
+    def _assert_match(LL: list[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2099,7 +2100,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _assign_match(LL: List[Leaf]) -> Optional[int]:
+    def _assign_match(LL: list[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2146,7 +2147,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _dict_or_lambda_match(LL: List[Leaf]) -> Optional[int]:
+    def _dict_or_lambda_match(LL: list[Leaf]) -> Optional[int]:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2185,7 +2186,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     def do_transform(
-        self, line: Line, string_indices: List[int]
+        self, line: Line, string_indices: list[int]
     ) -> Iterator[TResult[Line]]:
         LL = line.leaves
         assert len(string_indices) == 1, (
@@ -2351,7 +2352,7 @@ class StringParser:
     DONE: Final = 8
 
     # Lookup Table for Next State
-    _goto: Final[Dict[Tuple[ParserState, NodeType], ParserState]] = {
+    _goto: Final[dict[tuple[ParserState, NodeType], ParserState]] = {
         # A string trailer may start with '.' OR '%'.
         (START, token.DOT): DOT,
         (START, token.PERCENT): PERCENT,
@@ -2380,7 +2381,7 @@ class StringParser:
         self._state = self.START
         self._unmatched_lpars = 0
 
-    def parse(self, leaves: List[Leaf], string_idx: int) -> int:
+    def parse(self, leaves: list[Leaf], string_idx: int) -> int:
         """
         Pre-conditions:
             * @leaves[@string_idx].type == token.STRING

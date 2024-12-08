@@ -12,9 +12,9 @@ file_input: (NEWLINE | stmt)* ENDMARKER
 single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 eval_input: testlist NEWLINE* ENDMARKER
 
-typevar: NAME [':' expr]
-paramspec: '**' NAME
-typevartuple: '*' NAME
+typevar: NAME [':' expr] ['=' expr]
+paramspec: '**' NAME ['=' expr]
+typevartuple: '*' NAME ['=' (expr|star_expr)]
 typeparam: typevar | paramspec | typevartuple
 typeparams: '[' typeparam (',' typeparam)* [','] ']'
 
@@ -163,7 +163,7 @@ atom: ('(' [yield_expr|testlist_gexp] ')' |
        '[' [listmaker] ']' |
        '{' [dictsetmaker] '}' |
        '`' testlist1 '`' |
-       NAME | NUMBER | STRING+ | '.' '.' '.')
+       NAME | NUMBER | (STRING | fstring)+ | '.' '.' '.')
 listmaker: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star_expr))* [','] )
 testlist_gexp: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star_expr))* [','] )
 lambdef: 'lambda' [varargslist] ':' test
@@ -254,3 +254,8 @@ case_block: "case" patterns [guard] ':' suite
 guard: 'if' namedexpr_test
 patterns: pattern (',' pattern)* [',']
 pattern: (expr|star_expr) ['as' expr]
+
+fstring: FSTRING_START fstring_middle* FSTRING_END
+fstring_middle: fstring_replacement_field | FSTRING_MIDDLE
+fstring_replacement_field: '{' (yield_expr | testlist_star_expr) ['='] [ "!" NAME ] [ ':' fstring_format_spec* ] '}'
+fstring_format_spec: FSTRING_MIDDLE | fstring_replacement_field

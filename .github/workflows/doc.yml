@@ -26,13 +26,15 @@ jobs:
       - name: Set up latest Python
         uses: actions/setup-python@v5
         with:
-          python-version: "*"
+          python-version: "3.13"
+          allow-prereleases: true
 
       - name: Install dependencies
         run: |
           python -m pip install uv
-          python -m uv pip install --system -e ".[d]"
-          python -m uv pip install --system -r "docs/requirements.txt"
+          python -m uv venv
+          python -m uv pip install -e ".[d]"
+          python -m uv pip install -r "docs/requirements.txt"
 
       - name: Build documentation
         run: sphinx-build -a -b html -W --keep-going docs/ docs/_build

@@ -27,19 +27,11 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
+import builtins
 import sys
-from typing import (
-    Callable,
-    Final,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
-    Pattern,
-    Set,
-    Tuple,
-    Union,
-)
+from collections.abc import Callable, Iterable, Iterator
+from re import Pattern
+from typing import Final, Optional, Union
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
@@ -49,12 +41,17 @@ from blib2to3.pgen2.token import (
     DEDENT,
     ENDMARKER,
     ERRORTOKEN,
+    FSTRING_END,
+    FSTRING_MIDDLE,
+    FSTRING_START,
     INDENT,
+    LBRACE,
     NAME,
     NEWLINE,
     NL,
     NUMBER,
     OP,
+    RBRACE,
     STRING,
     tok_name,
 )
@@ -87,7 +84,7 @@ def maybe(*choices: str) -> str:
     return group(*choices) + "?"
 
 
-def _combinations(*l: str) -> Set[str]:
+def _combinations(*l: str) -> set[str]:
     return {x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()}
 
 
@@ -113,20 +110,38 @@ Imagnumber = group(r"\d+(?:_\d+)*[jJ]", Floatnumber + r"[jJ]")
 Number = group(Imagnumber, Floatnumber, Intnumber)
 
 # Tail end of ' string.
-Single = r"[^'\\]*(?:\\.[^'\\]*)*'"
+Single = r"(?:\\.|[^'\\])*'"
 # Tail end of " string.
-Double = r'[^"\\]*(?:\\.[^"\\]*)*"'
+Double = r'(?:\\.|[^"\\])*"'
 # Tail end of ''' string.
-Single3 = r"[^'\\]*(?:(?:\\.|'(?!''))[^'\\]*)*'''"
+Single3 = r"(?:\\.|'(?!'')|[^'\\])*'''"
 # Tail end of """ string.
-Double3 = r'[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*"""'
-_litprefix = r"(?:[uUrRbBfF]|[rR][fFbB]|[fFbBuU][rR])?"
-Triple = group(_litprefix + "'''", _litprefix + '"""')
-# Single-line ' or " string.
-String = group(
-    _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*'",
-    _litprefix + r'"[^\n"\\]*(?:\\.[^\n"\\]*)*"',
+Double3 = r'(?:\\.|"(?!"")|[^"\\])*"""'
+_litprefix = r"(?:[uUrRbB]|[rR][bB]|[bBuU][rR])?"
+_fstringlitprefix = r"(?:rF|FR|Fr|fr|RF|F|rf|f|Rf|fR)"
+Triple = group(
+    _litprefix + "'''",
+    _litprefix + '"""',
+    _fstringlitprefix + '"""',
+    _fstringlitprefix + "'''",
 )
+
+# beginning of a single quoted f-string. must not end with `{{` or `\N{`
+SingleLbrace = r"(?:\\N{|{{|\\'|[^\n'{])*(?<!\\N)({)(?!{)"
+DoubleLbrace = r'(?:\\N{|{{|\\"|[^\n"{])*(?<!\\N)({)(?!{)'
+
+# beginning of a triple quoted f-string. must not end with `{{` or `\N{`
+Single3Lbrace = r"(?:\\N{|{{|\\'|'(?!'')|[^'{])*(?<!\\N){(?!{)"
+Double3Lbrace = r'(?:\\N{|{{|\\"|"(?!"")|[^"{])*(?<!\\N){(?!{)'
+
+# ! format specifier inside an fstring brace, ensure it's not a `!=` token
+Bang = Whitespace + group("!") + r"(?!=)"
+bang = re.compile(Bang)
+Colon = Whitespace + group(":")
+colon = re.compile(Colon)
+
+FstringMiddleAfterColon = group(Whitespace + r".*?") + group("{", "}")
+fstring_middle_after_colon = re.compile(FstringMiddleAfterColon)
 
 # Because of leftmost-then-longest match semantics, be sure to put the
 # longest operators first (e.g., if = came before ==, == would get
@@ -147,42 +162,70 @@ Bracket = "[][(){}]"
 Special = group(r"\r?\n", r"[:;.,`@]")
 Funny = group(Operator, Bracket, Special)
 
+_string_middle_single = r"(?:[^\n'\\]|\\.)*"
+_string_middle_double = r'(?:[^\n"\\]|\\.)*'
+
+# FSTRING_MIDDLE and LBRACE, must not end with a `{{` or `\N{`
+_fstring_middle_single = SingleLbrace
+_fstring_middle_double = DoubleLbrace
+
 # First (or only) line of ' or " string.
 ContStr = group(
-    _litprefix + r"'[^\n'\\]*(?:\\.[^\n'\\]*)*" + group("'", r"\\\r?\n"),
-    _litprefix + r'"[^\n"\\]*(?:\\.[^\n"\\]*)*' + group('"', r"\\\r?\n"),
+    _litprefix + "'" + _string_middle_single + group("'", r"\\\r?\n"),
+    _litprefix + '"' + _string_middle_double + group('"', r"\\\r?\n"),
+    group(_fstringlitprefix + "'") + _fstring_middle_single,
+    group(_fstringlitprefix + '"') + _fstring_middle_double,
+    group(_fstringlitprefix + "'") + _string_middle_single + group("'", r"\\\r?\n"),
+    group(_fstringlitprefix + '"') + _string_middle_double + group('"', r"\\\r?\n"),
 )
 PseudoExtras = group(r"\\\r?\n", Comment, Triple)
 PseudoToken = Whitespace + group(PseudoExtras, Number, Funny, ContStr, Name)
 
 pseudoprog: Final = re.compile(PseudoToken, re.UNICODE)
-single3prog = re.compile(Single3)
-double3prog = re.compile(Double3)
 
-_strprefixes = (
-    _combinations("r", "R", "f", "F")
-    | _combinations("r", "R", "b", "B")
-    | {"u", "U", "ur", "uR", "Ur", "UR"}
-)
+singleprog = re.compile(Single)
+singleprog_plus_lbrace = re.compile(group(SingleLbrace, Single))
+doubleprog = re.compile(Double)
+doubleprog_plus_lbrace = re.compile(group(DoubleLbrace, Double))
+
+single3prog = re.compile(Single3)
+single3prog_plus_lbrace = re.compile(group(Single3Lbrace, Single3))
+double3prog = re.compile(Double3)
+double3prog_plus_lbrace = re.compile(group(Double3Lbrace, Double3))
+
+_strprefixes = _combinations("r", "R", "b", "B") | {"u", "U", "ur", "uR", "Ur", "UR"}
+_fstring_prefixes = _combinations("r", "R", "f", "F") - {"r", "R"}
 
 endprogs: Final = {
-    "'": re.compile(Single),
-    '"': re.compile(Double),
+    "'": singleprog,
+    '"': doubleprog,
     "'''": single3prog,
     '"""': double3prog,
+    **{f"{prefix}'": singleprog for prefix in _strprefixes},
+    **{f'{prefix}"': doubleprog for prefix in _strprefixes},
+    **{f"{prefix}'": singleprog_plus_lbrace for prefix in _fstring_prefixes},
+    **{f'{prefix}"': doubleprog_plus_lbrace for prefix in _fstring_prefixes},
     **{f"{prefix}'''": single3prog for prefix in _strprefixes},
     **{f'{prefix}"""': double3prog for prefix in _strprefixes},
+    **{f"{prefix}'''": single3prog_plus_lbrace for prefix in _fstring_prefixes},
+    **{f'{prefix}"""': double3prog_plus_lbrace for prefix in _fstring_prefixes},
 }
 
 triple_quoted: Final = (
     {"'''", '"""'}
-    | {f"{prefix}'''" for prefix in _strprefixes}
-    | {f'{prefix}"""' for prefix in _strprefixes}
+    | {f"{prefix}'''" for prefix in _strprefixes | _fstring_prefixes}
+    | {f'{prefix}"""' for prefix in _strprefixes | _fstring_prefixes}
 )
 single_quoted: Final = (
     {"'", '"'}
-    | {f"{prefix}'" for prefix in _strprefixes}
-    | {f'{prefix}"' for prefix in _strprefixes}
+    | {f"{prefix}'" for prefix in _strprefixes | _fstring_prefixes}
+    | {f'{prefix}"' for prefix in _strprefixes | _fstring_prefixes}
+)
+fstring_prefix: Final = (
+    {f"{prefix}'" for prefix in _fstring_prefixes}
+    | {f'{prefix}"' for prefix in _fstring_prefixes}
+    | {f"{prefix}'''" for prefix in _fstring_prefixes}
+    | {f'{prefix}"""' for prefix in _fstring_prefixes}
 )
 
 tabsize = 8
@@ -196,7 +239,7 @@ class StopTokenizing(Exception):
     pass
 
 
-Coord = Tuple[int, int]
+Coord = tuple[int, int]
 
 
 def printtoken(
@@ -237,12 +280,12 @@ def tokenize_loop(readline: Callable[[], str], tokeneater: TokenEater) -> None:
         tokeneater(*token_info)
 
 
-GoodTokenInfo = Tuple[int, str, Coord, Coord, str]
-TokenInfo = Union[Tuple[int, str], GoodTokenInfo]
+GoodTokenInfo = tuple[int, str, Coord, Coord, str]
+TokenInfo = Union[tuple[int, str], GoodTokenInfo]
 
 
 class Untokenizer:
-    tokens: List[str]
+    tokens: list[str]
     prev_row: int
     prev_col: int
 
@@ -272,7 +315,7 @@ class Untokenizer:
                 self.prev_col = 0
         return "".join(self.tokens)
 
-    def compat(self, token: Tuple[int, str], iterable: Iterable[TokenInfo]) -> None:
+    def compat(self, token: tuple[int, str], iterable: Iterable[TokenInfo]) -> None:
         startline = False
         indents = []
         toks_append = self.tokens.append
@@ -318,7 +361,7 @@ def _get_normal_name(orig_enc: str) -> str:
     return orig_enc
 
 
-def detect_encoding(readline: Callable[[], bytes]) -> Tuple[str, List[bytes]]:
+def detect_encoding(readline: Callable[[], bytes]) -> tuple[str, list[bytes]]:
     """
     The detect_encoding() function is used to detect the encoding that should
     be used to decode a Python source file. It requires one argument, readline,
@@ -415,6 +458,101 @@ def untokenize(iterable: Iterable[TokenInfo]) -> str:
     return ut.untokenize(iterable)
 
 
+def is_fstring_start(token: str) -> bool:
+    return builtins.any(token.startswith(prefix) for prefix in fstring_prefix)
+
+
+def _split_fstring_start_and_middle(token: str) -> tuple[str, str]:
+    for prefix in fstring_prefix:
+        _, prefix, rest = token.partition(prefix)
+        if prefix != "":
+            return prefix, rest
+
+    raise ValueError(f"Token {token!r} is not a valid f-string start")
+
+
+STATE_NOT_FSTRING: Final = 0  # not in an f-string
+STATE_MIDDLE: Final = 1  # in the string portion of an f-string (outside braces)
+STATE_IN_BRACES: Final = 2  # between braces in an f-string
+# in the format specifier (between the colon and the closing brace)
+STATE_IN_COLON: Final = 3
+
+
+class FStringState:
+    """Keeps track of state around f-strings.
+
+    The tokenizer should call the appropriate method on this class when
+    it transitions to a different part of an f-string. This is needed
+    because the tokenization depends on knowing where exactly we are in
+    the f-string.
+
+    For example, consider the following f-string:
+
+        f"a{1:b{2}c}d"
+
+    The following is the tokenization of this string and the states
+    tracked by this class:
+
+        1,0-1,2:	FSTRING_START	'f"'  # [STATE_NOT_FSTRING, STATE_MIDDLE]
+        1,2-1,3:	FSTRING_MIDDLE	'a'
+        1,3-1,4:	LBRACE	'{'  # [STATE_NOT_FSTRING, STATE_IN_BRACES]
+        1,4-1,5:	NUMBER	'1'
+        1,5-1,6:	OP	':'  # [STATE_NOT_FSTRING, STATE_IN_COLON]
+        1,6-1,7:	FSTRING_MIDDLE	'b'
+        1,7-1,8:	LBRACE	'{'  # [STATE_NOT_FSTRING, STATE_IN_COLON, STATE_IN_BRACES]
+        1,8-1,9:	NUMBER	'2'
+        1,9-1,10:	RBRACE	'}'  # [STATE_NOT_FSTRING, STATE_IN_COLON]
+        1,10-1,11:	FSTRING_MIDDLE	'c'
+        1,11-1,12:	RBRACE	'}'  # [STATE_NOT_FSTRING, STATE_MIDDLE]
+        1,12-1,13:	FSTRING_MIDDLE	'd'
+        1,13-1,14:	FSTRING_END	'"'  # [STATE_NOT_FSTRING]
+        1,14-1,15:	NEWLINE	'\n'
+        2,0-2,0:	ENDMARKER	''
+
+    Notice that the nested braces in the format specifier are represented
+    by adding a STATE_IN_BRACES entry to the state stack. The stack is
+    also used if there are nested f-strings.
+
+    """
+
+    def __init__(self) -> None:
+        self.stack: list[int] = [STATE_NOT_FSTRING]
+
+    def is_in_fstring_expression(self) -> bool:
+        return self.stack[-1] not in (STATE_MIDDLE, STATE_NOT_FSTRING)
+
+    def current(self) -> int:
+        return self.stack[-1]
+
+    def enter_fstring(self) -> None:
+        self.stack.append(STATE_MIDDLE)
+
+    def leave_fstring(self) -> None:
+        state = self.stack.pop()
+        assert state == STATE_MIDDLE
+
+    def consume_lbrace(self) -> None:
+        current_state = self.stack[-1]
+        if current_state == STATE_MIDDLE:
+            self.stack[-1] = STATE_IN_BRACES
+        elif current_state == STATE_IN_COLON:
+            self.stack.append(STATE_IN_BRACES)
+        else:
+            assert False, current_state
+
+    def consume_rbrace(self) -> None:
+        current_state = self.stack[-1]
+        assert current_state in (STATE_IN_BRACES, STATE_IN_COLON)
+        if len(self.stack) > 1 and self.stack[-2] == STATE_IN_COLON:
+            self.stack.pop()
+        else:
+            self.stack[-1] = STATE_MIDDLE
+
+    def consume_colon(self) -> None:
+        assert self.stack[-1] == STATE_IN_BRACES, self.stack
+        self.stack[-1] = STATE_IN_COLON
+
+
 def generate_tokens(
     readline: Callable[[], str], grammar: Optional[Grammar] = None
 ) -> Iterator[GoodTokenInfo]:
@@ -434,6 +572,9 @@ def generate_tokens(
     logical line; continuation lines are included.
     """
     lnum = parenlev = continued = 0
+    parenlev_stack: list[int] = []
+    fstring_state = FStringState()
+    formatspec = ""
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
@@ -448,8 +589,9 @@ def generate_tokens(
     async_def_indent = 0
     async_def_nl = False
 
-    strstart: Tuple[int, int]
-    endprog: Pattern[str]
+    strstart: tuple[int, int]
+    endprog_stack: list[Pattern[str]] = []
+    formatspec_start: tuple[int, int]
 
     while 1:  # loop over lines in stream
         try:
@@ -457,22 +599,85 @@ def generate_tokens(
         except StopIteration:
             line = ""
         lnum += 1
+
+        # skip lines that are just indent characters ending with a slash
+        # to avoid storing that line's indent information.
+        if not contstr and line.rstrip("\n").strip(" \t\f") == "\\":
+            continue
+
         pos, max = 0, len(line)
 
         if contstr:  # continued string
             assert contline is not None
             if not line:
                 raise TokenError("EOF in multi-line string", strstart)
+            endprog = endprog_stack[-1]
             endmatch = endprog.match(line)
             if endmatch:
-                pos = end = endmatch.end(0)
-                yield (
-                    STRING,
-                    contstr + line[:end],
-                    strstart,
-                    (lnum, end),
-                    contline + line,
-                )
+                end = endmatch.end(0)
+                token = contstr + line[:end]
+                spos = strstart
+                epos = (lnum, end)
+                tokenline = contline + line
+                if fstring_state.current() in (
+                    STATE_NOT_FSTRING,
+                    STATE_IN_BRACES,
+                ) and not is_fstring_start(token):
+                    yield (STRING, token, spos, epos, tokenline)
+                    endprog_stack.pop()
+                    parenlev = parenlev_stack.pop()
+                else:
+                    if is_fstring_start(token):
+                        fstring_start, token = _split_fstring_start_and_middle(token)
+                        fstring_start_epos = (spos[0], spos[1] + len(fstring_start))
+                        yield (
+                            FSTRING_START,
+                            fstring_start,
+                            spos,
+                            fstring_start_epos,
+                            tokenline,
+                        )
+                        fstring_state.enter_fstring()
+                        # increase spos to the end of the fstring start
+                        spos = fstring_start_epos
+
+                    if token.endswith("{"):
+                        fstring_middle, lbrace = token[:-1], token[-1]
+                        fstring_middle_epos = lbrace_spos = (lnum, end - 1)
+                        yield (
+                            FSTRING_MIDDLE,
+                            fstring_middle,
+                            spos,
+                            fstring_middle_epos,
+                            line,
+                        )
+                        yield (LBRACE, lbrace, lbrace_spos, epos, line)
+                        fstring_state.consume_lbrace()
+                    else:
+                        if token.endswith(('"""', "'''")):
+                            fstring_middle, fstring_end = token[:-3], token[-3:]
+                            fstring_middle_epos = end_spos = (lnum, end - 3)
+                        else:
+                            fstring_middle, fstring_end = token[:-1], token[-1]
+                            fstring_middle_epos = end_spos = (lnum, end - 1)
+                        yield (
+                            FSTRING_MIDDLE,
+                            fstring_middle,
+                            spos,
+                            fstring_middle_epos,
+                            line,
+                        )
+                        yield (
+                            FSTRING_END,
+                            fstring_end,
+                            end_spos,
+                            epos,
+                            line,
+                        )
+                        fstring_state.leave_fstring()
+                        endprog_stack.pop()
+                        parenlev = parenlev_stack.pop()
+                pos = end
                 contstr, needcont = "", 0
                 contline = None
             elif needcont and line[-2:] != "\\\n" and line[-3:] != "\\\r\n":
@@ -491,7 +696,12 @@ def generate_tokens(
                 contline = contline + line
                 continue
 
-        elif parenlev == 0 and not continued:  # new statement
+        # new statement
+        elif (
+            parenlev == 0
+            and not continued
+            and not fstring_state.is_in_fstring_expression()
+        ):
             if not line:
                 break
             column = 0
@@ -559,6 +769,100 @@ def generate_tokens(
             continued = 0
 
         while pos < max:
+            if fstring_state.current() == STATE_MIDDLE:
+                endprog = endprog_stack[-1]
+                endmatch = endprog.match(line, pos)
+                if endmatch:  # all on one line
+                    start, end = endmatch.span(0)
+                    token = line[start:end]
+                    if token.endswith(('"""', "'''")):
+                        middle_token, end_token = token[:-3], token[-3:]
+                        middle_epos = end_spos = (lnum, end - 3)
+                    else:
+                        middle_token, end_token = token[:-1], token[-1]
+                        middle_epos = end_spos = (lnum, end - 1)
+                    # TODO: unsure if this can be safely removed
+                    if stashed:
+                        yield stashed
+                        stashed = None
+                    yield (
+                        FSTRING_MIDDLE,
+                        middle_token,
+                        (lnum, pos),
+                        middle_epos,
+                        line,
+                    )
+                    if not token.endswith("{"):
+                        yield (
+                            FSTRING_END,
+                            end_token,
+                            end_spos,
+                            (lnum, end),
+                            line,
+                        )
+                        fstring_state.leave_fstring()
+                        endprog_stack.pop()
+                        parenlev = parenlev_stack.pop()
+                    else:
+                        yield (LBRACE, "{", (lnum, end - 1), (lnum, end), line)
+                        fstring_state.consume_lbrace()
+                    pos = end
+                    continue
+                else:  # multiple lines
+                    strstart = (lnum, end)
+                    contstr = line[end:]
+                    contline = line
+                    break
+
+            if fstring_state.current() == STATE_IN_COLON:
+                match = fstring_middle_after_colon.match(line, pos)
+                if match is None:
+                    formatspec += line[pos:]
+                    pos = max
+                    continue
+
+                start, end = match.span(1)
+                token = line[start:end]
+                formatspec += token
+
+                brace_start, brace_end = match.span(2)
+                brace_or_nl = line[brace_start:brace_end]
+                if brace_or_nl == "\n":
+                    pos = brace_end
+
+                yield (FSTRING_MIDDLE, formatspec, formatspec_start, (lnum, end), line)
+                formatspec = ""
+
+                if brace_or_nl == "{":
+                    yield (LBRACE, "{", (lnum, brace_start), (lnum, brace_end), line)
+                    fstring_state.consume_lbrace()
+                    end = brace_end
+                elif brace_or_nl == "}":
+                    yield (RBRACE, "}", (lnum, brace_start), (lnum, brace_end), line)
+                    fstring_state.consume_rbrace()
+                    end = brace_end
+                    formatspec_start = (lnum, brace_end)
+
+                pos = end
+                continue
+
+            if fstring_state.current() == STATE_IN_BRACES and parenlev == 0:
+                match = bang.match(line, pos)
+                if match:
+                    start, end = match.span(1)
+                    yield (OP, "!", (lnum, start), (lnum, end), line)
+                    pos = end
+                    continue
+
+                match = colon.match(line, pos)
+                if match:
+                    start, end = match.span(1)
+                    yield (OP, ":", (lnum, start), (lnum, end), line)
+                    fstring_state.consume_colon()
+                    formatspec_start = (lnum, end)
+                    pos = end
+                    continue
+
             pseudomatch = pseudoprog.match(line, pos)
             if pseudomatch:  # scan for tokens
                 start, end = pseudomatch.span(1)
@@ -571,7 +875,7 @@ def generate_tokens(
                     yield (NUMBER, token, spos, epos, line)
                 elif initial in "\r\n":
                     newline = NEWLINE
-                    if parenlev > 0:
+                    if parenlev > 0 or fstring_state.is_in_fstring_expression():
                         newline = NL
                     elif async_def:
                         async_def_nl = True
@@ -588,17 +892,70 @@ def generate_tokens(
                     yield (COMMENT, token, spos, epos, line)
                 elif token in triple_quoted:
                     endprog = endprogs[token]
+                    endprog_stack.append(endprog)
+                    parenlev_stack.append(parenlev)
+                    parenlev = 0
+                    if is_fstring_start(token):
+                        yield (FSTRING_START, token, spos, epos, line)
+                        fstring_state.enter_fstring()
+
                     endmatch = endprog.match(line, pos)
                     if endmatch:  # all on one line
-                        pos = endmatch.end(0)
-                        token = line[start:pos]
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield (STRING, token, spos, (lnum, pos), line)
+                        if not is_fstring_start(token):
+                            pos = endmatch.end(0)
+                            token = line[start:pos]
+                            epos = (lnum, pos)
+                            yield (STRING, token, spos, epos, line)
+                            endprog_stack.pop()
+                            parenlev = parenlev_stack.pop()
+                        else:
+                            end = endmatch.end(0)
+                            token = line[pos:end]
+                            spos, epos = (lnum, pos), (lnum, end)
+                            if not token.endswith("{"):
+                                fstring_middle, fstring_end = token[:-3], token[-3:]
+                                fstring_middle_epos = fstring_end_spos = (lnum, end - 3)
+                                yield (
+                                    FSTRING_MIDDLE,
+                                    fstring_middle,
+                                    spos,
+                                    fstring_middle_epos,
+                                    line,
+                                )
+                                yield (
+                                    FSTRING_END,
+                                    fstring_end,
+                                    fstring_end_spos,
+                                    epos,
+                                    line,
+                                )
+                                fstring_state.leave_fstring()
+                                endprog_stack.pop()
+                                parenlev = parenlev_stack.pop()
+                            else:
+                                fstring_middle, lbrace = token[:-1], token[-1]
+                                fstring_middle_epos = lbrace_spos = (lnum, end - 1)
+                                yield (
+                                    FSTRING_MIDDLE,
+                                    fstring_middle,
+                                    spos,
+                                    fstring_middle_epos,
+                                    line,
+                                )
+                                yield (LBRACE, lbrace, lbrace_spos, epos, line)
+                                fstring_state.consume_lbrace()
+                            pos = end
                     else:
-                        strstart = (lnum, start)  # multiple lines
-                        contstr = line[start:]
+                        # multiple lines
+                        if is_fstring_start(token):
+                            strstart = (lnum, pos)
+                            contstr = line[pos:]
+                        else:
+                            strstart = (lnum, start)
+                            contstr = line[start:]
                         contline = line
                         break
                 elif (
@@ -606,17 +963,18 @@ def generate_tokens(
                     or token[:2] in single_quoted
                     or token[:3] in single_quoted
                 ):
+                    maybe_endprog = (
+                        endprogs.get(initial)
+                        or endprogs.get(token[:2])
+                        or endprogs.get(token[:3])
+                    )
+                    assert maybe_endprog is not None, f"endprog not found for {token}"
+                    endprog = maybe_endprog
                     if token[-1] == "\n":  # continued string
+                        endprog_stack.append(endprog)
+                        parenlev_stack.append(parenlev)
+                        parenlev = 0
                         strstart = (lnum, start)
-                        maybe_endprog = (
-                            endprogs.get(initial)
-                            or endprogs.get(token[1])
-                            or endprogs.get(token[2])
-                        )
-                        assert (
-                            maybe_endprog is not None
-                        ), f"endprog not found for {token}"
-                        endprog = maybe_endprog
                         contstr, needcont = line[start:], 1
                         contline = line
                         break
@@ -624,7 +982,55 @@ def generate_tokens(
                         if stashed:
                             yield stashed
                             stashed = None
-                        yield (STRING, token, spos, epos, line)
+
+                        if not is_fstring_start(token):
+                            yield (STRING, token, spos, epos, line)
+                        else:
+                            if pseudomatch[20] is not None:
+                                fstring_start = pseudomatch[20]
+                                offset = pseudomatch.end(20) - pseudomatch.start(1)
+                            elif pseudomatch[22] is not None:
+                                fstring_start = pseudomatch[22]
+                                offset = pseudomatch.end(22) - pseudomatch.start(1)
+                            elif pseudomatch[24] is not None:
+                                fstring_start = pseudomatch[24]
+                                offset = pseudomatch.end(24) - pseudomatch.start(1)
+                            else:
+                                fstring_start = pseudomatch[26]
+                                offset = pseudomatch.end(26) - pseudomatch.start(1)
+
+                            start_epos = (lnum, start + offset)
+                            yield (FSTRING_START, fstring_start, spos, start_epos, line)
+                            fstring_state.enter_fstring()
+                            endprog = endprogs[fstring_start]
+                            endprog_stack.append(endprog)
+                            parenlev_stack.append(parenlev)
+                            parenlev = 0
+
+                            end_offset = pseudomatch.end(1) - 1
+                            fstring_middle = line[start + offset : end_offset]
+                            middle_spos = (lnum, start + offset)
+                            middle_epos = (lnum, end_offset)
+                            yield (
+                                FSTRING_MIDDLE,
+                                fstring_middle,
+                                middle_spos,
+                                middle_epos,
+                                line,
+                            )
+                            if not token.endswith("{"):
+                                end_spos = (lnum, end_offset)
+                                end_epos = (lnum, end_offset + 1)
+                                yield (FSTRING_END, token[-1], end_spos, end_epos, line)
+                                fstring_state.leave_fstring()
+                                endprog_stack.pop()
+                                parenlev = parenlev_stack.pop()
+                            else:
+                                end_spos = (lnum, end_offset)
+                                end_epos = (lnum, end_offset + 1)
+                                yield (LBRACE, "{", end_spos, end_epos, line)
+                                fstring_state.consume_lbrace()
+
                 elif initial.isidentifier():  # ordinary name
                     if token in ("async", "await"):
                         if async_keywords or async_def:
@@ -669,6 +1075,14 @@ def generate_tokens(
                         stashed = None
                     yield (NL, token, spos, (lnum, pos), line)
                     continued = 1
+                elif (
+                    initial == "}"
+                    and parenlev == 0
+                    and fstring_state.is_in_fstring_expression()
+                ):
+                    yield (RBRACE, token, spos, epos, line)
+                    fstring_state.consume_rbrace()
+                    formatspec_start = epos
                 else:
                     if initial in "([{":
                         parenlev += 1
@@ -689,6 +1103,8 @@ def generate_tokens(
     for _indent in indents[1:]:  # pop remaining indent levels
         yield (DEDENT, "", (lnum, 0), (lnum, 0), "")
     yield (ENDMARKER, "", (lnum, 0), (lnum, 0), "")
+    assert len(endprog_stack) == 0
+    assert len(parenlev_stack) == 0
 
 
 if __name__ == "__main__":  # testing

@@ -14,4 +14,3 @@ updates:
     schedule:
       interval: "weekly"
     labels: ["skip news", "C: dependencies", "T: documentation"]
-    reviewers: ["ichard26"]
