@@ -1,0 +1,17 @@
+# anti 1765 regression
+class Foo:
+    def foo(self):
+        if True:
+            content_ids: Mapping[
+                str, Optional[ContentId]
+            ] = self.publisher_content_store.store_config_contents(files)
+
+# output
+
+# anti 1765 regression
+class Foo:
+    def foo(self):
+        if True:
+            content_ids: Mapping[str, Optional[ContentId]] = (
+                self.publisher_content_store.store_config_contents(files)
+            )
