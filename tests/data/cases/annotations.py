@@ -1,4 +1,4 @@
-# anti 1765 regression
+# regression test for #1765
 class Foo:
     def foo(self):
         if True:
