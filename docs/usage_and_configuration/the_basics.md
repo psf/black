@@ -74,7 +74,7 @@ You should include all versions that your code supports. If you support Python 3
 through 3.13, you should write:
 
 ```console
-black -t py311 -t py312 -t py313
+$ black -t py311 -t py312 -t py313
 ```
 
 In a [configuration file](#configuration-via-a-file), you can write:
