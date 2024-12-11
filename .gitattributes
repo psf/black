@@ -1,2 +1,2 @@
 .git_archival.txt  export-subst
-*.py text=auto diff=python
+*.py diff=python
