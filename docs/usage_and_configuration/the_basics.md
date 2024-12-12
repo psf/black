@@ -478,9 +478,10 @@ operating system, this configuration file should be stored as:
   `XDG_CONFIG_HOME` environment variable is not set)
 
 Note that these are paths to the TOML file itself (meaning that they shouldn't be named
-as `pyproject.toml`), not directories where you store the configuration. Here, `~`
-refers to the path to your home directory. On Windows, this will be something like
-`C:\\Users\UserName`.
+as `pyproject.toml`), not directories where you store the configuration (i.e.,
+`black`/`.black` is the file to create and add your configuration options to, in the
+`~/.config/` directory). Here, `~` refers to the path to your home directory. On
+Windows, this will be something like `C:\\Users\UserName`.
 
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.
