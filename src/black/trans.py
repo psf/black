@@ -856,7 +856,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             ):
                 return TErr(
                     "StringMerger does NOT merge f-strings with different quote types"
-                    "and internal quotes."
+                    " and internal quotes."
                 )
 
             if id(leaf) in line.comments:
