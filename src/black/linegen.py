@@ -982,12 +982,18 @@ def _maybe_split_omitting_optional_parens(
             if line.is_chained_assignment:
                 pass
 
-            # elif not can_be_split(rhs.body) and not is_line_short_enough(
-            #     rhs.body, mode=mode
-            # ):
-            #     raise CannotSplit(
-            #         "Splitting failed, body is still too long and can't be split."
-            #     ) from e
+            elif (
+                not can_be_split(rhs.body)
+                and not is_line_short_enough(rhs.body, mode=mode)
+                and not (
+                    rhs.opening_bracket.parent
+                    and rhs.opening_bracket.parent.parent
+                    and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
+                )
+            ):
+                raise CannotSplit(
+                    "Splitting failed, body is still too long and can't be split."
+                ) from e
 
             elif (
                 rhs.head.contains_multiline_strings()
