@@ -27,11 +27,8 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
-import builtins
 import sys
-from collections.abc import Callable, Iterable, Iterator
-from re import Pattern
-from typing import Final, Optional, Union
+from collections.abc import Iterator
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
@@ -104,60 +101,86 @@ TOKEN_TYPE_MAP = {
 class TokenError(Exception): ...
 
 
-def token_type(token: pytokens.Token, source: str) -> int:
-    tok_type = TOKEN_TYPE_MAP[token.type]
-    if tok_type == NAME:
-        if source == "async":
-            return ASYNC
-
-        if source == "await":
-            return AWAIT
-
-    return tok_type
-
-
 def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
+    async_keywords = False if grammar is None else grammar.async_keywords
+
     lines = source.split("\n")
     lines += [""]  # For newline tokens in files that don't end in a newline
     line, column = 1, 0
+
+    token_iterator = pytokens.tokenize(source)
     try:
-        for token in pytokens.tokenize(source):
+        for token in token_iterator:
             line, column = token.start_line, token.start_col
             if token.type == TokenType.whitespace:
                 continue
 
-            token_string = source[token.start_index : token.end_index]
+            token_str = source[token.start_index : token.end_index]
 
-            if token.type == TokenType.newline and token_string == "":
+            if token.type == TokenType.newline and token_str == "":
                 # Black doesn't yield empty newline tokens at the end of a file
                 # if there's no newline at the end of a file.
                 continue
 
             source_line = lines[token.start_line - 1]
 
-            if token.type == TokenType.op and token_string == "...":
-                # Black doesn't have an ellipsis token yet, yield 3 DOTs instead
-                assert token.start_line == token.end_line
-                assert token.end_col == token.start_col + 3
+            if token.type == TokenType.identifier and token_str in ("async", "await"):
+                # Black uses `async` and `await` token types just for those two keywords
+                while True:
+                    next_token = next(token_iterator)
+                    if next_token.type == TokenType.whitespace:
+                        continue
+                    break
+                
+                next_token_type = TOKEN_TYPE_MAP[next_token.type]
+                next_str = source[next_token.start_index : next_token.end_index]
+                next_line = lines[next_token.start_line - 1]
+                
+                if next_token_type == NAME and next_str in ("def", "for"):
+                    current_token_type= ASYNC if token_str == "async" else AWAIT
+                else:
+                    current_token_type = TOKEN_TYPE_MAP[token.type]
 
-                token_string = "."
-                for start_col in range(token.start_col, token.start_col + 3):
-                    end_col = start_col + 1
-                    yield (
-                        token_type(token, token_string),
-                        token_string,
-                        (token.start_line, start_col),
-                        (token.end_line, end_col),
-                        source_line,
-                    )
-            else:
                 yield (
-                    token_type(token, token_string),
-                    token_string,
+                    current_token_type,
+                    token_str,
                     (token.start_line, token.start_col),
                     (token.end_line, token.end_col),
                     source_line,
                 )
+                yield (
+                    next_token_type,
+                    next_str,
+                    (next_token.start_line, next_token.start_col),
+                    (next_token.end_line, next_token.end_col),
+                    next_line,
+                )
+                continue
+
+            if token.type == TokenType.op and token_str == "...":
+                # Black doesn't have an ellipsis token yet, yield 3 DOTs instead
+                assert token.start_line == token.end_line
+                assert token.end_col == token.start_col + 3
+
+                token_str = "."
+                for start_col in range(token.start_col, token.start_col + 3):
+                    end_col = start_col + 1
+                    yield (
+                        TOKEN_TYPE_MAP[token.type],
+                        token_str,
+                        (token.start_line, start_col),
+                        (token.end_line, end_col),
+                        source_line,
+                    )
+                    continue
+
+            yield (
+                TOKEN_TYPE_MAP[token.type],
+                token_str,
+                (token.start_line, token.start_col),
+                (token.end_line, token.end_col),
+                source_line,
+            )
     except Exception as exc:  # TODO:
         raise TokenError(repr(exc), (line, column))
 
