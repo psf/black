@@ -8,7 +8,6 @@ from dataclasses import dataclass
 import black
 from blib2to3.pgen2 import token, tokenize
 
-token._name
 
 @dataclass
 class Token:
@@ -20,7 +19,10 @@ class Token:
 
 def get_tokens(text: str) -> list[Token]:
     """Return the tokens produced by the tokenizer."""
-    return [Token(token.tok_name[tok_type], string, start, end) for tok_type, string, start, end, _ in tokenize.tokenize(text)]
+    return [
+        Token(token.tok_name[tok_type], string, start, end)
+        for tok_type, string, start, end, _ in tokenize.tokenize(text)
+    ]
 
 
 def assert_tokenizes(text: str, tokens: list[Token]) -> None:

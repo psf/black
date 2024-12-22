@@ -97,11 +97,12 @@ TOKEN_TYPE_MAP = {
     TokenType.fstring_start: FSTRING_START,
     TokenType.fstring_middle: FSTRING_MIDDLE,
     TokenType.fstring_end: FSTRING_END,
-    TokenType.endmarker: ENDMARKER
-
+    TokenType.endmarker: ENDMARKER,
 }
 
+
 class TokenError(Exception): ...
+
 
 def token_type(token: pytokens.Token, source: str) -> int:
     tok_type = TOKEN_TYPE_MAP[token.type]
@@ -114,6 +115,7 @@ def token_type(token: pytokens.Token, source: str) -> int:
 
     return tok_type
 
+
 def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
     lines = source.split("\n")
     lines += [""]  # For newline tokens in files that don't end in a newline
@@ -124,9 +126,9 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
             if token.type == TokenType.whitespace:
                 continue
 
-            token_string = source[token.start_index:token.end_index]
+            token_string = source[token.start_index : token.end_index]
 
-            if token.type == TokenType.newline and token_string == '':
+            if token.type == TokenType.newline and token_string == "":
                 # Black doesn't yield empty newline tokens at the end of a file
                 # if there's no newline at the end of a file.
                 continue
@@ -141,11 +143,24 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 token_string = "."
                 for start_col in range(token.start_col, token.start_col + 3):
                     end_col = start_col + 1
-                    yield (token_type(token, token_string), token_string, (token.start_line, start_col), (token.end_line, end_col), source_line)
+                    yield (
+                        token_type(token, token_string),
+                        token_string,
+                        (token.start_line, start_col),
+                        (token.end_line, end_col),
+                        source_line,
+                    )
             else:
-                yield (token_type(token, token_string), token_string, (token.start_line, token.start_col), (token.end_line, token.end_col), source_line)
+                yield (
+                    token_type(token, token_string),
+                    token_string,
+                    (token.start_line, token.start_col),
+                    (token.end_line, token.end_col),
+                    source_line,
+                )
     except Exception as exc:  # TODO:
         raise TokenError(repr(exc), (line, column))
+
 
 def printtoken(
     type: int, token: str, srow_col: Coord, erow_col: Coord, line: str
@@ -155,6 +170,7 @@ def printtoken(
     print(
         "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, tok_name[type], repr(token))
     )
+
 
 if __name__ == "__main__":  # testing
     if len(sys.argv) > 1:
