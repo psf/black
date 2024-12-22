@@ -58,12 +58,11 @@ __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
 import re
-from codecs import BOM_UTF8, lookup
 import token
+from codecs import BOM_UTF8, lookup
 
 import pytokens
 from pytokens import TokenType
-
 
 from . import token
 
@@ -109,10 +108,10 @@ def token_type(token: pytokens.Token, source: str) -> int:
     if tok_type == NAME:
         if source == "async":
             return ASYNC
-        
+
         if source == "await":
             return AWAIT
-    
+
     return tok_type
 
 def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
@@ -126,7 +125,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 continue
 
             token_string = source[token.start_index:token.end_index]
-            
+
             if token.type == TokenType.newline and token_string == '':
                 # Black doesn't yield empty newline tokens at the end of a file
                 # if there's no newline at the end of a file.
@@ -145,7 +144,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                     yield (token_type(token, token_string), token_string, (token.start_line, start_col), (token.end_line, end_col), source_line)
             else:
                 yield (token_type(token, token_string), token_string, (token.start_line, token.start_col), (token.end_line, token.end_col), source_line)
-    except Exception as exc:  # TODO: 
+    except Exception as exc:  # TODO:
         raise TokenError(repr(exc), (line, column))
 
 def printtoken(
@@ -162,6 +161,6 @@ if __name__ == "__main__":  # testing
         token_iterator = tokenize(open(sys.argv[1]).read())
     else:
         token_iterator = tokenize(sys.stdin.read())
-    
+
     for tok in token_iterator:
-        printtoken(*tok)        
+        printtoken(*tok)
