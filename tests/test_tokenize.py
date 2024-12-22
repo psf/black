@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import black
 from blib2to3.pgen2 import token, tokenize
 
+token._name
 
 @dataclass
 class Token:
@@ -19,16 +20,7 @@ class Token:
 
 def get_tokens(text: str) -> list[Token]:
     """Return the tokens produced by the tokenizer."""
-    readline = io.StringIO(text).readline
-    tokens: list[Token] = []
-
-    def tokeneater(
-        type: int, string: str, start: tokenize.Coord, end: tokenize.Coord, line: str
-    ) -> None:
-        tokens.append(Token(token.tok_name[type], string, start, end))
-
-    tokenize.tokenize(readline, tokeneater)
-    return tokens
+    return [Token(token.tok_name[tok_type], string, start, end) for tok_type, string, start, end, _ in tokenize.tokenize(text)]
 
 
 def assert_tokenizes(text: str, tokens: list[Token]) -> None:
@@ -70,9 +62,9 @@ def test_fstring() -> None:
         [
             Token("FSTRING_START", 'f"', (1, 0), (1, 2)),
             Token("FSTRING_MIDDLE", "", (1, 2), (1, 2)),
-            Token("LBRACE", "{", (1, 2), (1, 3)),
+            Token("OP", "{", (1, 2), (1, 3)),
             Token("NAME", "x", (1, 3), (1, 4)),
-            Token("RBRACE", "}", (1, 4), (1, 5)),
+            Token("OP", "}", (1, 4), (1, 5)),
             Token("FSTRING_MIDDLE", "", (1, 5), (1, 5)),
             Token("FSTRING_END", '"', (1, 5), (1, 6)),
             Token("ENDMARKER", "", (2, 0), (2, 0)),
