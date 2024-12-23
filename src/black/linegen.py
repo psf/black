@@ -1029,22 +1029,22 @@ def _prefer_split_rhs_oop_over_rhs(
         return True
 
     # the split is right after `=`
-    if not (len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL):
+    if len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL:
         return True
 
     # the left side of assignment contains brackets
-    if not any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]):
+    if any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]):
         return True
 
     # the left side of assignment is short enough (the -1 is for the ending optional
     # paren)
-    if not is_line_short_enough(
+    if is_line_short_enough(
         rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
     ):
         return True
 
     # the left side of assignment won't explode further because of magic trailing comma
-    if rhs.head.magic_trailing_comma is not None:
+    if rhs.head.magic_trailing_comma is None:
         return True
 
     # If we have multiple targets, we prefer more `=`s on the head vs pushing them to
