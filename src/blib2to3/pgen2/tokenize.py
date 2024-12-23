@@ -222,8 +222,10 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 (token.end_line, token.end_col),
                 source_line,
             )
-    except Exception as exc:  # TODO:
-        raise TokenError(str(exc), (line, column))
+    except pytokens.UnexpectedEOF:
+        raise TokenError("Unexpected EOF in multi-line statement", (line, column))
+    except pytokens.TokenizeError:
+        raise TokenError("TODO", (line, column))
 
 
 def printtoken(
