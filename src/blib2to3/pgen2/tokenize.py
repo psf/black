@@ -109,9 +109,18 @@ def transform_whitespace(token: pytokens.Token, source: str) -> pytokens.Token:
     if token.type == TokenType.whitespace:
         token_str = source[token.start_index : token.end_index]
         if token_str.startswith("\\\n"):
-            return pytokens.Token(TokenType.nl, token.start_index, token.start_index + 2, token.start_line, token.start_col, token.start_line, token.start_col + 2)
+            return pytokens.Token(
+                TokenType.nl,
+                token.start_index,
+                token.start_index + 2,
+                token.start_line,
+                token.start_col,
+                token.start_line,
+                token.start_col + 2,
+            )
 
     return token
+
 
 def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
     async_keywords = False if grammar is None else grammar.async_keywords
@@ -161,15 +170,14 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 next_token_type = TOKEN_TYPE_MAP[next_token.type]
                 next_line = lines[next_token.start_line - 1]
 
-                if (
-                    token_str == "async"
-                    and next_token_type == NAME
-                    and next_str in ("def", "for")
+                if token_str == "async" and (
+                    async_keywords
+                    or (next_token_type == NAME and next_str in ("def", "for"))
                 ):
                     is_async = True
                     async_indent = current_indent + 1
                     current_token_type = ASYNC
-                elif token_str == "await" and is_async:
+                elif token_str == "await" and (async_keywords or is_async):
                     current_token_type = AWAIT
                 else:
                     current_token_type = TOKEN_TYPE_MAP[token.type]
