@@ -13,6 +13,9 @@
 - Fix formatting cells in IPython notebooks with magic methods and starting or trailing
   empty lines (#4484)
 
+- Fix crash when formatting `with` statements containing tuple genetators/unpacking
+  (#4538)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
