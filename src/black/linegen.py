@@ -1029,22 +1029,22 @@ def _prefer_split_rhs_oop_over_rhs(
         return True
 
     # the split is right after `=`
-    if len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL:
+    if not (len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL):
         return True
 
     # the left side of assignment contains brackets
-    if any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]):
+    if not any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]):
         return True
 
     # the left side of assignment is short enough (the -1 is for the ending optional
     # paren)
-    if is_line_short_enough(
+    if not is_line_short_enough(
         rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
     ):
         return True
 
     # the left side of assignment won't explode further because of magic trailing comma
-    if rhs.head.magic_trailing_comma is None:
+    if rhs.head.magic_trailing_comma is not None:
         return True
 
     # If we have multiple targets, we prefer more `=`s on the head vs pushing them to
@@ -1056,18 +1056,6 @@ def _prefer_split_rhs_oop_over_rhs(
     if rhs_head_equal_count > 1 and rhs_head_equal_count > rhs_oop_head_equal_count:
         return False
 
-    # the split is actually from inside the optional parens (done by checking the first
-    # line still contains the `=`)
-    if (
-        rhs_head_equal_count > 1
-        and rhs_oop_head_equal_count > 1
-        # and the first line is short enough
-        and is_line_short_enough(rhs_oop.head, mode=mode)
-    ):
-        return True
-
-    # contains matching brackets after the `=` (done by checking there is a closing
-    # bracket)
     has_closing_bracket_after_assign = False
     for leaf in reversed(rhs_oop.head.leaves):
         if leaf.type == token.EQUAL:
@@ -1075,10 +1063,18 @@ def _prefer_split_rhs_oop_over_rhs(
         if leaf.type in CLOSING_BRACKETS:
             has_closing_bracket_after_assign = True
             break
-    if has_closing_bracket_after_assign:
-        return True
-
-    return False
+    return (
+        # contains matching brackets after the `=` (done by checking there is a
+        # closing bracket)
+        has_closing_bracket_after_assign
+        or (
+            # the split is actually from inside the optional parens (done by checking
+            # the first line still contains the `=`)
+            any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
+            # the first line is short enough
+            and is_line_short_enough(rhs_oop.head, mode=mode)
+        )
+    )
 
 
 def bracket_split_succeeded_or_raise(head: Line, body: Line, tail: Line) -> None:
