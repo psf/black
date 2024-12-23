@@ -150,8 +150,8 @@ def foo():
             ),
         }
         x = {
-            common.models.DateTimeField: (
-                datetime(2020, 1, 31, tzinfo=utc) + timedelta(days=i)
+            common.models.DateTimeField: datetime(2020, 1, 31, tzinfo=utc) + timedelta(
+                days=i
             ),
         }
         x = {
