@@ -29,6 +29,7 @@ each time a new token is found."""
 
 import sys
 from collections.abc import Iterator
+from typing import Optional
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
@@ -101,12 +102,20 @@ TOKEN_TYPE_MAP = {
 class TokenError(Exception): ...
 
 
-def transform_whitespace(token: pytokens.Token, source: str) -> pytokens.Token:
+def transform_whitespace(
+    token: pytokens.Token, source: str, prev_token: Optional[pytokens.Token]
+) -> pytokens.Token:
     r"""
     Black treats `\\\n` at the end of a line as a 'NL' token, while it
     is ignored as whitespace in the regular Python parser.
+    But, only the first one. If there's a `\\\n` following it
+    (as in, a \ just by itself on a line), that is not made into NL.
     """
-    if token.type == TokenType.whitespace:
+    if (
+        token.type == TokenType.whitespace
+        and prev_token is not None
+        and prev_token.type != TokenType.nl
+    ):
         token_str = source[token.start_index : token.end_index]
         if token_str.startswith("\\\n"):
             return pytokens.Token(
@@ -133,9 +142,11 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
     is_async = False
     current_indent = 0
     async_indent = 0
+
+    prev_token: Optional[pytokens.Token] = None
     try:
         for token in token_iterator:
-            token = transform_whitespace(token, source)
+            token = transform_whitespace(token, source, prev_token)
 
             line, column = token.start_line, token.start_col
             if token.type == TokenType.whitespace:
@@ -146,6 +157,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
             if token.type == TokenType.newline and token_str == "":
                 # Black doesn't yield empty newline tokens at the end of a file
                 # if there's no newline at the end of a file.
+                prev_token = token
                 continue
 
             if token.type == TokenType.indent:
@@ -162,7 +174,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 while True:
                     next_token = next(token_iterator)
                     next_str = source[next_token.start_index : next_token.end_index]
-                    next_token = transform_whitespace(next_token, next_str)
+                    next_token = transform_whitespace(next_token, next_str, token)
                     if next_token.type == TokenType.whitespace:
                         continue
                     break
@@ -196,6 +208,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                     (next_token.end_line, next_token.end_col),
                     next_line,
                 )
+                prev_token = token
                 continue
 
             if token.type == TokenType.op and token_str == "...":
@@ -213,6 +226,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                         (token.end_line, end_col),
                         source_line,
                     )
+                prev_token = token
                 continue
 
             yield (
@@ -222,10 +236,12 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 (token.end_line, token.end_col),
                 source_line,
             )
+            prev_token = token
+
     except pytokens.UnexpectedEOF:
         raise TokenError("Unexpected EOF in multi-line statement", (line, column))
-    except pytokens.TokenizeError:
-        raise TokenError("TODO", (line, column))
+    except pytokens.TokenizeError as exc:
+        raise TokenError(f"Failed to parse: {type(exc).__name__}", (line, column))
 
 
 def printtoken(
