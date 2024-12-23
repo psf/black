@@ -55,21 +55,17 @@ from blib2to3.pgen2.token import (
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
 
-import re
-import token
-from codecs import BOM_UTF8, lookup
-
 import pytokens
 from pytokens import TokenType
 
-from . import token
+from . import token as _token
 
-__all__ = [x for x in dir(token) if x[0] != "_"] + [
+__all__ = [x for x in dir(_token) if x[0] != "_"] + [
     "tokenize",
     "generate_tokens",
     "untokenize",
 ]
-del token
+del _token
 
 Coord = tuple[int, int]
 TokenInfo = tuple[int, str, Coord, Coord, str]
