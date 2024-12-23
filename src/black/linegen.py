@@ -1627,15 +1627,18 @@ def maybe_make_parens_invisible_in_atom(
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
-        or (
-            # This condition tries to prevent removing non-optional brackets
-            # around a tuple, however, can be a bit overzealous so we provide
-            # and option to skip this check for `for` and `with` statements.
-            not remove_brackets_around_comma
-            and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-        )
         or is_tuple_containing_walrus(node)
     ):
+        return False
+
+    max_delimiter_priority = max_delimiter_priority_in_atom(node)
+    # This condition tries to prevent removing non-optional brackets
+    # around a tuple, however, can be a bit overzealous so we provide
+    # and option to skip this check for `for` and `with` statements.
+    if not remove_brackets_around_comma and max_delimiter_priority >= COMMA_PRIORITY:
+        return False
+
+    if parent.type == syms.dictsetmaker and max_delimiter_priority != 0:
         return False
 
     if is_walrus_assignment(node):
