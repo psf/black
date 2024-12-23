@@ -109,6 +109,9 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
     line, column = 1, 0
 
     token_iterator = pytokens.tokenize(source)
+    is_async = False
+    current_indent = 0
+    async_indent = 0
     try:
         for token in token_iterator:
             line, column = token.start_line, token.start_col
@@ -122,6 +125,13 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 # if there's no newline at the end of a file.
                 continue
 
+            if token.type == TokenType.indent:
+                current_indent += 1
+            if token.type == TokenType.dedent:
+                current_indent -= 1
+                if is_async and current_indent < async_indent:
+                    is_async = False
+
             source_line = lines[token.start_line - 1]
 
             if token.type == TokenType.identifier and token_str in ("async", "await"):
@@ -131,13 +141,21 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                     if next_token.type == TokenType.whitespace:
                         continue
                     break
-                
+
                 next_token_type = TOKEN_TYPE_MAP[next_token.type]
                 next_str = source[next_token.start_index : next_token.end_index]
                 next_line = lines[next_token.start_line - 1]
-                
-                if next_token_type == NAME and next_str in ("def", "for"):
-                    current_token_type= ASYNC if token_str == "async" else AWAIT
+
+                if (
+                    token_str == "async"
+                    and next_token_type == NAME
+                    and next_str in ("def", "for")
+                ):
+                    is_async = True
+                    async_indent = current_indent + 1
+                    current_token_type = ASYNC
+                elif token_str == "await" and is_async:
+                    current_token_type = AWAIT
                 else:
                     current_token_type = TOKEN_TYPE_MAP[token.type]
 
