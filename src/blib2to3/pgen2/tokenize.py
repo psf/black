@@ -190,7 +190,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                         (token.end_line, end_col),
                         source_line,
                     )
-                    continue
+                continue
 
             yield (
                 TOKEN_TYPE_MAP[token.type],
