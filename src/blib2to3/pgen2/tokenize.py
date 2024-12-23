@@ -127,7 +127,7 @@ def transform_whitespace(
     return token
 
 
-def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
+def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenInfo]:
     async_keywords = False if grammar is None else grammar.async_keywords
 
     lines = source.split("\n")
