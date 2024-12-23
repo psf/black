@@ -152,13 +152,13 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 # Black uses `async` and `await` token types just for those two keywords
                 while True:
                     next_token = next(token_iterator)
-                    next_token = transform_whitespace(next_token)
+                    next_str = source[next_token.start_index : next_token.end_index]
+                    next_token = transform_whitespace(next_token, next_str)
                     if next_token.type == TokenType.whitespace:
                         continue
                     break
 
                 next_token_type = TOKEN_TYPE_MAP[next_token.type]
-                next_str = source[next_token.start_index : next_token.end_index]
                 next_line = lines[next_token.start_line - 1]
 
                 if (
