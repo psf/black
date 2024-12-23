@@ -215,7 +215,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 source_line,
             )
     except Exception as exc:  # TODO:
-        raise TokenError(repr(exc), (line, column))
+        raise TokenError(str(exc), (line, column))
 
 
 def printtoken(
