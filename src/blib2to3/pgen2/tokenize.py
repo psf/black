@@ -114,7 +114,7 @@ def transform_whitespace(
     if (
         token.type == TokenType.whitespace
         and prev_token is not None
-        and prev_token.type != TokenType.nl
+        and prev_token.type not in (TokenType.nl, TokenType.newline)
     ):
         token_str = source[token.start_index : token.end_index]
         if token_str.startswith("\\\n"):
