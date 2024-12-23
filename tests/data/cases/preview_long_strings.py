@@ -279,7 +279,7 @@ string_with_escaped_nameescape = (
     "........................................................................... \\N{LAO KO LA}"
 )
 
-msg = lambda x: f"this is a very very very long lambda value {x} that doesn't fit on a single line"
+msg = lambda x: f"this is a very very very very long lambda value {x} that doesn't fit on a single line"
 
 dict_with_lambda_values = {
     "join": lambda j: (
