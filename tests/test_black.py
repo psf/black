@@ -458,17 +458,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertFormatEqual(contents_spc, fs(contents_spc))
         self.assertFormatEqual(contents_spc, fs(contents_tab))
 
-        # mixed tabs and spaces (valid Python 2 code)
-        contents_tab = "if 1:\n        if 2:\n\t\tpass\n\t# comment\n        pass\n"
-        contents_spc = "if 1:\n    if 2:\n        pass\n    # comment\n    pass\n"
-        self.assertFormatEqual(contents_spc, fs(contents_spc))
-        self.assertFormatEqual(contents_spc, fs(contents_tab))
-
-        contents_tab = "if 1:\n        if 2:\n\t\tpass\n\t\t# comment\n        pass\n"
-        contents_spc = "if 1:\n    if 2:\n        pass\n        # comment\n    pass\n"
-        self.assertFormatEqual(contents_spc, fs(contents_spc))
-        self.assertFormatEqual(contents_spc, fs(contents_tab))
-
     def test_false_positive_symlink_output_issue_3384(self) -> None:
         # Emulate the behavior when using the CLI (`black ./child  --verbose`), which
         # involves patching some `pathlib.Path` methods. In particular, `is_dir` is
