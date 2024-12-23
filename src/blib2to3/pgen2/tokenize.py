@@ -101,6 +101,18 @@ TOKEN_TYPE_MAP = {
 class TokenError(Exception): ...
 
 
+def transform_whitespace(token: pytokens.Token, source: str) -> pytokens.Token:
+    r"""
+    Black treats `\\\n` at the end of a line as a 'NL' token, while it
+    is ignored as whitespace in the regular Python parser.
+    """
+    if token.type == TokenType.whitespace:
+        token_str = source[token.start_index : token.end_index]
+        if token_str.startswith("\\\n"):
+            return pytokens.Token(TokenType.nl, token.start_index, token.start_index + 2, token.start_line, token.start_col, token.start_line, token.start_col + 2)
+
+    return token
+
 def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
     async_keywords = False if grammar is None else grammar.async_keywords
 
@@ -114,6 +126,8 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
     async_indent = 0
     try:
         for token in token_iterator:
+            token = transform_whitespace(token, source)
+
             line, column = token.start_line, token.start_col
             if token.type == TokenType.whitespace:
                 continue
@@ -138,6 +152,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 # Black uses `async` and `await` token types just for those two keywords
                 while True:
                     next_token = next(token_iterator)
+                    next_token = transform_whitespace(next_token)
                     if next_token.type == TokenType.whitespace:
                         continue
                     break
