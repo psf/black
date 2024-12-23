@@ -628,6 +628,7 @@ def is_tuple_containing_star(node: LN) -> bool:
     gexp = unwrap_singleton_parenthesis(node)
     if gexp is None or gexp.type != syms.testlist_gexp:
         return False
+
     return any(child.type == syms.star_expr for child in gexp.children)
 
 
@@ -638,6 +639,7 @@ def is_generator(node: LN) -> bool:
     gexp = unwrap_singleton_parenthesis(node)
     if gexp is None or gexp.type != syms.testlist_gexp:
         return False
+
     return any(child.type == syms.old_comp_for for child in gexp.children)
 
 
