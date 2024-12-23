@@ -232,8 +232,6 @@ file_input
                         fstring
                           FSTRING_START
  "f'"
-                          FSTRING_MIDDLE
- ''
                           fstring_replacement_field
                             LBRACE
  '{'
@@ -242,8 +240,6 @@ file_input
                             RBRACE
  '}'
                           /fstring_replacement_field
-                          FSTRING_MIDDLE
- ''
                           fstring_replacement_field
                             LBRACE
  '{'
@@ -252,8 +248,6 @@ file_input
                             RBRACE
  '}'
                           /fstring_replacement_field
-                          FSTRING_MIDDLE
- ''
                           FSTRING_END
  "'"
                         /fstring
@@ -399,8 +393,6 @@ file_input
                         fstring
                           FSTRING_START
  "f'"
-                          FSTRING_MIDDLE
- ''
                           fstring_replacement_field
                             LBRACE
  '{'
@@ -419,8 +411,6 @@ file_input
                             RBRACE
  '}'
                           /fstring_replacement_field
-                          FSTRING_MIDDLE
- ''
                           FSTRING_END
  "'"
                         /fstring
@@ -549,8 +539,6 @@ file_input
                         fstring
                           FSTRING_START
  "f'"
-                          FSTRING_MIDDLE
- ''
                           fstring_replacement_field
                             LBRACE
  '{'
@@ -559,8 +547,6 @@ file_input
                             RBRACE
  '}'
                           /fstring_replacement_field
-                          FSTRING_MIDDLE
- ''
                           fstring_replacement_field
                             LBRACE
  '{'
@@ -569,8 +555,6 @@ file_input
                             RBRACE
  '}'
                           /fstring_replacement_field
-                          FSTRING_MIDDLE
- ''
                           FSTRING_END
  "'"
                         /fstring
@@ -660,8 +644,6 @@ file_input
                                 RBRACE
  '}'
                               /fstring_replacement_field
-                              FSTRING_MIDDLE
- ''
                               FSTRING_END
  "'"
                             /fstring
@@ -744,8 +726,6 @@ file_input
                             RBRACE
  '}'
                           /fstring_replacement_field
-                          FSTRING_MIDDLE
- ''
                           FSTRING_END
  "'"
                         /fstring
