@@ -748,6 +748,8 @@ def get_sources(
 
     for s in src:
         if s == "-" and stdin_filename:
+            if path_is_excluded(stdin_filename, force_exclude):
+                continue
             path = Path(stdin_filename)
             is_stdin = True
         else:
