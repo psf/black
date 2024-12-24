@@ -51,7 +51,7 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Allow Black to use a different Python version than Vim (#4245)
 
 ### Documentation
 
