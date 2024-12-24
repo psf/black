@@ -45,6 +45,7 @@ from black.nodes import (
     is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
+    is_generator,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -55,6 +56,7 @@ from black.nodes import (
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
+    is_tuple_containing_star,
     is_tuple_containing_walrus,
     is_type_ignore_comment_string,
     is_vararg,
@@ -1628,6 +1630,8 @@ def maybe_make_parens_invisible_in_atom(
             and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
         )
         or is_tuple_containing_walrus(node)
+        or is_tuple_containing_star(node)
+        or is_generator(node)
     ):
         return False
 
