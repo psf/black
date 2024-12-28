@@ -56,6 +56,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
+  formatted. (#4539)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
