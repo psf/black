@@ -43,6 +43,7 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+- Speed up the `is_fstring_start` function in `blib2to3` tokenization using generic python `startswith` function (#4541)
 
 ### Output
 
