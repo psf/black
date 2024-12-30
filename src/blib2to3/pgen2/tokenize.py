@@ -221,7 +221,7 @@ single_quoted: Final = (
     | {f"{prefix}'" for prefix in _strprefixes | _fstring_prefixes}
     | {f'{prefix}"' for prefix in _strprefixes | _fstring_prefixes}
 )
-fstring_prefix: Final = (
+fstring_prefix: Final = tuple(
     {f"{prefix}'" for prefix in _fstring_prefixes}
     | {f'{prefix}"' for prefix in _fstring_prefixes}
     | {f"{prefix}'''" for prefix in _fstring_prefixes}
@@ -459,7 +459,7 @@ def untokenize(iterable: Iterable[TokenInfo]) -> str:
 
 
 def is_fstring_start(token: str) -> bool:
-    return builtins.any(token.startswith(prefix) for prefix in fstring_prefix)
+    return token.startswith(fstring_prefix)
 
 
 def _split_fstring_start_and_middle(token: str) -> tuple[str, str]:

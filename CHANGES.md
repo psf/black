@@ -43,6 +43,7 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+- Speed up the `is_fstring_start` function in Black's tokenizer (#4541)
 
 ### Output
 
