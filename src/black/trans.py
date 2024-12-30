@@ -856,7 +856,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             ):
                 return TErr(
                     "StringMerger does NOT merge f-strings with different quote types"
-                    "and internal quotes."
+                    " and internal quotes."
                 )
 
             if id(leaf) in line.comments:
@@ -887,6 +887,7 @@ class StringParenStripper(StringTransformer):
         The line contains a string which is surrounded by parentheses and:
             - The target string is NOT the only argument to a function call.
             - The target string is NOT a "pointless" string.
+            - The target string is NOT a dictionary value.
             - If the target string contains a PERCENT, the brackets are not
               preceded or followed by an operator with higher precedence than
               PERCENT.
@@ -934,11 +935,14 @@ class StringParenStripper(StringTransformer):
             ):
                 continue
 
-            # That LPAR should NOT be preceded by a function name or a closing
-            # bracket (which could be a function which returns a function or a
-            # list/dictionary that contains a function)...
+            # That LPAR should NOT be preceded by a colon (which could be a
+            # dictionary value), function name, or a closing bracket (which
+            # could be a function returning a function or a list/dictionary
+            # containing a function)...
             if is_valid_index(idx - 2) and (
-                LL[idx - 2].type == token.NAME or LL[idx - 2].type in CLOSING_BRACKETS
+                LL[idx - 2].type == token.COLON
+                or LL[idx - 2].type == token.NAME
+                or LL[idx - 2].type in CLOSING_BRACKETS
             ):
                 continue
 
@@ -2264,12 +2268,12 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             elif right_leaves and right_leaves[-1].type == token.RPAR:
                 # Special case for lambda expressions as dict's value, e.g.:
                 #     my_dict = {
-                #        "key": lambda x: f"formatted: {x},
+                #        "key": lambda x: f"formatted: {x}",
                 #     }
                 # After wrapping the dict's value with parentheses, the string is
                 # followed by a RPAR but its opening bracket is lambda's, not
                 # the string's:
-                #        "key": (lambda x: f"formatted: {x}),
+                #        "key": (lambda x: f"formatted: {x}"),
                 opening_bracket = right_leaves[-1].opening_bracket
                 if opening_bracket is not None and opening_bracket in left_leaves:
                     index = left_leaves.index(opening_bracket)
