@@ -38,6 +38,9 @@ Currently, the following features are included in the preview style:
   blocks when the line is too long
 - `pep646_typed_star_arg_type_var_tuple`: fix type annotation spacing between * and more
   complex type variable tuple (i.e. `def fn(*args: *tuple[*Ts, T]) -> None: pass`)
+- `type_comments_standardization`: type comments with zero or more empty spaces between
+  `#` and `type:`, or between `type:` and the type itself will be formatted to
+  `# type: (type itself)`.
 - `remove_lone_list_item_parens`: remove redundant parentheses around lone list items
   (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some
   cases)
