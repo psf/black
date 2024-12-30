@@ -932,9 +932,18 @@ def is_type_comment(leaf: Leaf) -> bool:
     be used for general type comments (excluding ignore annotations, which should
     use `is_type_ignore_comment`). Note that general type comments are no longer
     used in modern version of Python, this function may be deprecated in the future."""
-    t = leaf.type
-    v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
+    if leaf.type not in {token.COMMENT, STANDALONE_COMMENT}:
+        return False
+    comment_text = leaf.value.lstrip("#").lstrip()
+    return comment_text.startswith("type:") and not is_type_ignore_comment_string(comment_text)
+
+
+def normalize_type_comment(leaf: Leaf) -> str:
+    """Normalize a type comment by cleaning up whitespace after # and :.
+    This should only be called after confirming the leaf is a type comment using is_type_comment()."""
+    comment_text = leaf.value.lstrip("#").lstrip()
+    type_annotation = comment_text[4:].lstrip(":").strip()
+    return f"# type: {type_annotation}" if type_annotation else "# type:"
 
 
 def is_type_ignore_comment(leaf: Leaf) -> bool:
