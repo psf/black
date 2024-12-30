@@ -935,11 +935,15 @@ def is_type_comment(leaf: Leaf) -> bool:
     if leaf.type not in {token.COMMENT, STANDALONE_COMMENT}:
         return False
     comment_text = leaf.value.lstrip("#").lstrip()
-    if not comment_text.startswith("type:"):
-        return False
-    type_annotation = comment_text[5:].strip()
-    leaf.value = f"# type: {type_annotation}" if type_annotation else "# type:"
-    return True
+    return comment_text.startswith("type:") and not is_type_ignore_comment_string(comment_text)
+
+
+def normalize_type_comment(leaf: Leaf) -> str:
+    """Normalize a type comment by cleaning up whitespace after # and :.
+    This should only be called after confirming the leaf is a type comment using is_type_comment()."""
+    comment_text = leaf.value.lstrip("#").lstrip()
+    type_annotation = comment_text[4:].lstrip(":").strip()
+    return f"# type: {type_annotation}" if type_annotation else "# type:"
 
 
 def is_type_ignore_comment(leaf: Leaf) -> bool:
