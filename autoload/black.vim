@@ -4,6 +4,8 @@ import os
 import sys
 import vim
 
+from pathlib import Path
+
 def strtobool(text):
   if text.lower() in ['y', 'yes', 't', 'true', 'on', '1']:
     return True
@@ -34,7 +36,7 @@ FLAGS = [
 ]
 
 
-def _get_python_binary(exec_prefix, pyver):
+def _get_python_binary(exec_prefix, pyver=sys.version_info[:3]):
   try:
     default = vim.eval("g:pymode_python").strip()
   except vim.error:
@@ -51,19 +53,33 @@ def _get_python_binary(exec_prefix, pyver):
   exec_path = (bin_path / f"python3").resolve()
   if exec_path.exists():
     return exec_path
+  # TODO: Instead of failing, try to find black in PATH first and use its
+  # exec_prefix. This can happen when black is installed systemwide and
+  # g:black_virtualenv was not updated.
   raise ValueError("python executable not found")
+
+def _get_python_version(exec_path, as_string=False):
+  import subprocess
+  version_proc = subprocess.run([exec_path, "--version"], stdout=subprocess.PIPE, text=True)
+  version = version_proc.stdout.split(" ")[1].strip()
+  if not as_string:
+    version = tuple(map(int, version.split(".")))
+  return version
 
 def _get_pip(venv_path):
   if sys.platform[:3] == "win":
     return venv_path / 'Scripts' / 'pip.exe'
   return venv_path / 'bin' / 'pip'
 
-def _get_virtualenv_site_packages(venv_path, pyver):
+def _get_virtualenv_site_packages(venv_path):
   if sys.platform[:3] == "win":
     return venv_path / 'Lib' / 'site-packages'
-  return venv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
+  venv_python_version = _get_python_version(_get_python_binary(venv_path))
+  return venv_path / 'lib' / f'python{venv_python_version[0]}.{venv_python_version[1]}' / 'site-packages'
 
 def _initialize_black_env(upgrade=False):
+  virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
+  virtualenv_site_packages = str(_get_virtualenv_site_packages(virtualenv_path))
   if vim.eval("g:black_use_virtualenv ? 'true' : 'false'") == "false":
     if upgrade:
       print("Upgrade disabled due to g:black_use_virtualenv being disabled.")
@@ -71,19 +87,18 @@ def _initialize_black_env(upgrade=False):
       print("or modify your vimrc to have 'let g:black_use_virtualenv = 1'.")
       return False
     else:
-      # Nothing needed to be done.
+      if virtualenv_site_packages not in sys.path:
+        sys.path.insert(0, virtualenv_site_packages)
       return True
 
+  # TODO: Is this check about the Vim plugin, or about Black?
   pyver = sys.version_info[:3]
   if pyver < (3, 8):
     print("Sorry, Black requires Python 3.9+ to run.")
     return False
 
-  from pathlib import Path
   import subprocess
   import venv
-  virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
-  virtualenv_site_packages = str(_get_virtualenv_site_packages(virtualenv_path, pyver))
   first_install = False
   if not virtualenv_path.is_dir():
     print('Please wait, one time setup for Black.')
@@ -120,7 +135,12 @@ def _initialize_black_env(upgrade=False):
   return True
 
 if _initialize_black_env():
-  import black
+  # TODO: Better handling of the case when import succeeds but Black doesn't
+  # work, such as when it has been uninstalled from the virtualenv
+  try:
+    import black
+  except ImportError:
+    print(f"Could not import black from any of: {', '.join(sys.path)}.")
   import time
 
 def get_target_version(tv):
@@ -217,7 +237,9 @@ def BlackUpgrade():
   _initialize_black_env(upgrade=True)
 
 def BlackVersion():
-  print(f'Black, version {black.__version__} on Python {sys.version}.')
+  virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
+  virtualenv_python_version = _get_python_version(_get_python_binary(virtualenv_path), as_string=True)
+  print(f'Black, version {black.__version__} on Python {virtualenv_python_version}.')
 
 EndPython3
 
