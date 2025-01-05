@@ -47,8 +47,8 @@ If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 ### PyInstaller binaries
 
-PyInstaller is a tool that packages Python programs into standalone executables, under Windows, Linux, and macOS. 
-This allows users to run Python applications without needing to install Python or any dependencies on their system. 
+PyInstaller is a tool that packages Python programs into standalone executables, under Windows, Linux, and macOS.
+This allows users to run Python applications without needing to install Python or any dependencies on their system.
 
 - How PyInstaller Works:
 
