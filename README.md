@@ -45,6 +45,50 @@ If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+https://github.com/psf/black`
 
+### PyInstaller binaries
+
+PyInstaller is a tool that packages Python programs into standalone executables, under Windows, Linux, and macOS. 
+This allows users to run Python applications without needing to install Python or any dependencies on their system. 
+
+- How PyInstaller Works:
+
+Compilation into Executables:
+PyInstaller analyzes your Python script and identifies all necessary dependencies, such as libraries, Python modules, and resources (e.g., images, configuration files).
+It then compiles your script and the identified dependencies into a single executable or a directory containing the executable and the necessary shared libraries.
+
+Bundling Python Interpreter:
+The tool also bundles a Python interpreter along with the application, so the executable is self-contained and doesn't require a separate Python installation. This is one of the main benefits of using PyInstaller.
+
+Handling External Libraries:
+PyInstaller scans and includes dynamic libraries used by your Python code, including system libraries, third-party libraries (like numpy or requests), and other resources that your script depends on.
+
+Cross-Platform Packaging:
+PyInstaller can create executables for different platforms (Windows, Linux, macOS), but this typically requires building on the target platform. For cross-compiling (e.g., creating a Windows binary on a Linux machine), additional tools or virtual machines are often required.
+
+One-File or Folder Mode:
+One-file mode: The executable is bundled into a single file, making it portable but potentially slower to start, as it has to unpack everything into memory at runtime.
+One-folder mode: The executable is accompanied by several supporting files (including libraries and other resources), which allows for faster startup but is less convenient than a single-file executable.
+
+
+- How Users Can Obtain PyInstaller Binaries:
+
+Install PyInstaller via pip:
+To install PyInstaller and use it to package Python scripts, users can run the following command in their terminal or command prompt:
+      pip install pyinstaller
+
+Create an Executable:
+After installing PyInstaller, users can create an executable from their Python script using the command:
+     pyinstaller your_script.py
+This will generate a dist folder containing the executable file (or a folder containing the executable and dependencies, depending on the mode used).
+
+PyInstaller Website:
+If users want precompiled binaries for PyInstaller itself (i.e., the tool itself, not the executable for their script), they can visit the official PyInstaller website or its GitHub releases page to download them for various platforms. However, for creating executables of Python scripts, it's generally recommended to use the pip install method.
+Distribution:
+
+Once the executable is created, users can distribute it without needing the end user to install Python. For example, you can share the .exe file (on Windows) or the corresponding executable on other platforms.
+By using PyInstaller, Python developers can ensure their programs are easy to distribute and run on systems without requiring the installation of Python or dependencies.
+
+
 ### Usage
 
 To get started right away with sensible defaults:
