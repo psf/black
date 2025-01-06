@@ -67,7 +67,7 @@ from black.nodes import (
 )
 from black.numerics import normalize_numeric_literal
 from black.strings import (
-    fix_docstring,
+    fix_multiline_docstring,
     get_string_prefix,
     normalize_string_prefix,
     normalize_string_quotes,
@@ -444,7 +444,7 @@ class LineGenerator(Visitor[Line]):
             indent = " " * 4 * self.current_line.depth
 
             if is_multiline_string(leaf):
-                docstring = fix_docstring(docstring, indent)
+                docstring = fix_multiline_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
 
