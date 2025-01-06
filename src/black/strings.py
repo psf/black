@@ -185,7 +185,7 @@ def normalize_string_quotes(s: str) -> str:
         orig_quote = "'"
         new_quote = '"'
     first_quote_pos = s.find(orig_quote)
-    assert first_quote_pos != -1, f"INTERNAL ERROR: malformed string {s!r}"
+    assert first_quote_pos != -1, f"INTERNAL ERROR: Malformed string {s!r}"
 
     prefix = s[:first_quote_pos]
     unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
