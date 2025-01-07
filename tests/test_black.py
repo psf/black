@@ -1357,8 +1357,7 @@ class BlackTestCase(BlackBaseTestCase):
             output: io.StringIO, io_TextIOWrapper: type[io.TextIOWrapper]
         ) -> Callable[[Any, Any], Union[io.StringIO, io.TextIOWrapper]]:
             def get_output(
-                *args: Any,
-                **kwargs: Any
+                *args: Any, **kwargs: Any
             ) -> Union[io.StringIO, io.TextIOWrapper]:
                 if args == (sys.stdout.buffer,):
                     # It's `format_stdin_to_stdout()` calling `io.TextIOWrapper()`,
