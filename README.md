@@ -45,6 +45,54 @@ If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+https://github.com/psf/black`
 
+Step 1: Obtain the PyInstaller Binary
+Find the executable:
+
+The developer of the application should have created a .exe file (on Windows) or equivalent for other platforms using PyInstaller.
+
+Verify the file:
+
+Ensure the binary is from a trusted source to avoid malicious software.
+Step 2: Prepare Your Environment
+System requirements:
+
+Ensure your system has the necessary dependencies for running the binary. Usually, PyInstaller binaries bundle dependencies, so no additional setup is required.
+File location:
+Place the binary in a folder where you want to run it.
+
+Step 3: Run the Binary
+On Windows:
+
+Open the folder containing the binary.
+Double-click the .exe file to execute it.
+On Linux/macOS:
+
+Open a terminal.
+Navigate to the folder containing the binary:
+bash
+Copy code
+cd /path/to/binary
+Make the binary executable :
+
+
+chmod +x your_binary_name
+Run the binary:
+./your_binary_name
+
+Step 4: Troubleshooting
+Permissions issues:
+
+If the binary doesn’t run due to permissions, check your user privileges and try running it with elevated permissions 
+
+Missing dependencies:
+
+Rarely, some shared libraries might still be required (especially on Linux). Install them using your package manager.
+
+Step 5: Verify Functionality
+Check if the program runs as expected.
+If the binary is meant to perform a task (e.g., process files), test it with sample input.
+
+
 ### Usage
 
 To get started right away with sensible defaults:
