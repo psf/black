@@ -82,7 +82,7 @@ Run the binary:
 Step 4: Troubleshooting
 Permissions issues:
 
-If the binary doesn’t run due to permissions, check your user privileges and try running it with elevated permissions 
+If the binary doesn’t run due to permissions, check your user privileges and try running it with elevated permissions
 
 Missing dependencies:
 
