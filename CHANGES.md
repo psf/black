@@ -45,6 +45,7 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+- Speed up the `is_fstring_start` function in Black's tokenizer (#4541)
 
 ### Output
 
@@ -57,6 +58,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
+  formatted. (#4539)
 
 ### Documentation
 

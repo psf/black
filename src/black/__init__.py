@@ -749,6 +749,12 @@ def get_sources(
     for s in src:
         if s == "-" and stdin_filename:
             path = Path(stdin_filename)
+            if path_is_excluded(stdin_filename, force_exclude):
+                report.path_ignored(
+                    path,
+                    "--stdin-filename matches the --force-exclude regular expression",
+                )
+                continue
             is_stdin = True
         else:
             path = Path(s)
