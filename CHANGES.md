@@ -55,7 +55,7 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Allow Black to use a different Python version than Vim (#4245)
 
 - If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
   formatted. (#4539)
