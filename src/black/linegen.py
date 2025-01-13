@@ -1028,6 +1028,16 @@ def _prefer_split_rhs_oop_over_rhs(
     ):
         return True
 
+    # Retain optional parens around dictionary values
+    if (
+        rhs.opening_bracket.parent
+        and rhs.opening_bracket.parent.parent
+        and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
+        and rhs.body.bracket_tracker.delimiters
+    ):
+        # Unless the split is inside the key
+        return any(leaf.type == token.COLON for leaf in rhs_oop.tail.leaves)
+
     # the split is right after `=`
     if not (len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL):
         return True
@@ -1638,8 +1648,8 @@ def maybe_make_parens_invisible_in_atom(
     if not remove_brackets_around_comma and max_delimiter_priority >= COMMA_PRIORITY:
         return False
 
-    if parent.type == syms.dictsetmaker and max_delimiter_priority != 0:
-        return False
+    # if parent.type == syms.dictsetmaker and max_delimiter_priority != 0:
+    #     return False
 
     if is_walrus_assignment(node):
         if parent.type in [
