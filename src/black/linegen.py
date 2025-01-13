@@ -45,6 +45,7 @@ from black.nodes import (
     is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
+    is_generator,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -55,6 +56,7 @@ from black.nodes import (
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
+    is_tuple_containing_star,
     is_tuple_containing_walrus,
     is_type_ignore_comment_string,
     is_vararg,
@@ -65,7 +67,7 @@ from black.nodes import (
 )
 from black.numerics import normalize_numeric_literal
 from black.strings import (
-    fix_docstring,
+    fix_multiline_docstring,
     get_string_prefix,
     normalize_string_prefix,
     normalize_string_quotes,
@@ -442,7 +444,7 @@ class LineGenerator(Visitor[Line]):
             indent = " " * 4 * self.current_line.depth
 
             if is_multiline_string(leaf):
-                docstring = fix_docstring(docstring, indent)
+                docstring = fix_multiline_docstring(docstring, indent)
             else:
                 docstring = docstring.strip()
 
@@ -1638,6 +1640,8 @@ def maybe_make_parens_invisible_in_atom(
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or is_tuple_containing_walrus(node)
+        or is_tuple_containing_star(node)
+        or is_generator(node)
     ):
         return False
 
