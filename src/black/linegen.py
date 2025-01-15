@@ -988,7 +988,8 @@ def _maybe_split_omitting_optional_parens(
                 not can_be_split(rhs.body)
                 and not is_line_short_enough(rhs.body, mode=mode)
                 and not (
-                    rhs.opening_bracket.parent
+                    Preview.wrap_long_dict_values_in_parens
+                    and rhs.opening_bracket.parent
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
                 )
@@ -1032,7 +1033,8 @@ def _prefer_split_rhs_oop_over_rhs(
 
     # Retain optional parens around dictionary values
     if (
-        rhs.opening_bracket.parent
+        Preview.wrap_long_dict_values_in_parens
+        and rhs.opening_bracket.parent
         and rhs.opening_bracket.parent.parent
         and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
         and rhs.body.bracket_tracker.delimiters
@@ -1639,21 +1641,18 @@ def maybe_make_parens_invisible_in_atom(
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_yield(node) and parent.type != syms.expr_stmt)
+        or (
+            # This condition tries to prevent removing non-optional brackets
+            # around a tuple, however, can be a bit overzealous so we provide
+            # and option to skip this check for `for` and `with` statements.
+            not remove_brackets_around_comma
+            and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        )
         or is_tuple_containing_walrus(node)
         or is_tuple_containing_star(node)
         or is_generator(node)
     ):
         return False
-
-    max_delimiter_priority = max_delimiter_priority_in_atom(node)
-    # This condition tries to prevent removing non-optional brackets
-    # around a tuple, however, can be a bit overzealous so we provide
-    # and option to skip this check for `for` and `with` statements.
-    if not remove_brackets_around_comma and max_delimiter_priority >= COMMA_PRIORITY:
-        return False
-
-    # if parent.type == syms.dictsetmaker and max_delimiter_priority != 0:
-    #     return False
 
     if is_walrus_assignment(node):
         if parent.type in [
