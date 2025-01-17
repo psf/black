@@ -660,10 +660,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             """
             assert_is_leaf_string(string)
             if "f" in string_prefix:
-                f_expressions = (
+                f_expressions = [
                     string[span[0] + 1 : span[1] - 1]  # +-1 to get rid of curly braces
                     for span in iter_fexpr_spans(string)
-                )
+                ]
                 debug_expressions_contain_visible_quotes = any(
                     re.search(r".*[\'\"].*(?<![!:=])={1}(?!=)(?![^\s:])", expression)
                     for expression in f_expressions
