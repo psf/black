@@ -973,29 +973,7 @@ def _maybe_split_omitting_optional_parens(
         try:
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
-            is_split_right_after_equal = (
-                len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL
-            )
-            rhs_head_contains_brackets = any(
-                leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]
-            )
-            # the -1 is for the ending optional paren
-            rhs_head_short_enough = is_line_short_enough(
-                rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
-            )
-            rhs_head_explode_blocked_by_magic_trailing_comma = (
-                rhs.head.magic_trailing_comma is None
-            )
-            if (
-                not (
-                    is_split_right_after_equal
-                    and rhs_head_contains_brackets
-                    and rhs_head_short_enough
-                    and rhs_head_explode_blocked_by_magic_trailing_comma
-                )
-                # the omit optional parens split is preferred by some other reason
-                or _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode)
-            ):
+            if _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode):
                 yield from _maybe_split_omitting_optional_parens(
                     rhs_oop, line, mode, features=features, omit=omit
                 )
@@ -1006,8 +984,15 @@ def _maybe_split_omitting_optional_parens(
             if line.is_chained_assignment:
                 pass
 
-            elif not can_be_split(rhs.body) and not is_line_short_enough(
-                rhs.body, mode=mode
+            elif (
+                not can_be_split(rhs.body)
+                and not is_line_short_enough(rhs.body, mode=mode)
+                and not (
+                    Preview.wrap_long_dict_values_in_parens
+                    and rhs.opening_bracket.parent
+                    and rhs.opening_bracket.parent.parent
+                    and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
+                )
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -1038,6 +1023,44 @@ def _prefer_split_rhs_oop_over_rhs(
     Returns whether we should prefer the result from a split omitting optional parens
     (rhs_oop) over the original (rhs).
     """
+    # contains unsplittable type ignore
+    if (
+        rhs_oop.head.contains_unsplittable_type_ignore()
+        or rhs_oop.body.contains_unsplittable_type_ignore()
+        or rhs_oop.tail.contains_unsplittable_type_ignore()
+    ):
+        return True
+
+    # Retain optional parens around dictionary values
+    if (
+        Preview.wrap_long_dict_values_in_parens
+        and rhs.opening_bracket.parent
+        and rhs.opening_bracket.parent.parent
+        and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
+        and rhs.body.bracket_tracker.delimiters
+    ):
+        # Unless the split is inside the key
+        return any(leaf.type == token.COLON for leaf in rhs_oop.tail.leaves)
+
+    # the split is right after `=`
+    if not (len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL):
+        return True
+
+    # the left side of assignment contains brackets
+    if not any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-1]):
+        return True
+
+    # the left side of assignment is short enough (the -1 is for the ending optional
+    # paren)
+    if not is_line_short_enough(
+        rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+    ):
+        return True
+
+    # the left side of assignment won't explode further because of magic trailing comma
+    if rhs.head.magic_trailing_comma is not None:
+        return True
+
     # If we have multiple targets, we prefer more `=`s on the head vs pushing them to
     # the body
     rhs_head_equal_count = [leaf.type for leaf in rhs.head.leaves].count(token.EQUAL)
@@ -1065,10 +1088,6 @@ def _prefer_split_rhs_oop_over_rhs(
             # the first line is short enough
             and is_line_short_enough(rhs_oop.head, mode=mode)
         )
-        # contains unsplittable type ignore
-        or rhs_oop.head.contains_unsplittable_type_ignore()
-        or rhs_oop.body.contains_unsplittable_type_ignore()
-        or rhs_oop.tail.contains_unsplittable_type_ignore()
     )
 
 

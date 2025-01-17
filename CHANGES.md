@@ -24,6 +24,8 @@
   (#4498)
 - Remove parentheses around sole list items (#4312)
 - Collapse multiple empty lines after an import into one (#4489)
+- Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
+  parentheses around long dictionary values (#4377)
 
 ### Configuration
 
@@ -43,6 +45,7 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
 - Speed up the `is_fstring_start` function in Black's tokenizer (#4541)
 
 ### Output
