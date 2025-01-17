@@ -25,7 +25,7 @@
 - Remove parentheses around sole list items (#4312)
 - Collapse multiple empty lines after an import into one (#4489)
 - Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
-  parenthesis around long dictionary values (#4377)
+  parentheses around long dictionary values (#4377)
 
 ### Configuration
 
