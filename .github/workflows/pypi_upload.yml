@@ -50,8 +50,8 @@ jobs:
       # Keep cibuildwheel version in sync with below
       - name: Install cibuildwheel and pypyp
         run: |
-          pipx install cibuildwheel==2.21.2
-          pipx install pypyp==1
+          pipx install cibuildwheel==2.22.0
+          pipx install pypyp==1.3.0
       - name: generate matrix
         if: github.event_name != 'pull_request'
         run: |
