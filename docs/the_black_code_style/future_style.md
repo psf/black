@@ -26,6 +26,9 @@ Currently, the following features are included in the preview style:
   statements, except when the line after the import is a comment or an import statement
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
   ([see below](labels/wrap-long-dict-values))
+- `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
+  such as `def foo(): return "mock"  # fmt: skip`, where previously the declaration
+  would have been incorrectly collapsed.
 
 (labels/unstable-features)=
 
