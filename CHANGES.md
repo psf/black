@@ -26,6 +26,8 @@
 - Collapse multiple empty lines after an import into one (#4489)
 - Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
   parentheses around long dictionary values (#4377)
+- Improve the way black wraps generic type definitions in function declarations,
+  so it will prioritize wrapping parameters instead of the generic types. (#4553)
 
 ### Configuration
 

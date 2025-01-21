@@ -43,6 +43,8 @@ Currently, the following features are included in the preview style:
   cases)
 - `always_one_newline_after_import`: Always force one blank line after import
   statements, except when the line after the import is a comment or an import statement
+- `generic_type_def_wrapping`: Improves the wrapping on function definitions that
+  containain generic type definitions, such as `def func[T](a: T, b: T):`.
 
 (labels/unstable-features)=
 

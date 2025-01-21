@@ -787,6 +787,7 @@ def left_hand_split(
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
+
     tail_leaves: list[Leaf] = []
     body_leaves: list[Leaf] = []
     head_leaves: list[Leaf] = []
@@ -805,6 +806,14 @@ def left_hand_split(
         current_leaves.append(leaf)
         if current_leaves is head_leaves:
             if leaf.type in OPENING_BRACKETS:
+                if (
+                    Preview.generic_type_def_wrapping in mode
+                    and leaf.type
+                    == token.LSQB  # '[' indicates a generic type declaration
+                    and not _should_generic_type_def_in_func_be_splitted(leaf, mode)
+                ):
+                    continue
+
                 matching_bracket = leaf
                 current_leaves = body_leaves
     if not matching_bracket or not tail_leaves:
@@ -823,6 +832,35 @@ def left_hand_split(
     for result in (head, body, tail):
         if result:
             yield result
+
+
+def _should_generic_type_def_in_func_be_splitted(
+    opening_square_bracket: Leaf, mode: Mode
+) -> bool:
+    """
+    Receives the leaf of the opening square bracket that starts
+    the definition of a generic type in a function signature
+    """
+
+    # Determine the length of the function definition from its start to ']'
+    func_def_length = opening_square_bracket.column
+    current_node: Union[Node, Leaf] = opening_square_bracket
+
+    # Add the length of tokens until the closing bracket is reached
+    while current_node.next_sibling is not None and current_node.type != token.RSQB:
+        current_node = current_node.next_sibling
+        func_def_length += len(str(current_node))
+
+    # Check if generic types should be split
+    generic_types_should_be_splitted = (
+        func_def_length >= mode.line_length - 3  # Exceeds line length
+        or (
+            current_node.prev_sibling is not None
+            and current_node.prev_sibling.type == token.COMMA  # Trailing comma rule
+        )
+    )
+
+    return generic_types_should_be_splitted
 
 
 def right_hand_split(
