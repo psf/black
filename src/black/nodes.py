@@ -247,8 +247,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
             and (
                 parent_type(prevp.parent) == syms.subscriptlist
                 or (
-                    Preview.pep646_typed_star_arg_type_var_tuple in mode
-                    and parent_type(prevp.parent) == syms.tname_star
+                     parent_type(prevp.parent) == syms.tname_star
                 )
             )
         ):
@@ -551,7 +550,7 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-def is_docstring(node: NL, mode: Mode) -> bool:
+def is_docstring(node: NL) -> bool:
     if isinstance(node, Leaf):
         if node.type != token.STRING:
             return False
@@ -561,8 +560,7 @@ def is_docstring(node: NL, mode: Mode) -> bool:
             return False
 
     if (
-        Preview.unify_docstring_detection in mode
-        and node.parent
+        node.parent
         and node.parent.type == syms.simple_stmt
         and not node.parent.prev_sibling
         and node.parent.parent

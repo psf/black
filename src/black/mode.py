@@ -196,24 +196,12 @@ def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> b
 class Preview(Enum):
     """Individual preview style features."""
 
-    hex_codes_in_unicode_sequences = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    unify_docstring_detection = auto()
-    no_normalize_fmt_skip_whitespace = auto()
     wrap_long_dict_values_in_parens = auto()
     multiline_string_handling = auto()
-    typed_params_trailing_comma = auto()
-    is_simple_lookup_for_doublestar_expression = auto()
-    docstring_check_for_newline = auto()
-    remove_redundant_guard_parens = auto()
-    parens_for_long_if_clauses_in_case_block = auto()
-    # NOTE: remove_lone_list_item_parens requires
-    # hug_parens_with_braces_and_square_brackets to remove parens in some cases
-    remove_lone_list_item_parens = auto()
-    pep646_typed_star_arg_type_var_tuple = auto()
     always_one_newline_after_import = auto()
 
 
