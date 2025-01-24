@@ -14,7 +14,7 @@ else:
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
