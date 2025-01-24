@@ -83,9 +83,7 @@ def hug_power_op(
         # basically stuff that doesn't count as "simple". Only a NAME lookup
         # or dotted lookup (eg. NAME.NAME) is OK.
         if kind == -1:
-            return handle_is_simple_look_up_prev(
-                line, index, {token.RPAR, token.RSQB}
-            )
+            return handle_is_simple_look_up_prev(line, index, {token.RPAR, token.RSQB})
         else:
             return handle_is_simple_lookup_forward(
                 line, index, {token.LPAR, token.LSQB}

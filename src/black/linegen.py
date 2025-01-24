@@ -507,9 +507,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_atom(self, node: Node) -> Iterator[Line]:
         """Visit any atom"""
-        if (
-             len(node.children) == 3
-        ):
+        if len(node.children) == 3:
             first = node.children[0]
             last = node.children[-1]
             if (first.type == token.LSQB and last.type == token.RSQB) or (
@@ -1126,9 +1124,7 @@ def _ensure_trailing_comma(
         return False
     # Don't add commas if we already have any commas
     if any(
-        leaf.type == token.COMMA
-        and not is_part_of_annotation(leaf)
-        for leaf in leaves
+        leaf.type == token.COMMA and not is_part_of_annotation(leaf) for leaf in leaves
     ):
         return False
 
@@ -1409,10 +1405,7 @@ def normalize_invisible_parens(  # noqa: C901
             )
 
         # Add parentheses around if guards in case blocks
-        if (
-            isinstance(child, Node)
-            and child.type == syms.guard
-        ):
+        if isinstance(child, Node) and child.type == syms.guard:
             normalize_invisible_parens(
                 child, parens_after={"if"}, mode=mode, features=features
             )
