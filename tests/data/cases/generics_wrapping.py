@@ -3,14 +3,14 @@ def func[T](a: T, b: T,) -> T:
     return a
 
 
-def with_magic_trailling_comma[
+def with_magic_trailing_comma[
     T,
     B,
 ](a: T, b: T,) -> T:
     return a
 
 
-def without_magic_trailling_comma[
+def without_magic_trailing_comma[
     T,
     B
 ](a: T, b: T,) -> T:
@@ -45,14 +45,14 @@ def func[T](
     return a
 
 
-def with_magic_trailling_comma[
+def with_magic_trailing_comma[
     T,
     B,
 ](a: T, b: T,) -> T:
     return a
 
 
-def without_magic_trailling_comma[T, B](
+def without_magic_trailing_comma[T, B](
     a: T,
     b: T,
 ) -> T:

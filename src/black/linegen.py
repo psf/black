@@ -808,9 +808,9 @@ def left_hand_split(
             if leaf.type in OPENING_BRACKETS:
                 if (
                     Preview.generic_type_def_wrapping in mode
-                    and leaf.type
-                    == token.LSQB  # '[' indicates a generic type declaration
-                    and not _should_generic_type_def_in_func_be_splitted(leaf, mode)
+                    # '[' indicates a generic type declaration
+                    and leaf.type == token.LSQB
+                    and not _should_split_generic_type_def(leaf, mode)
                 ):
                     continue
 
@@ -834,7 +834,7 @@ def left_hand_split(
             yield result
 
 
-def _should_generic_type_def_in_func_be_splitted(
+def _should_split_generic_type_def(
     opening_square_bracket: Leaf, mode: Mode
 ) -> bool:
     """
