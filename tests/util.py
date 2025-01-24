@@ -83,6 +83,7 @@ def _assert_format_equal(expected: str, actual: str) -> None:
     if actual != expected:
         out(diff(expected, actual, "expected", "actual"))
 
+    print(actual)
     assert actual == expected
 
 

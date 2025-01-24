@@ -131,14 +131,19 @@ def arg_magic[T, B](
 def type_param_magic[
     T,
     B,
-](a: T, b: T) -> T:
+](
+    a: T, b: T
+) -> T:
     return a
 
 
 def both_magic[
     T,
     B,
-](a: T, b: T,) -> T:
+](
+    a: T,
+    b: T,
+) -> T:
     return a
 
 
@@ -156,14 +161,19 @@ def arg_magic_multiline[T, B](
 def type_param_magic_multiline[
     T,
     B,
-](a: T, b: T) -> T:
+](
+    a: T, b: T
+) -> T:
     return a
 
 
 def both_magic_multiline[
     T,
     B,
-](a: T, b: T,) -> T:
+](
+    a: T,
+    b: T,
+) -> T:
     return a
 
 
@@ -192,28 +202,38 @@ def arg_magic_mixed2[T, B](
 def type_param_magic_mixed1[
     T,
     B,
-](a: T, b: T) -> T:
+](
+    a: T, b: T
+) -> T:
     return a
 
 
 def type_param_magic_mixed2[
     T,
     B,
-](a: T, b: T) -> T:
+](
+    a: T, b: T
+) -> T:
     return a
 
 
 def both_magic_mixed1[
     T,
     B,
-](a: T, b: T,) -> T:
+](
+    a: T,
+    b: T,
+) -> T:
     return a
 
 
 def both_magic_mixed2[
     T,
     B,
-](a: T, b: T,) -> T:
+](
+    a: T,
+    b: T,
+) -> T:
     return a
 
 
@@ -247,4 +267,11 @@ def func[
     o: T,
     p: T,
 ) -> T:
+    return a
+
+
+def with_random_comments[
+    Z
+    # bye
+]():
     return a

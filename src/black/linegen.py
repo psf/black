@@ -788,34 +788,34 @@ def left_hand_split(
     :func:`right_hand_split` which also handles optional parentheses.
     """
 
-    tail_leaves: list[Leaf] = []
-    body_leaves: list[Leaf] = []
-    head_leaves: list[Leaf] = []
-    current_leaves = head_leaves
-    matching_bracket: Optional[Leaf] = None
-    for leaf in line.leaves:
-        if (
-            current_leaves is body_leaves
-            and leaf.type in CLOSING_BRACKETS
-            and leaf.opening_bracket is matching_bracket
-            and isinstance(matching_bracket, Leaf)
-        ):
-            ensure_visible(leaf)
-            ensure_visible(matching_bracket)
-            current_leaves = tail_leaves if body_leaves else head_leaves
-        current_leaves.append(leaf)
-        if current_leaves is head_leaves:
-            if leaf.type in OPENING_BRACKETS:
-                if (
-                    Preview.generic_type_def_wrapping in mode
-                    # '[' indicates a generic type declaration
-                    and leaf.type == token.LSQB
-                    and not _should_split_generic_type_def(leaf, mode)
-                ):
-                    continue
+    if Preview.generic_type_def_wrapping in mode:
+        leaf_type_sets = [[token.LPAR], [token.LSQB]]
+    else:
+        leaf_type_sets = [OPENING_BRACKETS]
 
-                matching_bracket = leaf
-                current_leaves = body_leaves
+    for leaf_types in leaf_type_sets:
+        tail_leaves: list[Leaf] = []
+        body_leaves: list[Leaf] = []
+        head_leaves: list[Leaf] = []
+        current_leaves = head_leaves
+        matching_bracket: Optional[Leaf] = None
+        for leaf in line.leaves:
+            if (
+                current_leaves is body_leaves
+                and leaf.type in CLOSING_BRACKETS
+                and leaf.opening_bracket is matching_bracket
+                and isinstance(matching_bracket, Leaf)
+            ):
+                ensure_visible(leaf)
+                ensure_visible(matching_bracket)
+                current_leaves = tail_leaves if body_leaves else head_leaves
+            current_leaves.append(leaf)
+            if current_leaves is head_leaves:
+                if leaf.type in leaf_types:
+                    matching_bracket = leaf
+                    current_leaves = body_leaves
+        if matching_bracket and tail_leaves:
+            break
     if not matching_bracket or not tail_leaves:
         raise CannotSplit("No brackets found")
 
@@ -832,35 +832,6 @@ def left_hand_split(
     for result in (head, body, tail):
         if result:
             yield result
-
-
-def _should_split_generic_type_def(
-    opening_square_bracket: Leaf, mode: Mode
-) -> bool:
-    """
-    Receives the leaf of the opening square bracket that starts
-    the definition of a generic type in a function signature
-    """
-
-    # Determine the length of the function definition from its start to ']'
-    func_def_length = opening_square_bracket.column
-    current_node: Union[Node, Leaf] = opening_square_bracket
-
-    # Add the length of tokens until the closing bracket is reached
-    while current_node.next_sibling is not None and current_node.type != token.RSQB:
-        current_node = current_node.next_sibling
-        func_def_length += len(str(current_node))
-
-    # Check if generic types should be split
-    generic_types_should_be_splitted = (
-        func_def_length >= mode.line_length - 3  # Exceeds line length
-        or (
-            current_node.prev_sibling is not None
-            and current_node.prev_sibling.type == token.COMMA  # Trailing comma rule
-        )
-    )
-
-    return generic_types_should_be_splitted
 
 
 def right_hand_split(
