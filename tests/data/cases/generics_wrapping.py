@@ -109,6 +109,13 @@ def func[A_LOT_OF_GENERIC_TYPES: AreBeingDefinedHere, LIKE_THIS, AND_THIS, ANOTH
     return a
 
 
+def with_random_comments[
+    Z
+    # bye
+]():
+    return a
+
+
 # output
 def plain[T, B](a: T, b: T) -> T:
     return a
