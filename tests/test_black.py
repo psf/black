@@ -253,7 +253,7 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertIn(black.TargetVersion.PY312, versions)
 
     def test_pep_696_version_detection(self) -> None:
-        source, _ = read_data("cases", "stable_type_param_defaults")
+        source, _ = read_data("cases", "type_param_defaults")
         samples = [
             source,
             "type X[T=int] = float",
