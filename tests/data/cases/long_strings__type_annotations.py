@@ -1,4 +1,3 @@
-# flags: --preview
 def func(
     arg1,
     arg2,
