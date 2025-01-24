@@ -1,27 +1,101 @@
 # flags: --minimum-version=3.12 --preview
-def func[T](a: T, b: T,) -> T:
+def plain[T, B](a: T, b: T) -> T:
+    return a
+
+def arg_magic[T, B](a: T, b: T,) -> T:
+    return a
+
+def type_param_magic[T, B,](a: T, b: T) -> T:
+    return a
+
+def both_magic[T, B,](a: T, b: T,) -> T:
     return a
 
 
-def with_magic_trailing_comma[
+def plain_multiline[
+    T,
+    B
+](
+    a: T,
+    b: T
+) -> T:
+    return a
+
+def arg_magic_multiline[
+    T,
+    B
+](
+    a: T,
+    b: T,
+) -> T:
+    return a
+
+def type_param_magic_multiline[
     T,
     B,
-](a: T, b: T,) -> T:
+](
+    a: T,
+    b: T
+) -> T:
+    return a
+
+def both_magic_multiline[
+    T,
+    B,
+](
+    a: T,
+    b: T,
+) -> T:
     return a
 
 
-def without_magic_trailing_comma[
+def plain_mixed1[
+    T,
+    B
+](a: T, b: T) -> T:
+    return a
+
+def plain_mixed2[T, B](
+    a: T,
+    b: T
+) -> T:
+    return a
+
+def arg_magic_mixed1[
     T,
     B
 ](a: T, b: T,) -> T:
     return a
 
+def arg_magic_mixed2[T, B](
+    a: T,
+    b: T,
+) -> T:
+    return a
 
-def func[
-    T
+def type_param_magic_mixed1[
+    T,
+    B,
+](a: T, b: T) -> T:
+    return a
+
+def type_param_magic_mixed2[T, B,](
+    a: T,
+    b: T
+) -> T:
+    return a
+
+def both_magic_mixed1[
+    T,
+    B,
 ](a: T, b: T,) -> T:
     return a
 
+def both_magic_mixed2[T, B,](
+    a: T,
+    b: T,
+) -> T:
+    return a
 
 def something_something_function[
     T: Model
@@ -36,33 +110,103 @@ def func[A_LOT_OF_GENERIC_TYPES: AreBeingDefinedHere, LIKE_THIS, AND_THIS, ANOTH
 
 
 # output
+def plain[T, B](a: T, b: T) -> T:
+    return a
 
 
-def func[T](
+def arg_magic[T, B](
     a: T,
     b: T,
 ) -> T:
     return a
 
 
-def with_magic_trailing_comma[
+def type_param_magic[
+    T,
+    B,
+](a: T, b: T) -> T:
+    return a
+
+
+def both_magic[
     T,
     B,
 ](a: T, b: T,) -> T:
     return a
 
 
-def without_magic_trailing_comma[T, B](
+def plain_multiline[T, B](a: T, b: T) -> T:
+    return a
+
+
+def arg_magic_multiline[T, B](
     a: T,
     b: T,
 ) -> T:
     return a
 
 
-def func[T](
+def type_param_magic_multiline[
+    T,
+    B,
+](a: T, b: T) -> T:
+    return a
+
+
+def both_magic_multiline[
+    T,
+    B,
+](a: T, b: T,) -> T:
+    return a
+
+
+def plain_mixed1[T, B](a: T, b: T) -> T:
+    return a
+
+
+def plain_mixed2[T, B](a: T, b: T) -> T:
+    return a
+
+
+def arg_magic_mixed1[T, B](
     a: T,
     b: T,
 ) -> T:
+    return a
+
+
+def arg_magic_mixed2[T, B](
+    a: T,
+    b: T,
+) -> T:
+    return a
+
+
+def type_param_magic_mixed1[
+    T,
+    B,
+](a: T, b: T) -> T:
+    return a
+
+
+def type_param_magic_mixed2[
+    T,
+    B,
+](a: T, b: T) -> T:
+    return a
+
+
+def both_magic_mixed1[
+    T,
+    B,
+](a: T, b: T,) -> T:
+    return a
+
+
+def both_magic_mixed2[
+    T,
+    B,
+](a: T, b: T,) -> T:
     return a
 
 
