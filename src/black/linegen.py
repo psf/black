@@ -788,6 +788,7 @@ def left_hand_split(
     :func:`right_hand_split` which also handles optional parentheses.
     """
 
+    leaf_type_sets: list[Collection[int]]
     if Preview.generic_type_def_wrapping in mode:
         leaf_type_sets = [[token.LPAR], [token.LSQB]]
     else:
