@@ -779,14 +779,7 @@ def left_hand_split(
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
-
-    leaf_type_sets: list[Collection[int]]
-    if Preview.generic_type_def_wrapping in mode:
-        leaf_type_sets = [[token.LPAR], [token.LSQB]]
-    else:
-        leaf_type_sets = [OPENING_BRACKETS]
-
-    for leaf_types in leaf_type_sets:
+    for leaf_type in [token.LPAR, token.LSQB]:
         tail_leaves: list[Leaf] = []
         body_leaves: list[Leaf] = []
         head_leaves: list[Leaf] = []
@@ -804,7 +797,7 @@ def left_hand_split(
                 current_leaves = tail_leaves if body_leaves else head_leaves
             current_leaves.append(leaf)
             if current_leaves is head_leaves:
-                if leaf.type in leaf_types:
+                if leaf.type == leaf_type:
                     matching_bracket = leaf
                     current_leaves = body_leaves
         if matching_bracket and tail_leaves:

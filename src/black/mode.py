@@ -203,7 +203,6 @@ class Preview(Enum):
     wrap_long_dict_values_in_parens = auto()
     multiline_string_handling = auto()
     always_one_newline_after_import = auto()
-    generic_type_def_wrapping = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

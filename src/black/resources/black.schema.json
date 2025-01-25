@@ -83,8 +83,7 @@
           "hug_parens_with_braces_and_square_brackets",
           "wrap_long_dict_values_in_parens",
           "multiline_string_handling",
-          "always_one_newline_after_import",
-          "generic_type_def_wrapping"
+          "always_one_newline_after_import"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."

@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.12 --preview
+# flags: --minimum-version=3.12
 def plain[T, B](a: T, b: T) -> T:
     return a
 

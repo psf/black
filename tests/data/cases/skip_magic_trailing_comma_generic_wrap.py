@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.12 --skip-magic-trailing-comma --preview
+# flags: --minimum-version=3.12 --skip-magic-trailing-comma
 def plain[T, B](a: T, b: T) -> T:
     return a
 

@@ -22,6 +22,8 @@ the following changes:
 The following changes were not in any previous release:
 
 - Remove parentheses around sole list items (#4312)
+- Generic function definitions are now formatted more elegantly: parameters are
+  split over multiple lines first instead of type parameter definitions (#4553)
 
 ### Stable style
 
@@ -41,8 +43,6 @@ The following changes were not in any previous release:
 - Collapse multiple empty lines after an import into one (#4489)
 - Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
   parentheses around long dictionary values (#4377)
-- Improve the way black wraps generic type definitions in function declarations,
-  so it will prioritize wrapping parameters instead of the generic types. (#4553)
 
 ### Configuration
 
