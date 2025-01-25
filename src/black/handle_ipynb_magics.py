@@ -43,7 +43,6 @@ PYTHON_CELL_MAGICS = frozenset((
     "time",
     "timeit",
 ))
-TOKEN_HEX = secrets.token_hex
 
 
 @dataclasses.dataclass(frozen=True)
@@ -160,7 +159,7 @@ def mask_cell(src: str) -> tuple[str, list[Replacement]]:
 
     becomes
 
-        "25716f358c32750e"
+        b"25716f358c32750"
         'foo'
 
     The replacements are returned, along with the transformed code.
@@ -192,6 +191,18 @@ def mask_cell(src: str) -> tuple[str, list[Replacement]]:
     return transformed, replacements
 
 
+def create_token(n_chars: int) -> str:
+    """Create a randomly generated token that is n_chars characters long."""
+    assert n_chars > 0
+    n_bytes = max(n_chars // 2 - 1, 1)
+    token = secrets.token_hex(n_bytes)
+    if len(token) + 3 > n_chars:
+        token = token[:-1]
+    # We use a bytestring so that the string does not get interpreted
+    # as a docstring.
+    return f'b"{token}"'
+
+
 def get_token(src: str, magic: str) -> str:
     """Return randomly generated token to mask IPython magic with.
 
@@ -201,11 +212,11 @@ def get_token(src: str, magic: str) -> str:
     not already present anywhere else in the cell.
     """
     assert magic
-    nbytes = max(len(magic) // 2 - 1, 1)
-    token = TOKEN_HEX(nbytes)
+    n_chars = len(magic)
+    token = create_token(n_chars)
     counter = 0
     while token in src:
-        token = TOKEN_HEX(nbytes)
+        token = create_token(n_chars)
         counter += 1
         if counter > 100:
             raise AssertionError(
@@ -213,9 +224,7 @@ def get_token(src: str, magic: str) -> str:
                 "Please report a bug on https://github.com/psf/black/issues.  "
                 f"The magic might be helpful: {magic}"
             ) from None
-    if len(token) + 2 < len(magic):
-        token = f"{token}."
-    return f'"{token}"'
+    return token
 
 
 def replace_cell_magics(src: str) -> tuple[str, list[Replacement]]:

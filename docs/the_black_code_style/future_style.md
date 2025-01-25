@@ -20,27 +20,6 @@ demoted from the `--preview` to the `--unstable` style, users can use the
 
 Currently, the following features are included in the preview style:
 
-- `hex_codes_in_unicode_sequences`: normalize casing of Unicode escape characters in
-  strings
-- `unify_docstring_detection`: fix inconsistencies in whether certain strings are
-  detected as docstrings
-- `no_normalize_fmt_skip_whitespace`: whitespace before `# fmt: skip` comments is no
-  longer normalized
-- `typed_params_trailing_comma`: consistently add trailing commas to typed function
-  parameters
-- `is_simple_lookup_for_doublestar_expression`: fix line length computation for certain
-  expressions that involve the power operator
-- `docstring_check_for_newline`: checks if there is a newline before the terminating
-  quotes of a docstring
-- `remove_redundant_guard_parens`: Removes redundant parentheses in `if` guards for
-  `case` blocks.
-- `parens_for_long_if_clauses_in_case_block`: Adds parentheses to `if` clauses in `case`
-  blocks when the line is too long
-- `pep646_typed_star_arg_type_var_tuple`: fix type annotation spacing between * and more
-  complex type variable tuple (i.e. `def fn(*args: *tuple[*Ts, T]) -> None: pass`)
-- `remove_lone_list_item_parens`: remove redundant parentheses around lone list items
-  (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some
-  cases)
 - `always_one_newline_after_import`: Always force one blank line after import
   statements, except when the line after the import is a comment or an import statement
 
