@@ -1,4 +1,3 @@
-# flags: --preview
 x = "\x1F"
 x = "\\x1B"
 x = "\\\x1B"

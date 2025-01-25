@@ -6,13 +6,29 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+This release introduces the new 2025 stable style (#4558), stabilizing
+the following changes:
+
+- Normalize casing of Unicode escape characters in strings to lowercase (#2916)
+- Fix inconsistencies in whether certain strings are detected as docstrings (#4095)
+- Consistently add trailing commas to typed function parameters (#4164)
+- Remove redundant parentheses in if guards for case blocks (#4214)
+- Add parentheses to if clauses in case blocks when the line is too long (#4269)
+- Whitespace before `# fmt: skip` comments is no longer normalized (#4146)
+- Fix line length computation for certain expressions that involve the power operator (#4154)
+- Check if there is a newline before the terminating quotes of a docstring (#4185)
+- Fix type annotation spacing between `*` and more complex type variable tuple (#4440)
+
+The following changes were not in any previous release:
+
+- Remove parentheses around sole list items (#4312)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
 - Fix formatting cells in IPython notebooks with magic methods and starting or trailing
   empty lines (#4484)
-
 - Fix crash when formatting `with` statements containing tuple generators/unpacking
   (#4538)
 
@@ -22,7 +38,6 @@
 
 - Fix/remove string merging changing f-string quotes on f-strings with internal quotes
   (#4498)
-- Remove parentheses around sole list items (#4312)
 - Collapse multiple empty lines after an import into one (#4489)
 - Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
   parentheses around long dictionary values (#4377)
