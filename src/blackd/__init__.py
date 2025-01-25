@@ -2,7 +2,7 @@ import asyncio
 import logging
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime, timezone
-from functools import partial, cache
+from functools import cache, partial
 from multiprocessing import freeze_support
 
 try:
