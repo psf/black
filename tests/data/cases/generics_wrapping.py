@@ -116,6 +116,24 @@ def with_random_comments[
     return a
 
 
+def func[
+    T,  # comment
+    U  # comment
+    ,
+    Z:  # comment
+    int
+](): pass
+
+
+def func[
+    T,  # comment but it's long so it doesn't just move to the end of the line
+    U  # comment comment comm comm ent ent
+    ,
+    Z:  # comment ent ent comm comm comment
+    int
+](): pass
+
+
 # output
 def plain[T, B](a: T, b: T) -> T:
     return a
@@ -275,3 +293,15 @@ def with_random_comments[
     # bye
 ]():
     return a
+
+
+def func[T, U, Z: int]():  # comment  # comment  # comment
+    pass
+
+
+def func[
+    T,  # comment but it's long so it doesn't just move to the end of the line
+    U,  # comment comment comm comm ent ent
+    Z: int,  # comment ent ent comm comm comment
+]():
+    pass
