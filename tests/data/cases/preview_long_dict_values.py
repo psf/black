@@ -1,4 +1,4 @@
-# flags: --unstable
+# flags: --preview
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
         "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
