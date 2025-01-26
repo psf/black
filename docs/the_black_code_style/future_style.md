@@ -23,6 +23,7 @@ Currently, the following features are included in the preview style:
 - `always_one_newline_after_import`: Always force one blank line after import
   statements, except when the line after the import is a comment or an import statement
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
+  ([see below](labels/wrap-long-dict-values))
 
 (labels/unstable-features)=
 
@@ -34,6 +35,33 @@ The unstable style additionally includes the following features:
   multiline strings ([see below](labels/multiline-string-handling))
 - `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
   brackets ([see below](labels/hug-parens))
+
+(labels/wrap-long-dict-values)=
+
+### Improved parentheses management in dicts
+
+For dict literals with long values, they are now wrapped in parentheses. Unnecessary
+parentheses are now removed. For example:
+
+```python
+my_dict = {
+    "a key in my dict": a_very_long_variable
+    * and_a_very_long_function_call()
+    / 100000.0,
+    "another key": (short_value),
+}
+```
+
+will be changed to:
+
+```python
+my_dict = {
+    "a key in my dict": (
+        a_very_long_variable * and_a_very_long_function_call() / 100000.0
+    ),
+    "another key": short_value,
+}
+```
 
 (labels/hug-parens)=
 
