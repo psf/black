@@ -779,26 +779,29 @@ def left_hand_split(
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
-    tail_leaves: list[Leaf] = []
-    body_leaves: list[Leaf] = []
-    head_leaves: list[Leaf] = []
-    current_leaves = head_leaves
-    matching_bracket: Optional[Leaf] = None
-    for leaf in line.leaves:
-        if (
-            current_leaves is body_leaves
-            and leaf.type in CLOSING_BRACKETS
-            and leaf.opening_bracket is matching_bracket
-            and isinstance(matching_bracket, Leaf)
-        ):
-            ensure_visible(leaf)
-            ensure_visible(matching_bracket)
-            current_leaves = tail_leaves if body_leaves else head_leaves
-        current_leaves.append(leaf)
-        if current_leaves is head_leaves:
-            if leaf.type in OPENING_BRACKETS:
-                matching_bracket = leaf
-                current_leaves = body_leaves
+    for leaf_type in [token.LPAR, token.LSQB]:
+        tail_leaves: list[Leaf] = []
+        body_leaves: list[Leaf] = []
+        head_leaves: list[Leaf] = []
+        current_leaves = head_leaves
+        matching_bracket: Optional[Leaf] = None
+        for leaf in line.leaves:
+            if (
+                current_leaves is body_leaves
+                and leaf.type in CLOSING_BRACKETS
+                and leaf.opening_bracket is matching_bracket
+                and isinstance(matching_bracket, Leaf)
+            ):
+                ensure_visible(leaf)
+                ensure_visible(matching_bracket)
+                current_leaves = tail_leaves if body_leaves else head_leaves
+            current_leaves.append(leaf)
+            if current_leaves is head_leaves:
+                if leaf.type == leaf_type:
+                    matching_bracket = leaf
+                    current_leaves = body_leaves
+        if matching_bracket and tail_leaves:
+            break
     if not matching_bracket or not tail_leaves:
         raise CannotSplit("No brackets found")
 

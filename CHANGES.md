@@ -22,6 +22,8 @@ the following changes:
 The following changes were not in any previous release:
 
 - Remove parentheses around sole list items (#4312)
+- Generic function definitions are now formatted more elegantly: parameters are
+  split over multiple lines first instead of type parameter definitions (#4553)
 
 ### Stable style
 
