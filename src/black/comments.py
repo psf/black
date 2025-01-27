@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final, Optional, Union
 
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
@@ -235,11 +235,7 @@ def convert_one_fmt_off_pair(
                 standalone_comment_prefix += fmt_off_prefix
                 hidden_value = comment.value + "\n" + hidden_value
             if is_fmt_skip:
-                hidden_value += (
-                    comment.leading_whitespace
-                    if Preview.no_normalize_fmt_skip_whitespace in mode
-                    else "  "
-                ) + comment.value
+                hidden_value += comment.leading_whitespace + comment.value
             if hidden_value.endswith("\n"):
                 # That happens when one of the `ignored_nodes` ended with a NEWLINE
                 # leaf (possibly followed by a DEDENT).

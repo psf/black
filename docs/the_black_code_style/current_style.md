@@ -250,6 +250,11 @@ exception of [capital "R" prefixes](#rstrings-and-rstrings), unicode literal mar
 (`u`) are removed because they are meaningless in Python 3, and in the case of multiple
 characters "r" is put first as in spoken language: "raw f-string".
 
+Another area where Python allows multiple ways to format a string is escape sequences.
+For example, `"\uabcd"` and `"\uABCD"` evaluate to the same string. _Black_ normalizes
+such escape sequences to lowercase, but uses uppercase for `\N` named character escapes,
+such as `"\N{MEETEI MAYEK LETTER HUK}"`.
+
 The main reason to standardize on a single form of quotes is aesthetics. Having one kind
 of quotes everywhere reduces reader distraction. It will also enable a future version of
 _Black_ to merge consecutive string literals that ended up on the same line (see

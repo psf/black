@@ -1,4 +1,4 @@
-# flags: --preview --minimum-version=3.10
+# flags: --minimum-version=3.10
 match match:
     case "test" if case != "not very loooooooooooooog condition":  # comment
         pass

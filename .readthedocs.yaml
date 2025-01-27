@@ -16,3 +16,6 @@ python:
       path: .
       extra_requirements:
         - d
+
+sphinx:
+  configuration: docs/conf.py

@@ -37,25 +37,27 @@ type something_that_is_long[
 ] = something_that_is_long
 
 
-def simple[
-    T = something_that_is_long
-](short1: int, short2: str, short3: bytes) -> float:
+def simple[T = something_that_is_long](
+    short1: int, short2: str, short3: bytes
+) -> float:
     pass
 
 
-def longer[
-    something_that_is_long = something_that_is_long
-](something_that_is_long: something_that_is_long) -> something_that_is_long:
+def longer[something_that_is_long = something_that_is_long](
+    something_that_is_long: something_that_is_long,
+) -> something_that_is_long:
     pass
 
 
 def trailing_comma1[
     T = int,
-](a: str):
+](
+    a: str,
+):
     pass
 
 
-def trailing_comma2[
-    T = int
-](a: str,):
+def trailing_comma2[T = int](
+    a: str,
+):
     pass

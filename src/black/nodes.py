@@ -14,7 +14,7 @@ else:
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
@@ -244,13 +244,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
         elif (
             prevp.type == token.STAR
             and parent_type(prevp) == syms.star_expr
-            and (
-                parent_type(prevp.parent) == syms.subscriptlist
-                or (
-                    Preview.pep646_typed_star_arg_type_var_tuple in mode
-                    and parent_type(prevp.parent) == syms.tname_star
-                )
-            )
+            and parent_type(prevp.parent) in (syms.subscriptlist, syms.tname_star)
         ):
             # No space between typevar tuples or unpacking them.
             return NO
@@ -551,7 +545,7 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-def is_docstring(node: NL, mode: Mode) -> bool:
+def is_docstring(node: NL) -> bool:
     if isinstance(node, Leaf):
         if node.type != token.STRING:
             return False
@@ -561,8 +555,7 @@ def is_docstring(node: NL, mode: Mode) -> bool:
             return False
 
     if (
-        Preview.unify_docstring_detection in mode
-        and node.parent
+        node.parent
         and node.parent.type == syms.simple_stmt
         and not node.parent.prev_sibling
         and node.parent.parent

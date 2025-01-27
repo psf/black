@@ -1,4 +1,3 @@
-# flags: --preview
 m2 = None if not isinstance(dist, Normal) else m** 2 + s * 2
 m3 = None if not isinstance(dist, Normal) else m ** 2 + s * 2
 m4 = None if not isinstance(dist, Normal) else m**2 + s * 2

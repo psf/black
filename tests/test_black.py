@@ -2353,8 +2353,8 @@ class TestCaching:
                 # If you are looking to remove one of these features, just
                 # replace it with any other feature.
                 values = [
-                    {Preview.docstring_check_for_newline},
-                    {Preview.hex_codes_in_unicode_sequences},
+                    {Preview.multiline_string_handling},
+                    {Preview.string_processing},
                 ]
             elif field.type is bool:
                 values = [True, False]

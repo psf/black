@@ -1,4 +1,3 @@
-# flags: --preview
 # long variable name
 this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it = 0
 this_is_a_ridiculously_long_name_and_nobody_in_their_right_mind_would_use_one_like_it = 1  # with a comment

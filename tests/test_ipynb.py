@@ -541,8 +541,8 @@ def test_ipynb_and_pyi_flags() -> None:
 
 
 def test_unable_to_replace_magics(monkeypatch: MonkeyPatch) -> None:
-    src = "%%time\na = 'foo'"
-    monkeypatch.setattr("black.handle_ipynb_magics.TOKEN_HEX", lambda _: "foo")
+    src = '%%time\na = b"foo"'
+    monkeypatch.setattr("secrets.token_hex", lambda _: "foo")
     with pytest.raises(
         AssertionError, match="Black was not able to replace IPython magic"
     ):

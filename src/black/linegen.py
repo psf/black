@@ -414,10 +414,9 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_STRING(self, leaf: Leaf) -> Iterator[Line]:
-        if Preview.hex_codes_in_unicode_sequences in self.mode:
-            normalize_unicode_escape_sequences(leaf)
+        normalize_unicode_escape_sequences(leaf)
 
-        if is_docstring(leaf, self.mode) and not re.search(r"\\\s*\n", leaf.value):
+        if is_docstring(leaf) and not re.search(r"\\\s*\n", leaf.value):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
@@ -488,10 +487,7 @@ class LineGenerator(Visitor[Line]):
                     and len(indent) + quote_len <= self.mode.line_length
                     and not has_trailing_backslash
                 ):
-                    if (
-                        Preview.docstring_check_for_newline in self.mode
-                        and leaf.value[-1 - quote_len] == "\n"
-                    ):
+                    if leaf.value[-1 - quote_len] == "\n":
                         leaf.value = prefix + quote + docstring + quote
                     else:
                         leaf.value = prefix + quote + docstring + "\n" + indent + quote
@@ -511,10 +507,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_atom(self, node: Node) -> Iterator[Line]:
         """Visit any atom"""
-        if (
-            Preview.remove_lone_list_item_parens in self.mode
-            and len(node.children) == 3
-        ):
+        if len(node.children) == 3:
             first = node.children[0]
             last = node.children[-1]
             if (first.type == token.LSQB and last.type == token.RSQB) or (
@@ -602,8 +595,7 @@ class LineGenerator(Visitor[Line]):
         # PEP 634
         self.visit_match_stmt = self.visit_match_case
         self.visit_case_block = self.visit_match_case
-        if Preview.remove_redundant_guard_parens in self.mode:
-            self.visit_guard = partial(v, keywords=Ø, parens={"if"})
+        self.visit_guard = partial(v, keywords=Ø, parens={"if"})
 
 
 def _hugging_power_ops_line_to_string(
@@ -787,26 +779,29 @@ def left_hand_split(
     Prefer RHS otherwise.  This is why this function is not symmetrical with
     :func:`right_hand_split` which also handles optional parentheses.
     """
-    tail_leaves: list[Leaf] = []
-    body_leaves: list[Leaf] = []
-    head_leaves: list[Leaf] = []
-    current_leaves = head_leaves
-    matching_bracket: Optional[Leaf] = None
-    for leaf in line.leaves:
-        if (
-            current_leaves is body_leaves
-            and leaf.type in CLOSING_BRACKETS
-            and leaf.opening_bracket is matching_bracket
-            and isinstance(matching_bracket, Leaf)
-        ):
-            ensure_visible(leaf)
-            ensure_visible(matching_bracket)
-            current_leaves = tail_leaves if body_leaves else head_leaves
-        current_leaves.append(leaf)
-        if current_leaves is head_leaves:
-            if leaf.type in OPENING_BRACKETS:
-                matching_bracket = leaf
-                current_leaves = body_leaves
+    for leaf_type in [token.LPAR, token.LSQB]:
+        tail_leaves: list[Leaf] = []
+        body_leaves: list[Leaf] = []
+        head_leaves: list[Leaf] = []
+        current_leaves = head_leaves
+        matching_bracket: Optional[Leaf] = None
+        for leaf in line.leaves:
+            if (
+                current_leaves is body_leaves
+                and leaf.type in CLOSING_BRACKETS
+                and leaf.opening_bracket is matching_bracket
+                and isinstance(matching_bracket, Leaf)
+            ):
+                ensure_visible(leaf)
+                ensure_visible(matching_bracket)
+                current_leaves = tail_leaves if body_leaves else head_leaves
+            current_leaves.append(leaf)
+            if current_leaves is head_leaves:
+                if leaf.type == leaf_type:
+                    matching_bracket = leaf
+                    current_leaves = body_leaves
+        if matching_bracket and tail_leaves:
+            break
     if not matching_bracket or not tail_leaves:
         raise CannotSplit("No brackets found")
 
@@ -1132,12 +1127,7 @@ def _ensure_trailing_comma(
         return False
     # Don't add commas if we already have any commas
     if any(
-        leaf.type == token.COMMA
-        and (
-            Preview.typed_params_trailing_comma not in original.mode
-            or not is_part_of_annotation(leaf)
-        )
-        for leaf in leaves
+        leaf.type == token.COMMA and not is_part_of_annotation(leaf) for leaf in leaves
     ):
         return False
 
@@ -1418,11 +1408,7 @@ def normalize_invisible_parens(  # noqa: C901
             )
 
         # Add parentheses around if guards in case blocks
-        if (
-            isinstance(child, Node)
-            and child.type == syms.guard
-            and Preview.parens_for_long_if_clauses_in_case_block in mode
-        ):
+        if isinstance(child, Node) and child.type == syms.guard:
             normalize_invisible_parens(
                 child, parens_after={"if"}, mode=mode, features=features
             )
