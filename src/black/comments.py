@@ -276,7 +276,7 @@ def generate_ignored_nodes(
     if _contains_fmt_skip_comment(comment.value, mode):
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment)
         return
-    
+
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container):
