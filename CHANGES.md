@@ -43,6 +43,7 @@ The following changes were not in any previous release:
 - Collapse multiple empty lines after an import into one (#4489)
 - Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
   parentheses around long dictionary values (#4377)
+- Move `wrap_long_dict_values_in_parens` from the unstable to preview style (#4561)
 
 ### Configuration
 
