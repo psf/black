@@ -72,8 +72,7 @@ dependencies = [
   "tomli>=1.1.0; python_version < '3.11'",
   "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
-version = "25.1.0"
-dynamic = ["readme"]
+dynamic = ["readme", "version"]
 
 [project.optional-dependencies]
 colorama = ["colorama>=0.4.3"]
