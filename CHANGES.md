@@ -1,5 +1,52 @@
 # Change Log
 
+## Unreleased
+
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+### Stable style
+
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
 ## 25.1.0
 
 ### Highlights
