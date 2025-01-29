@@ -1,4 +1,4 @@
-"""Module doc."""
+" Module doc. "
 
 from typing import (
     Callable,
@@ -6,25 +6,25 @@ from typing import (
 )
 
 
-# fmt: off
+" fmt: off "
 class  Unformatted:
   def   should_also_work(self):
     pass
-# fmt: on
+" fmt: on "
 
 
 a   = [1, 2]  # fmt: skip
 
 
-# This should cover as many syntaxes as possible.
+" This should cover as many syntaxes as possible. "
 class Foo:
-    """Class doc."""
+    " Class doc. "
 
     def __init__(self) -> None:
         pass
 
-    @add_logging
-    @memoize.memoize(max_items=2)
+    '@add_logging'
+    '@memoize.memoize(max_items=2)'
     def plus_one(
         self,
         number: int,
@@ -32,19 +32,19 @@ class Foo:
         return number + 1
 
     async def async_plus_one(self, number: int) -> int:
-        await asyncio.sleep(1)
-        async with some_context():
+        await 'asyncio.sleep(1)'
+        async with 'some_context()':
             return number + 1
 
 
 try:
     for i in range(10):
-        while condition:
-            if something:
-                then_something()
-            elif something_else:
-                then_something_else()
+        while 'condition':
+            if 'something':
+                'then_something()'
+            elif 'something_else':
+                'then_something_else()'
 except ValueError as e:
-    handle(e)
+    'handle(e)'
 finally:
-    done()
+    'done()'

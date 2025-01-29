@@ -270,26 +270,30 @@ def generate_ignored_nodes(
 ) -> Iterator[LN]:
     """Starting from the container of `leaf`, generate all leaves until `# fmt: on`.
 
-    If comment is skip, returns leaf only.
+    If the comment is `# fmt: skip`, returns leaf only.
     Stops at the end of the block.
     """
     if _contains_fmt_skip_comment(comment.value, mode):
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment)
         return
+    
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container):
             return
 
-        # fix for fmt: on in children
+        # Handle multiline strings explicitly
+        if container.type == token.STRING and "\n" in container.value:
+            yield container
+            container = container.next_sibling
+            continue
+
+        # Fix for fmt: on in children
         if children_contains_fmt_on(container):
             for index, child in enumerate(container.children):
                 if isinstance(child, Leaf) and is_fmt_on(child):
                     if child.type in CLOSING_BRACKETS:
-                        # This means `# fmt: on` is placed at a different bracket level
-                        # than `# fmt: off`. This is an invalid use, but as a courtesy,
-                        # we include this closing bracket in the ignored nodes.
-                        # The alternative is to fail the formatting.
+                        # Handle fmt: on at different bracket levels
                         yield child
                     return
                 if (
@@ -297,19 +301,14 @@ def generate_ignored_nodes(
                     and index < len(container.children) - 1
                     and children_contains_fmt_on(container.children[index + 1])
                 ):
-                    # This means `# fmt: on` is placed right after an indentation
-                    # level, and we shouldn't swallow the previous INDENT token.
                     return
                 if children_contains_fmt_on(child):
                     return
                 yield child
         else:
-            if container.type == token.DEDENT and container.next_sibling is None:
-                # This can happen when there is no matching `# fmt: on` comment at the
-                # same level as `# fmt: on`. We need to keep this DEDENT.
-                return
             yield container
             container = container.next_sibling
+
 
 
 def _generate_ignored_nodes_from_fmt_skip(

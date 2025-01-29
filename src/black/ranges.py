@@ -1,4 +1,4 @@
-"""Functions related to Black's formatting by line ranges feature."""
+" Functions related to Black's formatting by line ranges feature. "
 
 import difflib
 from collections.abc import Collection, Iterator, Sequence

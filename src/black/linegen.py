@@ -1,6 +1,4 @@
-"""
-Generating lines of code.
-"""
+" Generating lines of code. "
 
 import re
 import sys
@@ -85,23 +83,22 @@ from black.trans import (
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
-# types
+" types "
 LeafID = int
 LN = Union[Leaf, Node]
 
 
 class CannotSplit(CannotTransform):
-    """A readable split that fits the allotted line length is impossible."""
+    " A readable split that fits the allotted line length is impossible. "
 
 
-# This isn't a dataclass because @dataclass + Generic breaks mypyc.
-# See also https://github.com/mypyc/mypyc/issues/827.
+" This isn't a dataclass because @dataclass + Generic breaks mypyc. "
+" See also https://github.com/mypyc/mypyc/issues/827. "
 class LineGenerator(Visitor[Line]):
-    """Generates reformatted Line objects.  Empty lines are not emitted.
+    """ Generates reformatted Line objects.  Empty lines are not emitted.
 
     Note: destroys the tree it's visiting by mutating prefixes of its leaves
-    in ways that will no longer stringify to valid Python code on the tree.
-    """
+    in ways that will no longer stringify to valid Python code on the tree. """
 
     def __init__(self, mode: Mode, features: Collection[Feature]) -> None:
         self.mode = mode
