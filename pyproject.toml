@@ -72,7 +72,8 @@ dependencies = [
   "tomli>=1.1.0; python_version < '3.11'",
   "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
-dynamic = ["readme", "version"]
+version = "25.1.0"
+dynamic = ["readme"]
 
 [project.optional-dependencies]
 colorama = ["colorama>=0.4.3"]
@@ -185,16 +186,6 @@ MYPYC_DEBUG_LEVEL = "0"
 
 # Black needs Clang to compile successfully on Linux.
 CC = "clang"
-
-[tool.cibuildwheel.macos]
-build-frontend = { name = "build", args = ["--no-isolation"] }
-# Unfortunately, hatch doesn't respect MACOSX_DEPLOYMENT_TARGET
-# Note we don't have a good test for this sed horror, so if you futz with it
-# make sure to test manually
-before-build = [
-    "python -m pip install 'hatchling==1.20.0' hatch-vcs hatch-fancy-pypi-readme 'hatch-mypyc>=0.16.0' 'mypy>=1.12' 'click>=8.1.7'",
-    """sed -i '' -e "600,700s/'10_16'/os.environ['MACOSX_DEPLOYMENT_TARGET'].replace('.', '_')/" $(python -c 'import hatchling.builders.wheel as h; print(h.__file__)') """,
-]
 
 [tool.isort]
 atomic = true
