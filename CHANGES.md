@@ -1,10 +1,8 @@
 # Change Log
 
-## Unreleased
+## 25.1.0
 
 ### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
 
 This release introduces the new 2025 stable style (#4558), stabilizing
 the following changes:
@@ -27,16 +25,12 @@ The following changes were not in any previous release:
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Fix formatting cells in IPython notebooks with magic methods and starting or trailing
   empty lines (#4484)
 - Fix crash when formatting `with` statements containing tuple generators/unpacking
   (#4538)
 
 ### Preview style
-
-<!-- Changes that affect Black's preview style -->
 
 - Fix/remove string merging changing f-string quotes on f-strings with internal quotes
   (#4498)
@@ -45,46 +39,19 @@ The following changes were not in any previous release:
   parentheses around long dictionary values (#4377)
 - Move `wrap_long_dict_values_in_parens` from the unstable to preview style (#4561)
 
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
 ### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Store license identifier inside the `License-Expression` metadata field, see
   [PEP 639](https://peps.python.org/pep-0639/). (#4479)
 
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
 ### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 - Speed up the `is_fstring_start` function in Black's tokenizer (#4541)
 
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
   formatted. (#4539)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 24.10.0
 
