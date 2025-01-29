@@ -2,6 +2,8 @@
 
 ## Preview style
 
+(labels/preview-style)=
+
 Experimental, potentially disruptive style changes are gathered under the `--preview`
 CLI flag. At the end of each year, these changes may be adopted into the default style,
 as described in [The Black Code Style](index.md). Because the functionality is
@@ -262,52 +264,3 @@ s = (  # Top comment
     # Bottom comment
 )
 ```
-
-## Potential future changes
-
-This section lists changes that we may want to make in the future, but that aren't
-implemented yet.
-
-### Using backslashes for with statements
-
-[Backslashes are bad and should be never be used](labels/why-no-backslashes) however
-there is one exception: `with` statements using multiple context managers. Before Python
-3.9 Python's grammar does not allow organizing parentheses around the series of context
-managers.
-
-We don't want formatting like:
-
-```py3
-with make_context_manager1() as cm1, make_context_manager2() as cm2, make_context_manager3() as cm3, make_context_manager4() as cm4:
-    ...  # nothing to split on - line too long
-```
-
-So _Black_ will, when we implement this, format it like this:
-
-```py3
-with \
-     make_context_manager1() as cm1, \
-     make_context_manager2() as cm2, \
-     make_context_manager3() as cm3, \
-     make_context_manager4() as cm4 \
-:
-    ...  # backslashes and an ugly stranded colon
-```
-
-Although when the target version is Python 3.9 or higher, _Black_ uses parentheses
-instead in `--preview` mode (see below) since they're allowed in Python 3.9 and higher.
-
-An alternative to consider if the backslashes in the above formatting are undesirable is
-to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the
-following way:
-
-```python
-with contextlib.ExitStack() as exit_stack:
-    cm1 = exit_stack.enter_context(make_context_manager1())
-    cm2 = exit_stack.enter_context(make_context_manager2())
-    cm3 = exit_stack.enter_context(make_context_manager3())
-    cm4 = exit_stack.enter_context(make_context_manager4())
-    ...
-```
-
-(labels/preview-style)=
