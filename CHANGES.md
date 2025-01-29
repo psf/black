@@ -20,7 +20,7 @@
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
+- Fix the version check in the vim file to reject Python 3.8 (#4567)
 
 ### Parser
 
