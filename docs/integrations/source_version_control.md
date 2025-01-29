@@ -8,7 +8,7 @@ Use [pre-commit](https://pre-commit.com/). Once you
 repos:
   # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black
         # It is recommended to specify the latest version of Python
@@ -35,7 +35,7 @@ include Jupyter Notebooks. To use this hook, simply replace the hook's `id: blac
 repos:
   # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.10.0
+    rev: 25.1.0
     hooks:
       - id: black-jupyter
         # It is recommended to specify the latest version of Python
