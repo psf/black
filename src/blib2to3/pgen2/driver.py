@@ -28,7 +28,7 @@ from logging import Logger
 from typing import IO, Any, Optional, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pgen2.tokenize import GoodTokenInfo
+from blib2to3.pgen2.tokenize import TokenInfo
 from blib2to3.pytree import NL
 
 # Pgen imports
@@ -112,7 +112,7 @@ class Driver:
             logger = logging.getLogger(__name__)
         self.logger = logger
 
-    def parse_tokens(self, tokens: Iterable[GoodTokenInfo], debug: bool = False) -> NL:
+    def parse_tokens(self, tokens: Iterable[TokenInfo], debug: bool = False) -> NL:
         """Parse a series of tokens and return the syntax tree."""
         # XXX Move the prefix computation into a wrapper around tokenize.
         proxy = TokenProxy(tokens)
@@ -180,27 +180,17 @@ class Driver:
         assert p.rootnode is not None
         return p.rootnode
 
-    def parse_stream_raw(self, stream: IO[str], debug: bool = False) -> NL:
-        """Parse a stream and return the syntax tree."""
-        tokens = tokenize.generate_tokens(stream.readline, grammar=self.grammar)
-        return self.parse_tokens(tokens, debug)
-
-    def parse_stream(self, stream: IO[str], debug: bool = False) -> NL:
-        """Parse a stream and return the syntax tree."""
-        return self.parse_stream_raw(stream, debug)
-
     def parse_file(
         self, filename: Path, encoding: Optional[str] = None, debug: bool = False
     ) -> NL:
         """Parse a file and return the syntax tree."""
         with open(filename, encoding=encoding) as stream:
-            return self.parse_stream(stream, debug)
+            text = stream.read()
+        return self.parse_string(text, debug)
 
     def parse_string(self, text: str, debug: bool = False) -> NL:
         """Parse a string and return the syntax tree."""
-        tokens = tokenize.generate_tokens(
-            io.StringIO(text).readline, grammar=self.grammar
-        )
+        tokens = tokenize.tokenize(text, grammar=self.grammar)
         return self.parse_tokens(tokens, debug)
 
     def _partially_consume_prefix(self, prefix: str, column: int) -> tuple[str, str]:
