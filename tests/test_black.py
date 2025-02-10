@@ -26,8 +26,8 @@ import click
 import pytest
 from click import unstyle
 from click.testing import CliRunner
-from pathspec import PathSpec
 from packaging.version import Version
+from pathspec import PathSpec
 
 import black
 import black.files
