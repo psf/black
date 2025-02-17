@@ -116,7 +116,7 @@ class BlackRunner(CliRunner):
     """Make sure STDOUT and STDERR are kept separate when testing Black via its CLI."""
 
     def __init__(self) -> None:
-        if Version(imp_version('click')) >= Version('8.2.0'):
+        if Version(imp_version("click")) >= Version("8.2.0"):
             super().__init__()
         else:
             super().__init__(mix_stderr=False)
