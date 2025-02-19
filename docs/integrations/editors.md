@@ -186,7 +186,7 @@ There are several different ways you can use _Black_ from PyCharm:
    ```
 
 2. This command generates an executable inside the dist/ folder.
-   However, if your script imports Black, PyInstaller may fail to detect it automatically. 
+   However, if your script imports Black, PyInstaller may fail to detect it automatically.
 
 ### Handling missing dependencies
 
@@ -206,8 +206,8 @@ This can lead to errors such as:
    $ pyinstaller --onefile --name my_black_app --hidden-import black my_black_script.py
    ```
 
-2. Alternatively, modify an existing `.spec` file to explicitly include Black:      
-   
+2. Alternatively, modify an existing `.spec` file to explicitly include Black:
+
    ```console
    # my_black_script.spec
    from PyInstaller.utils.hooks import collect_submodules
@@ -234,7 +234,7 @@ This can lead to errors such as:
    $ ./my_black_app --help
    ```
 
-2. If Black is correctly bundled, it should display the available CLI options. 
+2. If Black is correctly bundled, it should display the available CLI options.
 
 ### Troubleshooting
 ```ModuleNotFoundError: No module named 'black'```
@@ -263,7 +263,7 @@ This can lead to errors such as:
 
 Integrating Black with PyInstaller allows you to distribute a pre-formatted Python code formatter within a standalone executable.
 By handling hidden imports and optimizing the package size, you can ensure a smooth experience.
-For more details, check out the [official PyInstaller documentation](https://pyinstaller.org/en/stable/) 
+For more details, check out the [official PyInstaller documentation](https://pyinstaller.org/en/stable/)
 or Black’s [GitHub repository](https://github.com/psf/black).
 
 ## Wing IDE
