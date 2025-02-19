@@ -162,6 +162,110 @@ There are several different ways you can use _Black_ from PyCharm:
   - Uncheck "Auto-save edited files to trigger the watcher"
   - Uncheck "Trigger the watcher on external changes"
 
+## PyInstaller Integration with Black
+
+   PyInstaller is a powerful tool that allows developers to package Python applications into standalone executables.
+   This is particularly useful when distributing applications to users who may not have Python installed.
+   While Black is primarily used as a development tool, there are cases where you might want to bundle it within a PyInstaller package—for instance,
+   if you are creating a tool that applies Black formatting in a controlled environment.
+
+### Installing dependencies
+
+1. Install black and PyInstaller.
+
+   ```console
+   $ pip install black pyinstaller
+   ```
+
+### Creating a standalone executable
+
+1. To package a Python script that uses Black:
+
+   ```console
+   $ pyinstaller --onefile my_black_script.py
+   ```
+
+2. This command generates an executable inside the dist/ folder.
+   However, if your script imports Black, PyInstaller may fail to detect it automatically. 
+
+### Handling missing dependencies
+
+PyInstaller uses dependency analysis to bundle necessary libraries.
+However, Black relies on dynamic imports, which PyInstaller may not detect.
+This can lead to errors such as:
+
+
+   ```console
+   ModuleNotFoundError: No module named 'black'
+   ```
+### Solution: Using a `.spec` File
+
+1. Generate a PyInstaller spec file:
+
+   ```console
+   $ pyinstaller --onefile --name my_black_app --hidden-import black my_black_script.py
+   ```
+
+2. Alternatively, modify an existing `.spec` file to explicitly include Black:      
+   
+   ```console
+   # my_black_script.spec
+   from PyInstaller.utils.hooks import collect_submodules
+
+   hidden_imports = collect_submodules('black')
+
+   a = Analysis([
+      'my_black_script.py'
+   ],
+      hiddenimports=hidden_imports,
+      ... # Other configurations
+   )
+   ```
+3. Then build the executable using
+
+   ```console
+   $ pyinstaller my_black_script.spec
+   ```
+### Testing the executable
+
+1. Once the build is complete, navigate to the dist/ directory and run:
+
+   ```console
+   $ ./my_black_app --help
+   ```
+
+2. If Black is correctly bundled, it should display the available CLI options. 
+
+### Troubleshooting
+```ModuleNotFoundError: No module named 'black'```
+
+1. Ensure Black is installed in your Python environment.
+
+2. Use ```--hidden-import black``` or modify the ```.spec``` file as shown above.
+
+### Large executable Size
+
+1. PyInstaller includes all dependencies, which may make the executable larger than expected.
+
+2. Use ```--exclude-module``` to remove unnecessary dependencies:
+
+   ```console
+   $ pyinstaller --onefile --exclude-module tests my_black_script.py
+   ```
+
+### Black not working inside executable
+
+1. Run ```_pyinstaller --clean_``` to remove cached builds and try again.
+
+2. Ensure your script correctly invokes Black with ```import black```.
+
+### Conclusion
+
+Integrating Black with PyInstaller allows you to distribute a pre-formatted Python code formatter within a standalone executable.
+By handling hidden imports and optimizing the package size, you can ensure a smooth experience.
+For more details, check out the [official PyInstaller documentation](https://pyinstaller.org/en/stable/) 
+or Black’s [GitHub repository](https://github.com/psf/black).
+
 ## Wing IDE
 
 Wing IDE supports `black` via **Preference Settings** for system wide settings and
