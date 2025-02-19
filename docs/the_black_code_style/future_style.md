@@ -2,6 +2,8 @@
 
 ## Preview style
 
+(labels/preview-style)=
+
 Experimental, potentially disruptive style changes are gathered under the `--preview`
 CLI flag. At the end of each year, these changes may be adopted into the default style,
 as described in [The Black Code Style](index.md). Because the functionality is
@@ -20,29 +22,10 @@ demoted from the `--preview` to the `--unstable` style, users can use the
 
 Currently, the following features are included in the preview style:
 
-- `hex_codes_in_unicode_sequences`: normalize casing of Unicode escape characters in
-  strings
-- `unify_docstring_detection`: fix inconsistencies in whether certain strings are
-  detected as docstrings
-- `no_normalize_fmt_skip_whitespace`: whitespace before `# fmt: skip` comments is no
-  longer normalized
-- `typed_params_trailing_comma`: consistently add trailing commas to typed function
-  parameters
-- `is_simple_lookup_for_doublestar_expression`: fix line length computation for certain
-  expressions that involve the power operator
-- `docstring_check_for_newline`: checks if there is a newline before the terminating
-  quotes of a docstring
-- `remove_redundant_guard_parens`: Removes redundant parentheses in `if` guards for
-  `case` blocks.
-- `parens_for_long_if_clauses_in_case_block`: Adds parentheses to `if` clauses in `case`
-  blocks when the line is too long
-- `pep646_typed_star_arg_type_var_tuple`: fix type annotation spacing between * and more
-  complex type variable tuple (i.e. `def fn(*args: *tuple[*Ts, T]) -> None: pass`)
-- `remove_lone_list_item_parens`: remove redundant parentheses around lone list items
-  (depends on unstable `hug_parens_with_braces_and_square_brackets` feature in some
-  cases)
 - `always_one_newline_after_import`: Always force one blank line after import
   statements, except when the line after the import is a comment or an import statement
+- `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
+  ([see below](labels/wrap-long-dict-values))
 
 (labels/unstable-features)=
 
@@ -50,12 +33,37 @@ The unstable style additionally includes the following features:
 
 - `string_processing`: split long string literals and related changes
   ([see below](labels/string-processing))
-- `wrap_long_dict_values_in_parens`: add parentheses to long values in dictionaries
-  ([see below](labels/wrap-long-dict-values))
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
 - `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
   brackets ([see below](labels/hug-parens))
+
+(labels/wrap-long-dict-values)=
+
+### Improved parentheses management in dicts
+
+For dict literals with long values, they are now wrapped in parentheses. Unnecessary
+parentheses are now removed. For example:
+
+```python
+my_dict = {
+    "a key in my dict": a_very_long_variable
+    * and_a_very_long_function_call()
+    / 100000.0,
+    "another key": (short_value),
+}
+```
+
+will be changed to:
+
+```python
+my_dict = {
+    "a key in my dict": (
+        a_very_long_variable * and_a_very_long_function_call() / 100000.0
+    ),
+    "another key": short_value,
+}
+```
 
 (labels/hug-parens)=
 
@@ -142,33 +150,6 @@ change their quotation mark style. User-made splits are respected when they do n
 exceed the line length limit. Line continuation backslashes are converted into
 parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
 this feature istracked in [this issue](https://github.com/psf/black/issues/2188).
-
-(labels/wrap-long-dict-values)=
-
-### Improved parentheses management in dicts
-
-For dict literals with long values, they are now wrapped in parentheses. Unnecessary
-parentheses are now removed. For example:
-
-```python
-my_dict = {
-    "a key in my dict": a_very_long_variable
-    * and_a_very_long_function_call()
-    / 100000.0,
-    "another key": (short_value),
-}
-```
-
-will be changed to:
-
-```python
-my_dict = {
-    "a key in my dict": (
-        a_very_long_variable * and_a_very_long_function_call() / 100000.0
-    ),
-    "another key": short_value,
-}
-```
 
 (labels/multiline-string-handling)=
 
@@ -283,52 +264,3 @@ s = (  # Top comment
     # Bottom comment
 )
 ```
-
-## Potential future changes
-
-This section lists changes that we may want to make in the future, but that aren't
-implemented yet.
-
-### Using backslashes for with statements
-
-[Backslashes are bad and should be never be used](labels/why-no-backslashes) however
-there is one exception: `with` statements using multiple context managers. Before Python
-3.9 Python's grammar does not allow organizing parentheses around the series of context
-managers.
-
-We don't want formatting like:
-
-```py3
-with make_context_manager1() as cm1, make_context_manager2() as cm2, make_context_manager3() as cm3, make_context_manager4() as cm4:
-    ...  # nothing to split on - line too long
-```
-
-So _Black_ will, when we implement this, format it like this:
-
-```py3
-with \
-     make_context_manager1() as cm1, \
-     make_context_manager2() as cm2, \
-     make_context_manager3() as cm3, \
-     make_context_manager4() as cm4 \
-:
-    ...  # backslashes and an ugly stranded colon
-```
-
-Although when the target version is Python 3.9 or higher, _Black_ uses parentheses
-instead in `--preview` mode (see below) since they're allowed in Python 3.9 and higher.
-
-An alternative to consider if the backslashes in the above formatting are undesirable is
-to use {external:py:obj}`contextlib.ExitStack` to combine context managers in the
-following way:
-
-```python
-with contextlib.ExitStack() as exit_stack:
-    cm1 = exit_stack.enter_context(make_context_manager1())
-    cm2 = exit_stack.enter_context(make_context_manager2())
-    cm3 = exit_stack.enter_context(make_context_manager3())
-    cm4 = exit_stack.enter_context(make_context_manager4())
-    ...
-```
-
-(labels/preview-style)=

@@ -14,6 +14,7 @@ from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import fields, replace
+from importlib.metadata import version as imp_version
 from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
@@ -25,6 +26,7 @@ import click
 import pytest
 from click import unstyle
 from click.testing import CliRunner
+from packaging.version import Version
 from pathspec import PathSpec
 
 import black
@@ -114,7 +116,10 @@ class BlackRunner(CliRunner):
     """Make sure STDOUT and STDERR are kept separate when testing Black via its CLI."""
 
     def __init__(self) -> None:
-        super().__init__(mix_stderr=False)
+        if Version(imp_version("click")) >= Version("8.2.0"):
+            super().__init__()
+        else:
+            super().__init__(mix_stderr=False)
 
 
 def invokeBlack(
@@ -2342,8 +2347,8 @@ class TestCaching:
                 # If you are looking to remove one of these features, just
                 # replace it with any other feature.
                 values = [
-                    {Preview.docstring_check_for_newline},
-                    {Preview.hex_codes_in_unicode_sequences},
+                    {Preview.multiline_string_handling},
+                    {Preview.string_processing},
                 ]
             elif field.type is bool:
                 values = [True, False]

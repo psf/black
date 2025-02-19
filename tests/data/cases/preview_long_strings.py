@@ -279,7 +279,7 @@ string_with_escaped_nameescape = (
     "........................................................................... \\N{LAO KO LA}"
 )
 
-msg = lambda x: f"this is a very very very long lambda value {x} that doesn't fit on a single line"
+msg = lambda x: f"this is a very very very very long lambda value {x} that doesn't fit on a single line"
 
 dict_with_lambda_values = {
     "join": lambda j: (
@@ -328,6 +328,20 @@ log.info(f'''Skipping: {"a" == 'b'} {desc["ms_name"]} {money=} {dte=} {pos_share
 log.info(f'''Skipping: {'a' == "b"=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}''')
 
 log.info(f"""Skipping: {'a' == 'b'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}""")
+
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
+    )
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx",
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
+    )
+}
 
 # output
 
@@ -842,11 +856,9 @@ string_with_escaped_nameescape = (
     " \\N{LAO KO LA}"
 )
 
-msg = (
-    lambda x: (
-        f"this is a very very very long lambda value {x} that doesn't fit on a single"
-        " line"
-    )
+msg = lambda x: (
+    f"this is a very very very very long lambda value {x} that doesn't fit on a"
+    " single line"
 )
 
 dict_with_lambda_values = {
@@ -926,3 +938,17 @@ log.info(
 log.info(
     f"""Skipping: {'a' == 'b'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"""
 )
+
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
+    )
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
+    ),
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
+}

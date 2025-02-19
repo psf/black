@@ -10,20 +10,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix formatting cells in IPython notebooks with magic methods and starting or trailing
-  empty lines (#4484)
-
-- Fix crash when formatting `with` statements containing tuple generators/unpacking
-  (#4538)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
-
-- Fix/remove string merging changing f-string quotes on f-strings with internal quotes
-  (#4498)
-- Remove parentheses around sole list items (#4312)
-- Collapse multiple empty lines after an import into one (#4489)
 
 ### Configuration
 
@@ -32,9 +21,6 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
-
-- Store license identifier inside the `License-Expression` metadata field, see
-  [PEP 639](https://peps.python.org/pep-0639/). (#4479)
 
 ### Parser
 
@@ -45,7 +31,6 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
-- Speed up the `is_fstring_start` function in Black's tokenizer (#4541)
 
 ### Output
 
@@ -59,13 +44,65 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
-  formatted. (#4539)
+- Fix the version check in the vim file to reject Python 3.8 (#4567)
 
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 25.1.0
+
+### Highlights
+
+This release introduces the new 2025 stable style (#4558), stabilizing
+the following changes:
+
+- Normalize casing of Unicode escape characters in strings to lowercase (#2916)
+- Fix inconsistencies in whether certain strings are detected as docstrings (#4095)
+- Consistently add trailing commas to typed function parameters (#4164)
+- Remove redundant parentheses in if guards for case blocks (#4214)
+- Add parentheses to if clauses in case blocks when the line is too long (#4269)
+- Whitespace before `# fmt: skip` comments is no longer normalized (#4146)
+- Fix line length computation for certain expressions that involve the power operator (#4154)
+- Check if there is a newline before the terminating quotes of a docstring (#4185)
+- Fix type annotation spacing between `*` and more complex type variable tuple (#4440)
+
+The following changes were not in any previous release:
+
+- Remove parentheses around sole list items (#4312)
+- Generic function definitions are now formatted more elegantly: parameters are
+  split over multiple lines first instead of type parameter definitions (#4553)
+
+### Stable style
+
+- Fix formatting cells in IPython notebooks with magic methods and starting or trailing
+  empty lines (#4484)
+- Fix crash when formatting `with` statements containing tuple generators/unpacking
+  (#4538)
+
+### Preview style
+
+- Fix/remove string merging changing f-string quotes on f-strings with internal quotes
+  (#4498)
+- Collapse multiple empty lines after an import into one (#4489)
+- Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
+  parentheses around long dictionary values (#4377)
+- Move `wrap_long_dict_values_in_parens` from the unstable to preview style (#4561)
+
+### Packaging
+
+- Store license identifier inside the `License-Expression` metadata field, see
+  [PEP 639](https://peps.python.org/pep-0639/). (#4479)
+
+### Performance
+
+- Speed up the `is_fstring_start` function in Black's tokenizer (#4541)
+
+### Integrations
+
+- If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
+  formatted. (#4539)
 
 ## 24.10.0
 
