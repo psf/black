@@ -40,7 +40,7 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Allow Black to use a different Python version than Vim (#4245)
 
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
 
