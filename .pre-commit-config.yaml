@@ -51,6 +51,7 @@ repos:
           - click >= 8.1.0, != 8.1.4, != 8.1.5
           - packaging >= 22.0
           - platformdirs >= 2.1.0
+          - pytokens >= 0.1.10
           - pytest
           - hypothesis
           - aiohttp >= 3.7.4

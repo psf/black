@@ -1,6 +1,5 @@
 """Tests for the blib2to3 tokenizer."""
 
-import io
 import sys
 import textwrap
 from dataclasses import dataclass
@@ -19,16 +18,10 @@ class Token:
 
 def get_tokens(text: str) -> list[Token]:
     """Return the tokens produced by the tokenizer."""
-    readline = io.StringIO(text).readline
-    tokens: list[Token] = []
-
-    def tokeneater(
-        type: int, string: str, start: tokenize.Coord, end: tokenize.Coord, line: str
-    ) -> None:
-        tokens.append(Token(token.tok_name[type], string, start, end))
-
-    tokenize.tokenize(readline, tokeneater)
-    return tokens
+    return [
+        Token(token.tok_name[tok_type], string, start, end)
+        for tok_type, string, start, end, _ in tokenize.tokenize(text)
+    ]
 
 
 def assert_tokenizes(text: str, tokens: list[Token]) -> None:
@@ -69,11 +62,9 @@ def test_fstring() -> None:
         'f"{x}"',
         [
             Token("FSTRING_START", 'f"', (1, 0), (1, 2)),
-            Token("FSTRING_MIDDLE", "", (1, 2), (1, 2)),
-            Token("LBRACE", "{", (1, 2), (1, 3)),
+            Token("OP", "{", (1, 2), (1, 3)),
             Token("NAME", "x", (1, 3), (1, 4)),
-            Token("RBRACE", "}", (1, 4), (1, 5)),
-            Token("FSTRING_MIDDLE", "", (1, 5), (1, 5)),
+            Token("OP", "}", (1, 4), (1, 5)),
             Token("FSTRING_END", '"', (1, 5), (1, 6)),
             Token("ENDMARKER", "", (2, 0), (2, 0)),
         ],
@@ -82,13 +73,11 @@ def test_fstring() -> None:
         'f"{x:y}"\n',
         [
             Token(type="FSTRING_START", string='f"', start=(1, 0), end=(1, 2)),
-            Token(type="FSTRING_MIDDLE", string="", start=(1, 2), end=(1, 2)),
-            Token(type="LBRACE", string="{", start=(1, 2), end=(1, 3)),
+            Token(type="OP", string="{", start=(1, 2), end=(1, 3)),
             Token(type="NAME", string="x", start=(1, 3), end=(1, 4)),
             Token(type="OP", string=":", start=(1, 4), end=(1, 5)),
             Token(type="FSTRING_MIDDLE", string="y", start=(1, 5), end=(1, 6)),
-            Token(type="RBRACE", string="}", start=(1, 6), end=(1, 7)),
-            Token(type="FSTRING_MIDDLE", string="", start=(1, 7), end=(1, 7)),
+            Token(type="OP", string="}", start=(1, 6), end=(1, 7)),
             Token(type="FSTRING_END", string='"', start=(1, 7), end=(1, 8)),
             Token(type="NEWLINE", string="\n", start=(1, 8), end=(1, 9)),
             Token(type="ENDMARKER", string="", start=(2, 0), end=(2, 0)),
@@ -99,10 +88,9 @@ def test_fstring() -> None:
         [
             Token(type="FSTRING_START", string='f"', start=(1, 0), end=(1, 2)),
             Token(type="FSTRING_MIDDLE", string="x\\\n", start=(1, 2), end=(2, 0)),
-            Token(type="LBRACE", string="{", start=(2, 0), end=(2, 1)),
+            Token(type="OP", string="{", start=(2, 0), end=(2, 1)),
             Token(type="NAME", string="a", start=(2, 1), end=(2, 2)),
-            Token(type="RBRACE", string="}", start=(2, 2), end=(2, 3)),
-            Token(type="FSTRING_MIDDLE", string="", start=(2, 3), end=(2, 3)),
+            Token(type="OP", string="}", start=(2, 2), end=(2, 3)),
             Token(type="FSTRING_END", string='"', start=(2, 3), end=(2, 4)),
             Token(type="NEWLINE", string="\n", start=(2, 4), end=(2, 5)),
             Token(type="ENDMARKER", string="", start=(3, 0), end=(3, 0)),
