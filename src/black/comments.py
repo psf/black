@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final, Optional, Union
 
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
@@ -270,7 +270,7 @@ def generate_ignored_nodes(
     Stops at the end of the block.
     """
     if _contains_fmt_skip_comment(comment.value, mode):
-        yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment)
+        yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment, mode)
         return
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
@@ -309,11 +309,12 @@ def generate_ignored_nodes(
 
 
 def _generate_ignored_nodes_from_fmt_skip(
-    leaf: Leaf, comment: ProtoComment
+    leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
     """Generate all leaves that should be ignored by the `# fmt: skip` from `leaf`."""
     prev_sibling = leaf.prev_sibling
     parent = leaf.parent
+    ignored_nodes: list[LN] = []
     # Need to properly format the leaf prefix to compare it to comment.value,
     # which is also formatted
     comments = list_comments(leaf.prefix, is_endmarker=False)
@@ -321,11 +322,54 @@ def _generate_ignored_nodes_from_fmt_skip(
         return
     if prev_sibling is not None:
         leaf.prefix = ""
-        siblings = [prev_sibling]
-        while "\n" not in prev_sibling.prefix and prev_sibling.prev_sibling is not None:
-            prev_sibling = prev_sibling.prev_sibling
-            siblings.insert(0, prev_sibling)
-        yield from siblings
+
+        if Preview.fix_fmt_skip_in_one_liners not in mode:
+            siblings = [prev_sibling]
+            while (
+                "\n" not in prev_sibling.prefix
+                and prev_sibling.prev_sibling is not None
+            ):
+                prev_sibling = prev_sibling.prev_sibling
+                siblings.insert(0, prev_sibling)
+            yield from siblings
+            return
+
+        # Generates the nodes to be ignored by `fmt: skip`.
+
+        # Nodes to ignore are the ones on the same line as the
+        # `# fmt: skip` comment, excluding the `# fmt: skip`
+        # node itself.
+
+        # Traversal process (starting at the `# fmt: skip` node):
+        # 1. Move to the `prev_sibling` of the current node.
+        # 2. If `prev_sibling` has children, go to its rightmost leaf.
+        # 3. If there’s no `prev_sibling`, move up to the parent
+        # node and repeat.
+        # 4. Continue until:
+        #    a. You encounter an `INDENT` or `NEWLINE` node (indicates
+        #       start of the line).
+        #    b. You reach the root node.
+
+        # Include all visited LEAVES in the ignored list, except INDENT
+        # or NEWLINE leaves.
+
+        current_node = prev_sibling
+        ignored_nodes = [current_node]
+        if current_node.prev_sibling is None and current_node.parent is not None:
+            current_node = current_node.parent
+        while "\n" not in current_node.prefix and current_node.prev_sibling is not None:
+            leaf_nodes = list(current_node.prev_sibling.leaves())
+            current_node = leaf_nodes[-1] if leaf_nodes else current_node
+
+            if current_node.type in (token.NEWLINE, token.INDENT):
+                current_node.prefix = ""
+                break
+
+            ignored_nodes.insert(0, current_node)
+
+            if current_node.prev_sibling is None and current_node.parent is not None:
+                current_node = current_node.parent
+        yield from ignored_nodes
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
     ):
@@ -333,7 +377,6 @@ def _generate_ignored_nodes_from_fmt_skip(
         # statements. The ignored nodes should be previous siblings of the
         # parent suite node.
         leaf.prefix = ""
-        ignored_nodes: list[LN] = []
         parent_sibling = parent.prev_sibling
         while parent_sibling is not None and parent_sibling.type != syms.suite:
             ignored_nodes.insert(0, parent_sibling)
