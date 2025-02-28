@@ -14,6 +14,7 @@ from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import fields, replace
+from importlib.metadata import version as imp_version
 from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
@@ -25,6 +26,7 @@ import click
 import pytest
 from click import unstyle
 from click.testing import CliRunner
+from packaging.version import Version
 from pathspec import PathSpec
 
 import black
@@ -114,7 +116,10 @@ class BlackRunner(CliRunner):
     """Make sure STDOUT and STDERR are kept separate when testing Black via its CLI."""
 
     def __init__(self) -> None:
-        super().__init__(mix_stderr=False)
+        if Version(imp_version("click")) >= Version("8.2.0"):
+            super().__init__()
+        else:
+            super().__init__(mix_stderr=False)
 
 
 def invokeBlack(
@@ -187,10 +192,10 @@ class BlackTestCase(BlackBaseTestCase):
             input=BytesIO(source.encode("utf-8")),
         )
         self.assertEqual(result.exit_code, 0)
-        self.assertFormatEqual(expected, result.output)
-        if source != result.output:
-            black.assert_equivalent(source, result.output)
-            black.assert_stable(source, result.output, DEFAULT_MODE)
+        self.assertFormatEqual(expected, result.stdout)
+        if source != result.stdout:
+            black.assert_equivalent(source, result.stdout)
+            black.assert_stable(source, result.stdout, DEFAULT_MODE)
 
     def test_piping_diff(self) -> None:
         diff_header = re.compile(
@@ -210,7 +215,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.main, args, input=BytesIO(source.encode("utf-8"))
         )
         self.assertEqual(result.exit_code, 0)
-        actual = diff_header.sub(DETERMINISTIC_HEADER, result.output)
+        actual = diff_header.sub(DETERMINISTIC_HEADER, result.stdout)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         self.assertEqual(expected, actual)
 
@@ -295,7 +300,7 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
-        actual = result.output
+        actual = result.stdout
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         if expected != actual:
             dump = black.dump_to_file(actual)
@@ -404,7 +409,7 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
-        actual = result.output
+        actual = result.stdout
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         actual = actual.rstrip() + "\n"  # the diff output has a trailing space
         if expected != actual:
@@ -1826,7 +1831,7 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(result.exit_code, 0)
         finally:
             os.unlink(tmp_file)
-        actual = result.output
+        actual = result.stdout
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         self.assertEqual(actual, expected)
 
@@ -1836,7 +1841,7 @@ class BlackTestCase(BlackBaseTestCase):
     ) -> None:
         """Helper method to test the value and exit code of a click Result."""
         assert (
-            result.output == expected_value
+            result.stdout == expected_value
         ), "The output did not match the expected value."
         assert result.exit_code == expected_exit_code, "The exit code is incorrect."
 

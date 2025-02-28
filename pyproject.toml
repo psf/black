@@ -224,6 +224,8 @@ branch = true
 python_version = "3.9"
 mypy_path = "src"
 strict = true
+strict_bytes = true
+local_partial_types = true
 # Unreachable blocks have been an issue when compiling mypyc, let's try to avoid 'em in the first place.
 warn_unreachable = true
 implicit_reexport = true
