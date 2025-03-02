@@ -24,6 +24,29 @@ Currently, the following features are included in the preview style:
 
 - `always_one_newline_after_import`: Always force one blank line after import
   statements, except when the line after the import is a comment or an import statement
+### Example:
+
+####Before: `always_one_newline_after_import` is disabled:
+
+import pandas as pd
+import numpy as np
+def calculate_statistics(data):  # No newline after imports
+    mean = np.mean(data)
+    median = np.median(data)
+    return mean, median
+
+####After:`always_one_newline_after_import` is enabled:
+
+import pandas as pd
+import numpy as np
+
+def calculate_statistics(data):  # Newline after imports
+    mean = np.mean(data)
+    median = np.median(data)
+    return mean, median
+
+  
+  
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
   ([see below](labels/wrap-long-dict-values))
 
