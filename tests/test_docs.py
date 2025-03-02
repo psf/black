@@ -1,6 +1,27 @@
 """
+ 
 
-Test that the docs are up to date.
+""" ##This is a just  a documentation update to style features but you can run pytest just to assure the code is running properly 
+
+Navigate to your repo (for example) 
+
+cd C:\Users\espio\OneDrive\Documents\black-main2\black-main\black_code_formatter 
+
+ 
+
+ 
+
+Run pytest for docs with style features 
+
+pytest tests/test_docs.py 
+
+ 
+
+Run all test 
+
+pytest tests  
+
+""" 
 
 """
 
