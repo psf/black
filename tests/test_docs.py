@@ -1,7 +1,7 @@
 """
  
 
-""" ##This is a just  a documentation update to style features but you can run pytest just to assure the code is running properly 
+This is a just  a documentation update to style features but you can run pytest just to assure the code is running properly 
 
 Navigate to your repo (for example) 
 
@@ -21,7 +21,7 @@ Run all test
 
 pytest tests  
 
-""" 
+
 
 """
 
