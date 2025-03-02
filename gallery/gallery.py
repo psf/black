@@ -16,7 +16,7 @@ from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"
 PYPI_TOP_PACKAGES = (
-    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-30-days.min.json"
+    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages.min.json"
 )
 INTERNAL_BLACK_REPO = f"{tempfile.gettempdir()}/__black"
 
