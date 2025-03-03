@@ -26,6 +26,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted
+  in type parameter bounds and defaults. (#4602)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
