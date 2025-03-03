@@ -14,6 +14,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip`
+  would still be formatted (#4552)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
