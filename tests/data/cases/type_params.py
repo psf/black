@@ -13,6 +13,8 @@ def it_gets_worse[WhatIsTheLongestTypeVarNameYouCanThinkOfEnoughToMakeBlackSplit
 
 def magic[Trailing, Comma,](): pass
 
+def weird_syntax[T: lambda: 42, U: a or b](): pass
+
 # output
 
 
@@ -55,4 +57,8 @@ def magic[
     Trailing,
     Comma,
 ]():
+    pass
+
+
+def weird_syntax[T: lambda: 42, U: a or b]():
     pass

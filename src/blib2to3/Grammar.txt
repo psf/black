@@ -12,9 +12,9 @@ file_input: (NEWLINE | stmt)* ENDMARKER
 single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 eval_input: testlist NEWLINE* ENDMARKER
 
-typevar: NAME [':' expr] ['=' expr]
-paramspec: '**' NAME ['=' expr]
-typevartuple: '*' NAME ['=' (expr|star_expr)]
+typevar: NAME [':' test] ['=' test]
+paramspec: '**' NAME ['=' test]
+typevartuple: '*' NAME ['=' (test|star_expr)]
 typeparam: typevar | paramspec | typevartuple
 typeparams: '[' typeparam (',' typeparam)* [','] ']'
 
