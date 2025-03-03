@@ -26,6 +26,8 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Rewrite tokenizer to improve performance and compliance (#4536)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
