@@ -71,9 +71,9 @@ def read_version_specifier_from_pyproject() -> str:
         return f"=={version}"
 
     arrays = [
+        *pyproject.get("dependency-groups", {}).values(),
         pyproject.get("project", {}).get("dependencies"),
         *pyproject.get("project", {}).get("optional-dependencies", {}).values(),
-        *pyproject.get("dependency-groups", {}).values(),
     ]
     for array in arrays:
         version = find_black_version_in_array(array)
