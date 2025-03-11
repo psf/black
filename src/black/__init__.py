@@ -683,13 +683,12 @@ def main(  # noqa: C901
         except GitWildMatchPatternError:
             ctx.exit(1)
 
-        path_empty(
-            sources,
-            "No Python files are present to be formatted. Nothing to do 😴",
-            quiet,
-            verbose,
-            ctx,
-        )
+        if not sources:
+            if verbose or not quiet:
+                out("No Python files are present to be formatted. Nothing to do 😴")
+            if "-" in src:
+                sys.stdout.write(sys.stdin.read())
+            ctx.exit(0)
 
         if len(sources) == 1:
             reformat_one(
@@ -820,18 +819,6 @@ def get_sources(
             err(f"invalid path: {s}")
 
     return sources
-
-
-def path_empty(
-    src: Sized, msg: str, quiet: bool, verbose: bool, ctx: click.Context
-) -> None:
-    """
-    Exit if there is no `src` provided for formatting
-    """
-    if not src:
-        if verbose or not quiet:
-            out(msg)
-        ctx.exit(0)
 
 
 def reformat_code(
