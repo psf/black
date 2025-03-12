@@ -49,7 +49,7 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
-- Upgraded PyPI upload workflow to use Trusted Publishing (#4589)
+- Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
 
 ### Documentation
 
