@@ -1314,7 +1314,7 @@ def iter_fexpr_spans(s: str) -> Iterator[tuple[int, int]]:
     i = 0
     while i < len(s):
         char = s[i]
-        
+
         if char == '{':
             # Skip escaped braces {{
             if not stack and i + 1 < len(s) and s[i + 1] == '{':
@@ -1323,7 +1323,7 @@ def iter_fexpr_spans(s: str) -> Iterator[tuple[int, int]]:
             stack.append(i)
             i += 1
             continue
-            
+
         if char == '}':
             if stack:
                 start = stack.pop()
@@ -1342,7 +1342,7 @@ def iter_fexpr_spans(s: str) -> Iterator[tuple[int, int]]:
                 i += 1
             i += len(delim)
             continue
-            
+
         i += 1
 
 
