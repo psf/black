@@ -58,19 +58,19 @@ def format_str(src_contents: str, *, mode: Mode) -> str:
     dst_blocks = []
     line_generator = LineGenerator(mode=mode)
     elt = EmptyLineTracker(mode=mode)
-    
+
     for current_line in line_generator.visit(src_node):
         block = elt.maybe_empty_lines(current_line)
         dst_blocks.append(block)
         block.content_lines.append(str(current_line))
-    
+
     if dst_blocks:
         dst_blocks[-1].after = 0
-    
+
     dst_contents = []
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
-    
+
     return "".join(dst_contents) if dst_contents else ""
 
 def format_file_contents(src_contents: str, *, mode: Mode) -> str:
@@ -84,11 +84,11 @@ def format_file_contents(src_contents: str, *, mode: Mode) -> str:
 def format_ipynb_string(src_contents: str, *, mode: Mode) -> str:
     if not src_contents:
         raise NothingChanged
-    
+
     nb = json.loads(src_contents)
     if nb.get("metadata", {}).get("language_info", {}).get("name") not in (None, "python"):
         raise NothingChanged
-    
+
     modified = False
     for cell in nb["cells"]:
         if cell.get("cell_type") == "code":
@@ -101,7 +101,7 @@ def format_ipynb_string(src_contents: str, *, mode: Mode) -> str:
                 modified = True
             except:
                 continue
-    
+
     if modified:
         return json.dumps(nb, indent=1, ensure_ascii=False)
     raise NothingChanged
@@ -131,7 +131,7 @@ def main(ctx, code, line_length, check, diff, color, quiet, verbose):
         if report.verbose:
             traceback.print_exc()
         report.failed(Path("<string>"), str(exc))
-    
+
     if verbose or not quiet:
         out("All done! ✨ 🍰 ✨" if not report.return_code else "Oh no! 💥 💔 💥")
     ctx.exit(report.return_code)
