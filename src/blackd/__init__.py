@@ -23,10 +23,8 @@ import black
 from _black_version import version as __version__
 from black.concurrency import maybe_install_uvloop
 
-# This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
 
-# Request headers
 PROTOCOL_VERSION_HEADER = "X-Protocol-Version"
 LINE_LENGTH_HEADER = "X-Line-Length"
 PYTHON_VARIANT_HEADER = "X-Python-Variant"
@@ -53,17 +51,13 @@ BLACK_HEADERS = [
     DIFF_HEADER,
 ]
 
-# Response headers
 BLACK_VERSION_HEADER = "X-Black-Version"
-
 
 class HeaderError(Exception):
     pass
 
-
 class InvalidVariantHeader(Exception):
     pass
-
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
@@ -84,11 +78,9 @@ def main(bind_host: str, bind_port: int) -> None:
     black.out(f"blackd version {ver} listening on {bind_host} port {bind_port}")
     web.run_app(app, host=bind_host, port=bind_port, handle_signals=True, print=None)
 
-
 @cache
 def executor() -> Executor:
     return ProcessPoolExecutor()
-
 
 def make_app() -> web.Application:
     app = web.Application(
@@ -96,7 +88,6 @@ def make_app() -> web.Application:
     )
     app.add_routes([web.post("/", partial(handle, executor=executor()))])
     return app
-
 
 async def handle(request: web.Request, executor: Executor) -> web.Response:
     headers = {BLACK_VERSION_HEADER: __version__}
@@ -106,21 +97,19 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
                 status=501, text="This server only supports protocol version 1"
             )
 
-        fast = False
-        if request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast":
-            fast = True
+        fast = request.headers.get(FAST_OR_SAFE_HEADER, "safe") == "fast"
         try:
             mode = parse_mode(request.headers)
         except HeaderError as e:
             return web.Response(status=400, text=e.args[0])
         req_bytes = await request.content.read()
-        charset = request.charset if request.charset is not None else "utf8"
+        charset = request.charset if request.charset else "utf8"
         req_str = req_bytes.decode(charset)
         then = datetime.now(timezone.utc)
 
         header = ""
         if mode.skip_source_first_line:
-            first_newline_position: int = req_str.find("\n") + 1
+            first_newline_position = req_str.find("\n") + 1
             header = req_str[:first_newline_position]
             req_str = req_str[first_newline_position:]
 
@@ -129,25 +118,20 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
 
-        # Preserve CRLF line endings
         nl = req_str.find("\n")
         if nl > 0 and req_str[nl - 1] == "\r":
             formatted_str = formatted_str.replace("\n", "\r\n")
-            # If, after swapping line endings, nothing changed, then say so
             if formatted_str == req_str:
                 raise black.NothingChanged
 
-        # Put the source first line back
         req_str = header + req_str
         formatted_str = header + formatted_str
 
-        # Only output the diff in the HTTP response
         only_diff = bool(request.headers.get(DIFF_HEADER, False))
         if only_diff:
             now = datetime.now(timezone.utc)
             src_name = f"In\t{then}"
             dst_name = f"Out\t{now}"
-            loop = asyncio.get_event_loop()
             formatted_str = await loop.run_in_executor(
                 executor,
                 partial(black.diff, req_str, formatted_str, src_name, dst_name),
@@ -166,7 +150,6 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
     except Exception as e:
         logging.exception("Exception during handling a request")
         return web.Response(status=500, headers=headers, text=str(e))
-
 
 def parse_mode(headers: MultiMapping[str]) -> black.Mode:
     try:
@@ -194,7 +177,7 @@ def parse_mode(headers: MultiMapping[str]) -> black.Mode:
 
     preview = bool(headers.get(PREVIEW, False))
     unstable = bool(headers.get(UNSTABLE, False))
-    enable_features: set[black.Preview] = set()
+    enable_features = set()
     enable_unstable_features = headers.get(ENABLE_UNSTABLE_FEATURE, "").split(",")
     for piece in enable_unstable_features:
         piece = piece.strip()
@@ -218,7 +201,6 @@ def parse_mode(headers: MultiMapping[str]) -> black.Mode:
         enabled_features=enable_features,
     )
 
-
 def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersion]]:
     if value == "pyi":
         return True, set()
@@ -241,7 +223,6 @@ def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersi
                     if major == 2:
                         raise InvalidVariantHeader("Python 2 is not supported")
                 else:
-                    # Default to lowest supported minor version.
                     minor = 7 if major == 2 else 3
                 version_str = f"PY{major}{minor}"
                 if major == 3 and not hasattr(black.TargetVersion, version_str):
@@ -251,12 +232,10 @@ def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersi
                 raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'") from None
         return False, versions
 
-
 def patched_main() -> None:
     maybe_install_uvloop()
     freeze_support()
     main()
-
 
 if __name__ == "__main__":
     patched_main()
