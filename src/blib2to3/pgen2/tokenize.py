@@ -4,8 +4,25 @@ from typing import Final, Optional, Union
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
-    ASYNC, AWAIT, COMMENT, DEDENT, ENDMARKER, ERRORTOKEN, FSTRING_END, FSTRING_MIDDLE, FSTRING_START,
-    INDENT, LBRACE, NAME, NEWLINE, NL, NUMBER, OP, RBRACE, STRING, tok_name,
+    ASYNC,
+    AWAIT,
+    COMMENT,
+    DEDENT,
+    ENDMARKER,
+    ERRORTOKEN,
+    FSTRING_END,
+    FSTRING_MIDDLE,
+    FSTRING_START,
+    INDENT,
+    LBRACE,
+    NAME,
+    NEWLINE,
+    NL,
+    NUMBER,
+    OP,
+    RBRACE,
+    STRING,
+    tok_name,
 )
 
 __all__ = ["tokenize", "generate_tokens", "untokenize"]
