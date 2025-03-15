@@ -4,9 +4,11 @@ from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime, timezone
 from functools import cache, partial
 from multiprocessing import freeze_support
+
+import click
 from aiohttp import web
 from multidict import MultiMapping
-import click
+
 import black
 from _black_version import version as __version__
 from black.concurrency import maybe_install_uvloop
@@ -73,10 +75,10 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
 
         formatted_str = await asyncio.get_event_loop().run_in_executor(
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
-        
+
         )
 
-        if "\r\n" in req_str: 
+        if "\r\n" in req_str:
             formatted_str = formatted_str.replace("\n", "\r\n")
         formatted_str = header + formatted_str
 
