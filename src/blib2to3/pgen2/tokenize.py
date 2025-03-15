@@ -27,7 +27,6 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
-import builtins
 import sys
 from collections.abc import Callable, Iterable, Iterator
 from re import Pattern
@@ -56,9 +55,6 @@ from blib2to3.pgen2.token import (
     tok_name,
 )
 
-__author__ = "Ka-Ping Yee <ping@lfw.org>"
-__credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
-
 import re
 from codecs import BOM_UTF8, lookup
 
@@ -71,22 +67,45 @@ __all__ = [x for x in dir(token) if x[0] != "_"] + [
 ]
 del token
 
-
-def group(*choices: str) -> str:
-    return "(" + "|".join(choices) + ")"
-
-
-def any(*choices: str) -> str:
-    return group(*choices) + "*"
-
-
-def maybe(*choices: str) -> str:
-    return group(*choices) + "?"
-
+# Simplified regex helpers
+def group(*choices: str) -> str: return "(" + "|".join(choices) + ")"
+def any(*choices: str) -> str: return group(*choices) + "*"
+def maybe(*choices: str) -> str: return group(*choices) + "?"
 
 def _combinations(*l: str) -> set[str]:
     return {x + y for x in l for y in l + ("",) if x.casefold() != y.casefold()}
 
+# Combine similar patterns
+_string_patterns = {
+    'single': r"(?:\\.|[^'\\])*'",
+    'double': r'(?:\\.|[^"\\])*"',
+    'single3': r"(?:\\.|'(?!'')|[^'\\])*'''",
+    'double3': r'(?:\\.|"(?!"")|[^"\\])*"""'
+}
+
+# Simplified number patterns
+Number = group(
+    r"\d+(?:_\d+)*[jJ]",  # Imaginary
+    r"\d+(?:_\d+)*\.(?:\d+(?:_\d+)*)?(?:[eE][-+]?\d+(?:_\d+)*)?",  # Float
+    r"0[bBoOxX]_?[\da-fA-F0-7]+(?:_[\da-fA-F0-7]+)*[lL]?",  # Binary/Octal/Hex
+    r"[1-9]\d*(?:_\d+)*[lL]?",  # Decimal
+    "0[lL]?"  # Zero
+)
+
+# Simplified string prefix handling
+_litprefix = r"(?:[uUrRbB]|[rR][bB]|[bBuU][rR])?"
+_fstringlitprefix = r"(?:[fF][rR]?|[rR][fF])"
+
+# Simplified operator patterns
+Operator = group(
+    r"[+\-*/%&@|^=<>:]=?",
+    r"\*\*=?",
+    r">>=?",
+    r"<<=?",
+    r"//=?",
+    r"->",
+    r"~"
+)
 
 Whitespace = r"[ \f\t]*"
 Comment = r"#[^\r\n]*"
@@ -95,30 +114,15 @@ Name = (  # this is invalid but it's fine because Name comes after Number in all
     r"[^\s#\(\)\[\]\{\}+\-*/!@$%^&=|;:'\",\.<>/?`~\\]+"
 )
 
-Binnumber = r"0[bB]_?[01]+(?:_[01]+)*"
-Hexnumber = r"0[xX]_?[\da-fA-F]+(?:_[\da-fA-F]+)*[lL]?"
-Octnumber = r"0[oO]?_?[0-7]+(?:_[0-7]+)*[lL]?"
-Decnumber = group(r"[1-9]\d*(?:_\d+)*[lL]?", "0[lL]?")
-Intnumber = group(Binnumber, Hexnumber, Octnumber, Decnumber)
-Exponent = r"[eE][-+]?\d+(?:_\d+)*"
-Pointfloat = group(r"\d+(?:_\d+)*\.(?:\d+(?:_\d+)*)?", r"\.\d+(?:_\d+)*") + maybe(
-    Exponent
-)
-Expfloat = r"\d+(?:_\d+)*" + Exponent
-Floatnumber = group(Pointfloat, Expfloat)
-Imagnumber = group(r"\d+(?:_\d+)*[jJ]", Floatnumber + r"[jJ]")
-Number = group(Imagnumber, Floatnumber, Intnumber)
-
 # Tail end of ' string.
-Single = r"(?:\\.|[^'\\])*'"
+Single = _string_patterns['single']
 # Tail end of " string.
-Double = r'(?:\\.|[^"\\])*"'
+Double = _string_patterns['double']
 # Tail end of ''' string.
-Single3 = r"(?:\\.|'(?!'')|[^'\\])*'''"
+Single3 = _string_patterns['single3']
 # Tail end of """ string.
-Double3 = r'(?:\\.|"(?!"")|[^"\\])*"""'
-_litprefix = r"(?:[uUrRbB]|[rR][bB]|[bBuU][rR])?"
-_fstringlitprefix = r"(?:rF|FR|Fr|fr|RF|F|rf|f|Rf|fR)"
+Double3 = _string_patterns['double3']
+
 Triple = group(
     _litprefix + "'''",
     _litprefix + '"""',
@@ -142,21 +146,6 @@ colon = re.compile(Colon)
 
 FstringMiddleAfterColon = group(Whitespace + r".*?") + group("{", "}")
 fstring_middle_after_colon = re.compile(FstringMiddleAfterColon)
-
-# Because of leftmost-then-longest match semantics, be sure to put the
-# longest operators first (e.g., if = came before ==, == would get
-# recognized as two instances of =).
-Operator = group(
-    r"\*\*=?",
-    r">>=?",
-    r"<<=?",
-    r"<>",
-    r"!=",
-    r"//=?",
-    r"->",
-    r"[+\-*/%&@|^=<>:]=?",
-    r"~",
-)
 
 Bracket = "[][(){}]"
 Special = group(r"\r?\n", r"[:;.,`@]")
@@ -571,26 +560,22 @@ def generate_tokens(
     and the line on which the token was found. The line passed is the
     logical line; continuation lines are included.
     """
-    lnum = parenlev = continued = 0
+    lnum = parenlev = 0
     parenlev_stack: list[int] = []
     fstring_state = FStringState()
-    formatspec = ""
+    indents = [0]
+    
+    async_keywords = bool(grammar and grammar.async_keywords)
+    stashed: Optional[GoodTokenInfo] = None
+    async_def = async_def_indent = async_def_nl = False
+
     numchars: Final[str] = "0123456789"
     contstr, needcont = "", 0
     contline: Optional[str] = None
-    indents = [0]
-
-    # If we know we're parsing 3.7+, we can unconditionally parse `async` and
-    # `await` as keywords.
-    async_keywords = False if grammar is None else grammar.async_keywords
-    # 'stashed' and 'async_*' are used for async/await parsing
-    stashed: Optional[GoodTokenInfo] = None
-    async_def = False
-    async_def_indent = 0
-    async_def_nl = False
 
     strstart: tuple[int, int]
     endprog_stack: list[Pattern[str]] = []
+    formatspec = ""
     formatspec_start: tuple[int, int]
 
     while 1:  # loop over lines in stream
