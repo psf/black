@@ -20,6 +20,8 @@ def trailing_comma1[T=int,](a: str):
 def trailing_comma2[T=int](a: str,):
     pass
 
+def weird_syntax[T=lambda: 42, **P=lambda: 43, *Ts=lambda: 44](): pass
+
 # output
 
 type A[T = int] = float
@@ -60,4 +62,8 @@ def trailing_comma1[
 def trailing_comma2[T = int](
     a: str,
 ):
+    pass
+
+
+def weird_syntax[T = lambda: 42, **P = lambda: 43, *Ts = lambda: 44]():
     pass
