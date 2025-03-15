@@ -8,6 +8,7 @@ from multiprocessing import freeze_support
 try:
     from aiohttp import web
     from multidict import MultiMapping
+
     from .middlewares import cors
 except ImportError as ie:
     raise ImportError(
@@ -15,6 +16,7 @@ except ImportError as ie:
     ) from None
 
 import click
+
 import black
 from _black_version import version as __version__
 from black.concurrency import maybe_install_uvloop
@@ -74,7 +76,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         # Format the content
         formatted = await asyncio.get_event_loop().run_in_executor(
             executor,
-            partial(black.format_file_contents, 
+            partial(black.format_file_contents,
                    source,
                    fast=request.headers.get(HEADERS['fast_or_safe']) == "fast",
                    mode=mode)
@@ -83,9 +85,9 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         # Handle CRLF and diff if needed
         if '\r\n' in source:
             formatted = formatted.replace('\n', '\r\n')
-        
+
         formatted = header + formatted
-        
+
         if request.headers.get(HEADERS['diff']):
             formatted = await asyncio.get_event_loop().run_in_executor(
                 executor,
@@ -98,7 +100,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
                           charset=charset,
                           headers=headers,
                           text=formatted)
-                          
+
     except black.NothingChanged:
         return web.Response(status=204, headers=headers)
     except black.InvalidInput as e:
