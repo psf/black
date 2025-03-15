@@ -27,7 +27,9 @@ are the same, except instead of generating tokens, tokeneater is a callback
 function to which the 5 fields described above are passed as 5 arguments,
 each time a new token is found."""
 
+import re
 import sys
+from codecs import BOM_UTF8, lookup
 from collections.abc import Callable, Iterable, Iterator
 from re import Pattern
 from typing import Final, Optional, Union
@@ -54,9 +56,6 @@ from blib2to3.pgen2.token import (
     STRING,
     tok_name,
 )
-
-import re
-from codecs import BOM_UTF8, lookup
 
 from . import token
 
@@ -564,7 +563,7 @@ def generate_tokens(
     parenlev_stack: list[int] = []
     fstring_state = FStringState()
     indents = [0]
-    
+
     async_keywords = bool(grammar and grammar.async_keywords)
     stashed: Optional[GoodTokenInfo] = None
     async_def = async_def_indent = async_def_nl = False
