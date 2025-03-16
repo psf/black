@@ -29,6 +29,7 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Rewrite tokenizer to improve performance and compliance (#4536)
 - Fix bug where certain unusual expressions (e.g., lambdas) were not accepted
   in type parameter bounds and defaults. (#4602)
 

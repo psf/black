@@ -69,6 +69,7 @@ dependencies = [
   "packaging>=22.0",
   "pathspec>=0.9.0",
   "platformdirs>=2",
+  "pytokens>=0.1.10",
   "tomli>=1.1.0; python_version < '3.11'",
   "typing_extensions>=4.0.1; python_version < '3.11'",
 ]

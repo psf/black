@@ -6,7 +6,7 @@ from collections.abc import Iterator, Sequence
 from typing import IO, Any, NoReturn, Optional, Union
 
 from blib2to3.pgen2 import grammar, token, tokenize
-from blib2to3.pgen2.tokenize import GoodTokenInfo
+from blib2to3.pgen2.tokenize import TokenInfo
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -18,7 +18,7 @@ class PgenGrammar(grammar.Grammar):
 class ParserGenerator:
     filename: Path
     stream: IO[str]
-    generator: Iterator[GoodTokenInfo]
+    generator: Iterator[TokenInfo]
     first: dict[str, Optional[dict[str, int]]]
 
     def __init__(self, filename: Path, stream: Optional[IO[str]] = None) -> None:
@@ -27,8 +27,7 @@ class ParserGenerator:
             stream = open(filename, encoding="utf-8")
             close_stream = stream.close
         self.filename = filename
-        self.stream = stream
-        self.generator = tokenize.generate_tokens(stream.readline)
+        self.generator = tokenize.tokenize(stream.read())
         self.gettoken()  # Initialize lookahead
         self.dfas, self.startsymbol = self.parse()
         if close_stream is not None:
