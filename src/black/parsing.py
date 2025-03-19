@@ -213,7 +213,7 @@ def _stringify_ast(node: ast.AST, parent_stack: list[ast.AST]) -> Iterator[str]:
                     and isinstance(node, ast.Delete)
                     and isinstance(item, ast.Tuple)
                 ):
-                    for elt in item.elts:
+                    for elt in _unwrap_tuples(item):
                         yield from _stringify_ast_with_new_parent(
                             elt, parent_stack, node
                         )
@@ -250,3 +250,11 @@ def _stringify_ast(node: ast.AST, parent_stack: list[ast.AST]) -> Iterator[str]:
             )
 
     yield f"{'    ' * len(parent_stack)})  # /{node.__class__.__name__}"
+
+
+def _unwrap_tuples(node: ast.Tuple) -> Iterator[ast.AST]:
+    for elt in node.elts:
+        if isinstance(elt, ast.Tuple):
+            yield from _unwrap_tuples(elt)
+        else:
+            yield elt
