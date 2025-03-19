@@ -9,6 +9,7 @@
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
+- Fix crash while formatting a long `del` statement containing tuples (#4628)
 
 ### Preview style
 
