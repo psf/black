@@ -9,6 +9,7 @@
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
+- Fix crash while formatting a long `del` statement containing tuples (#4628)
 
 ### Preview style
 
@@ -50,6 +51,8 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
+- Enhance GitHub Action `psf/black` to read Black version from an additional
+  section in pyproject.toml: `[project.dependency-groups]` (#4606)
 
 ### Documentation
 
