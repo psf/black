@@ -10,6 +10,7 @@
 
 <!-- Changes that affect Black's stable style -->
 - Fix crash while formatting a long `del` statement containing tuples (#4628)
+- Fix crash while formatting names expressions in complex `with` statements (#4630)
 
 ### Preview style
 
