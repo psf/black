@@ -1649,6 +1649,7 @@ def maybe_make_parens_invisible_in_atom(
             syms.except_clause,
             syms.funcdef,
             syms.with_stmt,
+            syms.testlist_gexp,
             syms.tname,
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
