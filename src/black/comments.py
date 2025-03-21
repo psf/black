@@ -321,7 +321,7 @@ def _generate_ignored_nodes_from_fmt_skip(
     if not comments or comment.value != comments[0].value:
         return
     if prev_sibling is not None:
-        leaf.prefix = ""
+        leaf.prefix = leaf.prefix[comment.consumed :]
 
         if Preview.fix_fmt_skip_in_one_liners not in mode:
             siblings = [prev_sibling]
