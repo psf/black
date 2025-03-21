@@ -603,26 +603,31 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
-def is_tuple_containing_walrus(node: LN) -> bool:
-    """Return True if `node` holds a tuple that contains a walrus operator."""
+def is_tuple(node: LN) -> bool:
+    """Return True if `node` holds a tuple."""
     if node.type != syms.atom:
         return False
     gexp = unwrap_singleton_parenthesis(node)
     if gexp is None or gexp.type != syms.testlist_gexp:
         return False
 
-    return any(child.type == syms.namedexpr_test for child in gexp.children)
+    return True
+
+
+def is_tuple_containing_walrus(node: LN) -> bool:
+    """Return True if `node` holds a tuple that contains a walrus operator."""
+    if not is_tuple(node):
+        return False
+
+    return any(child.type == syms.namedexpr_test for child in node.children)
 
 
 def is_tuple_containing_star(node: LN) -> bool:
     """Return True if `node` holds a tuple that contains a star operator."""
-    if node.type != syms.atom:
-        return False
-    gexp = unwrap_singleton_parenthesis(node)
-    if gexp is None or gexp.type != syms.testlist_gexp:
+    if not is_tuple(node):
         return False
 
-    return any(child.type == syms.star_expr for child in gexp.children)
+    return any(child.type == syms.star_expr for child in node.children)
 
 
 def is_generator(node: LN) -> bool:
