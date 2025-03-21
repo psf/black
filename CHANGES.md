@@ -12,6 +12,7 @@
 - Fix crash while formatting a long `del` statement containing tuples (#4628)
 - Fix crash while formatting expressions using the walrus operator in complex
   `with` statements (#4630)
+- Handle `# fmt: skip` followed by a comment at the end of file (#4635)
 
 ### Preview style
 
