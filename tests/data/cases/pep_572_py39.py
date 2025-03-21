@@ -5,3 +5,7 @@
 # We better not remove the parentheses here (since it's a 3.10 feature)
 x[(a := 1)]
 x[(a := 1), (b := 3)]
+
+# don't remove the brackets here, it changes the meaning of the code.
+with (x, y) as z:
+    pass
