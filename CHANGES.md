@@ -12,6 +12,7 @@
 - Fix crash while formatting a long `del` statement containing tuples (#4628)
 - Fix crash while formatting expressions using the walrus operator in complex
   `with` statements (#4630)
+- Disallow unwrapping tuples in an `as` clause (#4634)
 
 ### Preview style
 
