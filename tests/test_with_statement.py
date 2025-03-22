@@ -1,4 +1,5 @@
-from black import format_str, FileMode
+from black import FileMode, format_str
+
 
 def test_with_statement_formatting():
     """Test Black's formatting of with statements using tuple arguments."""
