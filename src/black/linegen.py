@@ -214,8 +214,9 @@ class LineGenerator(Visitor[Line]):
         invisible parens should be put.
         """
         normalize_invisible_parens(
-            node, parens_after=parens, mode=self.mode, features=self.features
-        )
+            node, parens_after=parens, mode=self.mode, features=self.features)
+        if "with" in keywords and len(node.children) > 1 and node.children[1].type == syms.test:
+            wrap_in_parentheses(node, node.children[1], visible=True)
         for child in node.children:
             if is_name_token(child) and child.value in keywords:
                 yield from self.line()
