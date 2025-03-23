@@ -39,7 +39,7 @@ from black.mode import Mode, Preview
 from black.output import color_diff, diff
 from black.parsing import ASTSafetyError
 from black.report import Report
-from black.strings import lines_with_leading_tabs_expanded
+from black.strings import format_function_call, lines_with_leading_tabs_expanded
 
 # Import other test classes
 from tests.util import (
@@ -2063,6 +2063,23 @@ class BlackTestCase(BlackBaseTestCase):
         assert lines_with_leading_tabs_expanded("\tx") == [f"{tab}x"]
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
         assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
+
+    def test_format_function_call(self) -> None:
+        input_code = (
+            "await isolated_page.evaluate(\n"
+            "    '''() => {\n"
+            "    history.pushState({}, '', '/first.html');\n"
+            "    history.pushState({}, '', '/second.html');\n"
+            "}'''\n"
+            ")"
+        )
+        expected_code = (
+            "await isolated_page.evaluate('''() => {\n"
+            "    history.pushState({}, '', '/first.html');\n"
+            "    history.pushState({}, '', '/second.html');\n"
+            "}''')"
+        )
+        assert format_function_call(input_code) == expected_code
 
 
 class TestCaching:

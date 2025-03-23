@@ -377,8 +377,7 @@ def str_width(line_str: str) -> int:
 
 def count_chars_in_width(line_str: str, max_width: int) -> int:
     """Count the number of characters in `line_str` that would fit in a
-    terminal or editor of `max_width` (which respects Unicode East Asian
-    Width).
+    terminal or editor of `max_width` (which respects Unicode East Asian Width).
     """
     total_width = 0
     for i, char in enumerate(line_str):
@@ -387,3 +386,15 @@ def count_chars_in_width(line_str: str, max_width: int) -> int:
             return i
         total_width += width
     return len(line_str)
+
+
+def format_function_call(code: str) -> str:
+    """
+    Reformat function calls that have a triple-quoted string argument
+    so that the opening parenthesis and the triple quotes are on the same line,
+    and the closing triple quotes and the closing parenthesis are on the same line.
+    """
+
+    code = re.sub(r"(\(\s*)\n\s*(?P<quote>'''|\"\"\")", r"\1\g<quote>", code)
+    code = re.sub(r"(?P<quote>'''|\"\"\")\s*\n\s*\)", r"\g<quote>)", code)
+    return code
