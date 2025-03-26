@@ -1782,7 +1782,6 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 omit.add(id(closing_bracket))
                 omit.update(inner_brackets)
                 inner_brackets.clear()
-                yield omit
 
             if (
                 prev
@@ -1797,6 +1796,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
             if leaf.value:
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
+    yield omit
 
 
 def run_transformer(
