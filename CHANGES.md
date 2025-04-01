@@ -13,6 +13,8 @@
 - Fix crash while formatting expressions using the walrus operator in complex
   `with` statements (#4630)
 - Handle `# fmt: skip` followed by a comment at the end of file (#4635)
+- Fix crash when a tuple appears in the `as` clause of a `with` statement
+  (#4634)
 
 ### Preview style
 

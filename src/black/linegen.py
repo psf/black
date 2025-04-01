@@ -56,6 +56,7 @@ from black.nodes import (
     is_rpar_token,
     is_stub_body,
     is_stub_suite,
+    is_tuple,
     is_tuple_containing_star,
     is_tuple_containing_walrus,
     is_type_ignore_comment_string,
@@ -1626,6 +1627,7 @@ def maybe_make_parens_invisible_in_atom(
         node.type not in (syms.atom, syms.expr)
         or is_empty_tuple(node)
         or is_one_tuple(node)
+        or (is_tuple(node) and parent.type == syms.asexpr_test)
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or (
             # This condition tries to prevent removing non-optional brackets
