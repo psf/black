@@ -11,9 +11,9 @@ from black.nodes import (
     WHITESPACE,
     container_of,
     first_leaf_of,
+    is_type_comment_string,
     make_simple_prefix,
     preceding_leaf,
-    is_type_comment_string,
     syms,
 )
 from blib2to3.pgen2 import token
