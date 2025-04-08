@@ -15,6 +15,7 @@
 - Handle `# fmt: skip` followed by a comment at the end of file (#4635)
 - Fix crash when a tuple appears in the `as` clause of a `with` statement
   (#4634)
+- Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
 
 ### Preview style
 

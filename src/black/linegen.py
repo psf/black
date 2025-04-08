@@ -40,6 +40,7 @@ from black.nodes import (
     ensure_visible,
     fstring_to_string,
     get_annotation_type,
+    has_sibling_with_type,
     is_arith_like,
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
@@ -1628,6 +1629,11 @@ def maybe_make_parens_invisible_in_atom(
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_tuple(node) and parent.type == syms.asexpr_test)
+        or (
+            is_tuple(node)
+            and parent.type == syms.with_stmt
+            and has_sibling_with_type(node, token.COMMA)
+        )
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or (
             # This condition tries to prevent removing non-optional brackets
