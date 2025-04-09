@@ -205,7 +205,7 @@ with (x, y) as z:
 
 
 # don't remove the brackets here, it changes the meaning of the code.
-# even tough the code will always trigger a runtime error
+# even though the code will always trigger a runtime error
 with (name_5, name_4), name_5:
     pass
 
