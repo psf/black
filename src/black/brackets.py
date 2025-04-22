@@ -315,7 +315,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Pr
         and not (
             previous is not None
             and previous.type == token.NAME
-            and previous.value == "is"
+            # and previous.value == "is"
         )
     ):
         return COMPARATOR_PRIORITY
