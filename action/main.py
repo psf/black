@@ -53,7 +53,7 @@ def read_version_specifier_from_pyproject() -> str:
         )
         sys.exit(1)
 
-    import tomllib  # type: ignore[import-not-found,unreachable]
+    import tomllib  # type: ignore[import-untyped, unreachable]
 
     try:
         with Path("pyproject.toml").open("rb") as fp:

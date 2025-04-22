@@ -938,7 +938,16 @@ def is_type_comment(leaf: Leaf) -> bool:
     used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_comment_string(v)
+
+
+def is_type_comment_string(value: str) -> bool:
+    """Helper: Return True if the string value looks like a potential type comment
+    (general or ignore) using flexible whitespace checking after '#'.
+    Recognizes '# type:' and '#    type:' but NOT '# type :'.
+    """
+    content_after_hash = value[1:].lstrip()
+    return content_after_hash.startswith("type:")
 
 
 def is_type_ignore_comment(leaf: Leaf) -> bool:
@@ -951,7 +960,12 @@ def is_type_ignore_comment(leaf: Leaf) -> bool:
 def is_type_ignore_comment_string(value: str) -> bool:
     """Return True if the given string match with type comment with
     ignore annotation."""
-    return value.startswith("# type: ignore")
+    content_after_hash = value[1:].lstrip()
+    if not content_after_hash.startswith("type:"):
+        return False
+    part_after_type_colon = content_after_hash[5:]
+    cleaned_part_after_colon = part_after_type_colon.lstrip()
+    return cleaned_part_after_colon.startswith("ignore")
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
@@ -1058,3 +1072,21 @@ def furthest_ancestor_with_last_leaf(leaf: Leaf) -> LN:
     while node.parent and node.parent.children and node is node.parent.children[-1]:
         node = node.parent
     return node
+
+
+def has_sibling_with_type(node: LN, type: int) -> bool:
+    # Check previous siblings
+    sibling = node.prev_sibling
+    while sibling is not None:
+        if sibling.type == type:
+            return True
+        sibling = sibling.prev_sibling
+
+    # Check next siblings
+    sibling = node.next_sibling
+    while sibling is not None:
+        if sibling.type == type:
+            return True
+        sibling = sibling.next_sibling
+
+    return False
