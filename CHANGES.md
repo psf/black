@@ -16,6 +16,7 @@
 - Fix crash when a tuple appears in the `as` clause of a `with` statement
   (#4634)
 - Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
+- Fix crash when standalone comment is within parentheses in lambda default arguments (#4640)
 
 ### Preview style
 
