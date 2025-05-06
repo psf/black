@@ -2064,6 +2064,20 @@ class BlackTestCase(BlackBaseTestCase):
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
         assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
 
+    def test_carrige_return_edge_cases(self) -> None:
+        # These tests are here instead of in the normal cases because
+        # of git's newline normalization and because it's hard to
+        # get `\r` vs `\r\n` vs `\n` to display properly
+        assert (
+            black.format_str(
+                "try:\\\r# type: ignore\n pass\nfinally:\n pass\n",
+                mode=black.FileMode(),
+            )
+            == "try:  # type: ignore\n    pass\nfinally:\n    pass\n"
+        )
+        assert black.format_str("{\r}", mode=black.FileMode()) == "{}\n"
+        assert black.format_str("pass #\r#\n", mode=black.FileMode()) == "pass  #\n#\n"
+
 
 class TestCaching:
     def test_get_cache_dir(
