@@ -2064,7 +2064,7 @@ class BlackTestCase(BlackBaseTestCase):
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
         assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
 
-    def test_carrige_return_edge_cases(self) -> None:
+    def test_carriage_return_edge_cases(self) -> None:
         # These tests are here instead of in the normal cases because
         # of git's newline normalization and because it's hard to
         # get `\r` vs `\r\n` vs `\n` to display properly
