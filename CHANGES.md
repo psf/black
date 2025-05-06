@@ -16,6 +16,7 @@
 - Fix crash when a tuple appears in the `as` clause of a `with` statement
   (#4634)
 - Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
+- Fix crash when formatting a `\` followed by a `\r` followed by a comment (#4663)
 
 ### Preview style
 
