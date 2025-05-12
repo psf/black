@@ -38,9 +38,9 @@ the `pyproject.toml` file. `version` can be any
 or just the version number if you want an exact version. To read the version from the
 `pyproject.toml` file instead, set `use_pyproject` to `true`. This will first look into
 the `tool.black.required-version` field, then the `dependency-groups` table, then the
-`project.dependencies` array and finally the `project.optional-dependencies` table.
-The action defaults to the latest release available on PyPI. Only versions available
-from PyPI are supported, so no commit SHAs or branch names.
+`project.dependencies` array and finally the `project.optional-dependencies` table. The
+action defaults to the latest release available on PyPI. Only versions available from
+PyPI are supported, so no commit SHAs or branch names.
 
 If you want to include Jupyter Notebooks, _Black_ must be installed with the `jupyter`
 extra. Installing the extra and including Jupyter Notebook files can be configured via

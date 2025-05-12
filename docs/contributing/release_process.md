@@ -29,8 +29,8 @@ frequently than monthly nets rapidly diminishing returns.
 **You must have `write` permissions for the _Black_ repository to cut a release.**
 
 The 10,000 foot view of the release process is that you prepare a release PR and then
-publish a [GitHub Release]. This triggers [release automation](#release-workflows) that builds
-all release artifacts and publishes them to the various platforms we publish to.
+publish a [GitHub Release]. This triggers [release automation](#release-workflows) that
+builds all release artifacts and publishes them to the various platforms we publish to.
 
 We now have a `scripts/release.py` script to help with cutting the release PRs.
 
@@ -96,8 +96,9 @@ In the end, use your best judgement and ask other maintainers for their thoughts
 
 ## Release workflows
 
-All of _Black_'s release automation uses [GitHub Actions]. All workflows are therefore configured
-using YAML files in the `.github/workflows` directory of the _Black_ repository.
+All of _Black_'s release automation uses [GitHub Actions]. All workflows are therefore
+configured using YAML files in the `.github/workflows` directory of the _Black_
+repository.
 
 They are triggered by the publication of a [GitHub Release].
 
