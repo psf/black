@@ -9,20 +9,20 @@
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
+
 - Fix crash while formatting a long `del` statement containing tuples (#4628)
-- Fix crash while formatting expressions using the walrus operator in complex
-  `with` statements (#4630)
+- Fix crash while formatting expressions using the walrus operator in complex `with`
+  statements (#4630)
 - Handle `# fmt: skip` followed by a comment at the end of file (#4635)
-- Fix crash when a tuple appears in the `as` clause of a `with` statement
-  (#4634)
+- Fix crash when a tuple appears in the `as` clause of a `with` statement (#4634)
 - Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip`
-  would still be formatted (#4552)
+- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
+  be formatted (#4552)
 
 ### Configuration
 
@@ -37,8 +37,8 @@
 <!-- Changes to the parser or to version autodetection -->
 
 - Rewrite tokenizer to improve performance and compliance (#4536)
-- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted
-  in type parameter bounds and defaults. (#4602)
+- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted in type
+  parameter bounds and defaults. (#4602)
 
 ### Performance
 
@@ -57,8 +57,8 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
-- Enhance GitHub Action `psf/black` to read Black version from an additional
-  section in pyproject.toml: `[project.dependency-groups]` (#4606)
+- Enhance GitHub Action `psf/black` to read Black version from an additional section in
+  pyproject.toml: `[project.dependency-groups]` (#4606)
 
 ### Documentation
 
@@ -69,8 +69,8 @@
 
 ### Highlights
 
-This release introduces the new 2025 stable style (#4558), stabilizing
-the following changes:
+This release introduces the new 2025 stable style (#4558), stabilizing the following
+changes:
 
 - Normalize casing of Unicode escape characters in strings to lowercase (#2916)
 - Fix inconsistencies in whether certain strings are detected as docstrings (#4095)
@@ -78,15 +78,16 @@ the following changes:
 - Remove redundant parentheses in if guards for case blocks (#4214)
 - Add parentheses to if clauses in case blocks when the line is too long (#4269)
 - Whitespace before `# fmt: skip` comments is no longer normalized (#4146)
-- Fix line length computation for certain expressions that involve the power operator (#4154)
+- Fix line length computation for certain expressions that involve the power operator
+  (#4154)
 - Check if there is a newline before the terminating quotes of a docstring (#4185)
 - Fix type annotation spacing between `*` and more complex type variable tuple (#4440)
 
 The following changes were not in any previous release:
 
 - Remove parentheses around sole list items (#4312)
-- Generic function definitions are now formatted more elegantly: parameters are
-  split over multiple lines first instead of type parameter definitions (#4553)
+- Generic function definitions are now formatted more elegantly: parameters are split
+  over multiple lines first instead of type parameter definitions (#4553)
 
 ### Stable style
 
