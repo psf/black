@@ -64,11 +64,11 @@ repos:
         args: ["--python-version=3.10"]
         additional_dependencies: *mypy_deps
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.5.3
     hooks:
       - id: prettier
-        types_or: [css, javascript, html, json, yaml]
+        types_or: [markdown, yaml, json]
         exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
