@@ -1907,7 +1907,8 @@ class BlackTestCase(BlackBaseTestCase):
             args = ["--safe", "--code", code]
             result = CliRunner().invoke(black.main, args)
 
-            self.compare_results(result, error_msg, 123)
+            assert error_msg == result.output
+            assert result.exit_code == 123
 
     def test_code_option_fast(self) -> None:
         """Test that the code option ignores errors when the sanity checks fail."""
