@@ -119,7 +119,7 @@ class BlackRunner(CliRunner):
         if Version(imp_version("click")) >= Version("8.2.0"):
             super().__init__()
         else:
-            super().__init__(mix_stderr=False)
+            super().__init__(mix_stderr=False)  # type: ignore
 
 
 def invokeBlack(
