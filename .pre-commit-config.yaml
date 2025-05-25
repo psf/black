@@ -48,7 +48,9 @@ repos:
           - types-PyYAML
           - types-atheris
           - tomli >= 0.2.6, < 2.0.0
-          - click >= 8.1.0, != 8.1.4, != 8.1.5
+          - click >= 8.2.0
+          # Click is intentionally out-of-sync with pyproject.toml
+          # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
           - packaging >= 22.0
           - platformdirs >= 2.1.0
           - pytokens >= 0.1.10
