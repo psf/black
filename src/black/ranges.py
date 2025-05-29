@@ -330,6 +330,19 @@ def _convert_node_to_standalone_comment(node: LN) -> None:
     first.prefix = ""
     index = node.remove()
     if index is not None:
+        # Because of the special handling of multiple decorators, if the decorated
+        # item is a single line then there will be a missing newline between the
+        # decorator and item, so add it back. This doesn't affect any other case
+        # since a decorated item with a newline would hit the earlier suite case
+        # in _convert_unchanged_line_by_line that correctly handles the newlines.
+        if node.type == syms.decorated:
+            # A leaf of type decorated wouldn't make sense, since it should always
+            # have at least the decorator + the decorated item, so if this assert
+            # hits that means there's a problem in the parser.
+            assert isinstance(node, Node)
+            # 1 will always be the correct index since before this function is
+            # called all the decorators are collapsed into a single leaf
+            node.insert_child(1, Leaf(NEWLINE, "\n"))
         # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
         # generating the formatted code.
         value = str(node)[:-1]
