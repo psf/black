@@ -370,9 +370,21 @@ class Line:
         if self.is_import:
             return True
 
-        if closing.opening_bracket is not None and not is_one_sequence_between(
-            closing.opening_bracket, closing, self.leaves
-        ):
+        # Check if there are any standalone comments in the line
+        # If so, we need to split the line, so return True
+        for leaf in self.leaves:
+            if leaf.type == STANDALONE_COMMENT:
+                return True
+
+        # Only try is_one_sequence_between if there are no standalone comments
+        try:
+            if closing.opening_bracket is not None and not is_one_sequence_between(
+                closing.opening_bracket, closing, self.leaves
+            ):
+                return True
+        except LookupError:
+            # If we can't find the opening bracket, assume we need to split
+            # This can happen with standalone comments in lambda default arguments
             return True
 
         return False
