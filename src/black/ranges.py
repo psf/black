@@ -330,6 +330,13 @@ def _convert_node_to_standalone_comment(node: LN) -> None:
     first.prefix = ""
     index = node.remove()
     if index is not None:
+        # Because of the special handling of multiple decorators, if the function
+        # def is a single line then there will be a missing newline between the 
+        # decorator and def, so add it back. This doesn't affect any other case
+        # since a function def with a newline would hit the earlier suite case
+        # in _convert_unchanged_line_by_line that correctly handles the newlines.
+        if node.type == syms.decorated:
+            node.insert_child(1, Leaf(NEWLINE, "\n"))
         # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
         # generating the formatted code.
         value = str(node)[:-1]
