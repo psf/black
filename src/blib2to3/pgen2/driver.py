@@ -141,7 +141,7 @@ class Driver:
             if type in (tokenize.COMMENT, tokenize.NL):
                 prefix += value
                 lineno, column = end
-                if value.endswith("\n"):
+                if value.endswith("\n") or value.endswith("\r"):
                     lineno += 1
                     column = 0
                 continue
@@ -170,7 +170,9 @@ class Driver:
             lineno, column = end
             # FSTRING_MIDDLE is the only token that can end with a newline, and
             # `end` will point to the next line. For that case, don't increment lineno.
-            if value.endswith("\n") and type != token.FSTRING_MIDDLE:
+            if (
+                value.endswith("\n") or value.endswith("\r")
+            ) and type != token.FSTRING_MIDDLE:
                 lineno += 1
                 column = 0
         else:
