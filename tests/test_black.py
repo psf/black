@@ -2069,19 +2069,19 @@ class BlackTestCase(BlackBaseTestCase):
         # These tests are here instead of in the normal cases because
         # of git's newline normalization and because it's hard to
         # get `\r` vs `\r\n` vs `\n` to display properly in editors
-        assert black.format_str("x=\\r\n1", mode=black.FileMode()) == "x = 1\n"
-        assert black.format_str("x=\\n1", mode=black.FileMode()) == "x = 1\n"
-        assert black.format_str("x=\\r1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\r\n1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\n1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\r1", mode=black.FileMode()) == "x = 1\n"
         assert (
-            black.format_str("class A\\r\n:...", mode=black.FileMode())
+            black.format_str("class A\\\r\n:...", mode=black.FileMode())
             == "class A: ...\n"
         )
         assert (
-            black.format_str("class A\\n:...", mode=black.FileMode())
+            black.format_str("class A\\\n:...", mode=black.FileMode())
             == "class A: ...\n"
         )
         assert (
-            black.format_str("class A\\r:...", mode=black.FileMode())
+            black.format_str("class A\\\r:...", mode=black.FileMode())
             == "class A: ...\n"
         )
 
