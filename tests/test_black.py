@@ -2072,9 +2072,18 @@ class BlackTestCase(BlackBaseTestCase):
         assert black.format_str("x=\\r\n1", mode=black.FileMode()) == "x = 1\n"
         assert black.format_str("x=\\n1", mode=black.FileMode()) == "x = 1\n"
         assert black.format_str("x=\\r1", mode=black.FileMode()) == "x = 1\n"
-        assert black.format_str("class A\\r\n:...", mode=black.FileMode()) == "class A: ...\n"
-        assert black.format_str("class A\\n:...", mode=black.FileMode()) == "class A: ...\n"
-        assert black.format_str("class A\\r:...", mode=black.FileMode()) == "class A: ...\n"
+        assert (
+            black.format_str("class A\\r\n:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+        assert (
+            black.format_str("class A\\n:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+        assert (
+            black.format_str("class A\\r:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
 
 
 class TestCaching:
