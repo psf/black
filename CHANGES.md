@@ -68,6 +68,7 @@
   pyproject.toml: `[project.dependency-groups]` (#4606)
 - Build gallery docker image with python3-slim and reduce image size (#4686)
 - Vim: Print the import paths when importing black fails
+- Vim: Fix handling of virtualenvs that have a different Python version
 
 ### Documentation
 
