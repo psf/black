@@ -127,7 +127,7 @@ def transform_whitespace(
     return token
 
 
-def tokenize(source: str) -> Iterator[TokenInfo]:
+def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenInfo]:
     lines = source.split("\n")
     lines += [""]  # For newline tokens in files that don't end in a newline
     line, column = 1, 0
