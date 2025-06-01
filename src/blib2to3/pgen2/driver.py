@@ -190,7 +190,7 @@ class Driver:
 
     def parse_string(self, text: str, debug: bool = False) -> NL:
         """Parse a string and return the syntax tree."""
-        tokens = tokenize.tokenize(text, grammar=self.grammar)
+        tokens = tokenize.tokenize(text)
         return self.parse_tokens(tokens, debug)
 
     def _partially_consume_prefix(self, prefix: str, column: int) -> tuple[str, str]:
