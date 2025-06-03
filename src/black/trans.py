@@ -1307,7 +1307,6 @@ class BaseStringSplitter(StringTransformer):
 def iter_fexpr_spans(s: str) -> Iterator[tuple[int, int]]:
     """
     Yields spans corresponding to expressions in a given f-string.
-    Spans are half-open ranges (left inclusive, right exclusive).
     Assumes the input string is a valid f-string, but will not crash if the input
     string is invalid.
     """
@@ -1755,7 +1754,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         ]
         for it in iterators:
             for begin, end in it:
-                illegal_indices.update(range(begin, end + 1))
+                illegal_indices.update(range(begin, end))
         return illegal_indices
 
     def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
