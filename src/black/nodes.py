@@ -190,6 +190,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
     NO: Final[str] = ""
     SPACE: Final[str] = " "
     DOUBLESPACE: Final[str] = "  "
+    TAB="\t"
     t = leaf.type
     p = leaf.parent
     v = leaf.value
