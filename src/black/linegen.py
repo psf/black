@@ -442,7 +442,7 @@ class LineGenerator(Visitor[Line]):
             quote_len = 1 if docstring[1] != quote_char else 3
             docstring = docstring[quote_len:-quote_len]
             docstring_started_empty = not docstring
-            indent = " " * 4 * self.current_line.depth
+            indent = "\t" * self.current_line.depth
 
             if is_multiline_string(leaf):
                 docstring = fix_multiline_docstring(docstring, indent)
@@ -794,6 +794,8 @@ def left_hand_split(
                 and leaf.opening_bracket is matching_bracket
                 and isinstance(matching_bracket, Leaf)
             ):
+
+
                 ensure_visible(leaf)
                 ensure_visible(matching_bracket)
                 current_leaves = tail_leaves if body_leaves else head_leaves

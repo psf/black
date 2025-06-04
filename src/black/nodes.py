@@ -198,7 +198,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
         return NO
 
     if t == token.COMMENT:
-        return DOUBLESPACE
+        return TAB
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
     if t == token.COLON and p.type not in {
