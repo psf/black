@@ -1,8 +1,8 @@
 Literally [black](https://black.readthedocs.io/en/stable/), with tabs.
 
-Almost the same philosophy, but different takes.
+Almost the same [hilosophy](./TODO.md), but different takes.
 ## Styling
-[TODO.md](./TODO.md)
+anti-pep8
 ## License
 
 MIT
