@@ -31,7 +31,7 @@ requires = ["hatchling>=1.20.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
-name = "blackish"
+name = "monochromatic"
 description = "The uncompromising* code formatter."
 license = "MIT"
 requires-python = ">=3.9"
