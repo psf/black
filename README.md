@@ -2,7 +2,7 @@ Literally [black](https://black.readthedocs.io/en/stable/), with tabs.
 
 Almost the same philosophy, but different takes.
 ## Styling
-![TODO.md](./TODO.md)
+[TODO.md](./TODO.md)
 ## License
 
 MIT
