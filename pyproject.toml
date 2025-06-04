@@ -31,12 +31,12 @@ requires = ["hatchling>=1.20.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
-name = "black"
-description = "The uncompromising code formatter."
+name = "blackish"
+description = "The uncompromising* code formatter."
 license = "MIT"
 requires-python = ">=3.9"
 authors = [
-  { name = "Łukasz Langa", email = "lukasz@langa.pl" },
+  { name = "Emil Bowry", email = "emil.bowry@icloud.com" },
 ]
 keywords = [
   "automation",
