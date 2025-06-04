@@ -1,3 +1,5 @@
+
+**original black gode of conduct**
 # Treat each other well
 
 Everyone participating in the _Black_ project, and in particular in the issue tracker,
