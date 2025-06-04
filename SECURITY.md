@@ -1,1 +1,1 @@
-Use at own risk
+Use at own risk (of sanity)
