@@ -790,7 +790,7 @@ def left_hand_split(
         depth = 0
         for index, leaf in enumerate(line.leaves):
             if index == 2 and leaf.type == token.LSQB:
-                # A [ at index 2 means this is a type annotation, so start
+                # A [ at index 2 means this is a type param, so start
                 # tracking the depth
                 depth += 1
             elif depth > 0:
@@ -804,7 +804,7 @@ def left_hand_split(
                 and leaf.opening_bracket is matching_bracket
                 and isinstance(matching_bracket, Leaf)
                 # If the code is still on LPAR and we are inside a type
-                # annotation, ignore the match since this is searching
+                # param, ignore the match since this is searching
                 # for the function arguments
                 and not (leaf_type == token.LPAR and depth > 0)
             ):
