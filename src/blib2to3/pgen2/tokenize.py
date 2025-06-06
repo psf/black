@@ -245,9 +245,7 @@ def printtoken(
 ) -> None:  # for testing
     (srow, scol) = srow_col
     (erow, ecol) = erow_col
-    print(
-        "%d,%d-%d,%d:\t%s\t%s" % (srow, scol, erow, ecol, tok_name[type], repr(token))
-    )
+    print(f"{srow},{scol}-{erow},{ecol}:\t{tok_name[type]}\t{token!r}")
 
 
 if __name__ == "__main__":  # testing

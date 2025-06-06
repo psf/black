@@ -149,9 +149,7 @@ class Driver:
                 type = grammar.opmap[value]
             if debug:
                 assert type is not None
-                self.logger.debug(
-                    "%s %r (prefix=%r)", token.tok_name[type], value, prefix
-                )
+                self.logger.debug(f"{token.tok_name[type]} {value!r} ({prefix=!r})")
             if type == token.INDENT:
                 indent_columns.append(len(value))
                 _prefix = prefix + value
