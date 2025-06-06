@@ -113,7 +113,17 @@ def transform_whitespace(
         and prev_token.type not in (TokenType.nl, TokenType.newline)
     ):
         token_str = source[token.start_index : token.end_index]
-        if token_str.startswith("\\\n"):
+        if token_str.startswith("\\\r\n"):
+            return pytokens.Token(
+                TokenType.nl,
+                token.start_index,
+                token.start_index + 3,
+                token.start_line,
+                token.start_col,
+                token.start_line,
+                token.start_col + 3,
+            )
+        elif token_str.startswith("\\\n") or token_str.startswith("\\\r"):
             return pytokens.Token(
                 TokenType.nl,
                 token.start_index,
