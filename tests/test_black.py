@@ -2048,6 +2048,26 @@ class BlackTestCase(BlackBaseTestCase):
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
         assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
 
+    def test_backslash_carriage_return(self) -> None:
+        # These tests are here instead of in the normal cases because
+        # of git's newline normalization and because it's hard to
+        # get `\r` vs `\r\n` vs `\n` to display properly in editors
+        assert black.format_str("x=\\\r\n1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\n1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\r1", mode=black.FileMode()) == "x = 1\n"
+        assert (
+            black.format_str("class A\\\r\n:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+        assert (
+            black.format_str("class A\\\n:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+        assert (
+            black.format_str("class A\\\r:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+
 
 class TestCaching:
     def test_get_cache_dir(
