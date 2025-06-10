@@ -145,13 +145,13 @@ class SourceFiles:
         changes_string = changes_string.replace(
             "## Unreleased", f"## {self.next_version}"
         )
-        
+
         # Remove all comments
         changes_string = re.sub(r"^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
 
         # Remove empty subheadings
         changes_string = re.sub(r"^###.+\n\n(?=#)", "", changes_string)
-        
+
         with self.changes_path.open("w") as cfp:
             cfp.write(changes_string)
 
