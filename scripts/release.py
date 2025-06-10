@@ -8,6 +8,7 @@ Tool to help automate changes needed in commits during and after releases
 
 import argparse
 import logging
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
