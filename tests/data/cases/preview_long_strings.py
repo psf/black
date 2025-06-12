@@ -883,43 +883,43 @@ code = (
 call(body="%s %s" % (",".join(items), suffix))
 
 log.info(
-    "Skipping:"
-    f' {desc["db_id"]=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]=} {desc["exposure_max"]=}'
+    f'Skipping: {desc["db_id"]=} {desc["ms_name"]} {money=} {dte=} {pos_share=}'
+    f' {desc["status"]=} {desc["exposure_max"]=}'
 )
 
 log.info(
-    "Skipping:"
-    f" {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']=} {desc['exposure_max']=}"
+    f"Skipping: {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_share=}"
+    f" {desc['status']=} {desc['exposure_max']=}"
 )
 
 log.info(
-    "Skipping:"
-    f' {desc["db_id"]} {foo("bar",x=123)} {"foo" != "bar"} {(x := "abc=")} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {desc["db_id"]} {foo("bar",x=123)} {"foo" != "bar"} {(x := "abc=")}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {desc["db_id"]} {desc["ms_name"]} {money=} {(x := "abc=")=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {desc["db_id"]} {desc["ms_name"]} {money=} {(x := "abc=")=}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {desc["db_id"]} {foo("bar",x=123)=} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {desc["db_id"]} {foo("bar",x=123)=} {money=} {dte=} {pos_share=}'
+    f' {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {foo("asdf")=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {foo("asdf")=} {desc["ms_name"]} {money=} {dte=} {pos_share=}'
+    f' {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {"a" == "b" == "c" == "d"} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {"a" == "b" == "c" == "d"} {desc["ms_name"]} {money=} {dte=}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {"a" == "b" == "c" == "d"=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {"a" == "b" == "c" == "d"=} {desc["ms_name"]} {money=} {dte=}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
