@@ -184,9 +184,7 @@ def spellcheck_pyproject_toml_keys(
 ) -> None:
     invalid_keys: list[str] = []
     available_config_options = {param.name for param in ctx.command.params}
-    for key in config_keys:
-        if key not in available_config_options:
-            invalid_keys.append(key)
+    invalid_keys = [key for key in config_keys if key not in available_config_options]
     if invalid_keys:
         keys_str = ", ".join(map(repr, invalid_keys))
         out(
