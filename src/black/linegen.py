@@ -573,7 +573,6 @@ class LineGenerator(Visitor[Line]):
         self.current_line = Line(mode=self.mode)
 
         v = self.visit_stmt
-        Ø: set[str] = set()
         self.visit_assert_stmt = partial(v, keywords={"assert"}, parens={"assert", ","})
         self.visit_if_stmt = partial(
             v, keywords={"if", "else", "elif"}, parens={"if", "elif"}
@@ -581,23 +580,23 @@ class LineGenerator(Visitor[Line]):
         self.visit_while_stmt = partial(v, keywords={"while", "else"}, parens={"while"})
         self.visit_for_stmt = partial(v, keywords={"for", "else"}, parens={"for", "in"})
         self.visit_try_stmt = partial(
-            v, keywords={"try", "except", "else", "finally"}, parens=Ø
+            v, keywords={"try", "except", "else", "finally"}, parens=set()
         )
         self.visit_except_clause = partial(v, keywords={"except"}, parens={"except"})
         self.visit_with_stmt = partial(v, keywords={"with"}, parens={"with"})
-        self.visit_classdef = partial(v, keywords={"class"}, parens=Ø)
+        self.visit_classdef = partial(v, keywords={"class"}, parens=set())
 
-        self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
+        self.visit_expr_stmt = partial(v, keywords=set(), parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
-        self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
-        self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
+        self.visit_import_from = partial(v, keywords=set(), parens={"import"})
+        self.visit_del_stmt = partial(v, keywords=set(), parens={"del"})
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators
 
         # PEP 634
         self.visit_match_stmt = self.visit_match_case
         self.visit_case_block = self.visit_match_case
-        self.visit_guard = partial(v, keywords=Ø, parens={"if"})
+        self.visit_guard = partial(v, keywords=set(), parens={"if"})
 
 
 def _hugging_power_ops_line_to_string(
