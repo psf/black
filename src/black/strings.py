@@ -355,7 +355,7 @@ def char_width(char: str) -> int:
         elif codepoint > end_codepoint:
             lowest = idx + 1
         else:
-            return 0 if width < 0 else width
+            return max(width, 0)
         if highest < lowest:
             break
         idx = (highest + lowest) // 2
