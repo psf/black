@@ -1279,7 +1279,7 @@ def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
     if not lines:
         return "", encoding, "\n"
 
-    newline = "\r\n" if b"\r\n" == lines[0][-2:] else "\n"
+    newline = "\r\n" if lines[0][-2:] == b"\r\n" else "\n"
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:
         return tiow.read(), encoding, newline
