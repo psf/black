@@ -77,7 +77,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
         git("commit", "--allow-empty", "-aqC", commit)
 
     for commit in commits:
-        git("branch", "-qD", "%s-black" % commit)
+        git("branch", "-qD", f"{commit}-black")
 
     return 0
 

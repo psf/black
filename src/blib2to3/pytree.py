@@ -268,11 +268,7 @@ class Node(Base):
     def __repr__(self) -> str:
         """Return a canonical string representation."""
         assert self.type is not None
-        return "{}({}, {!r})".format(
-            self.__class__.__name__,
-            type_repr(self.type),
-            self.children,
-        )
+        return f"{self.__class__.__name__}({type_repr(self.type)}, {self.children!r})"
 
     def __str__(self) -> str:
         """
@@ -421,10 +417,9 @@ class Leaf(Base):
         from .pgen2.token import tok_name
 
         assert self.type is not None
-        return "{}({}, {!r})".format(
-            self.__class__.__name__,
-            tok_name.get(self.type, self.type),
-            self.value,
+        return (
+            f"{self.__class__.__name__}({tok_name.get(self.type, self.type)},"
+            f" {self.value!r})"
         )
 
     def __str__(self) -> str:
@@ -527,7 +522,7 @@ class BasePattern:
         args = [type_repr(self.type), self.content, self.name]
         while args and args[-1] is None:
             del args[-1]
-        return "{}({})".format(self.__class__.__name__, ", ".join(map(repr, args)))
+        return f"{self.__class__.__name__}({', '.join(map(repr, args))})"
 
     def _submatch(self, node, results=None) -> bool:
         raise NotImplementedError

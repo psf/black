@@ -28,16 +28,16 @@ def escape(m: re.Match[str]) -> str:
     if tail.startswith("x"):
         hexes = tail[1:]
         if len(hexes) < 2:
-            raise ValueError("invalid hex string escape ('\\%s')" % tail)
+            raise ValueError(f"invalid hex string escape ('\\{tail}')")
         try:
             i = int(hexes, 16)
         except ValueError:
-            raise ValueError("invalid hex string escape ('\\%s')" % tail) from None
+            raise ValueError(f"invalid hex string escape ('\\{tail}')") from None
     else:
         try:
             i = int(tail, 8)
         except ValueError:
-            raise ValueError("invalid octal string escape ('\\%s')" % tail) from None
+            raise ValueError(f"invalid octal string escape ('\\{tail}')") from None
     return chr(i)
 
 

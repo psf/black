@@ -8,6 +8,7 @@ Tool to help automate changes needed in commits during and after releases
 
 import argparse
 import logging
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -142,19 +143,18 @@ class SourceFiles:
             changes_string = cfp.read()
 
         # Change Unreleased to next version
-        versioned_changes = changes_string.replace(
+        changes_string = changes_string.replace(
             "## Unreleased", f"## {self.next_version}"
         )
 
-        # Remove all comments (subheadings are harder - Human required still)
-        no_comments_changes = []
-        for line in versioned_changes.splitlines():
-            if line.startswith("<!--") or line.endswith("-->"):
-                continue
-            no_comments_changes.append(line)
+        # Remove all comments
+        changes_string = re.sub(r"^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
+
+        # Remove empty subheadings
+        changes_string = re.sub(r"^###.+\n\n(?=#)", "", changes_string)
 
         with self.changes_path.open("w") as cfp:
-            cfp.write("\n".join(no_comments_changes) + "\n")
+            cfp.write(changes_string)
 
         LOG.debug(f"Finished Cleaning up {self.changes_path}")
 
