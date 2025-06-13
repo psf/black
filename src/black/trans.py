@@ -1706,10 +1706,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             yield Ok(last_line)
 
     def _iter_nameescape_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
-        """
+        r"""
         Yields:
             All ranges of @string which, if @string were to be split there,
-            would result in the splitting of an \\N{...} expression (which is NOT
+            would result in the splitting of an \N{...} expression (which is NOT
             allowed).
         """
         # True - the previous backslash was unescaped
