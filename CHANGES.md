@@ -63,6 +63,7 @@
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
 - Enhance GitHub Action `psf/black` to read Black version from an additional section in
   pyproject.toml: `[project.dependency-groups]` (#4606)
+- Build gallery docker image with python3-slim and reduce image size (#4686)
 
 ### Documentation
 
