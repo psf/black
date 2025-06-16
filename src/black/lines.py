@@ -71,7 +71,7 @@ class Line:
         if not has_value:
             return
 
-        if token.COLON == leaf.type and self.is_class_paren_empty:
+        if leaf.type == token.COLON and self.is_class_paren_empty:
             del self.leaves[-2:]
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
