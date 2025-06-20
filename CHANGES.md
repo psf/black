@@ -23,6 +23,7 @@
 
 - Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
   be formatted (#4552)
+- Split the `in` clause of comprehensions onto its own line if necessary (#)
 
 ### Configuration
 

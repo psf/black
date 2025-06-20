@@ -30,6 +30,7 @@ Priority = int
 COMPREHENSION_PRIORITY: Final = 20
 COMMA_PRIORITY: Final = 18
 TERNARY_PRIORITY: Final = 16
+COMP_IN_PRIORITY: Final = 15
 LOGIC_PRIORITY: Final = 14
 STRING_PRIORITY: Final = 12
 COMPARATOR_PRIORITY: Final = 10
@@ -289,6 +290,14 @@ def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Pr
         and leaf.parent.type in {syms.comp_if, syms.old_comp_if}
     ):
         return COMPREHENSION_PRIORITY
+
+    if (
+        # Preview.split_comprehension_in in mode and
+        leaf.value == "in"
+        and leaf.parent
+        and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
+    ):
+        return COMP_IN_PRIORITY
 
     if leaf.value in {"if", "else"} and leaf.parent and leaf.parent.type == syms.test:
         return TERNARY_PRIORITY
