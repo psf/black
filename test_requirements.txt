@@ -4,3 +4,5 @@ pytest >= 6.1.1
 pytest-xdist >= 3.0.2
 pytest-cov >= 4.1.0
 tox
+pysource_codegen >= 0.4.1
+pysource_minimize >= 0.4.0
