@@ -1,7 +1,7 @@
 """
 blib2to3 Node/Leaf transformation-related utility functions.
 """
-
+import re
 import sys
 from collections.abc import Iterator
 from typing import Final, Generic, Literal, Optional, TypeVar, Union
@@ -937,7 +937,12 @@ def is_type_comment(leaf: Leaf) -> bool:
     use `is_type_ignore_comment`). Note that general type comments are no longer
     used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
-    v = leaf.value
+    v = leaf.value.strip()
+
+    # Normalize spaces
+    v = re.sub(r"^#\s*", "# ", v)  # Ensure one space after #
+    v = re.sub(r"\s*:\s*", ": ", v)  # Ensure one space after :
+
     return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
 
 
