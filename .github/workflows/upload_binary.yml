@@ -13,9 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-22.04, macos-latest]
+        os: [windows-2025, ubuntu-22.04, macos-latest]
         include:
-          - os: windows-2019
+          - os: windows-2025
             pathsep: ";"
             asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"

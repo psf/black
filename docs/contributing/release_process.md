@@ -46,8 +46,6 @@ To cut a release:
    - `release.py` will calculate this and log to stderr for you copy paste pleasure
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
    - Run `python3 scripts/release.py [--debug]` to generate most changes
-     - Sub headings in the template, if they have no bullet points need manual removal
-       _PR welcome to improve :D_
 1. If `release.py` fail manually edit; otherwise, yay, skip this step!
    1. Replace the `## Unreleased` header with the version number
    1. Remove any empty sections for the current release

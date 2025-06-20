@@ -16,6 +16,10 @@
 - Handle `# fmt: skip` followed by a comment at the end of file (#4635)
 - Fix crash when a tuple appears in the `as` clause of a `with` statement (#4634)
 - Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
+- Fix crash on a `\\r\n` (#4673)
+- Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
+- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
+  (#4676)
 
 ### Preview style
 
@@ -60,6 +64,7 @@
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
 - Enhance GitHub Action `psf/black` to read Black version from an additional section in
   pyproject.toml: `[project.dependency-groups]` (#4606)
+- Build gallery docker image with python3-slim and reduce image size (#4686)
 
 ### Documentation
 
