@@ -251,7 +251,8 @@ class LineGenerator(Visitor[Line]):
                             child,
                             parent=node,
                             mode=self.mode,
-                            remove_brackets_around_comma=False                        )
+                            remove_brackets_around_comma=False,
+                        )
                     else:
                         wrap_in_parentheses(node, child, visible=False)
         yield from self.visit_default(node)
@@ -271,7 +272,7 @@ class LineGenerator(Visitor[Line]):
                         child,
                         parent=node,
                         mode=self.mode,
-                        remove_brackets_around_comma=False
+                        remove_brackets_around_comma=False,
                     ):
                         wrap_in_parentheses(node, child, visible=False)
                 else:
