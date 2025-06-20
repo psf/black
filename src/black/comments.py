@@ -446,9 +446,8 @@ def _contains_fmt_skip_comment(comment_line: str, mode: Mode) -> bool:
         ],
         *[
             _COMMENT_PREFIX + comment.strip()
-            for comment in comment_line.strip(_COMMENT_PREFIX).split(
-                _COMMENT_LIST_SEPARATOR
-            )
+            for comment
+            in comment_line.strip(_COMMENT_PREFIX).split(_COMMENT_LIST_SEPARATOR)
         ],
     ]
 

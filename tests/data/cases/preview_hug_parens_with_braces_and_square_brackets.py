@@ -284,7 +284,8 @@ func(
 )
 func([
     x
-    for x in [
+    for x
+    in [
         x
         for x in "long line long line long line long line long line long line long line"
     ]

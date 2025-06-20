@@ -27,9 +27,10 @@ Currently, the following features are included in the preview style:
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
   ([see below](labels/wrap-long-dict-values))
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
-  such as `def foo(): return "mock"  # fmt: skip`, where previously the declaration
-  would have been incorrectly collapsed.
-- `split_comprehension_in`: Split the `in` clause of list and dictionary comprehensions onto its own line if it would otherwise exceed the maximum line length.
+  such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
+  have been incorrectly collapsed.
+- `split_comprehension_in`: Split the `in` clause of list and dictionary comprehensions
+  onto its own line if it would otherwise exceed the maximum line length.
 
 (labels/unstable-features)=
 
