@@ -34,7 +34,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >
-          python scripts/diff_shades_gha_helper.py config ${{ github.event_name }} ${{ matrix.mode }}
+          python scripts/diff_shades_gha_helper.py config ${{ github.event_name }}
+          ${{ matrix.mode }}
 
   analysis:
     name: analysis / ${{ matrix.mode }}
@@ -48,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.configure.outputs.matrix )}}
+        include: ${{ fromJson(needs.configure.outputs.matrix) }}
 
     steps:
       - name: Checkout this repository (full clone)
@@ -130,10 +131,9 @@ jobs:
       - name: Generate summary file (PR only)
         if: github.event_name == 'pull_request' && matrix.mode == 'preview-changes'
         run: >
-          python helper.py comment-body
-          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
-          ${{ matrix.baseline-sha }} ${{ matrix.target-sha }}
-          ${{ github.event.pull_request.number }}
+          python helper.py comment-body ${{ matrix.baseline-analysis }}
+          ${{ matrix.target-analysis }} ${{ matrix.baseline-sha }}
+          ${{ matrix.target-sha }} ${{ github.event.pull_request.number }}
 
       - name: Upload summary file (PR only)
         if: github.event_name == 'pull_request' && matrix.mode == 'preview-changes'

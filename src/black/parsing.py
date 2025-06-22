@@ -70,7 +70,7 @@ def lib2to3_parse(
     for grammar in grammars:
         drv = driver.Driver(grammar)
         try:
-            result = drv.parse_string(src_txt, True)
+            result = drv.parse_string(src_txt, False)
             break
 
         except ParseError as pe:
@@ -105,7 +105,7 @@ def lib2to3_parse(
 def matches_grammar(src_txt: str, grammar: Grammar) -> bool:
     drv = driver.Driver(grammar)
     try:
-        drv.parse_string(src_txt, True)
+        drv.parse_string(src_txt, False)
     except (ParseError, TokenError, IndentationError):
         return False
     else:
