@@ -88,7 +88,7 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> list[ProtoComment]:
     nlines = 0
     ignored_lines = 0
     form_feed = False
-    for index, full_line in enumerate(re.split("\r?\n", prefix)):
+    for index, full_line in enumerate(re.split("\r?\n|\r", prefix)):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
         match = re.match(r"^(\s*)(\S.*|)$", full_line)
         assert match
