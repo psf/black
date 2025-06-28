@@ -84,7 +84,8 @@
           "wrap_long_dict_values_in_parens",
           "multiline_string_handling",
           "always_one_newline_after_import",
-          "fix_fmt_skip_in_one_liners"
+          "fix_fmt_skip_in_one_liners",
+          "split_comprehension_in"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
