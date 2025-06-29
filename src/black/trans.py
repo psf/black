@@ -1307,7 +1307,7 @@ class BaseStringSplitter(StringTransformer):
 def iter_fexpr_spans(s: str) -> Iterator[tuple[int, int]]:
     """
     Yields spans corresponding to expressions in a given f-string.
-    Spans are closed ranges (left and right inclusive).
+    Spans are half-open ranges (left inclusive, right exclusive).
     Assumes the input string is a valid f-string, but will not crash if the input
     string is invalid.
     """
