@@ -28,6 +28,8 @@
 
 - Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
   be formatted (#4552)
+- Fix a bug where `string_processing` would not split f-strings directly after
+  expressions (#4680)
 
 ### Configuration
 
