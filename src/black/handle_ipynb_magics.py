@@ -66,7 +66,7 @@ def jupyter_dependencies_are_installed(*, warn: bool) -> bool:
 
 
 def validate_cell(src: str, mode: Mode) -> None:
-    """Check that cell does not already contain TransformerManager transformations,
+    r"""Check that cell does not already contain TransformerManager transformations,
     or non-Python cell magics, which might cause tokenizer_rt to break because of
     indentations.
 
@@ -228,14 +228,14 @@ def get_token(src: str, magic: str) -> str:
 
 
 def replace_cell_magics(src: str) -> tuple[str, list[Replacement]]:
-    """Replace cell magic with token.
+    r"""Replace cell magic with token.
 
     Note that 'src' will already have been processed by IPython's
     TransformerManager().transform_cell.
 
     Example,
 
-        get_ipython().run_cell_magic('t', '-n1', 'ls =!ls\\n')
+        get_ipython().run_cell_magic('t', '-n1', 'ls =!ls\n')
 
     becomes
 
@@ -370,7 +370,7 @@ class CellMagic:
 
 # ast.NodeVisitor + dataclass = breakage under mypyc.
 class CellMagicFinder(ast.NodeVisitor):
-    """Find cell magics.
+    r"""Find cell magics.
 
     Note that the source of the abstract syntax tree
     will already have been processed by IPython's
@@ -383,7 +383,7 @@ class CellMagicFinder(ast.NodeVisitor):
 
     would have been transformed to
 
-        get_ipython().run_cell_magic('time', '', 'foo()\\n')
+        get_ipython().run_cell_magic('time', '', 'foo()\n')
 
     and we look for instances of the latter.
     """

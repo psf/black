@@ -584,7 +584,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 <= i
                 < previous_merged_string_idx + previous_merged_num_of_strings
             ):
-                for comment_leaf in line.comments_after(LL[i]):
+                for comment_leaf in line.comments_after(leaf):
                     new_line.append(comment_leaf, preformatted=True)
                 continue
 
@@ -1706,10 +1706,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             yield Ok(last_line)
 
     def _iter_nameescape_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
-        """
+        r"""
         Yields:
             All ranges of @string which, if @string were to be split there,
-            would result in the splitting of an \\N{...} expression (which is NOT
+            would result in the splitting of an \N{...} expression (which is NOT
             allowed).
         """
         # True - the previous backslash was unescaped

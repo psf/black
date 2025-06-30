@@ -184,9 +184,7 @@ def spellcheck_pyproject_toml_keys(
 ) -> None:
     invalid_keys: list[str] = []
     available_config_options = {param.name for param in ctx.command.params}
-    for key in config_keys:
-        if key not in available_config_options:
-            invalid_keys.append(key)
+    invalid_keys = [key for key in config_keys if key not in available_config_options]
     if invalid_keys:
         keys_str = ", ".join(map(repr, invalid_keys))
         out(
@@ -778,7 +776,7 @@ def get_sources(
                 continue
 
             if is_stdin:
-                path = Path(f"{STDIN_PLACEHOLDER}{str(path)}")
+                path = Path(f"{STDIN_PLACEHOLDER}{path}")
 
             if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 warn=verbose or not quiet
@@ -1281,7 +1279,7 @@ def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
     if not lines:
         return "", encoding, "\n"
 
-    newline = "\r\n" if b"\r\n" == lines[0][-2:] else "\n"
+    newline = "\r\n" if lines[0][-2:] == b"\r\n" else "\n"
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:
         return tiow.read(), encoding, newline
