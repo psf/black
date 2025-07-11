@@ -8,11 +8,11 @@
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+<!-- Changes that affect Prism's stable style -->
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+<!-- Changes that affect Prism's preview style -->
 
 - Enforce empty lines before classes and functions with sticky leading comments (#3302)
 - Reformat empty and whitespace-only files as either an empty file (if no newline is
@@ -24,7 +24,7 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+<!-- Changes to how Prism can be configured -->
 
 - Fix incorrectly applied .gitignore rules by considering the .gitignore location and
   the relative path to the target file (#3338)
@@ -33,7 +33,7 @@
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
+<!-- Changes to how Prism is packaged, such as dependency requirements -->
 
 ### Parser
 
@@ -45,22 +45,22 @@
 
 ### Performance
 
-<!-- Changes that improve Black's performance. -->
+<!-- Changes that improve Prism's performance. -->
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
+<!-- Changes to Prism's terminal output and error messages -->
 
-### _Blackd_
+### _Prismd_
 
-<!-- Changes to blackd -->
+<!-- Changes to prismd -->
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Vim plugin: Optionally allow using the system installation of Black via
-  `let g:black_use_virtualenv = 0`(#3309)
+- Vim plugin: Optionally allow using the system installation of Prism via
+  `let g:prism_use_virtualenv = 0`(#3309)
 
 ### Documentation
 
@@ -96,31 +96,31 @@
   at once on macOS. Native x86-64 executables for macOS are available once again.
   (#3275)
 - Hatchling is now used as the build backend. This will not have any effect for users
-  who install Black with its wheels from PyPI. (#3233)
+  who install Prism with its wheels from PyPI. (#3233)
 - Faster compiled wheels are now available for CPython 3.11 (#3276)
 
-### _Blackd_
+### _Prismd_
 
 - Windows style (CRLF) newlines will be preserved (#3257).
 
 ### Integrations
 
-- Vim plugin: add flag (`g:black_preview`) to enable/disable the preview style (#3246)
+- Vim plugin: add flag (`g:prism_preview`) to enable/disable the preview style (#3246)
 - Update GitHub Action to support formatting of Jupyter Notebook files via a `jupyter`
   option (#3282)
-- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
+- Update GitHub Action to support use of version specifiers (e.g. `<23`) for Prism
   version (#3265)
 
 ## 22.8.0
 
 ### Highlights
 
-- Python 3.11 is now supported, except for _blackd_ as aiohttp does not support 3.11 as
+- Python 3.11 is now supported, except for _prismd_ as aiohttp does not support 3.11 as
   of publishing (#3234)
-- This is the last release that supports running _Black_ on Python 3.6 (formatting 3.6
+- This is the last release that supports running _Prism_ on Python 3.6 (formatting 3.6
   code will continue to be supported until further notice)
 - Reword the stability policy to say that we may, in rare cases, make changes that
-  affect code that was not previously formatted by _Black_ (#3155)
+  affect code that was not previously formatted by _Prism_ (#3155)
 
 ### Stable style
 
@@ -143,13 +143,13 @@
 - Fix a string merging/split issue when a comment is present in the middle of implicitly
   concatenated strings on its own line (#3227)
 
-### _Blackd_
+### _Prismd_
 
-- `blackd` now supports enabling the preview style via the `X-Preview` header (#3217)
+- `prismd` now supports enabling the preview style via the `X-Preview` header (#3217)
 
 ### Configuration
 
-- Black now uses the presence of debug f-strings to detect target version (#3215)
+- Prism now uses the presence of debug f-strings to detect target version (#3215)
 - Fix misdetection of project root and verbose logging of sources in cases involving
   `--stdin-filename` (#3216)
 - Immediate `.gitignore` files in source directories given on the command line are now
@@ -158,11 +158,11 @@
 
 ### Documentation
 
-- Recommend using BlackConnect in IntelliJ IDEs (#3150)
+- Recommend using PrismConnect in IntelliJ IDEs (#3150)
 
 ### Integrations
 
-- Vim plugin: prefix messages with `Black: ` so it's clear they come from Black (#3194)
+- Vim plugin: prefix messages with `Prism: ` so it's clear they come from Prism (#3194)
 - Docker: changed to a /opt/venv installation + added to PATH to be available to
   non-root users (#3202)
 
@@ -181,7 +181,7 @@
 
 ### Performance
 
-- Reduce Black's startup time when formatting a single file by 15-30% (#3211)
+- Reduce Prism's startup time when formatting a single file by 15-30% (#3211)
 
 ## 22.6.0
 
@@ -200,7 +200,7 @@
 
 ### Integrations
 
-- Add `scripts/migrate-black.py` script to ease introduction of Black to a Git project
+- Add `scripts/migrate-prism.py` script to ease introduction of Prism to a Git project
   (#3038)
 
 ### Output
@@ -250,26 +250,26 @@
 
 ### Output
 
-- In verbose mode, log when _Black_ is using user-level config (#2861)
+- In verbose mode, log when _Prism_ is using user-level config (#2861)
 
 ### Packaging
 
-- Fix Black to work with Click 8.1.0 (#2966)
+- Fix Prism to work with Click 8.1.0 (#2966)
 - On Python 3.11 and newer, use the standard library's `tomllib` instead of `tomli`
   (#2903)
-- `black-primer`, the deprecated internal devtool, has been removed and copied to a
-  [separate repository](https://github.com/cooperlees/black-primer) (#2924)
+- `prism-primer`, the deprecated internal devtool, has been removed and copied to a
+  [separate repository](https://github.com/cooperlees/prism-primer) (#2924)
 
 ### Parser
 
-- Black can now parse starred expressions in the target of `for` and `async for`
+- Prism can now parse starred expressions in the target of `for` and `async for`
   statements, e.g `for item in *items_1, *items_2: pass` (#2879).
 
 ## 22.1.0
 
-At long last, _Black_ is no longer a beta product! This is the first non-beta release
+At long last, _Prism_ is no longer a beta product! This is the first non-beta release
 and the first release covered by our new
-[stability policy](https://black.readthedocs.io/en/stable/the_black_code_style/index.html#stability-policy).
+[stability policy](https://prism.readthedocs.io/en/stable/the_prism_code_style/index.html#stability-policy).
 
 ### Highlights
 
@@ -282,7 +282,7 @@ and the first release covered by our new
   `--preview` (#2789)
 - For stubs, one blank line between class attributes and methods is now kept if there's
   at least one pre-existing blank line (#2736)
-- Black now normalizes string prefix order (#2297)
+- Prism now normalizes string prefix order (#2297)
 - Remove spaces around power operators if both operands are simple (#2726)
 - Work around bug that causes unstable formatting in some cases in the presence of the
   magic trailing comma (#2807)
@@ -312,7 +312,7 @@ and the first release covered by our new
 
 - Speed-up the new backtracking parser about 4X in general (enabled when
   `--target-version` is set to 3.10 and higher). (#2728)
-- _Black_ is now compiled with [mypyc](https://github.com/mypyc/mypyc) for an overall 2x
+- _Prism_ is now compiled with [mypyc](https://github.com/mypyc/mypyc) for an overall 2x
   speed-up. 64-bit Windows, MacOS, and Linux (not including musl) are supported. (#1009,
   #2431)
 
@@ -353,12 +353,12 @@ and the first release covered by our new
 - Change protocol in pip installation instructions to `https://` (#2761)
 - Change HTML theme to Furo primarily for its responsive design and mobile support
   (#2793)
-- Deprecate the `black-primer` tool (#2809)
+- Deprecate the `prism-primer` tool (#2809)
 - Document Python support policy (#2819)
 
 ## 21.12b0
 
-### _Black_
+### _Prism_
 
 - Fix determination of f-string expression spans (#2654)
 - Fix bad formatting of error messages about EOF in multi-line statements (#2343)
@@ -391,13 +391,13 @@ and the first release covered by our new
 
 ## 21.11b1
 
-### _Black_
+### _Prism_
 
 - Bumped regex version minimum to 2021.4.4 to fix Pattern class usage (#2621)
 
 ## 21.11b0
 
-### _Black_
+### _Prism_
 
 - Warn about Python 2 deprecation in more cases by improving Python 2 only syntax
   detection (#2592)
@@ -405,7 +405,7 @@ and the first release covered by our new
 - Add partial support for the match statement. As it's experimental, it's only enabled
   when `--target-version py310` is explicitly specified (#2586)
 - Add support for parenthesized with (#2586)
-- Declare support for Python 3.10 for running Black (#2562)
+- Declare support for Python 3.10 for running Prism (#2562)
 
 ### Integrations
 
@@ -414,7 +414,7 @@ and the first release covered by our new
 
 ## 21.10b0
 
-### _Black_
+### _Prism_
 
 - Document stability policy, that will apply for non-beta releases (#2529)
 - Add new `--workers` parameter (#2514)
@@ -424,12 +424,12 @@ and the first release covered by our new
   even though it has been removed (#2580)
 - Deprecate Python 2 formatting support (#2523)
 
-### _Blackd_
+### _Prismd_
 
 - Remove dependency on aiohttp-cors (#2500)
 - Bump required aiohttp version to 3.7.4 (#2509)
 
-### _Black-Primer_
+### _Prism-Primer_
 
 - Add primer support for --projects (#2555)
 - Print primer summary after individual failures (#2570)
@@ -449,7 +449,7 @@ and the first release covered by our new
 
 ## 21.8b0
 
-### _Black_
+### _Prism_
 
 - Add support for formatting Jupyter Notebook files (#2357)
 - Move from `appdirs` dependency to `platformdirs` (#2375)
@@ -464,7 +464,7 @@ and the first release covered by our new
 - Exclude typing-extensions version 3.10.0.1 due to it being broken on Python 3.10
   (#2460)
 
-### _Blackd_
+### _Prismd_
 
 - Replace sys.exit(-1) with raise ImportError as it plays more nicely with tools that
   scan installed packages (#2440)
@@ -476,18 +476,18 @@ and the first release covered by our new
 
 ## 21.7b0
 
-### _Black_
+### _Prism_
 
 - Configuration files using TOML features higher than spec v0.5.0 are now supported
   (#2301)
-- Add primer support and test for code piped into black via STDIN (#2315)
+- Add primer support and test for code piped into prism via STDIN (#2315)
 - Fix internal error when `FORCE_OPTIONAL_PARENTHESES` feature is enabled (#2332)
 - Accept empty stdin (#2346)
 - Provide a more useful error when parsing fails during AST safety checks (#2304)
 
 ### Docker
 
-- Add new `latest_release` tag automation to follow latest black release on docker
+- Add new `latest_release` tag automation to follow latest prism release on docker
   images (#2374)
 
 ### Integrations
@@ -496,18 +496,18 @@ and the first release covered by our new
   instead of the current working directory for pyproject.toml. (#1871)
 - The vim plugin now reads the correct string normalization option in pyproject.toml
   (#1869)
-- The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
+- The vim plugin no longer crashes Prism when there's boolean values in pyproject.toml
   (#1869)
 
 ## 21.6b0
 
-### _Black_
+### _Prism_
 
 - Fix failure caused by `fmt: skip` and indentation (#2281)
 - Account for += assignment when deciding whether to split string (#2312)
 - Correct max string length calculation when there are string operators (#2292)
 - Fixed option usage when using the `--code` flag (#2259)
-- Do not call `uvloop.install()` when _Black_ is used as a library (#2303)
+- Do not call `uvloop.install()` when _Prism_ is used as a library (#2303)
 - Added `--required-version` option to require a specific version to be running (#2300)
 - Fix incorrect custom breakpoint indices when string group contains fake f-strings
   (#2311)
@@ -517,12 +517,12 @@ and the first release covered by our new
 
 ### Integrations
 
-- The official Black action now supports choosing what version to use, and supports the
+- The official Prism action now supports choosing what version to use, and supports the
   major 3 OSes. (#1940)
 
 ## 21.5b2
 
-### _Black_
+### _Prism_
 
 - A space is no longer inserted into empty docstrings (#2249)
 - Fix handling of .gitignore files containing non-ASCII characters on Windows (#2229)
@@ -532,9 +532,9 @@ and the first release covered by our new
 - Add extra uvloop install + import support if in python env (#2258)
 - Fix --experimental-string-processing crash when matching parens are not found (#2283)
 - Make sure to split lines that start with a string operator (#2286)
-- Fix regular expression that black uses to identify f-expressions (#2287)
+- Fix regular expression that prism uses to identify f-expressions (#2287)
 
-### _Blackd_
+### _Prismd_
 
 - Add a lower bound for the `aiohttp-cors` dependency. Only 0.4.0 or higher is
   supported. (#2231)
@@ -556,52 +556,52 @@ and the first release covered by our new
 
 ## 21.5b1
 
-### _Black_
+### _Prism_
 
-- Refactor `src/black/__init__.py` into many files (#2206)
+- Refactor `src/prism/__init__.py` into many files (#2206)
 
 ### Documentation
 
 - Replaced all remaining references to the
-  [`master`](https://github.com/psf/black/tree/main) branch with the
-  [`main`](https://github.com/psf/black/tree/main) branch. Some additional changes in
+  [`master`](https://github.com/psf/prism/tree/main) branch with the
+  [`main`](https://github.com/psf/prism/tree/main) branch. Some additional changes in
   the source code were also made. (#2210)
 - Sigificantly reorganized the documentation to make much more sense. Check them out by
-  heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
+  heading over to [the stable docs on RTD](https://prism.readthedocs.io/en/stable/).
   (#2174)
 
 ## 21.5b0
 
-### _Black_
+### _Prism_
 
 - Set `--pyi` mode if `--stdin-filename` ends in `.pyi` (#2169)
 - Stop detecting target version as Python 3.9+ with pre-PEP-614 decorators that are
   being called but with no arguments (#2182)
 
-### _Black-Primer_
+### _Prism-Primer_
 
-- Add `--no-diff` to black-primer to suppress formatting changes (#2187)
+- Add `--no-diff` to prism-primer to suppress formatting changes (#2187)
 
 ## 21.4b2
 
-### _Black_
+### _Prism_
 
 - Fix crash if the user configuration directory is inaccessible. (#2158)
 
 - Clarify
-  [circumstances](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#pragmatism)
-  in which _Black_ may change the AST (#2159)
+  [circumstances](https://github.com/psf/prism/blob/master/docs/the_prism_code_style.md#pragmatism)
+  in which _Prism_ may change the AST (#2159)
 
 - Allow `.gitignore` rules to be overridden by specifying `exclude` in `pyproject.toml`
   or on the command line. (#2170)
 
 ### _Packaging_
 
-- Install `primer.json` (used by `black-primer` by default) with black. (#2154)
+- Install `primer.json` (used by `prism-primer` by default) with prism. (#2154)
 
 ## 21.4b1
 
-### _Black_
+### _Prism_
 
 - Fix crash on docstrings ending with "\\ ". (#2142)
 
@@ -620,25 +620,25 @@ and the first release covered by our new
 
 ## 21.4b0
 
-### _Black_
+### _Prism_
 
 - Fixed a rare but annoying formatting instability created by the combination of
-  optional trailing commas inserted by `Black` and optional parentheses looking at
+  optional trailing commas inserted by `Prism` and optional parentheses looking at
   pre-existing "magic" trailing commas. This fixes issue #1629 and all of its many many
   duplicates. (#2126)
 
-- `Black` now processes one-line docstrings by stripping leading and trailing spaces,
+- `Prism` now processes one-line docstrings by stripping leading and trailing spaces,
   and adding a padding space when needed to break up """". (#1740)
 
-- `Black` now cleans up leading non-breaking spaces in comments (#2092)
+- `Prism` now cleans up leading non-breaking spaces in comments (#2092)
 
-- `Black` now respects `--skip-string-normalization` when normalizing multiline
+- `Prism` now respects `--skip-string-normalization` when normalizing multiline
   docstring quotes (#1637)
 
-- `Black` no longer removes all empty lines between non-function code and decorators
-  when formatting typing stubs. Now `Black` enforces a single empty line. (#1646)
+- `Prism` no longer removes all empty lines between non-function code and decorators
+  when formatting typing stubs. Now `Prism` enforces a single empty line. (#1646)
 
-- `Black` no longer adds an incorrect space after a parenthesized assignment expression
+- `Prism` no longer adds an incorrect space after a parenthesized assignment expression
   in if/while statements (#1655)
 
 - Added `--skip-magic-trailing-comma` / `-C` to avoid using trailing commas as a reason
@@ -666,50 +666,50 @@ and the first release covered by our new
 
 - Lines ending with `fmt: skip` will now be not formatted (#1800)
 
-- PR #2053: Black no longer relies on typed-ast for Python 3.8 and higher
+- PR #2053: Prism no longer relies on typed-ast for Python 3.8 and higher
 
 - PR #2053: Python 2 support is now optional, install with
-  `python3 -m pip install black[python2]` to maintain support.
+  `python3 -m pip install prism[python2]` to maintain support.
 
 - Exclude `venv` directory by default (#1683)
 
-- Fixed "Black produced code that is not equivalent to the source" when formatting
+- Fixed "Prism produced code that is not equivalent to the source" when formatting
   Python 2 docstrings (#2037)
 
 ### _Packaging_
 
-- Self-contained native _Black_ binaries are now provided for releases via GitHub
+- Self-contained native _Prism_ binaries are now provided for releases via GitHub
   Releases (#1743)
 
 ## 20.8b1
 
 ### _Packaging_
 
-- explicitly depend on Click 7.1.2 or newer as `Black` no longer works with versions
+- explicitly depend on Click 7.1.2 or newer as `Prism` no longer works with versions
   older than 7.0
 
 ## 20.8b0
 
-### _Black_
+### _Prism_
 
 - re-implemented support for explicit trailing commas: now it works consistently within
   any bracket pair, including nested structures (#1288 and duplicates)
 
-- `Black` now reindents docstrings when reindenting code around it (#1053)
+- `Prism` now reindents docstrings when reindenting code around it (#1053)
 
-- `Black` now shows colored diffs (#1266)
+- `Prism` now shows colored diffs (#1266)
 
-- `Black` is now packaged using 'py3' tagged wheels (#1388)
+- `Prism` is now packaged using 'py3' tagged wheels (#1388)
 
-- `Black` now supports Python 3.8 code, e.g. star expressions in return statements
+- `Prism` now supports Python 3.8 code, e.g. star expressions in return statements
   (#1121)
 
-- `Black` no longer normalizes capital R-string prefixes as those have a
+- `Prism` no longer normalizes capital R-string prefixes as those have a
   community-accepted meaning (#1244)
 
-- `Black` now uses exit code 2 when specified configuration file doesn't exit (#1361)
+- `Prism` now uses exit code 2 when specified configuration file doesn't exit (#1361)
 
-- `Black` now works on AWS Lambda (#1141)
+- `Prism` now works on AWS Lambda (#1141)
 
 - added `--force-exclude` argument (#1032)
 
@@ -723,8 +723,8 @@ and the first release covered by our new
 
 - fixed invalid removal on organizing brackets followed by indexing (#1575)
 
-- introduced `black-primer`, a CI tool that allows us to run regression tests against
-  existing open source users of Black (#1402)
+- introduced `prism-primer`, a CI tool that allows us to run regression tests against
+  existing open source users of Prism (#1402)
 
 - introduced property-based fuzzing to our test suite based on Hypothesis and
   Hypothersmith (#1566)
@@ -749,7 +749,7 @@ and the first release covered by our new
 - added support for pre-splitting collections by putting an explicit trailing comma
   inside (#826)
 
-- added `black -c` as a way to format code passed from the command line (#761)
+- added `prism -c` as a way to format code passed from the command line (#761)
 
 - --safe now works with Python 2 code (#840)
 
@@ -761,21 +761,21 @@ and the first release covered by our new
 - `# fmt: off`/`# fmt: on` comment pairs placed multiple times within the same block of
   code now behave correctly (#1005)
 
-- _Black_ no longer crashes on Windows machines with more than 61 cores (#838)
+- _Prism_ no longer crashes on Windows machines with more than 61 cores (#838)
 
-- _Black_ no longer crashes on standalone comments prepended with a backslash (#767)
+- _Prism_ no longer crashes on standalone comments prepended with a backslash (#767)
 
-- _Black_ no longer crashes on `from` ... `import` blocks with comments (#829)
+- _Prism_ no longer crashes on `from` ... `import` blocks with comments (#829)
 
-- _Black_ no longer crashes on Python 3.7 on some platform configurations (#494)
+- _Prism_ no longer crashes on Python 3.7 on some platform configurations (#494)
 
-- _Black_ no longer fails on comments in from-imports (#671)
+- _Prism_ no longer fails on comments in from-imports (#671)
 
-- _Black_ no longer fails when the file starts with a backslash (#922)
+- _Prism_ no longer fails when the file starts with a backslash (#922)
 
-- _Black_ no longer merges regular comments with type comments (#1027)
+- _Prism_ no longer merges regular comments with type comments (#1027)
 
-- _Black_ no longer splits long lines that contain type comments (#997)
+- _Prism_ no longer splits long lines that contain type comments (#997)
 
 - removed unnecessary parentheses around `yield` expressions (#834)
 
@@ -784,27 +784,27 @@ and the first release covered by our new
 - added parentheses around complex powers when they are prefixed by a unary operator
   (#646)
 
-- fixed bug that led _Black_ format some code with a line length target of 1 (#762)
+- fixed bug that led _Prism_ format some code with a line length target of 1 (#762)
 
-- _Black_ no longer introduces quotes in f-string subexpressions on string boundaries
+- _Prism_ no longer introduces quotes in f-string subexpressions on string boundaries
   (#863)
 
-- if _Black_ puts parenthesis around a single expression, it moves comments to the
+- if _Prism_ puts parenthesis around a single expression, it moves comments to the
   wrapped expression instead of after the brackets (#872)
 
-- `blackd` now returns the version of _Black_ in the response headers (#1013)
+- `prismd` now returns the version of _Prism_ in the response headers (#1013)
 
-- `blackd` can now output the diff of formats on source code when the `X-Diff` header is
+- `prismd` can now output the diff of formats on source code when the `X-Diff` header is
   provided (#969)
 
 ## 19.3b0
 
-- new option `--target-version` to control which Python versions _Black_-formatted code
+- new option `--target-version` to control which Python versions _Prism_-formatted code
   should target (#618)
 
 - deprecated `--py36` (use `--target-version=py36` instead) (#724)
 
-- _Black_ no longer normalizes numeric literals to include `_` separators (#696)
+- _Prism_ no longer normalizes numeric literals to include `_` separators (#696)
 
 - long `del` statements are now split into multiple lines (#698)
 
@@ -812,19 +812,19 @@ and the first release covered by our new
 
 - improved performance of formatting deeply nested data structures (#509)
 
-- _Black_ now properly formats multiple files in parallel on Windows (#632)
+- _Prism_ now properly formats multiple files in parallel on Windows (#632)
 
-- _Black_ now creates cache files atomically which allows it to be used in parallel
+- _Prism_ now creates cache files atomically which allows it to be used in parallel
   pipelines (like `xargs -P8`) (#673)
 
-- _Black_ now correctly indents comments in files that were previously formatted with
+- _Prism_ now correctly indents comments in files that were previously formatted with
   tabs (#262)
 
-- `blackd` now supports CORS (#622)
+- `prismd` now supports CORS (#622)
 
 ## 18.9b0
 
-- numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
+- numeric literals are now formatted by _Prism_ (#452, #461, #464, #469):
 
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
 
@@ -837,8 +837,8 @@ and the first release covered by our new
 
   - hexadecimal digits are always uppercased (e.g. `0xBADC0DE`)
 
-- added `blackd`, see
-  [its documentation](https://github.com/psf/black/blob/18.9b0/README.md#blackd) for
+- added `prismd`, see
+  [its documentation](https://github.com/psf/prism/blob/18.9b0/README.md#prismd) for
   more info (#349)
 
 - adjacent string literals are now correctly split into multiple lines (#463)
@@ -861,7 +861,7 @@ and the first release covered by our new
 
 - fixed formatting of lambda expressions with default arguments (#468)
 
-- fixed `async for` statements: _Black_ no longer breaks them into separate lines (#372)
+- fixed `async for` statements: _Prism_ no longer breaks them into separate lines (#372)
 
 - note: the Vim plugin stopped registering `,=` as a default chord as it turned out to
   be a bad idea (#415)
@@ -934,7 +934,7 @@ and the first release covered by our new
 
 - fixed stdin handling not working correctly if an old version of Click was used (#276)
 
-- _Black_ now preserves line endings when formatting a file in place (#258)
+- _Prism_ now preserves line endings when formatting a file in place (#258)
 
 ## 18.5b1
 
@@ -942,10 +942,10 @@ and the first release covered by our new
 
 - added `--py36` (#249)
 
-- Python grammar pickle caches are stored with the formatting caches, making _Black_
+- Python grammar pickle caches are stored with the formatting caches, making _Prism_
   work in environments where site-packages is not user-writable (#192)
 
-- _Black_ now enforces a PEP 257 empty line after a class-level docstring (and/or
+- _Prism_ now enforces a PEP 257 empty line after a class-level docstring (and/or
   fields) and the first method
 
 - fixed invalid code produced when standalone comments were present in a trailer that
@@ -1034,9 +1034,9 @@ and the first release covered by our new
 - generalized star expression handling, including double stars; this fixes
   multiplication making expressions "unsafe" for trailing commas (#132)
 
-- _Black_ no longer enforces putting empty lines behind control flow statements (#90)
+- _Prism_ no longer enforces putting empty lines behind control flow statements (#90)
 
-- _Black_ now splits imports like "Mode 3 + trailing comma" of isort (#127)
+- _Prism_ now splits imports like "Mode 3 + trailing comma" of isort (#127)
 
 - fixed comment indentation when a standalone comment closes a block (#16, #32)
 
@@ -1084,7 +1084,7 @@ and the first release covered by our new
 
 - standardize string literals to use double quotes (almost) everywhere (#75)
 
-- fixed handling of standalone comments within nested bracketed expressions; _Black_
+- fixed handling of standalone comments within nested bracketed expressions; _Prism_
   will no longer produce super long lines or put all standalone comments at the end of
   the expression (#22)
 
@@ -1092,9 +1092,9 @@ and the first release covered by our new
   (#80)
 
 - fixed 18.3a4 regression: `# yapf: disable` usage as trailing comment would cause
-  _Black_ to not emit the rest of the file (#95)
+  _Prism_ to not emit the rest of the file (#95)
 
-- when CTRL+C is pressed while formatting many files, _Black_ no longer freaks out with
+- when CTRL+C is pressed while formatting many files, _Prism_ no longer freaks out with
   a flurry of asyncio-related exceptions
 
 - only allow up to two empty lines on module level and only single empty lines within

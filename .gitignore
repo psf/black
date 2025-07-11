@@ -9,14 +9,14 @@ docs/_static/pypi.svg
 __pycache__
 
 # Packaging artifacts
-black.egg-info
-black.dist-info
+prism.egg-info
+prism.dist-info
 build/
 dist/
 pip-wheel-metadata/
 .eggs
 
-src/_black_version.py
+src/_prism_version.py
 .idea
 
 .dmypy.json

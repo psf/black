@@ -510,7 +510,7 @@ fstring = (
 
 welcome_to_programming = R"hello," R" world!"
 
-fstring = F"f-strings definitely make things more {difficult} than they need to be for {{black}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
+fstring = F"f-strings definitely make things more {difficult} than they need to be for {{prism}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
 
 x = F"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
 
@@ -1158,7 +1158,7 @@ welcome_to_programming = R"hello," R" world!"
 
 fstring = (
     f"f-strings definitely make things more {difficult} than they need to be for"
-    " {black}. But boy they sure are handy. The problem is that some lines will need"
+    " {prism}. But boy they sure are handy. The problem is that some lines will need"
     f" to have the 'f' whereas others do not. This {line}, for example, needs one."
 )
 

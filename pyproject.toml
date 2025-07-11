@@ -1,36 +1,36 @@
-# Example configuration for Black.
+# Example configuration for Prism.
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
 # It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
+# verbose regular expressions by Prism.  Use [ ] to denote a significant space
 # character.
 
-[tool.black]
+[tool.prism]
 line-length = 88
 target-version = ['py37', 'py38']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  # The following are specific to Black, you probably don't want those.
+  # The following are specific to Prism, you probably don't want those.
   | blib2to3
   | tests/data
   | profiling
 )/
 '''
-# We use preview style for formatting Black itself. If you
+# We use preview style for formatting Prism itself. If you
 # want stable formatting across releases, you should keep
 # this off.
 preview = true
 
 # Build system information and other project-specific configuration below.
-# NOTE: You don't need this in your own Black configuration.
+# NOTE: You don't need this in your own Prism configuration.
 
 [build-system]
 requires = ["hatchling>=1.8.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
-name = "black"
+name = "prism"
 description = "The uncompromising code formatter."
 license = { text = "MIT" }
 requires-python = ">=3.7"
@@ -85,12 +85,12 @@ jupyter = [
 ]
 
 [project.scripts]
-black = "black:patched_main"
-blackd = "blackd:patched_main [d]"
+prism = "prism:patched_main"
+prismd = "prismd:patched_main [d]"
 
 [project.urls]
-Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
-Homepage = "https://github.com/psf/black"
+Changelog = "https://github.com/psf/prism/blob/main/CHANGES.md"
+Homepage = "https://github.com/psf/prism"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
@@ -103,7 +103,7 @@ fragments = [
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/_black_version.py"
+version-file = "src/_prism_version.py"
 template = '''
 version = "{version}"
 '''
@@ -125,19 +125,19 @@ dependencies = [
 ]
 require-runtime-dependencies = true
 exclude = [
-  # There's no good reason for blackd to be compiled.
-  "/src/blackd",
+  # There's no good reason for prismd to be compiled.
+  "/src/prismd",
   # Not performance sensitive, so save bytes + compilation time:
   "/src/blib2to3/__init__.py",
   "/src/blib2to3/pgen2/__init__.py",
-  "/src/black/output.py",
-  "/src/black/concurrency.py",
-  "/src/black/files.py",
-  "/src/black/report.py",
+  "/src/prism/output.py",
+  "/src/prism/concurrency.py",
+  "/src/prism/files.py",
+  "/src/prism/report.py",
   # Breaks the test suite when compiled (and is also useless):
-  "/src/black/debug.py",
+  "/src/prism/debug.py",
   # Compiled modules can't be run directly and that's a problem here:
-  "/src/black/__main__.py",
+  "/src/prism/__main__.py",
 ]
 options = { debug_level = "0" }
 
@@ -176,35 +176,35 @@ before-build = [
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
-# Black needs Clang to compile successfully on Linux.
+# Prism needs Clang to compile successfully on Linux.
 CC = "clang"
 AIOHTTP_NO_EXTENSIONS = "1"
 
 [tool.isort]
 atomic = true
-profile = "black"
+profile = "prism"
 line_length = 88
 skip_gitignore = true
 skip_glob = ["src/blib2to3", "tests/data", "profiling"]
-known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
+known_first_party = ["prism", "blib2to3", "prismd", "_prism_version"]
 
 [tool.pytest.ini_options]
 # Option below requires `tests/optional.py`
 addopts = "--strict-config --strict-markers"
 optional-tests = [
-  "no_blackd: run when `d` extra NOT installed",
+  "no_prismd: run when `d` extra NOT installed",
   "no_jupyter: run when `jupyter` extra NOT installed",
 ]
 markers = [
-  "incompatible_with_mypyc: run when testing mypyc compiled black"
+  "incompatible_with_mypyc: run when testing mypyc compiled prism"
 ]
 xfail_strict = true
 filterwarnings = [
     "error",
-    # this is mitigated by a try/catch in https://github.com/psf/black/pull/2974/
+    # this is mitigated by a try/catch in https://github.com/psf/prism/pull/2974/
     # this ignore can be removed when support for aiohttp 3.7 is dropped.
     '''ignore:Decorator `@unittest_run_loop` is no longer needed in aiohttp 3\.8\+:DeprecationWarning''',
-    # this is mitigated by a try/catch in https://github.com/psf/black/pull/3198/
+    # this is mitigated by a try/catch in https://github.com/psf/prism/pull/3198/
     # this ignore can be removed when support for aiohttp 3.x is dropped.
     '''ignore:Middleware decorator is deprecated since 4\.0 and its behaviour is default, you can simply remove this decorator:DeprecationWarning''',
     # this is mitigated by https://github.com/python/cpython/issues/79071 in python 3.8+

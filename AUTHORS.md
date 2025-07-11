@@ -19,7 +19,7 @@ Multiple contributions by:
 - [Abdur-Rahmaan Janhangeer](mailto:arj.python@gmail.com)
 - [Adam Johnson](mailto:me@adamj.eu)
 - [Adam Williamson](mailto:adamw@happyassassin.net)
-- [Alexander Huynh](mailto:ahrex-gh-psf-black@e.sc)
+- [Alexander Huynh](mailto:ahrex-gh-psf-prism@e.sc)
 - [Alexandr Artemyev](mailto:mogost@gmail.com)
 - [Alex Vandiver](mailto:github@chmrr.net)
 - [Allan Simon](mailto:allan.simon@supinfo.com)
@@ -30,7 +30,7 @@ Multiple contributions by:
 - [Andrey](mailto:dyuuus@yandex.ru)
 - [Andy Freeland](mailto:andy@andyfreeland.net)
 - [Anthony Sottile](mailto:asottile@umich.edu)
-- [Antonio Ossa Guerra](mailto:aaossa+black@uc.cl)
+- [Antonio Ossa Guerra](mailto:aaossa+prism@uc.cl)
 - [Arjaan Buijk](mailto:arjaan.buijk@gmail.com)
 - [Arnav Borbornah](mailto:arnavborborah11@gmail.com)
 - [Artem Malyshev](mailto:proofit404@gmail.com)
@@ -64,7 +64,7 @@ Multiple contributions by:
 - [David Szotten](mailto:davidszotten@gmail.com)
 - [Denis Laxalde](mailto:denis@laxalde.org)
 - [Douglas Thor](mailto:dthor@transphormusa.com)
-- dylanjblack
+- dylanjprism
 - [Eli Treuherz](mailto:eli@treuherz.com)
 - [Emil Hessman](mailto:emil@hessman.se)
 - [Felix Kohlgrüber](mailto:felix.kohlgrueber@gmail.com)

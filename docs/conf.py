@@ -37,13 +37,13 @@ os.putenv("pythonioencoding", "utf-8")
 
 # -- Project information -----------------------------------------------------
 
-project = "Black"
-copyright = "2018-Present, Łukasz Langa and contributors to Black"
-author = "Łukasz Langa and contributors to Black"
+project = "Prism"
+copyright = "2018-Present, Łukasz Langa and contributors to Prism"
+author = "Łukasz Langa and contributors to Prism"
 
 # Autopopulate version
 # The version, including alpha/beta/rc tags, but not commit hash and datestamps
-release = get_distribution("black").version.split("+")[0]
+release = get_distribution("prism").version.split("+")[0]
 # The short X.Y version.
 version = release
 for sp in "abcfr":
@@ -141,7 +141,7 @@ html_static_path = ["_static"]
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "blackdoc"
+htmlhelp_basename = "prismdoc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -152,9 +152,9 @@ htmlhelp_basename = "blackdoc"
 latex_documents = [
     (
         master_doc,
-        "black.tex",
-        "Documentation for Black",
-        "Łukasz Langa and contributors to Black",
+        "prism.tex",
+        "Documentation for Prism",
+        "Łukasz Langa and contributors to Prism",
         "manual",
     )
 ]
@@ -164,7 +164,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "black", "Documentation for Black", [author], 1)]
+man_pages = [(master_doc, "prism", "Documentation for Prism", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -175,10 +175,10 @@ man_pages = [(master_doc, "black", "Documentation for Black", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "Black",
-        "Documentation for Black",
+        "Prism",
+        "Documentation for Prism",
         author,
-        "Black",
+        "Prism",
         "The uncompromising Python code formatter",
         "Miscellaneous",
     )

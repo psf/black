@@ -1,4 +1,4 @@
-[tool.black]
+[tool.prism]
 verbose = 1
 --check = "no"
 diff = "y"
@@ -10,7 +10,7 @@ include='\.py?$'
 python-cell-magics = ["custom1", "custom2"]
 
 [v1.0.0-syntax]
-# This shouldn't break Black.
+# This shouldn't break Prism.
 contributors = [
   "Foo Bar <foo@example.com>",
   { name = "Baz Qux", email = "bazqux@example.com", url = "https://example.com/bazqux" }

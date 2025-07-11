@@ -1,6 +1,6 @@
 # The basics
 
-An overview on contributing to the _Black_ project.
+An overview on contributing to the _Prism_ project.
 
 ## Technicalities
 
@@ -19,7 +19,7 @@ $ source .venv/bin/activate
 ```
 
 Before submitting pull requests, run lints and tests with the following commands from
-the root of the black repo:
+the root of the prism repo:
 
 ```console
 # Linting
@@ -34,24 +34,24 @@ the root of the black repo:
 
 ### News / Changelog Requirement
 
-`Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
+`Prism` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
 you feel this PR does not require a changelog entry please state that in a comment and a
 maintainer can add a `skip news` label to make the CI pass. Otherwise, please ensure you
 have a line in the following format:
 
 ```md
-- `Black` is now more awesome (#X)
+- `Prism` is now more awesome (#X)
 ```
 
 Note that X should be your PR number, not issue number! To workout X, please use
-[Next PR Number](https://ichard26.github.io/next-pr-number/?owner=psf&name=black). This
+[Next PR Number](https://ichard26.github.io/next-pr-number/?owner=psf&name=prism). This
 is not perfect but saves a lot of release overhead as now the releaser does not need to
 go back and workout what to add to the `CHANGES.md` for each release.
 
 ### Style Changes
 
 If a change would affect the advertised code style, please modify the documentation (The
-_Black_ code style) to reflect that change. Patches that fix unintended bugs in
+_Prism_ code style) to reflect that change. Patches that fix unintended bugs in
 formatting don't need to be mentioned separately though. If the change is implemented
 with the `--preview` flag, please include the change in the future style document
 instead and write the changelog entry under a dedicated "Preview changes" heading.

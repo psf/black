@@ -1,8 +1,8 @@
 # Release process
 
-_Black_ has had a lot of work done into standardizing and automating its release
+_Prism_ has had a lot of work done into standardizing and automating its release
 process. This document sets out to explain how everything works and how to release
-_Black_ using said automation.
+_Prism_ using said automation.
 
 ## Release cadence
 
@@ -26,7 +26,7 @@ frequently than monthly nets rapidly diminishing returns.
 
 ## Cutting a release
 
-**You must have `write` permissions for the _Black_ repository to cut a release.**
+**You must have `write` permissions for the _Prism_ repository to cut a release.**
 
 The 10,000 foot view of the release process is that you prepare a release PR and then
 publish a [GitHub Release]. This triggers [release automation](#release-workflows) that
@@ -35,7 +35,7 @@ builds all release artifacts and publishes them to the various platforms we publ
 To cut a release:
 
 1. Determine the release's version number
-   - **_Black_ follows the [CalVer] versioning standard using the `YY.M.N` format**
+   - **_Prism_ follows the [CalVer] versioning standard using the `YY.M.N` format**
      - So unless there already has been a release during this month, `N` should be `0`
    - Example: the first release in January, 2022 → `22.1.0`
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
@@ -62,12 +62,12 @@ To cut a release:
 1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
    will handle the rest
 1. At this point, you're basically done. It's good practice to go and [watch and verify
-   that all the release workflows pass][black-actions], although you will receive a
+   that all the release workflows pass][prism-actions], although you will receive a
    GitHub notification should something fail.
    - If something fails, don't panic. Please go read the respective workflow's logs and
      configuration file to reverse-engineer your way to a fix/solution.
 
-Congratulations! You've successfully cut a new release of _Black_. Go and stand up and
+Congratulations! You've successfully cut a new release of _Prism_. Go and stand up and
 take a break, you deserve it.
 
 ```{important}
@@ -92,19 +92,19 @@ Use the following template for a clean changelog after the release:
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+<!-- Changes that affect Prism's stable style -->
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+<!-- Changes that affect Prism's preview style -->
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
+<!-- Changes to how Prism can be configured -->
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
+<!-- Changes to how Prism is packaged, such as dependency requirements -->
 
 ### Parser
 
@@ -112,15 +112,15 @@ Use the following template for a clean changelog after the release:
 
 ### Performance
 
-<!-- Changes that improve Black's performance. -->
+<!-- Changes that improve Prism's performance. -->
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
+<!-- Changes to Prism's terminal output and error messages -->
 
-### _Blackd_
+### _Prismd_
 
-<!-- Changes to blackd -->
+<!-- Changes to prismd -->
 
 ### Integrations
 
@@ -134,8 +134,8 @@ Use the following template for a clean changelog after the release:
 
 ## Release workflows
 
-All of _Black_'s release automation uses [GitHub Actions]. All workflows are therefore
-configured using YAML files in the `.github/workflows` directory of the _Black_
+All of _Prism_'s release automation uses [GitHub Actions]. All workflows are therefore
+configured using YAML files in the `.github/workflows` directory of the _Prism_
 repository.
 
 They are triggered by the publication of a [GitHub Release].
@@ -145,7 +145,7 @@ Below are descriptions of our release workflows.
 ### Publish to PyPI
 
 This is our main workflow. It builds an [sdist] and [wheels] to upload to PyPI where the
-vast majority of users will download Black from. It's divided into three job groups:
+vast majority of users will download Prism from. It's divided into three job groups:
 
 #### sdist + pure wheel
 
@@ -155,7 +155,7 @@ are general-purpose and can be used on basically any platform supported by Pytho
 
 #### mypyc wheels (…)
 
-We use [mypyc] to compile _Black_ into a CPython C extension for significantly improved
+We use [mypyc] to compile _Prism_ into a CPython C extension for significantly improved
 performance. Wheels built with mypyc are platform and Python version specific.
 [Supported platforms are documented in the FAQ](labels/mypyc-support).
 
@@ -177,7 +177,7 @@ saves us from remembering to update the branch sometime after cutting the releas
 ### Publish executables
 
 This workflow builds native executables for multiple platforms using [PyInstaller]. This
-allows people to download the executable for their platform and run _Black_ without a
+allows people to download the executable for their platform and run _Prism_ without a
 [Python runtime](https://wiki.python.org/moin/PythonImplementations) installed.
 
 The created binaries are stored on the associated GitHub Release for download over _IPv4
@@ -186,7 +186,7 @@ only_ (GitHub still does not have IPv6 access 😢).
 ### docker
 
 This workflow uses the QEMU powered `buildx` feature of Docker to upload an `arm64` and
-`amd64`/`x86_64` build of the official _Black_ Docker image™.
+`amd64`/`x86_64` build of the official _Prism_ Docker image™.
 
 - _Currently this workflow uses an API Token associated with @cooperlees account_
 
@@ -194,14 +194,14 @@ This workflow uses the QEMU powered `buildx` feature of Docker to upload an `arm
 This also runs on each push to `main`.
 ```
 
-[black-actions]: https://github.com/psf/black/actions
+[prism-actions]: https://github.com/psf/prism/actions
 [build]: https://pypa-build.readthedocs.io/
 [calver]: https://calver.org
 [cibuildwheel]: https://cibuildwheel.readthedocs.io/
-[gh-3139]: https://github.com/psf/black/pull/3139
+[gh-3139]: https://github.com/psf/prism/pull/3139
 [github actions]: https://github.com/features/actions
-[github release]: https://github.com/psf/black/releases
-[new-release]: https://github.com/psf/black/releases/new
+[github release]: https://github.com/psf/prism/releases
+[new-release]: https://github.com/psf/prism/releases/new
 [mypyc]: https://mypyc.readthedocs.io/
 [mypyc-platform-support]:
   /faq.html#what-is-compiled-yes-no-all-about-in-the-version-output
