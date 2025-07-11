@@ -234,7 +234,7 @@ show_error_codes = true
 show_column_numbers = true
 
 [[tool.mypy.overrides]]
-module = ["pathspec.*", "IPython.*", "colorama.*", "tokenize_rt.*", "uvloop.*", "_black_version.*"]
+module = ["pathspec.*", "IPython.*", "colorama.*", "tokenize_rt.*", "uvloop.*"]
 ignore_missing_imports = true
 
 # CI only checks src/, but in case users are running LSP or similar we explicitly ignore

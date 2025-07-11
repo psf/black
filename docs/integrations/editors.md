@@ -53,7 +53,6 @@ There are several different ways you can use _Black_ from PyCharm:
    `File -> Settings -> Tools -> BlackConnect`
 
 1. In `Local Instance (shared between projects)` section:
-
    1. Check `Start local blackd instance when plugin loads`.
    1. Press the `Detect` button near `Path` input. The plugin should detect the `blackd`
       executable.
@@ -65,7 +64,6 @@ There are several different ways you can use _Black_ from PyCharm:
    shortcut.
 
 1. Optionally, to run _Black_ on every file save:
-
    - In `Trigger Settings` section of plugin configuration check
      `Trigger when saving changed files`.
 
@@ -107,14 +105,12 @@ There are several different ways you can use _Black_ from PyCharm:
    `File -> Settings -> Tools -> External Tools`
 
 1. Click the + icon to add a new external tool with the following values:
-
    - Name: Black
    - Description: Black is the uncompromising Python code formatter.
    - Program: \<install_location_from_step_2>
    - Arguments: `"$FilePath$"`
 
 1. Format the currently opened file by selecting `Tools -> External Tools -> black`.
-
    - Alternatively, you can set a keyboard shortcut by navigating to
      `Preferences or Settings -> Keymap -> External Tools -> External Tools - Black`.
 
