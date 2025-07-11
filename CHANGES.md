@@ -16,6 +16,11 @@
 - Handle `# fmt: skip` followed by a comment at the end of file (#4635)
 - Fix crash when a tuple appears in the `as` clause of a `with` statement (#4634)
 - Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
+- Fix crash when formatting a `\` followed by a `\r` followed by a comment (#4663)
+- Fix crash on a `\\r\n` (#4673)
+- Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
+- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
+  (#4676)
 - Fix crash on parenthesized expression inside a type parameter bound (#4684)
 
 ### Preview style
@@ -24,6 +29,8 @@
 
 - Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
   be formatted (#4552)
+- Fix a bug where `string_processing` would not split f-strings directly after
+  expressions (#4680)
 
 ### Configuration
 
@@ -60,6 +67,7 @@
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
 - Enhance GitHub Action `psf/black` to read Black version from an additional section in
   pyproject.toml: `[project.dependency-groups]` (#4606)
+- Build gallery docker image with python3-slim and reduce image size (#4686)
 
 ### Documentation
 
@@ -1635,7 +1643,6 @@ and the first release covered by our new
 ## 18.9b0
 
 - numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
-
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
 
   - added `--skip-numeric-underscore-normalization` to disable the above behavior and
@@ -1685,7 +1692,6 @@ and the first release covered by our new
 - typing stub files (`.pyi`) now have blank lines added after constants (#340)
 
 - `# fmt: off` and `# fmt: on` are now much more dependable:
-
   - they now work also within bracket pairs (#329)
 
   - they now correctly work across function/class boundaries (#335)
