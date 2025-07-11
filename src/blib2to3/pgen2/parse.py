@@ -190,7 +190,7 @@ class Parser(object):
         to be converted.  The syntax tree is converted from the bottom
         up.
 
-        **post-note: the convert argument is ignored since for Black's
+        **post-note: the convert argument is ignored since for Prism's
         usage, convert will always be blib2to3.pytree.convert. Allowing
         this to be dynamic hurts mypyc's ability to use early binding.
         These docs are left for historical and informational value.

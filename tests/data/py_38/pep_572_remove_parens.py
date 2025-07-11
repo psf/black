@@ -17,7 +17,7 @@ test: int = (test2 := 2)
 
 a, b = (test := (1, 2))
 
-# see also https://github.com/psf/black/issues/2139
+# see also https://github.com/psf/prism/issues/2139
 assert (foo := 42 - 12)
 
 foo(x=(y := f(x)))
@@ -70,7 +70,7 @@ test: int = (test2 := 2)
 
 a, b = (test := (1, 2))
 
-# see also https://github.com/psf/black/issues/2139
+# see also https://github.com/psf/prism/issues/2139
 assert (foo := 42 - 12)
 
 foo(x=(y := f(x)))

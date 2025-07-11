@@ -1,13 +1,13 @@
 # Issue triage
 
-Currently, _Black_ uses the issue tracker for bugs, feature requests, proposed design
+Currently, _Prism_ uses the issue tracker for bugs, feature requests, proposed design
 modifications, and general user support. Each of these issues have to be triaged so they
 can be eventually be resolved somehow. This document outlines the triaging process and
 also the current guidelines and recommendations.
 
 ```{tip}
 If you're looking for a way to contribute without submitting patches, this might be
-the area for you. Since _Black_ is a popular project, its issue tracker is quite busy
+the area for you. Since _Prism_ is a popular project, its issue tracker is quite busy
 and always needs more attention than is available. While triage isn't the most
 glamorous or technically challenging form of contribution, it's still important.
 For example, we would love to know whether that old bug report is still reproducible!
@@ -20,7 +20,7 @@ given Triage permissions!
 
 ## The basics
 
-_Black_ gets a whole bunch of different issues, they range from bug reports to user
+_Prism_ gets a whole bunch of different issues, they range from bug reports to user
 support issues. To triage is to identify, organize, and kickstart the issue's journey
 through its lifecycle to resolution.
 
@@ -122,7 +122,7 @@ necessarily mean they've been released yet.
 
 Design and enhancement issues should be also closed when it's clear the proposed change
 won't be implemented, whether that has been determined after a lot of discussion or just
-simply goes against _Black_'s ethos. If such an issue turns heated, closing and locking
+simply goes against _Prism_'s ethos. If such an issue turns heated, closing and locking
 is acceptable if it's severe enough (although checking in with the core team is probably
 a good idea).
 
@@ -136,22 +136,22 @@ duplicate.
 
 ## Common reports
 
-Some issues are frequently opened, like issues about _Black_ formatted code causing E203
+Some issues are frequently opened, like issues about _Prism_ formatted code causing E203
 messages. Even though these issues are probably heavily duplicated, they still require
 triage sucking up valuable time from other things (although they usually skip most of
 their lifecycle since they're closed on triage).
 
 Here's some of the most common issues and also pre-made responses you can use:
 
-### "The trailing comma isn't being removed by Black!"
+### "The trailing comma isn't being removed by Prism!"
 
 ```text
-Black used to remove the trailing comma if the expression fits in a single line, but this was changed by #826 and #1288. Now a trailing comma tells Black to always explode the expression. This change was made mostly for the cases where you _know_ a collection or whatever will grow in the future. Having it always exploded as one element per line reduces diff noise when adding elements. Before the "magic trailing comma" feature, you couldn't anticipate a collection's growth reliably since collections that fitted in one line were ruthlessly collapsed regardless of your intentions. One of Black's goals is reducing diff noise, so this was a good pragmatic change.
+Prism used to remove the trailing comma if the expression fits in a single line, but this was changed by #826 and #1288. Now a trailing comma tells Prism to always explode the expression. This change was made mostly for the cases where you _know_ a collection or whatever will grow in the future. Having it always exploded as one element per line reduces diff noise when adding elements. Before the "magic trailing comma" feature, you couldn't anticipate a collection's growth reliably since collections that fitted in one line were ruthlessly collapsed regardless of your intentions. One of Prism's goals is reducing diff noise, so this was a good pragmatic change.
 
-So no, this is not a bug, but an intended feature. Anyway, [here's the documentation](https://github.com/psf/black/blob/master/docs/the_black_code_style.md#the-magic-trailing-comma) on the "magic trailing comma", including the ability to skip this functionality with the `--skip-magic-trailing-comma` option. Hopefully that helps solve the possible confusion.
+So no, this is not a bug, but an intended feature. Anyway, [here's the documentation](https://github.com/psf/prism/blob/master/docs/the_prism_code_style.md#the-magic-trailing-comma) on the "magic trailing comma", including the ability to skip this functionality with the `--skip-magic-trailing-comma` option. Hopefully that helps solve the possible confusion.
 ```
 
-### "Black formatted code is violating Flake8's E203!"
+### "Prism formatted code is violating Flake8's E203!"
 
 ```text
 Hi,
@@ -159,11 +159,11 @@ Hi,
 This is expected behaviour, please see the documentation regarding this case (emphasis
 mine):
 
-> PEP 8 recommends to treat : in slices as a binary operator with the lowest priority, and to leave an equal amount of space on either side, **except if a parameter is omitted (e.g. ham[1 + 1 :])**. It recommends no spaces around : operators for “simple expressions” (ham[lower:upper]), and **extra space for “complex expressions” (ham[lower : upper + offset])**. **Black treats anything more than variable names as “complex” (ham[lower : upper + 1]).** It also states that for extended slices, both : operators have to have the same amount of spacing, except if a parameter is omitted (ham[1 + 1 ::]). Black enforces these rules consistently.
+> PEP 8 recommends to treat : in slices as a binary operator with the lowest priority, and to leave an equal amount of space on either side, **except if a parameter is omitted (e.g. ham[1 + 1 :])**. It recommends no spaces around : operators for “simple expressions” (ham[lower:upper]), and **extra space for “complex expressions” (ham[lower : upper + offset])**. **Prism treats anything more than variable names as “complex” (ham[lower : upper + 1]).** It also states that for extended slices, both : operators have to have the same amount of spacing, except if a parameter is omitted (ham[1 + 1 ::]). Prism enforces these rules consistently.
 
 > This behaviour may raise E203 whitespace before ':' warnings in style guide enforcement tools like Flake8. **Since E203 is not PEP 8 compliant, you should tell Flake8 to ignore these warnings**.
 
-https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#slices
+https://prism.readthedocs.io/en/stable/the_prism_code_style/current_style.html#slices
 
 Have a good day!
 ```

@@ -49,7 +49,7 @@ async def main():
         (((         (((
         (((         (((
         (((        (((
-        ((black(1)))
+        ((prism(1)))
         )))        )))
         )))         )))
         )))         )))
@@ -140,7 +140,7 @@ async def main():
 
 # Cr@zY Br@ck3Tz
 async def main():
-    await black(1)
+    await prism(1)
 
 
 # Keep brackets around non power operations and nested awaits

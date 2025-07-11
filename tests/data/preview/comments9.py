@@ -1,4 +1,4 @@
-# Test for https://github.com/psf/black/issues/246.
+# Test for https://github.com/psf/prism/issues/246.
 
 some = statement
 # This comment should be split from the statement above by two lines.
@@ -117,7 +117,7 @@ class MyClass:
 # output
 
 
-# Test for https://github.com/psf/black/issues/246.
+# Test for https://github.com/psf/prism/issues/246.
 
 some = statement
 

@@ -1,59 +1,59 @@
-*Black* classes
+*Prism* classes
 ===============
 
 *Contents are subject to change.*
 
-.. currentmodule:: black
+.. currentmodule:: prism
 
 :class:`BracketTracker`
 -----------------------
 
-.. autoclass:: black.brackets.BracketTracker
+.. autoclass:: prism.brackets.BracketTracker
     :members:
 
 :class:`Line`
 -------------
 
-.. autoclass:: black.lines.Line
+.. autoclass:: prism.lines.Line
     :members:
     :special-members: __str__, __bool__
 
 :class:`LinesBlock`
 -------------------------
 
-.. autoclass:: black.lines.LinesBlock
+.. autoclass:: prism.lines.LinesBlock
     :members:
 
 :class:`EmptyLineTracker`
 -------------------------
 
-.. autoclass:: black.lines.EmptyLineTracker
+.. autoclass:: prism.lines.EmptyLineTracker
     :members:
 
 :class:`LineGenerator`
 ----------------------
 
-.. autoclass:: black.linegen.LineGenerator
+.. autoclass:: prism.linegen.LineGenerator
     :show-inheritance:
     :members:
 
 :class:`ProtoComment`
 ---------------------
 
-.. autoclass:: black.comments.ProtoComment
+.. autoclass:: prism.comments.ProtoComment
     :members:
 
 :class:`Report`
 ---------------
 
-.. autoclass:: black.report.Report
+.. autoclass:: prism.report.Report
     :members:
     :special-members: __str__
 
 :class:`Visitor`
 ----------------
 
-.. autoclass:: black.nodes.Visitor
+.. autoclass:: prism.nodes.Visitor
     :show-inheritance:
     :members:
 
@@ -63,20 +63,20 @@ Enums
 :class:`Changed`
 ----------------
 
-.. autoclass:: black.Changed
+.. autoclass:: prism.Changed
     :show-inheritance:
     :members:
 
 :class:`Mode`
 -----------------
 
-.. autoclass:: black.Mode
+.. autoclass:: prism.Mode
     :show-inheritance:
     :members:
 
 :class:`WriteBack`
 ------------------
 
-.. autoclass:: black.WriteBack
+.. autoclass:: prism.WriteBack
     :show-inheritance:
     :members:

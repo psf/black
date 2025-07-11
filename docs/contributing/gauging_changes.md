@@ -3,15 +3,15 @@
 A lot of the time, your change will affect formatting and/or performance. Quantifying
 these changes is hard, so we have tooling to help make it easier.
 
-It's recommended you evaluate the quantifiable changes your _Black_ formatting
+It's recommended you evaluate the quantifiable changes your _Prism_ formatting
 modification causes before submitting a PR. Think about if the change seems disruptive
-enough to cause frustration to projects that are already "black formatted".
+enough to cause frustration to projects that are already "prism formatted".
 
 ## diff-shades
 
-diff-shades is a tool that runs _Black_ across a list of open-source projects recording
+diff-shades is a tool that runs _Prism_ across a list of open-source projects recording
 the results. The main highlight feature of diff-shades is being able to compare two
-revisions of _Black_. This is incredibly useful as it allows us to see what exact
+revisions of _Prism_. This is incredibly useful as it allows us to see what exact
 changes will occur, say merging a certain PR.
 
 For more information, please see the [diff-shades documentation][diff-shades].
@@ -20,7 +20,7 @@ For more information, please see the [diff-shades documentation][diff-shades].
 
 diff-shades is also the tool behind the "diff-shades results comparing ..." /
 "diff-shades reports zero changes ..." comments on PRs. The project has a GitHub Actions
-workflow that analyzes and compares two revisions of _Black_ according to these rules:
+workflow that analyzes and compares two revisions of _Prism_ according to these rules:
 
 |                       | Baseline revision       | Target revision              |
 | --------------------- | ----------------------- | ---------------------------- |
@@ -33,7 +33,7 @@ preview style is used for all projects.
 For PRs they get one more analysis job: `assert-no-changes`. It's similar to
 `preview-changes` but runs with the stable code style. It will fail if changes were
 made. This makes sure code won't be reformatted again and again within the same year in
-accordance to Black's stability policy.
+accordance to Prism's stability policy.
 
 Additionally for PRs, a PR comment will be posted embedding a summary of the preview
 changes and links to further information. If there's a pre-existing diff-shades comment,

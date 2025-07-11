@@ -8,7 +8,7 @@ func1(arg1).func2(arg1, (one_tuple,)).func3(arg3)
 (a, b, c, d,) = func1(arg1) and func2(arg2)
 
 
-# Example from https://github.com/psf/black/issues/3229
+# Example from https://github.com/psf/prism/issues/3229
 def refresh_token(self, device_family, refresh_token, api_key):
     return self.orchestration.refresh_token(
         data={
@@ -19,7 +19,7 @@ def refresh_token(self, device_family, refresh_token, api_key):
 
 
 # Edge case where a bug in a working-in-progress version of
-# https://github.com/psf/black/pull/3370 causes an infinite recursion.
+# https://github.com/psf/prism/pull/3370 causes an infinite recursion.
 assert (
     long_module.long_class.long_func().another_func()
     == long_module.long_class.long_func()["some_key"].another_func(arg1)
@@ -56,7 +56,7 @@ func1(arg1).func2(arg1, (one_tuple,)).func3(arg3)
 ) and func2(arg2)
 
 
-# Example from https://github.com/psf/black/issues/3229
+# Example from https://github.com/psf/prism/issues/3229
 def refresh_token(self, device_family, refresh_token, api_key):
     return self.orchestration.refresh_token(
         data={
@@ -67,7 +67,7 @@ def refresh_token(self, device_family, refresh_token, api_key):
 
 
 # Edge case where a bug in a working-in-progress version of
-# https://github.com/psf/black/pull/3370 causes an infinite recursion.
+# https://github.com/psf/prism/pull/3370 causes an infinite recursion.
 assert (
     long_module.long_class.long_func().another_func()
     == long_module.long_class.long_func()["some_key"].another_func(arg1)

@@ -1,12 +1,12 @@
-*Black* exceptions
+*Prism* exceptions
 ==================
 
 *Contents are subject to change.*
 
-.. currentmodule:: black
+.. currentmodule:: prism
 
-.. autoexception:: black.linegen.CannotSplit
+.. autoexception:: prism.linegen.CannotSplit
 
-.. autoexception:: black.NothingChanged
+.. autoexception:: prism.NothingChanged
 
-.. autoexception:: black.InvalidInput
+.. autoexception:: prism.InvalidInput

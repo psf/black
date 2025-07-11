@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import PIPE, STDOUT, run
 
 ACTION_PATH = Path(os.environ["GITHUB_ACTION_PATH"])
-ENV_PATH = ACTION_PATH / ".black-env"
+ENV_PATH = ACTION_PATH / ".prism-env"
 ENV_BIN = ENV_PATH / ("Scripts" if sys.platform == "win32" else "bin")
 OPTIONS = os.getenv("INPUT_OPTIONS", default="")
 SRC = os.getenv("INPUT_SRC", default="")
@@ -22,7 +22,7 @@ if JUPYTER:
     extra_deps = "[colorama,jupyter]"
 else:
     extra_deps = "[colorama]"
-req = f"black{extra_deps}{version_specifier}"
+req = f"prism{extra_deps}{version_specifier}"
 pip_proc = run(
     [str(ENV_BIN / "python"), "-m", "pip", "install", req],
     stdout=PIPE,
@@ -31,11 +31,11 @@ pip_proc = run(
 )
 if pip_proc.returncode:
     print(pip_proc.stdout)
-    print("::error::Failed to install Black.", flush=True)
+    print("::error::Failed to install Prism.", flush=True)
     sys.exit(pip_proc.returncode)
 
 
-base_cmd = [str(ENV_BIN / "black")]
+base_cmd = [str(ENV_BIN / "prism")]
 if BLACK_ARGS:
     # TODO: remove after a while since this is deprecated in favour of SRC + OPTIONS.
     proc = run([*base_cmd, *shlex.split(BLACK_ARGS)])

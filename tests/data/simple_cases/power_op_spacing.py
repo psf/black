@@ -49,7 +49,7 @@ p = {(k, k**2): v**2.0 for k, v in pairs}
 q = [10.5**i for i in range(6)]
 
 
-# WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/black/issues/2873)
+# WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/prism/issues/2873)
 if hasattr(view, "sum_of_weights"):
     return np.divide(  # type: ignore[no-any-return]
         view.variance,  # type: ignore[union-attr]
@@ -117,7 +117,7 @@ p = {(k, k**2): v**2.0 for k, v in pairs}
 q = [10.5**i for i in range(6)]
 
 
-# WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/black/issues/2873)
+# WE SHOULD DEFINITELY NOT EAT THESE COMMENTS (https://github.com/psf/prism/issues/2873)
 if hasattr(view, "sum_of_weights"):
     return np.divide(  # type: ignore[no-any-return]
         view.variance,  # type: ignore[union-attr]

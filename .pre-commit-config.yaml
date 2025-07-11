@@ -17,7 +17,7 @@ repos:
           ]
 
       - id: check-version-in-the-basics-example
-        name: Check black version in the basics example
+        name: Check prism version in the basics example
         language: python
         entry: python -m scripts.check_version_in_basics_example
         files: '(CHANGES\.md|the_basics\.md)$'

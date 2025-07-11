@@ -1,6 +1,6 @@
-"""Helper script for psf/black's diff-shades Github Actions integration.
+"""Helper script for psf/prism's diff-shades Github Actions integration.
 
-diff-shades is a tool for analyzing what happens when you run Black on
+diff-shades is a tool for analyzing what happens when you run Prism on
 OSS code capturing it for comparisons or other usage. It's used here to
 help measure the impact of a change *before* landing it (in particular
 posting a comment on completion for PRs).
@@ -11,7 +11,7 @@ resolving, caching, and PR comment logic is contained here.
 
 For more information, please see the developer docs:
 
-https://black.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades
+https://prism.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades
 """
 
 import json
@@ -37,13 +37,13 @@ else:
 COMMENT_FILE: Final = ".pr-comment.json"
 DIFF_STEP_NAME: Final = "Generate HTML diff report"
 DOCS_URL: Final = (
-    "https://black.readthedocs.io/en/latest/"
+    "https://prism.readthedocs.io/en/latest/"
     "contributing/gauging_changes.html#diff-shades"
 )
-USER_AGENT: Final = f"psf/black diff-shades workflow via urllib3/{urllib3.__version__}"
+USER_AGENT: Final = f"psf/prism diff-shades workflow via urllib3/{urllib3.__version__}"
 SHA_LENGTH: Final = 10
 GH_API_TOKEN: Final = os.getenv("GITHUB_TOKEN")
-REPO: Final = os.getenv("GITHUB_REPOSITORY", default="psf/black")
+REPO: Final = os.getenv("GITHUB_REPOSITORY", default="psf/prism")
 http = urllib3.PoolManager()
 
 
@@ -94,7 +94,7 @@ def get_pr_revision(pr: int) -> str:
 
 
 def get_pypi_version() -> Version:
-    data = http_get("https://pypi.org/pypi/black/json")
+    data = http_get("https://pypi.org/pypi/prism/json")
     versions = [Version(v) for v in data["releases"]]
     sorted_versions = sorted(versions, reverse=True)
     return sorted_versions[0]
@@ -112,7 +112,7 @@ def config(event: Literal["push", "pull_request"]) -> None:
 
     if event == "push":
         jobs = [{"mode": "preview-changes", "force-flag": "--force-preview-style"}]
-        # Push on main, let's use PyPI Black as the baseline.
+        # Push on main, let's use PyPI Prism as the baseline.
         baseline_name = str(get_pypi_version())
         baseline_cmd = f"git checkout {baseline_name}"
         target_rev = os.getenv("GITHUB_SHA")

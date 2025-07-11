@@ -1,5 +1,5 @@
 <!--
-black documentation master file, created by
+prism documentation master file, created by
 sphinx-quickstart on Fri Mar 23 10:53:30 2018.
 -->
 
@@ -7,33 +7,33 @@ sphinx-quickstart on Fri Mar 23 10:53:30 2018.
 
 > “Any color you like.”
 
-By using _Black_, you agree to cede control over minutiae of hand-formatting. In return,
-_Black_ gives you speed, determinism, and freedom from `pycodestyle` nagging about
+By using _Prism_, you agree to cede control over minutiae of hand-formatting. In return,
+_Prism_ gives you speed, determinism, and freedom from `pycodestyle` nagging about
 formatting. You will save time and mental energy for more important matters.
 
-_Black_ makes code review faster by producing the smallest diffs possible. Blackened
+_Prism_ makes code review faster by producing the smallest diffs possible. Prismened
 code looks the same regardless of the project you're reading. Formatting becomes
 transparent after a while and you can focus on the content instead.
 
-Try it out now using the [Black Playground](https://black.vercel.app).
+Try it out now using the [Prism Playground](https://prism.vercel.app).
 
-```{admonition} Note - Black is now stable!
-*Black* is [successfully used](https://github.com/psf/black#used-by) by
-many projects, small and big. *Black* has a comprehensive test suite, with efficient
+```{admonition} Note - Prism is now stable!
+*Prism* is [successfully used](https://github.com/psf/prism#used-by) by
+many projects, small and big. *Prism* has a comprehensive test suite, with efficient
 parallel tests, our own auto formatting and parallel Continuous Integration runner.
 Now that we have become stable, you should not expect large formatting to changes in
 the future. Stylistic changes will mostly be responses to bug reports and support for new Python
 syntax.
 
-Also, as a safety measure which slows down processing, *Black* will check that the
+Also, as a safety measure which slows down processing, *Prism* will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
 original (see the
-[Pragmatism](./the_black_code_style/current_style.md#pragmatism)
+[Pragmatism](./the_prism_code_style/current_style.md#pragmatism)
 section for details). If you're feeling confident, use `--fast`.
 ```
 
 ```{note}
-{doc}`Black is licensed under the MIT license <license>`.
+{doc}`Prism is licensed under the MIT license <license>`.
 ```
 
 ## Testimonials
@@ -48,7 +48,7 @@ section for details). If you're feeling confident, use `--fast`.
 **Dusty Phillips**,
 [writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
 
-> _Black is opinionated so you don't have to be._
+> _Prism is opinionated so you don't have to be._
 
 **Hynek Schlawack**, creator of [attrs](https://www.attrs.org/), core developer of
 Twisted and CPython:
@@ -69,20 +69,20 @@ Twisted and CPython:
 Use the badge in your project's README.md:
 
 ```md
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code style: prism](https://img.shields.io/badge/code%20style-prism-000000.svg)](https://github.com/psf/prism)
 ```
 
 Using the badge in README.rst:
 
 ```rst
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/psf/black
+.. image:: https://img.shields.io/badge/code%20style-prism-000000.svg
+   :target: https://github.com/psf/prism
 ```
 
 Looks like this:
 
-```{image} https://img.shields.io/badge/code%20style-black-000000.svg
-:target: https://github.com/psf/black
+```{image} https://img.shields.io/badge/code%20style-prism-000000.svg
+:target: https://github.com/psf/prism
 ```
 
 ## Contents
@@ -93,7 +93,7 @@ maxdepth: 3
 includehidden:
 ---
 
-the_black_code_style/index
+the_prism_code_style/index
 ```
 
 ```{toctree}
@@ -128,8 +128,8 @@ hidden:
 caption: Project Links
 ---
 
-GitHub <https://github.com/psf/black>
-PyPI <https://pypi.org/project/black>
+GitHub <https://github.com/psf/prism>
+PyPI <https://pypi.org/project/prism>
 Chat <https://discord.gg/RtVdv86PrH>
 ```
 

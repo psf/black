@@ -1,12 +1,12 @@
 """
 Check that the rev value in the example pre-commit configuration matches
-the latest version of Black. This saves us from forgetting to update that
+the latest version of Prism. This saves us from forgetting to update that
 during the release process.
 
 Why can't we just use `rev: stable` and call it a day? Well pre-commit
 won't auto update the hook as you may expect (and for good reasons, some
 technical and some pragmatic). Encouraging bad practice is also just
-not ideal. xref: https://github.com/psf/black/issues/420
+not ideal. xref: https://github.com/psf/prism/issues/420
 """
 
 import os
