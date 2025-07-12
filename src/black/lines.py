@@ -872,6 +872,12 @@ def is_line_short_enough(  # noqa: C901
             max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
 
         if is_multiline_string(leaf):
+            if leaf.parent and (
+                leaf.parent.type == syms.test
+                or (leaf.parent.parent and leaf.parent.parent.type == syms.dictsetmaker)
+            ):
+                # Keep ternary and dictionary values parenthesized
+                return False
             if len(multiline_string_contexts) > 0:
                 # >1 multiline string cannot fit on a single line - force split
                 return False

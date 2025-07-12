@@ -29,6 +29,7 @@
 
 - Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
   be formatted (#4552)
+- Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
 - Fix a bug where `string_processing` would not split f-strings directly after
   expressions (#4680)
 
