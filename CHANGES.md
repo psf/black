@@ -21,6 +21,7 @@
 - Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
 - Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
   (#4676)
+- Fix crash on parenthesized expression inside a type parameter bound (#4684)
 
 ### Preview style
 
