@@ -152,7 +152,7 @@ plain strings. f-strings will not be merged if they contain internal quotes and 
 change their quotation mark style. User-made splits are respected when they do not
 exceed the line length limit. Line continuation backslashes are converted into
 parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
-this feature istracked in [this issue](https://github.com/psf/black/issues/2188).
+this feature is tracked in [this issue](https://github.com/psf/black/issues/2188).
 
 (labels/multiline-string-handling)=
 

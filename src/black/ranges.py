@@ -155,7 +155,7 @@ def adjusted_lines(
 
 
 def convert_unchanged_lines(src_node: Node, lines: Collection[tuple[int, int]]) -> None:
-    """Converts unchanged lines to STANDALONE_COMMENT.
+    r"""Converts unchanged lines to STANDALONE_COMMENT.
 
     The idea is similar to how `# fmt: on/off` is implemented. It also converts the
     nodes between those markers as a single `STANDALONE_COMMENT` leaf node with
@@ -275,7 +275,7 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
             # We will check `simple_stmt` and `stmt+` separately against the lines set
             parent_sibling = leaf.parent.prev_sibling
             nodes_to_ignore = []
-            while parent_sibling and not parent_sibling.type == syms.suite:
+            while parent_sibling and parent_sibling.type != syms.suite:
                 # NOTE: Multiple suite nodes can exist as siblings in e.g. `if_stmt`.
                 nodes_to_ignore.insert(0, parent_sibling)
                 parent_sibling = parent_sibling.prev_sibling
