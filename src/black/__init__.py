@@ -1239,10 +1239,7 @@ def _format_str_once(
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
-        for feature in {
-            Feature.TRAILING_COMMA_IN_CALL,
-            Feature.TRAILING_COMMA_IN_DEF,
-        }
+        for feature in {Feature.TRAILING_COMMA_IN_CALL, Feature.TRAILING_COMMA_IN_DEF}
         if supports_feature(versions, feature)
     }
     block: Optional[LinesBlock] = None
