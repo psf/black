@@ -1030,7 +1030,7 @@ def format_stdin_to_stdout(
                 dst += newline
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-            now = datetime.now(tz=timezone.utc)
+            now = datetime.now(timezone.utc)
             src_name = f"STDIN\t{then}"
             dst_name = f"STDOUT\t{now}"
             d = diff(src, dst, src_name, dst_name)
@@ -1266,7 +1266,6 @@ def _format_str_once(
         if "\n" in normalized_contents:
             return newline_type
         return ""
-    # print(f"{src_contents=}\n{normalized_contents=}\n{newline_type=}\n")
     return "".join(dst_contents).replace("\n", newline_type)
 
 
@@ -1276,7 +1275,6 @@ def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
     `newline` is either CRLF or LF but `decoded_contents` is decoded with
     universal newlines (i.e. only contains LF).
     """
-    # breakpoint()
     srcbuf = io.BytesIO(src)
     encoding, lines = tokenize.detect_encoding(srcbuf.readline)
     if not lines:
