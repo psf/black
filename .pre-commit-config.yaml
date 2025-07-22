@@ -24,12 +24,12 @@ repos:
         additional_dependencies: *version_check_dependencies
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 6.0.1
     hooks:
       - id: isort
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.1
+    rev: 7.3.0
     hooks:
       - id: flake8
         additional_dependencies:
@@ -39,7 +39,7 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.16.1
     hooks:
       - id: mypy
         exclude: ^(docs/conf.py|scripts/generate_schema.py)$
@@ -48,7 +48,9 @@ repos:
           - types-PyYAML
           - types-atheris
           - tomli >= 0.2.6, < 2.0.0
-          - click >= 8.1.0, != 8.1.4, != 8.1.5
+          - click >= 8.2.0
+          # Click is intentionally out-of-sync with pyproject.toml
+          # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
           - packaging >= 22.0
           - platformdirs >= 2.1.0
           - pytokens >= 0.1.10
@@ -64,11 +66,11 @@ repos:
         args: ["--python-version=3.10"]
         additional_dependencies: *mypy_deps
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v4.0.0-alpha.8
+  - repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.6.2
     hooks:
       - id: prettier
-        types_or: [css, javascript, html, json, yaml]
+        types_or: [markdown, yaml, json]
         exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks

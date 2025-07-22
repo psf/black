@@ -40,6 +40,7 @@ from black.nodes import (
     ensure_visible,
     fstring_to_string,
     get_annotation_type,
+    has_sibling_with_type,
     is_arith_like,
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
@@ -792,12 +793,26 @@ def left_hand_split(
         head_leaves: list[Leaf] = []
         current_leaves = head_leaves
         matching_bracket: Optional[Leaf] = None
-        for leaf in line.leaves:
+        depth = 0
+        for index, leaf in enumerate(line.leaves):
+            if index == 2 and leaf.type == token.LSQB:
+                # A [ at index 2 means this is a type param, so start
+                # tracking the depth
+                depth += 1
+            elif depth > 0:
+                if leaf.type == token.LSQB:
+                    depth += 1
+                elif leaf.type == token.RSQB:
+                    depth -= 1
             if (
                 current_leaves is body_leaves
                 and leaf.type in CLOSING_BRACKETS
                 and leaf.opening_bracket is matching_bracket
                 and isinstance(matching_bracket, Leaf)
+                # If the code is still on LPAR and we are inside a type
+                # param, ignore the match since this is searching
+                # for the function arguments
+                and not (leaf_type == token.LPAR and depth > 0)
             ):
                 ensure_visible(leaf)
                 ensure_visible(matching_bracket)
@@ -1640,6 +1655,11 @@ def maybe_make_parens_invisible_in_atom(
         or is_empty_tuple(node)
         or is_one_tuple(node)
         or (is_tuple(node) and parent.type == syms.asexpr_test)
+        or (
+            is_tuple(node)
+            and parent.type == syms.with_stmt
+            and has_sibling_with_type(node, token.COMMA)
+        )
         or (is_yield(node) and parent.type != syms.expr_stmt)
         or (
             # This condition tries to prevent removing non-optional brackets

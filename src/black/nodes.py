@@ -1075,3 +1075,21 @@ def furthest_ancestor_with_last_leaf(leaf: Leaf) -> LN:
     while node.parent and node.parent.children and node is node.parent.children[-1]:
         node = node.parent
     return node
+
+
+def has_sibling_with_type(node: LN, type: int) -> bool:
+    # Check previous siblings
+    sibling = node.prev_sibling
+    while sibling is not None:
+        if sibling.type == type:
+            return True
+        sibling = sibling.prev_sibling
+
+    # Check next siblings
+    sibling = node.next_sibling
+    while sibling is not None:
+        if sibling.type == type:
+            return True
+        sibling = sibling.next_sibling
+
+    return False
