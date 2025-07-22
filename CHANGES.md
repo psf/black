@@ -26,6 +26,7 @@
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
 - Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
   be formatted (#4552)
 - Standardize type comments to form `# type: <value>` (#4645)
