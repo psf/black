@@ -12,8 +12,8 @@ jobs:
   comment:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "*"
 
@@ -33,7 +33,7 @@ jobs:
       - name: Try to find pre-existing PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
         id: find-comment
-        uses: peter-evans/find-comment@b657a70ff16d17651703a84bee1cb9ad9d2be2ea
+        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e
         with:
           issue-number: ${{ steps.metadata.outputs.pr-number }}
           comment-author: "github-actions[bot]"
@@ -41,7 +41,7 @@ jobs:
 
       - name: Create or update PR comment
         if: steps.metadata.outputs.needs-comment == 'true'
-        uses: peter-evans/create-or-update-comment@5adcb0bb0f9fb3f95ef05400558bdb3f329ee808
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ steps.metadata.outputs.pr-number }}

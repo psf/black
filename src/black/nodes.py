@@ -3,12 +3,9 @@ blib2to3 Node/Leaf transformation-related utility functions.
 """
 
 import sys
-from typing import Generic, Iterator, List, Optional, Set, Tuple, TypeVar, Union
+from collections.abc import Iterator
+from typing import Final, Generic, Literal, Optional, TypeVar, Union
 
-if sys.version_info >= (3, 8):
-    from typing import Final
-else:
-    from typing_extensions import Final
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
 else:
@@ -17,7 +14,8 @@ else:
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.strings import has_triple_quotes
+from black.mode import Mode
+from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import NL, Leaf, Node, type_repr
@@ -107,6 +105,7 @@ TEST_DESCENDANTS: Final = {
     syms.trailer,
     syms.term,
     syms.power,
+    syms.namedexpr_test,
 }
 TYPED_NAMES: Final = {syms.tname, syms.tname_star}
 ASSIGNMENTS: Final = {
@@ -124,6 +123,7 @@ ASSIGNMENTS: Final = {
     ">>=",
     "**=",
     "//=",
+    ":",
 }
 
 IMPLICIT_TUPLE: Final = {syms.testlist, syms.testlist_star_expr, syms.exprlist}
@@ -135,7 +135,13 @@ BRACKET: Final = {
 OPENING_BRACKETS: Final = set(BRACKET.keys())
 CLOSING_BRACKETS: Final = set(BRACKET.values())
 BRACKETS: Final = OPENING_BRACKETS | CLOSING_BRACKETS
-ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {token.COMMA, STANDALONE_COMMENT}
+ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
+    token.COMMA,
+    STANDALONE_COMMENT,
+    token.FSTRING_MIDDLE,
+    token.FSTRING_END,
+    token.BANG,
+}
 
 RARROW = 55
 
@@ -175,15 +181,15 @@ class Visitor(Generic[T]):
                 yield from self.visit(child)
 
 
-def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
+def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # noqa: C901
     """Return whitespace prefix if needed for the given `leaf`.
 
     `complex_subscript` signals whether the given leaf is part of a subscription
     which has non-trivial arguments, like arithmetic expressions or function calls.
     """
-    NO: Final = ""
-    SPACE: Final = " "
-    DOUBLESPACE: Final = "  "
+    NO: Final[str] = ""
+    SPACE: Final[str] = " "
+    DOUBLESPACE: Final[str] = "  "
     t = leaf.type
     p = leaf.parent
     v = leaf.value
@@ -199,6 +205,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         syms.subscriptlist,
         syms.sliceop,
     }:
+        return NO
+
+    if t == token.LBRACE and p.type == syms.fstring_replacement_field:
         return NO
 
     prev = leaf.prev_sibling
@@ -235,9 +244,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
         elif (
             prevp.type == token.STAR
             and parent_type(prevp) == syms.star_expr
-            and parent_type(prevp.parent) == syms.subscriptlist
+            and parent_type(prevp.parent) in (syms.subscriptlist, syms.tname_star)
         ):
-            # No space between typevar tuples.
+            # No space between typevar tuples or unpacking them.
             return NO
 
         elif prevp.type in VARARGS_SPECIALS:
@@ -260,6 +269,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             return NO
 
     elif prev.type in OPENING_BRACKETS:
+        return NO
+
+    elif prev.type == token.BANG:
         return NO
 
     if p.type in {syms.parameters, syms.arglist}:
@@ -349,6 +361,9 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
 
             return NO
 
+        elif t == token.COLONEQUAL or prev.type == token.COLONEQUAL:
+            return SPACE
+
         elif not complex_subscript:
             return NO
 
@@ -380,6 +395,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
                 return NO
 
+        # TODO: add fstring here?
         elif t in {token.NAME, token.NUMBER, token.STRING}:
             return NO
 
@@ -405,6 +421,13 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool) -> str:  # noqa: C901
     return SPACE
 
 
+def make_simple_prefix(nl_count: int, form_feed: bool, empty_line: str = "\n") -> str:
+    """Generate a normalized prefix string."""
+    if form_feed:
+        return (empty_line * (nl_count - 1)) + "\f" + empty_line
+    return empty_line * nl_count
+
+
 def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     """Return the first leaf that precedes `node`, if any."""
     while node:
@@ -423,7 +446,7 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     return None
 
 
-def prev_siblings_are(node: Optional[LN], tokens: List[Optional[NodeType]]) -> bool:
+def prev_siblings_are(node: Optional[LN], tokens: list[Optional[NodeType]]) -> bool:
     """Return if the `node` and its previous siblings match types against the provided
     list of tokens; the provided `node`has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
@@ -522,14 +545,31 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
-def is_docstring(leaf: Leaf) -> bool:
+def is_docstring(node: NL) -> bool:
+    if isinstance(node, Leaf):
+        if node.type != token.STRING:
+            return False
+
+        prefix = get_string_prefix(node.value)
+        if set(prefix).intersection("bBfF"):
+            return False
+
+    if (
+        node.parent
+        and node.parent.type == syms.simple_stmt
+        and not node.parent.prev_sibling
+        and node.parent.parent
+        and node.parent.parent.type == syms.file_input
+    ):
+        return True
+
     if prev_siblings_are(
-        leaf.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
+        node.parent, [None, token.NEWLINE, token.INDENT, syms.simple_stmt]
     ):
         return True
 
     # Multiline docstring on the same line as the `def`.
-    if prev_siblings_are(leaf.parent, [syms.parameters, token.COLON, syms.simple_stmt]):
+    if prev_siblings_are(node.parent, [syms.parameters, token.COLON, syms.simple_stmt]):
         # `syms.parameters` is only used in funcdefs and async_funcdefs in the Python
         # grammar. We're safe to return True without further checks.
         return True
@@ -563,11 +603,55 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
+def is_tuple(node: LN) -> bool:
+    """Return True if `node` holds a tuple."""
+    if node.type != syms.atom:
+        return False
+    gexp = unwrap_singleton_parenthesis(node)
+    if gexp is None or gexp.type != syms.testlist_gexp:
+        return False
+
+    return True
+
+
+def is_tuple_containing_walrus(node: LN) -> bool:
+    """Return True if `node` holds a tuple that contains a walrus operator."""
+    if node.type != syms.atom:
+        return False
+    gexp = unwrap_singleton_parenthesis(node)
+    if gexp is None or gexp.type != syms.testlist_gexp:
+        return False
+
+    return any(child.type == syms.namedexpr_test for child in gexp.children)
+
+
+def is_tuple_containing_star(node: LN) -> bool:
+    """Return True if `node` holds a tuple that contains a star operator."""
+    if node.type != syms.atom:
+        return False
+    gexp = unwrap_singleton_parenthesis(node)
+    if gexp is None or gexp.type != syms.testlist_gexp:
+        return False
+
+    return any(child.type == syms.star_expr for child in gexp.children)
+
+
+def is_generator(node: LN) -> bool:
+    """Return True if `node` holds a generator."""
+    if node.type != syms.atom:
+        return False
+    gexp = unwrap_singleton_parenthesis(node)
+    if gexp is None or gexp.type != syms.testlist_gexp:
+        return False
+
+    return any(child.type == syms.old_comp_for for child in gexp.children)
+
+
 def is_one_sequence_between(
     opening: Leaf,
     closing: Leaf,
-    leaves: List[Leaf],
-    brackets: Tuple[int, int] = (token.LPAR, token.RPAR),
+    leaves: list[Leaf],
+    brackets: tuple[int, int] = (token.LPAR, token.RPAR),
 ) -> bool:
     """Return True if content between `opening` and `closing` is a one-sequence."""
     if (opening.type, closing.type) != brackets:
@@ -677,7 +761,7 @@ def is_yield(node: LN) -> bool:
     return False
 
 
-def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
+def is_vararg(leaf: Leaf, within: set[NodeType]) -> bool:
     """Return True if `leaf` is a star or double star in a vararg or kwarg.
 
     If `within` includes VARARGS_PARENTS, this applies to function signatures.
@@ -700,19 +784,60 @@ def is_vararg(leaf: Leaf, within: Set[NodeType]) -> bool:
     return p.type in within
 
 
-def is_multiline_string(leaf: Leaf) -> bool:
+def is_fstring(node: Node) -> bool:
+    """Return True if the node is an f-string"""
+    return node.type == syms.fstring
+
+
+def fstring_to_string(node: Node) -> Leaf:
+    """Converts an fstring node back to a string node."""
+    string_without_prefix = str(node)[len(node.prefix) :]
+    string_leaf = Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
+    string_leaf.lineno = node.get_lineno() or 0
+    return string_leaf
+
+
+def is_multiline_string(node: LN) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
+    if isinstance(node, Node) and is_fstring(node):
+        leaf = fstring_to_string(node)
+    elif isinstance(node, Leaf):
+        leaf = node
+    else:
+        return False
+
     return has_triple_quotes(leaf.value) and "\n" in leaf.value
+
+
+def is_parent_function_or_class(node: Node) -> bool:
+    assert node.type in {syms.suite, syms.simple_stmt}
+    assert node.parent is not None
+    # Note this works for suites / simple_stmts in async def as well
+    return node.parent.type in {syms.funcdef, syms.classdef}
+
+
+def is_function_or_class(node: Node) -> bool:
+    return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
 
 
 def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
+    if node.parent is not None and not is_parent_function_or_class(node):
+        return False
+
+    # If there is a comment, we want to keep it.
+    if node.prefix.strip():
+        return False
+
     if (
         len(node.children) != 4
         or node.children[0].type != token.NEWLINE
         or node.children[1].type != token.INDENT
         or node.children[3].type != token.DEDENT
     ):
+        return False
+
+    if node.children[3].prefix.strip():
         return False
 
     return is_stub_body(node.children[2])
@@ -728,7 +853,8 @@ def is_stub_body(node: LN) -> bool:
 
     child = node.children[0]
     return (
-        child.type == syms.atom
+        not child.prefix.strip()
+        and child.type == syms.atom
         and len(child.children) == 3
         and all(leaf == Leaf(token.DOT, ".") for leaf in child.children)
     )
@@ -778,12 +904,54 @@ def is_import(leaf: Leaf) -> bool:
     )
 
 
-def is_type_comment(leaf: Leaf, suffix: str = "") -> bool:
-    """Return True if the given leaf is a special comment.
-    Only returns true for type comments for now."""
+def is_with_or_async_with_stmt(leaf: Leaf) -> bool:
+    """Return True if the given leaf starts a with or async with statement."""
+    return bool(
+        leaf.type == token.NAME
+        and leaf.value == "with"
+        and leaf.parent
+        and leaf.parent.type == syms.with_stmt
+    ) or bool(
+        leaf.type == token.ASYNC
+        and leaf.next_sibling
+        and leaf.next_sibling.type == syms.with_stmt
+    )
+
+
+def is_async_stmt_or_funcdef(leaf: Leaf) -> bool:
+    """Return True if the given leaf starts an async def/for/with statement.
+
+    Note that `async def` can be either an `async_stmt` or `async_funcdef`,
+    the latter is used when it has decorators.
+    """
+    return bool(
+        leaf.type == token.ASYNC
+        and leaf.parent
+        and leaf.parent.type in {syms.async_stmt, syms.async_funcdef}
+    )
+
+
+def is_type_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a type comment. This function should only
+    be used for general type comments (excluding ignore annotations, which should
+    use `is_type_ignore_comment`). Note that general type comments are no longer
+    used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:" + suffix)
+    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
+
+
+def is_type_ignore_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a type comment with ignore annotation."""
+    t = leaf.type
+    v = leaf.value
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(v)
+
+
+def is_type_ignore_comment_string(value: str) -> bool:
+    """Return True if the given string match with type comment with
+    ignore annotation."""
+    return value.startswith("# type: ignore")
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
@@ -842,9 +1010,69 @@ def is_rpar_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.RPAR
 
 
-def is_string_token(nl: NL) -> TypeGuard[Leaf]:
-    return nl.type == token.STRING
-
-
 def is_number_token(nl: NL) -> TypeGuard[Leaf]:
     return nl.type == token.NUMBER
+
+
+def get_annotation_type(leaf: Leaf) -> Literal["return", "param", None]:
+    """Returns the type of annotation this leaf is part of, if any."""
+    ancestor = leaf.parent
+    while ancestor is not None:
+        if ancestor.prev_sibling and ancestor.prev_sibling.type == token.RARROW:
+            return "return"
+        if ancestor.parent and ancestor.parent.type == syms.tname:
+            return "param"
+        ancestor = ancestor.parent
+    return None
+
+
+def is_part_of_annotation(leaf: Leaf) -> bool:
+    """Returns whether this leaf is part of a type annotation."""
+    assert leaf.parent is not None
+    return get_annotation_type(leaf) is not None
+
+
+def first_leaf(node: LN) -> Optional[Leaf]:
+    """Returns the first leaf of the ancestor node."""
+    if isinstance(node, Leaf):
+        return node
+    elif not node.children:
+        return None
+    else:
+        return first_leaf(node.children[0])
+
+
+def last_leaf(node: LN) -> Optional[Leaf]:
+    """Returns the last leaf of the ancestor node."""
+    if isinstance(node, Leaf):
+        return node
+    elif not node.children:
+        return None
+    else:
+        return last_leaf(node.children[-1])
+
+
+def furthest_ancestor_with_last_leaf(leaf: Leaf) -> LN:
+    """Returns the furthest ancestor that has this leaf node as the last leaf."""
+    node: LN = leaf
+    while node.parent and node.parent.children and node is node.parent.children[-1]:
+        node = node.parent
+    return node
+
+
+def has_sibling_with_type(node: LN, type: int) -> bool:
+    # Check previous siblings
+    sibling = node.prev_sibling
+    while sibling is not None:
+        if sibling.type == type:
+            return True
+        sibling = sibling.prev_sibling
+
+    # Check next siblings
+    sibling = node.next_sibling
+    while sibling is not None:
+        if sibling.type == type:
+            return True
+        sibling = sibling.next_sibling
+
+    return False

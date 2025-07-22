@@ -13,13 +13,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-20.04, macos-latest]
+        os: [windows-2025, ubuntu-22.04, macos-latest]
         include:
-          - os: windows-2019
+          - os: windows-2025
             pathsep: ";"
             asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             pathsep: ":"
             asset_name: black_linux
             executable_mime: "application/x-executable"
@@ -29,12 +29,12 @@ jobs:
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up latest Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "*"
+          python-version: "3.12.4"
 
       - name: Install Black and PyInstaller
         run: |

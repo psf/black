@@ -21,18 +21,14 @@ import pprint
 import subprocess
 import sys
 import zipfile
+from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Final, Literal
 
 import click
 import urllib3
 from packaging.version import Version
-
-if sys.version_info >= (3, 8):
-    from typing import Final, Literal
-else:
-    from typing_extensions import Final, Literal
 
 COMMENT_FILE: Final = ".pr-comment.json"
 DIFF_STEP_NAME: Final = "Generate HTML diff report"
@@ -52,7 +48,17 @@ def set_output(name: str, value: str) -> None:
         print(f"[INFO]: setting '{name}' to '{value}'")
     else:
         print(f"[INFO]: setting '{name}' to [{len(value)} chars]")
-    print(f"::set-output name={name}::{value}")
+
+    if "GITHUB_OUTPUT" in os.environ:
+        if "\n" in value:
+            # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+            delimiter = b64encode(os.urandom(16)).decode()
+            value = f"{delimiter}\n{value}\n{delimiter}"
+            command = f"{name}<<{value}"
+        else:
+            command = f"{name}={value}"
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            print(command, file=f)
 
 
 def http_get(url: str, *, is_json: bool = True, **kwargs: Any) -> Any:
@@ -108,7 +114,7 @@ def main() -> None:
 @main.command("config", help="Acquire run configuration and metadata.")
 @click.argument("event", type=click.Choice(["push", "pull_request"]))
 def config(event: Literal["push", "pull_request"]) -> None:
-    import diff_shades
+    import diff_shades  # type: ignore[import-not-found]
 
     if event == "push":
         jobs = [{"mode": "preview-changes", "force-flag": "--force-preview-style"}]
@@ -218,9 +224,7 @@ def comment_details(run_id: str) -> None:
     # while it's still in progress seems impossible).
     body = body.replace("$workflow-run-url", data["html_url"])
     body = body.replace("$job-diff-url", diff_url)
-    # https://github.community/t/set-output-truncates-multiline-strings/16852/3
-    escaped = body.replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
-    set_output("comment-body", escaped)
+    set_output("comment-body", body)
 
 
 if __name__ == "__main__":

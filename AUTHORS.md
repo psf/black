@@ -10,9 +10,10 @@ Maintained with:
 - [Mika Naylor](mailto:mail@autophagy.io)
 - [Zsolt Dollenstein](mailto:zsol.zsol@gmail.com)
 - [Cooper Lees](mailto:me@cooperlees.com)
-- Richard Si
+- [Richard Si](mailto:sichard26@gmail.com)
 - [Felix Hildén](mailto:felix.hilden@gmail.com)
 - [Batuhan Taskaya](mailto:batuhan@python.org)
+- [Shantanu Jain](mailto:hauntsaninja@gmail.com)
 
 Multiple contributions by:
 
@@ -180,6 +181,7 @@ Multiple contributions by:
 - [Tony Narlock](mailto:tony@git-pull.com)
 - [Tsuyoshi Hombashi](mailto:tsuyoshi.hombashi@gmail.com)
 - [Tushar Chandra](mailto:tusharchandra2018@u.northwestern.edu)
+- [Tushar Sadhwani](mailto:tushar.sadhwani000@gmail.com)
 - [Tzu-ping Chung](mailto:uranusjr@gmail.com)
 - [Utsav Shah](mailto:ukshah2@illinois.edu)
 - utsav-dbx

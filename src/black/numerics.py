@@ -1,6 +1,7 @@
 """
 Formatting numeric literals.
 """
+
 from blib2to3.pytree import Leaf
 
 
@@ -13,7 +14,7 @@ def format_hex(text: str) -> str:
 
 
 def format_scientific_notation(text: str) -> str:
-    """Formats a numeric string utilizing scentific notation"""
+    """Formats a numeric string utilizing scientific notation"""
     before, after = text.split("e")
     sign = ""
     if after.startswith("-"):

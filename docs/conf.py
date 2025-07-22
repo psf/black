@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
 #
@@ -14,10 +13,12 @@
 #
 
 import os
+import re
 import string
+from importlib.metadata import version
 from pathlib import Path
 
-from pkg_resources import get_distribution
+from sphinx.application import Sphinx
 
 CURRENT_DIR = Path(__file__).parent
 
@@ -25,10 +26,31 @@ CURRENT_DIR = Path(__file__).parent
 def make_pypi_svg(version: str) -> None:
     template: Path = CURRENT_DIR / "_static" / "pypi_template.svg"
     target: Path = CURRENT_DIR / "_static" / "pypi.svg"
-    with open(str(template), "r", encoding="utf8") as f:
+    with open(str(template), encoding="utf8") as f:
         svg: str = string.Template(f.read()).substitute(version=version)
     with open(str(target), "w", encoding="utf8") as f:
         f.write(svg)
+
+
+def replace_pr_numbers_with_links(content: str) -> str:
+    """Replaces all PR numbers with the corresponding GitHub link."""
+    return re.sub(r"#(\d+)", r"[#\1](https://github.com/psf/black/pull/\1)", content)
+
+
+def handle_include_read(
+    app: Sphinx,
+    relative_path: Path,
+    parent_docname: str,
+    content: list[str],
+) -> None:
+    """Handler for the include-read sphinx event."""
+    if parent_docname == "change_log":
+        content[0] = replace_pr_numbers_with_links(content[0])
+
+
+def setup(app: Sphinx) -> None:
+    """Sets up a minimal sphinx extension."""
+    app.connect("include-read", handle_include_read)
 
 
 # Necessary so Click doesn't hit an encode error when called by
@@ -43,7 +65,7 @@ author = "Łukasz Langa and contributors to Black"
 
 # Autopopulate version
 # The version, including alpha/beta/rc tags, but not commit hash and datestamps
-release = get_distribution("black").version.split("+")[0]
+release = version("black").split("+")[0]
 # The short X.Y version.
 version = release
 for sp in "abcfr":
@@ -149,15 +171,13 @@ htmlhelp_basename = "blackdoc"
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
-latex_documents = [
-    (
-        master_doc,
-        "black.tex",
-        "Documentation for Black",
-        "Łukasz Langa and contributors to Black",
-        "manual",
-    )
-]
+latex_documents = [(
+    master_doc,
+    "black.tex",
+    "Documentation for Black",
+    "Łukasz Langa and contributors to Black",
+    "manual",
+)]
 
 
 # -- Options for manual page output ------------------------------------------
@@ -172,17 +192,15 @@ man_pages = [(master_doc, "black", "Documentation for Black", [author], 1)]
 # Grouping the document tree into Texinfo files. List of tuples
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
-texinfo_documents = [
-    (
-        master_doc,
-        "Black",
-        "Documentation for Black",
-        author,
-        "Black",
-        "The uncompromising Python code formatter",
-        "Miscellaneous",
-    )
-]
+texinfo_documents = [(
+    master_doc,
+    "Black",
+    "Documentation for Black",
+    author,
+    "Black",
+    "The uncompromising Python code formatter",
+    "Miscellaneous",
+)]
 
 
 # -- Options for Epub output -------------------------------------------------
@@ -210,7 +228,14 @@ epub_exclude_files = ["search.html"]
 
 autodoc_member_order = "bysource"
 
+#  -- sphinx-copybutton configuration ----------------------------------------
+copybutton_prompt_text = (
+    r">>> |\.\.\. |> |\$ |\# | In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+)
+copybutton_prompt_is_regexp = True
+copybutton_remove_prompts = True
+
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"https://docs.python.org/3/": None}
+intersphinx_mapping = {"<name>": ("https://docs.python.org/3/", None)}

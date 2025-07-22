@@ -7,15 +7,16 @@ import traceback
 import venv
 import zipfile
 from argparse import ArgumentParser, Namespace
+from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Generator, List, NamedTuple, Optional, Tuple, Union, cast
+from typing import NamedTuple, Optional, Union, cast
 from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"
 PYPI_TOP_PACKAGES = (
-    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-30-days.min.json"
+    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages.min.json"
 )
 INTERNAL_BLACK_REPO = f"{tempfile.gettempdir()}/__black"
 
@@ -54,7 +55,7 @@ def get_pypi_download_url(package: str, version: Optional[str]) -> str:
     return cast(str, source["url"])
 
 
-def get_top_packages() -> List[str]:
+def get_top_packages() -> list[str]:
     with urlopen(PYPI_TOP_PACKAGES) as page:
         result = json.load(page)
 
@@ -150,7 +151,7 @@ def git_switch_branch(
     subprocess.run(args, cwd=repo)
 
 
-def init_repos(options: Namespace) -> Tuple[Path, ...]:
+def init_repos(options: Namespace) -> tuple[Path, ...]:
     options.output.mkdir(exist_ok=True)
 
     if options.top_packages:
@@ -206,7 +207,7 @@ def format_repo_with_version(
     git_switch_branch(black_version.version, repo=black_repo)
     git_switch_branch(current_branch, repo=repo, new=True, from_branch=from_branch)
 
-    format_cmd: List[Union[Path, str]] = [
+    format_cmd: list[Union[Path, str]] = [
         black_runner(black_version.version, black_repo),
         (black_repo / "black.py").resolve(),
         ".",
@@ -222,7 +223,7 @@ def format_repo_with_version(
     return current_branch
 
 
-def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
+def format_repos(repos: tuple[Path, ...], options: Namespace) -> None:
     black_versions = tuple(
         BlackVersion(*version.split(":")) for version in options.versions
     )
@@ -243,11 +244,9 @@ def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
 
 
 def main() -> None:
-    parser = ArgumentParser(
-        description="""Black Gallery is a script that
+    parser = ArgumentParser(description="""Black Gallery is a script that
     automates the process of applying different Black versions to a selected
-    PyPI package and seeing the results between versions."""
-    )
+    PyPI package and seeing the results between versions.""")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-p", "--pypi-package", help="PyPI package to download.")

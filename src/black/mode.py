@@ -4,18 +4,11 @@ Mostly around Python language feature support per version and Black configuratio
 chosen by the user.
 """
 
-import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Dict, Set
-from warnings import warn
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -30,6 +23,12 @@ class TargetVersion(Enum):
     PY39 = 9
     PY310 = 10
     PY311 = 11
+    PY312 = 12
+    PY313 = 13
+
+    def pretty(self) -> str:
+        assert self.name[:2] == "PY"
+        return f"Python {self.name[2]}.{self.name[3:]}"
 
 
 class Feature(Enum):
@@ -50,6 +49,10 @@ class Feature(Enum):
     EXCEPT_STAR = 14
     VARIADIC_GENERICS = 15
     DEBUG_F_STRINGS = 16
+    PARENTHESIZED_CONTEXT_MANAGERS = 17
+    TYPE_PARAMS = 18
+    FSTRING_PARSING = 19
+    TYPE_PARAM_DEFAULTS = 20
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -61,7 +64,7 @@ FUTURE_FLAG_TO_FEATURE: Final = {
 }
 
 
-VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
+VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
     TargetVersion.PY33: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY34: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY35: {Feature.TRAILING_COMMA_IN_CALL, Feature.ASYNC_IDENTIFIERS},
@@ -106,6 +109,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,
@@ -120,6 +124,7 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
     },
     TargetVersion.PY311: {
@@ -135,68 +140,116 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.POS_ONLY_ARGUMENTS,
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
     },
+    TargetVersion.PY312: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.FSTRING_PARSING,
+    },
+    TargetVersion.PY313: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.FSTRING_PARSING,
+        Feature.TYPE_PARAM_DEFAULTS,
+    },
 }
 
 
-def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
+def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
 class Preview(Enum):
     """Individual preview style features."""
 
-    annotation_parens = auto()
-    empty_lines_before_class_or_def_with_leading_comments = auto()
-    long_docstring_quotes_on_newline = auto()
-    normalize_docstring_quotes_and_prefixes_properly = auto()
-    one_element_subscript = auto()
-    remove_block_trailing_newline = auto()
-    remove_redundant_parens = auto()
+    # NOTE: string_processing requires wrap_long_dict_values_in_parens
+    # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
-    skip_magic_trailing_comma_in_subscript = auto()
+    hug_parens_with_braces_and_square_brackets = auto()
+    wrap_long_dict_values_in_parens = auto()
+    multiline_string_handling = auto()
+    always_one_newline_after_import = auto()
+    fix_fmt_skip_in_one_liners = auto()
+
+
+UNSTABLE_FEATURES: set[Preview] = {
+    # Many issues, see summary in https://github.com/psf/black/issues/4042
+    Preview.string_processing,
+    # See issue #4159
+    Preview.multiline_string_handling,
+    # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
+    Preview.hug_parens_with_braces_and_square_brackets,
+}
 
 
 class Deprecated(UserWarning):
     """Visible deprecation warning."""
 
 
+_MAX_CACHE_KEY_PART_LENGTH: Final = 32
+
+
 @dataclass
 class Mode:
-    target_versions: Set[TargetVersion] = field(default_factory=set)
+    target_versions: set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    experimental_string_processing: bool = False
-    python_cell_magics: Set[str] = field(default_factory=set)
+    python_cell_magics: set[str] = field(default_factory=set)
     preview: bool = False
-
-    def __post_init__(self) -> None:
-        if self.experimental_string_processing:
-            warn(
-                (
-                    "`experimental string processing` has been included in `preview`"
-                    " and deprecated. Use `preview` instead."
-                ),
-                Deprecated,
-            )
+    unstable: bool = False
+    enabled_features: set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
         Provide `Preview.FEATURE in Mode` syntax that mirrors the ``preview`` flag.
 
-        The argument is not checked and features are not differentiated.
-        They only exist to make development easier by clarifying intent.
+        In unstable mode, all features are enabled. In preview mode, all features
+        except those in UNSTABLE_FEATURES are enabled. Any features in
+        `self.enabled_features` are also enabled.
         """
-        if feature is Preview.string_processing:
-            return self.preview or self.experimental_string_processing
-        return self.preview
+        if self.unstable:
+            return True
+        if feature in self.enabled_features:
+            return True
+        return self.preview and feature not in UNSTABLE_FEATURES
 
     def get_cache_key(self) -> str:
         if self.target_versions:
@@ -206,6 +259,19 @@ class Mode:
             )
         else:
             version_str = "-"
+        if len(version_str) > _MAX_CACHE_KEY_PART_LENGTH:
+            version_str = sha256(version_str.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
+        features_and_magics = (
+            ",".join(sorted(f.name for f in self.enabled_features))
+            + "@"
+            + ",".join(sorted(self.python_cell_magics))
+        )
+        if len(features_and_magics) > _MAX_CACHE_KEY_PART_LENGTH:
+            features_and_magics = sha256(features_and_magics.encode()).hexdigest()[
+                :_MAX_CACHE_KEY_PART_LENGTH
+            ]
         parts = [
             version_str,
             str(self.line_length),
@@ -214,8 +280,8 @@ class Mode:
             str(int(self.is_ipynb)),
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
-            str(int(self.experimental_string_processing)),
             str(int(self.preview)),
-            sha256((",".join(sorted(self.python_cell_magics))).encode()).hexdigest(),
+            str(int(self.unstable)),
+            features_and_magics,
         ]
         return ".".join(parts)

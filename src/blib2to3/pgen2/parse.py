@@ -9,36 +9,24 @@ See Parser/parser.c in the Python distribution for additional info on
 how this parsing engine works.
 
 """
-import copy
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING, Any, Optional, Union, cast
+
+from blib2to3.pgen2.grammar import Grammar
+from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
 
 # Local imports
 from . import grammar, token, tokenize
-from typing import (
-    cast,
-    Any,
-    Optional,
-    Text,
-    Union,
-    Tuple,
-    Dict,
-    List,
-    Iterator,
-    Callable,
-    Set,
-    TYPE_CHECKING,
-)
-from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pytree import convert, NL, Context, RawNode, Leaf, Node
 
 if TYPE_CHECKING:
-    from blib2to3.driver import TokenProxy
+    from blib2to3.pgen2.driver import TokenProxy
 
 
-Results = Dict[Text, NL]
+Results = dict[str, NL]
 Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]
-DFA = List[List[Tuple[int, int]]]
-DFAS = Tuple[DFA, Dict[int, int]]
+DFA = list[list[tuple[int, int]]]
+DFAS = tuple[DFA, dict[int, int]]
 
 
 def lam_sub(grammar: Grammar, node: RawNode) -> NL:
@@ -51,24 +39,24 @@ DUMMY_NODE = (-1, None, None, None)
 
 
 def stack_copy(
-    stack: List[Tuple[DFAS, int, RawNode]]
-) -> List[Tuple[DFAS, int, RawNode]]:
+    stack: list[tuple[DFAS, int, RawNode]],
+) -> list[tuple[DFAS, int, RawNode]]:
     """Nodeless stack copy."""
     return [(dfa, label, DUMMY_NODE) for dfa, label, _ in stack]
 
 
 class Recorder:
-    def __init__(self, parser: "Parser", ilabels: List[int], context: Context) -> None:
+    def __init__(self, parser: "Parser", ilabels: list[int], context: Context) -> None:
         self.parser = parser
         self._ilabels = ilabels
         self.context = context  # not really matter
 
-        self._dead_ilabels: Set[int] = set()
+        self._dead_ilabels: set[int] = set()
         self._start_point = self.parser.stack
         self._points = {ilabel: stack_copy(self._start_point) for ilabel in ilabels}
 
     @property
-    def ilabels(self) -> Set[int]:
+    def ilabels(self) -> set[int]:
         return self._dead_ilabels.symmetric_difference(self._ilabels)
 
     @contextmanager
@@ -100,21 +88,17 @@ class Recorder:
         finally:
             self.parser.is_backtracking = is_backtracking
 
-    def add_token(self, tok_type: int, tok_val: Text, raw: bool = False) -> None:
-        func: Callable[..., Any]
-        if raw:
-            func = self.parser._addtoken
-        else:
-            func = self.parser.addtoken
-
+    def add_token(self, tok_type: int, tok_val: str, raw: bool = False) -> None:
         for ilabel in self.ilabels:
             with self.switch_to(ilabel):
-                args = [tok_type, tok_val, self.context]
                 if raw:
-                    args.insert(0, ilabel)
-                func(*args)
+                    self.parser._addtoken(ilabel, tok_type, tok_val, self.context)
+                else:
+                    self.parser.addtoken(tok_type, tok_val, self.context)
 
-    def determine_route(self, value: Optional[Text] = None, force: bool = False) -> Optional[int]:
+    def determine_route(
+        self, value: Optional[str] = None, force: bool = False
+    ) -> Optional[int]:
         alive_ilabels = self.ilabels
         if len(alive_ilabels) == 0:
             *_, most_successful_ilabel = self._dead_ilabels
@@ -131,10 +115,10 @@ class ParseError(Exception):
     """Exception to signal the parser is stuck."""
 
     def __init__(
-        self, msg: Text, type: Optional[int], value: Optional[Text], context: Context
+        self, msg: str, type: Optional[int], value: Optional[str], context: Context
     ) -> None:
         Exception.__init__(
-            self, "%s: type=%r, value=%r, context=%r" % (msg, type, value, context)
+            self, f"{msg}: type={type!r}, value={value!r}, context={context!r}"
         )
         self.msg = msg
         self.type = type
@@ -142,7 +126,7 @@ class ParseError(Exception):
         self.context = context
 
 
-class Parser(object):
+class Parser:
     """Parser engine.
 
     The proper usage sequence is:
@@ -210,6 +194,7 @@ class Parser(object):
         # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
         self.is_backtracking = False
+        self.last_token: Optional[int] = None
 
     def setup(self, proxy: "TokenProxy", start: Optional[int] = None) -> None:
         """Prepare for parsing.
@@ -231,12 +216,13 @@ class Parser(object):
         # where children is a list of nodes or None, and context may be None.
         newnode: RawNode = (start, None, None, [])
         stackentry = (self.grammar.dfas[start], 0, newnode)
-        self.stack: List[Tuple[DFAS, int, RawNode]] = [stackentry]
+        self.stack: list[tuple[DFAS, int, RawNode]] = [stackentry]
         self.rootnode: Optional[NL] = None
-        self.used_names: Set[str] = set()
+        self.used_names: set[str] = set()
         self.proxy = proxy
+        self.last_token = None
 
-    def addtoken(self, type: int, value: Text, context: Context) -> bool:
+    def addtoken(self, type: int, value: str, context: Context) -> bool:
         """Add a token; return True iff this is the end of the program."""
         # Map from token to label
         ilabels = self.classify(type, value, context)
@@ -284,7 +270,7 @@ class Parser(object):
 
         return self._addtoken(ilabel, type, value, context)
 
-    def _addtoken(self, ilabel: int, type: int, value: Text, context: Context) -> bool:
+    def _addtoken(self, ilabel: int, type: int, value: str, context: Context) -> bool:
         # Loop until the token is shifted; may raise exceptions
         while True:
             dfa, state, node = self.stack[-1]
@@ -316,6 +302,7 @@ class Parser(object):
                         dfa, state, node = self.stack[-1]
                         states, first = dfa
                     # Done with this token
+                    self.last_token = type
                     return False
 
             else:
@@ -329,7 +316,7 @@ class Parser(object):
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
 
-    def classify(self, type: int, value: Text, context: Context) -> List[int]:
+    def classify(self, type: int, value: str, context: Context) -> list[int]:
         """Turn a token into a label.  (Internal)
 
         Depending on whether the value is a soft-keyword or not,
@@ -342,9 +329,23 @@ class Parser(object):
                 return [self.grammar.keywords[value]]
             elif value in self.grammar.soft_keywords:
                 assert type in self.grammar.tokens
+                # Current soft keywords (match, case, type) can only appear at the
+                # beginning of a statement. So as a shortcut, don't try to treat them
+                # like keywords in any other context.
+                # ('_' is also a soft keyword in the real grammar, but for our grammar
+                # it's just an expression, so we don't need to treat it specially.)
+                if self.last_token not in (
+                    None,
+                    token.INDENT,
+                    token.DEDENT,
+                    token.NEWLINE,
+                    token.SEMI,
+                    token.COLON,
+                ):
+                    return [self.grammar.tokens[type]]
                 return [
-                    self.grammar.soft_keywords[value],
                     self.grammar.tokens[type],
+                    self.grammar.soft_keywords[value],
                 ]
 
         ilabel = self.grammar.tokens.get(type)
@@ -352,7 +353,7 @@ class Parser(object):
             raise ParseError("bad token", type, value, context)
         return [ilabel]
 
-    def shift(self, type: int, value: Text, newstate: int, context: Context) -> None:
+    def shift(self, type: int, value: str, newstate: int, context: Context) -> None:
         """Shift a token.  (Internal)"""
         if self.is_backtracking:
             dfa, state, _ = self.stack[-1]

@@ -5,19 +5,25 @@ Simple formatting on strings. Further string formatting code is in trans.py.
 import re
 import sys
 from functools import lru_cache
-from typing import List, Pattern
+from re import Match, Pattern
+from typing import Final
 
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
-
+from black._width_table import WIDTH_TABLE
+from blib2to3.pytree import Leaf
 
 STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
 STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
-FIRST_NON_WHITESPACE_RE: Final = re.compile(r"\s*\t+\s*(\S)")
+UNICODE_ESCAPE_RE: Final = re.compile(
+    r"(?P<backslashes>\\+)(?P<body>"
+    r"(u(?P<u>[a-fA-F0-9]{4}))"  # Character with 16-bit hex value xxxx
+    r"|(U(?P<U>[a-fA-F0-9]{8}))"  # Character with 32-bit hex value xxxxxxxx
+    r"|(x(?P<x>[a-fA-F0-9]{2}))"  # Character with hex value hh
+    r"|(N\{(?P<N>[a-zA-Z0-9 \-]{2,})\})"  # Character named name in the Unicode database
+    r")",
+    re.VERBOSE,
+)
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -38,32 +44,28 @@ def has_triple_quotes(string: str) -> bool:
     return raw_string[:3] in {'"""', "'''"}
 
 
-def lines_with_leading_tabs_expanded(s: str) -> List[str]:
+def lines_with_leading_tabs_expanded(s: str) -> list[str]:
     """
     Splits string into lines and expands only leading tabs (following the normal
     Python rules)
     """
     lines = []
     for line in s.splitlines():
-        # Find the index of the first non-whitespace character after a string of
-        # whitespace that includes at least one tab
-        match = FIRST_NON_WHITESPACE_RE.match(line)
-        if match:
-            first_non_whitespace_idx = match.start(1)
-
-            lines.append(
-                line[:first_non_whitespace_idx].expandtabs()
-                + line[first_non_whitespace_idx:]
-            )
-        else:
+        stripped_line = line.lstrip()
+        if not stripped_line or stripped_line == line:
             lines.append(line)
+        else:
+            prefix_length = len(line) - len(stripped_line)
+            prefix = line[:prefix_length].expandtabs()
+            lines.append(prefix + stripped_line)
+    if s.endswith("\n"):
+        lines.append("")
     return lines
 
 
-def fix_docstring(docstring: str, prefix: str) -> str:
+def fix_multiline_docstring(docstring: str, prefix: str) -> str:
     # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
-    if not docstring:
-        return ""
+    assert docstring, "INTERNAL ERROR: Multiline docstrings cannot be empty"
     lines = lines_with_leading_tabs_expanded(docstring)
     # Determine minimum indentation (first line doesn't count):
     indent = sys.maxsize
@@ -151,7 +153,7 @@ def normalize_string_prefix(s: str) -> str:
     )
 
     # Python syntax guarantees max 2 prefixes and that one of them is "r"
-    if len(new_prefix) == 2 and "r" != new_prefix[0].lower():
+    if len(new_prefix) == 2 and new_prefix[0].lower() != "r":
         new_prefix = new_prefix[::-1]
     return f"{new_prefix}{match.group(2)}"
 
@@ -167,8 +169,7 @@ def _cached_compile(pattern: str) -> Pattern[str]:
 def normalize_string_quotes(s: str) -> str:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
-    Adds or removes backslashes as appropriate. Doesn't parse and fix
-    strings nested in f-strings.
+    Adds or removes backslashes as appropriate.
     """
     value = s.lstrip(STRING_PREFIX_CHARS)
     if value[:3] == '"""':
@@ -184,8 +185,7 @@ def normalize_string_quotes(s: str) -> str:
         orig_quote = "'"
         new_quote = '"'
     first_quote_pos = s.find(orig_quote)
-    if first_quote_pos == -1:
-        return s  # There's an internal error
+    assert first_quote_pos != -1, f"INTERNAL ERROR: Malformed string {s!r}"
 
     prefix = s[:first_quote_pos]
     unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
@@ -209,6 +209,7 @@ def normalize_string_quotes(s: str) -> str:
             s = f"{prefix}{orig_quote}{body}{orig_quote}"
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
         new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
+
     if "f" in prefix.casefold():
         matches = re.findall(
             r"""
@@ -236,3 +237,153 @@ def normalize_string_quotes(s: str) -> str:
         return s  # Prefer double quotes
 
     return f"{prefix}{new_quote}{new_body}{new_quote}"
+
+
+def normalize_fstring_quotes(
+    quote: str,
+    middles: list[Leaf],
+    is_raw_fstring: bool,
+) -> tuple[list[Leaf], str]:
+    """Prefer double quotes but only if it doesn't cause more escaping.
+
+    Adds or removes backslashes as appropriate.
+    """
+    if quote == '"""':
+        return middles, quote
+
+    elif quote == "'''":
+        new_quote = '"""'
+    elif quote == '"':
+        new_quote = "'"
+    else:
+        new_quote = '"'
+
+    unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
+    escaped_new_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
+    escaped_orig_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){quote}")
+    if is_raw_fstring:
+        for middle in middles:
+            if unescaped_new_quote.search(middle.value):
+                # There's at least one unescaped new_quote in this raw string
+                # so converting is impossible
+                return middles, quote
+
+        # Do not introduce or remove backslashes in raw strings, just use double quote
+        return middles, '"'
+
+    new_segments = []
+    for middle in middles:
+        segment = middle.value
+        # remove unnecessary escapes
+        new_segment = sub_twice(escaped_new_quote, rf"\1\2{new_quote}", segment)
+        if segment != new_segment:
+            # Consider the string without unnecessary escapes as the original
+            middle.value = new_segment
+
+        new_segment = sub_twice(escaped_orig_quote, rf"\1\2{quote}", new_segment)
+        new_segment = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_segment)
+        new_segments.append(new_segment)
+
+    if new_quote == '"""' and new_segments[-1].endswith('"'):
+        # edge case:
+        new_segments[-1] = new_segments[-1][:-1] + '\\"'
+
+    for middle, new_segment in zip(middles, new_segments):
+        orig_escape_count = middle.value.count("\\")
+        new_escape_count = new_segment.count("\\")
+
+    if new_escape_count > orig_escape_count:
+        return middles, quote  # Do not introduce more escaping
+
+    if new_escape_count == orig_escape_count and quote == '"':
+        return middles, quote  # Prefer double quotes
+
+    for middle, new_segment in zip(middles, new_segments):
+        middle.value = new_segment
+
+    return middles, new_quote
+
+
+def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
+    """Replace hex codes in Unicode escape sequences with lowercase representation."""
+    text = leaf.value
+    prefix = get_string_prefix(text)
+    if "r" in prefix.lower():
+        return
+
+    def replace(m: Match[str]) -> str:
+        groups = m.groupdict()
+        back_slashes = groups["backslashes"]
+
+        if len(back_slashes) % 2 == 0:
+            return back_slashes + groups["body"]
+
+        if groups["u"]:
+            # \u
+            return back_slashes + "u" + groups["u"].lower()
+        elif groups["U"]:
+            # \U
+            return back_slashes + "U" + groups["U"].lower()
+        elif groups["x"]:
+            # \x
+            return back_slashes + "x" + groups["x"].lower()
+        else:
+            assert groups["N"], f"Unexpected match: {m}"
+            # \N{}
+            return back_slashes + "N{" + groups["N"].upper() + "}"
+
+    leaf.value = re.sub(UNICODE_ESCAPE_RE, replace, text)
+
+
+@lru_cache(maxsize=4096)
+def char_width(char: str) -> int:
+    """Return the width of a single character as it would be displayed in a
+    terminal or editor (which respects Unicode East Asian Width).
+
+    Full width characters are counted as 2, while half width characters are
+    counted as 1.  Also control characters are counted as 0.
+    """
+    table = WIDTH_TABLE
+    codepoint = ord(char)
+    highest = len(table) - 1
+    lowest = 0
+    idx = highest // 2
+    while True:
+        start_codepoint, end_codepoint, width = table[idx]
+        if codepoint < start_codepoint:
+            highest = idx - 1
+        elif codepoint > end_codepoint:
+            lowest = idx + 1
+        else:
+            return 0 if width < 0 else width
+        if highest < lowest:
+            break
+        idx = (highest + lowest) // 2
+    return 1
+
+
+def str_width(line_str: str) -> int:
+    """Return the width of `line_str` as it would be displayed in a terminal
+    or editor (which respects Unicode East Asian Width).
+
+    You could utilize this function to determine, for example, if a string
+    is too wide to display in a terminal or editor.
+    """
+    if line_str.isascii():
+        # Fast path for a line consisting of only ASCII characters
+        return len(line_str)
+    return sum(map(char_width, line_str))
+
+
+def count_chars_in_width(line_str: str, max_width: int) -> int:
+    """Count the number of characters in `line_str` that would fit in a
+    terminal or editor of `max_width` (which respects Unicode East Asian
+    Width).
+    """
+    total_width = 0
+    for i, char in enumerate(line_str):
+        width = char_width(char)
+        if width + total_width > max_width:
+            return i
+        total_width += width
+    return len(line_str)

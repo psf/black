@@ -1,13 +1,8 @@
 """Builds on top of nodes.py to track brackets."""
 
-import sys
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Tuple, Union
-
-if sys.version_info < (3, 8):
-    from typing_extensions import Final
-else:
-    from typing import Final
+from typing import Final, Optional, Union
 
 from black.nodes import (
     BRACKET,
@@ -66,12 +61,12 @@ class BracketTracker:
     """Keeps track of brackets on a line."""
 
     depth: int = 0
-    bracket_match: Dict[Tuple[Depth, NodeType], Leaf] = field(default_factory=dict)
-    delimiters: Dict[LeafID, Priority] = field(default_factory=dict)
+    bracket_match: dict[tuple[Depth, NodeType], Leaf] = field(default_factory=dict)
+    delimiters: dict[LeafID, Priority] = field(default_factory=dict)
     previous: Optional[Leaf] = None
-    _for_loop_depths: List[int] = field(default_factory=list)
-    _lambda_argument_depths: List[int] = field(default_factory=list)
-    invisible: List[Leaf] = field(default_factory=list)
+    _for_loop_depths: list[int] = field(default_factory=list)
+    _lambda_argument_depths: list[int] = field(default_factory=list)
+    invisible: list[Leaf] = field(default_factory=list)
 
     def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
@@ -80,15 +75,25 @@ class BracketTracker:
         within brackets a given leaf is. 0 means there are no enclosing brackets
         that started on this line.
 
-        If a leaf is itself a closing bracket, it receives an `opening_bracket`
-        field that it forms a pair with. This is a one-directional link to
-        avoid reference cycles.
+        If a leaf is itself a closing bracket and there is a matching opening
+        bracket earlier, it receives an `opening_bracket` field with which it forms a
+        pair. This is a one-directional link to avoid reference cycles. Closing
+        bracket without opening happens on lines continued from previous
+        breaks, e.g. `) -> "ReturnType":` as part of a funcdef where we place
+        the return type annotation on its own line of the previous closing RPAR.
 
         If a leaf is a delimiter (a token on which Black can split the line if
         needed) and it's on depth 0, its `id()` is stored in the tracker's
         `delimiters` field.
         """
         if leaf.type == token.COMMENT:
+            return
+
+        if (
+            self.depth == 0
+            and leaf.type in CLOSING_BRACKETS
+            and (self.depth, leaf.type) not in self.bracket_match
+        ):
             return
 
         self.maybe_decrement_after_for_loop_variable(leaf)
@@ -111,7 +116,7 @@ class BracketTracker:
             if delim and self.previous is not None:
                 self.delimiters[id(self.previous)] = delim
             else:
-                delim = is_split_after_delimiter(leaf, self.previous)
+                delim = is_split_after_delimiter(leaf)
                 if delim:
                     self.delimiters[id(leaf)] = delim
         if leaf.type in OPENING_BRACKETS:
@@ -122,6 +127,13 @@ class BracketTracker:
         self.previous = leaf
         self.maybe_increment_lambda_arguments(leaf)
         self.maybe_increment_for_loop_variable(leaf)
+
+    def any_open_for_or_lambda(self) -> bool:
+        """Return True if there is an open for or lambda expression on the line.
+
+        See maybe_increment_for_loop_variable and maybe_increment_lambda_arguments
+        for details."""
+        return bool(self._for_loop_depths or self._lambda_argument_depths)
 
     def any_open_brackets(self) -> bool:
         """Return True if there is an yet unmatched open bracket on the line."""
@@ -204,7 +216,7 @@ class BracketTracker:
         return self.bracket_match.get((self.depth - 1, token.RSQB))
 
 
-def is_split_after_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
+def is_split_after_delimiter(leaf: Leaf) -> Priority:
     """Return the priority of the `leaf` delimiter, given a line break after it.
 
     The delimiter priorities returned here are from those delimiters that would
@@ -340,3 +352,32 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
 
     except ValueError:
         return 0
+
+
+def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> set[LeafID]:
+    """Return leaves that are inside matching brackets.
+
+    The input `leaves` can have non-matching brackets at the head or tail parts.
+    Matching brackets are included.
+    """
+    try:
+        # Start with the first opening bracket and ignore closing brackets before.
+        start_index = next(
+            i for i, l in enumerate(leaves) if l.type in OPENING_BRACKETS
+        )
+    except StopIteration:
+        return set()
+    bracket_stack = []
+    ids = set()
+    for i in range(start_index, len(leaves)):
+        leaf = leaves[i]
+        if leaf.type in OPENING_BRACKETS:
+            bracket_stack.append((BRACKET[leaf.type], i))
+        if leaf.type in CLOSING_BRACKETS:
+            if bracket_stack and leaf.type == bracket_stack[-1][0]:
+                _, start = bracket_stack.pop()
+                for j in range(start, i + 1):
+                    ids.add(id(leaves[j]))
+            else:
+                break
+    return ids

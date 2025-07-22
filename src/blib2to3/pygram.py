@@ -5,13 +5,10 @@
 
 # Python imports
 import os
-
 from typing import Union
 
 # Local imports
-from .pgen2 import token
 from .pgen2 import driver
-
 from .pgen2.grammar import Grammar
 
 # Moved into initialize because mypyc can't handle __file__ (XXX bug)
@@ -21,7 +18,7 @@ from .pgen2.grammar import Grammar
 #                                      "PatternGrammar.txt")
 
 
-class Symbols(object):
+class Symbols:
     def __init__(self, grammar: Grammar) -> None:
         """Initializer.
 
@@ -66,7 +63,6 @@ class _python_symbols(Symbols):
     encoding_decl: int
     eval_input: int
     except_clause: int
-    exec_stmt: int
     expr: int
     expr_stmt: int
     exprlist: int
@@ -74,6 +70,10 @@ class _python_symbols(Symbols):
     file_input: int
     flow_stmt: int
     for_stmt: int
+    fstring: int
+    fstring_format_spec: int
+    fstring_middle: int
+    fstring_replacement_field: int
     funcdef: int
     global_stmt: int
     guard: int
@@ -95,11 +95,11 @@ class _python_symbols(Symbols):
     old_test: int
     or_test: int
     parameters: int
+    paramspec: int
     pass_stmt: int
     pattern: int
     patterns: int
     power: int
-    print_stmt: int
     raise_stmt: int
     return_stmt: int
     shift_expr: int
@@ -126,7 +126,12 @@ class _python_symbols(Symbols):
     tname_star: int
     trailer: int
     try_stmt: int
+    type_stmt: int
     typedargslist: int
+    typeparam: int
+    typeparams: int
+    typevar: int
+    typevartuple: int
     varargslist: int
     vfpdef: int
     vfplist: int
@@ -150,22 +155,16 @@ class _pattern_symbols(Symbols):
 
 
 python_grammar: Grammar
-python_grammar_no_print_statement: Grammar
-python_grammar_no_print_statement_no_exec_statement: Grammar
-python_grammar_no_print_statement_no_exec_statement_async_keywords: Grammar
-python_grammar_no_exec_statement: Grammar
-pattern_grammar: Grammar
+python_grammar_async_keywords: Grammar
 python_grammar_soft_keywords: Grammar
-
+pattern_grammar: Grammar
 python_symbols: _python_symbols
 pattern_symbols: _pattern_symbols
 
 
 def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     global python_grammar
-    global python_grammar_no_print_statement
-    global python_grammar_no_print_statement_no_exec_statement
-    global python_grammar_no_print_statement_no_exec_statement_async_keywords
+    global python_grammar_async_keywords
     global python_grammar_soft_keywords
     global python_symbols
     global pattern_grammar
@@ -177,38 +176,25 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
         os.path.dirname(__file__), "PatternGrammar.txt"
     )
 
-    # Python 2
     python_grammar = driver.load_packaged_grammar("blib2to3", _GRAMMAR_FILE, cache_dir)
-    python_grammar.version = (2, 0)
+    assert "print" not in python_grammar.keywords
+    assert "exec" not in python_grammar.keywords
 
     soft_keywords = python_grammar.soft_keywords.copy()
     python_grammar.soft_keywords.clear()
 
     python_symbols = _python_symbols(python_grammar)
 
-    # Python 2 + from __future__ import print_function
-    python_grammar_no_print_statement = python_grammar.copy()
-    del python_grammar_no_print_statement.keywords["print"]
-
     # Python 3.0-3.6
-    python_grammar_no_print_statement_no_exec_statement = python_grammar.copy()
-    del python_grammar_no_print_statement_no_exec_statement.keywords["print"]
-    del python_grammar_no_print_statement_no_exec_statement.keywords["exec"]
-    python_grammar_no_print_statement_no_exec_statement.version = (3, 0)
+    python_grammar.version = (3, 0)
 
     # Python 3.7+
-    python_grammar_no_print_statement_no_exec_statement_async_keywords = (
-        python_grammar_no_print_statement_no_exec_statement.copy()
-    )
-    python_grammar_no_print_statement_no_exec_statement_async_keywords.async_keywords = (
-        True
-    )
-    python_grammar_no_print_statement_no_exec_statement_async_keywords.version = (3, 7)
+    python_grammar_async_keywords = python_grammar.copy()
+    python_grammar_async_keywords.async_keywords = True
+    python_grammar_async_keywords.version = (3, 7)
 
     # Python 3.10+
-    python_grammar_soft_keywords = (
-        python_grammar_no_print_statement_no_exec_statement_async_keywords.copy()
-    )
+    python_grammar_soft_keywords = python_grammar_async_keywords.copy()
     python_grammar_soft_keywords.soft_keywords = soft_keywords
     python_grammar_soft_keywords.version = (3, 10)
 
