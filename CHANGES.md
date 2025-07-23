@@ -75,6 +75,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Add FAQ entry for windows emojis not displaying (#4714)
+
 ## 25.1.0
 
 ### Highlights
