@@ -140,8 +140,8 @@ wheels (including the pure Python wheel), so this command will use the [sdist].
 
 ## Why are emoji not displaying correctly on Windows?
 
-When using Windows, the emoji in _Black_'s output may not display correctly. This is
-not fixable from _Black_'s end.
+When using Windows, the emoji in _Black_'s output may not display correctly. This is not
+fixable from _Black_'s end.
 
 Instead, run your chosen command line/shell through [Windows Terminal], which will
 properly handle rendering the emoji.
