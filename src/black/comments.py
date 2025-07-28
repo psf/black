@@ -167,9 +167,9 @@ def make_comment(content: str, mode: Mode) -> str:
         Preview.standardize_type_comments in mode
         and content
         and "\N{NO-BREAK SPACE}" not in content
-        and is_type_comment_string("# " + content.lstrip(), mode=mode)
+        and is_type_comment_string("#" + content, mode=mode)
     ):
-        type_part, value_part = content.strip().split(":", 1)
+        type_part, value_part = content.split(":", 1)
         content = type_part.strip() + ": " + value_part.strip()
 
     if content and content[0] not in COMMENT_EXCEPTIONS:
