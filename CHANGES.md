@@ -152,6 +152,8 @@ The following changes were not in any previous release:
 
 - Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
   fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
+- Remove parentheses around multiple exception types in except and except\* without as.
+  (#4720)
 
 ### Caching
 
