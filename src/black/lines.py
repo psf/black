@@ -209,7 +209,7 @@ class Line:
     @property
     def is_chained_assignment(self) -> bool:
         """Is the line a chained assignment"""
-        return [leaf.type for leaf in self.leaves].count(token.EQUAL) > 1
+        return sum(1 for leaf in self.leaves if leaf.type == token.EQUAL) > 1
 
     @property
     def opens_block(self) -> bool:
