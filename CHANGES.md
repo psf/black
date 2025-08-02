@@ -32,6 +32,8 @@
 - Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
 - Fix a bug where `string_processing` would not split f-strings directly after
   expressions (#4680)
+- Remove parentheses around multiple exception types in except and except\* without as.
+  (#4720)
 
 ### Configuration
 
@@ -152,8 +154,6 @@ The following changes were not in any previous release:
 
 - Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
   fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
-- Remove parentheses around multiple exception types in except and except\* without as.
-  (#4720)
 
 ### Caching
 
