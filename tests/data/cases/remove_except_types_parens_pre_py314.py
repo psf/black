@@ -12,10 +12,20 @@ try:
 except ValueError:
     pass
 
+try:
+    pass
+except* ValueError:
+    pass
+
 # parenthesis are removed
 try:
     pass
 except (ValueError):
+    pass
+
+try:
+    pass
+except* (ValueError):
     pass
 
 # parenthesis are removed
@@ -24,16 +34,20 @@ try:
 except (ValueError) as e:
     pass
 
-# parenthesis are removed
 try:
     pass
-except ValueError as e:
+except* (ValueError) as e:
     pass
 
 # remains unchanged
 try:
     pass
 except (ValueError,):
+    pass
+
+try:
+    pass
+except* (ValueError,):
     pass
 
 # remains unchanged
@@ -42,16 +56,31 @@ try:
 except (ValueError,) as e:
     pass
 
-# remains unchanged
+try:
+    pass
+except* (ValueError,) as e:
+    pass
+
+# parenthesis are not removed
 try:
     pass
 except (ValueError, TypeError, KeyboardInterrupt):
     pass
 
-# remains unchanged
+try:
+    pass
+except* (ValueError, TypeError, KeyboardInterrupt):
+    pass
+
+# parenthesis are not removed
 try:
     pass
 except (ValueError, TypeError, KeyboardInterrupt) as e:
+    pass
+
+try:
+    pass
+except* (ValueError, TypeError, KeyboardInterrupt) as e:
     pass
 
 # parenthesis are removed
@@ -60,14 +89,26 @@ try:
 except (ValueError if True else TypeError):
     pass
 
-# inner except: parenthesis are not removed
-# outer except: parenthsis are not removed
+try:
+    pass
+except* (ValueError if True else TypeError):
+    pass
+
+# parenthesis are not removed
 try:
     try:
         pass
     except (TypeError, KeyboardInterrupt):
         pass
 except (ValueError,):
+    pass
+
+try:
+    try:
+        pass
+    except* (TypeError, KeyboardInterrupt):
+        pass
+except* (ValueError,):
     pass
 
 # output
@@ -84,28 +125,42 @@ try:
 except ValueError:
     pass
 
+try:
+    pass
+except* ValueError:
+    pass
+
 # parenthesis are removed
 try:
     pass
 except ValueError:
     pass
 
-# parenthesis are removed
 try:
     pass
-except ValueError as e:
+except* ValueError:
     pass
 
 # parenthesis are removed
 try:
     pass
 except ValueError as e:
+    pass
+
+try:
+    pass
+except* ValueError as e:
     pass
 
 # remains unchanged
 try:
     pass
 except (ValueError,):
+    pass
+
+try:
+    pass
+except* (ValueError,):
     pass
 
 # remains unchanged
@@ -114,16 +169,31 @@ try:
 except (ValueError,) as e:
     pass
 
-# remains unchanged
+try:
+    pass
+except* (ValueError,) as e:
+    pass
+
+# parenthesis are not removed
 try:
     pass
 except (ValueError, TypeError, KeyboardInterrupt):
     pass
 
-# remains unchanged
+try:
+    pass
+except* (ValueError, TypeError, KeyboardInterrupt):
+    pass
+
+# parenthesis are not removed
 try:
     pass
 except (ValueError, TypeError, KeyboardInterrupt) as e:
+    pass
+
+try:
+    pass
+except* (ValueError, TypeError, KeyboardInterrupt) as e:
     pass
 
 # parenthesis are removed
@@ -132,12 +202,24 @@ try:
 except ValueError if True else TypeError:
     pass
 
-# inner except: parenthesis are not removed
-# outer except: parenthsis are not removed
+try:
+    pass
+except* ValueError if True else TypeError:
+    pass
+
+# parenthesis are not removed
 try:
     try:
         pass
     except (TypeError, KeyboardInterrupt):
         pass
 except (ValueError,):
+    pass
+
+try:
+    try:
+        pass
+    except* (TypeError, KeyboardInterrupt):
+        pass
+except* (ValueError,):
     pass
