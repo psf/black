@@ -1523,6 +1523,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1532,6 +1533,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
@@ -1543,6 +1545,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1553,6 +1556,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1567,6 +1571,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1583,6 +1588,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             ("==3.8.*", [TargetVersion.PY38]),
