@@ -30,7 +30,7 @@
   be formatted (#4552)
 - Fix a bug where `string_processing` would not split f-strings directly after
   expressions (#4680)
-- Split the `in` clause of comprehensions onto its own line if necessary (#4699)
+- Wrap the `in` clause of comprehensions across lines if necessary (#4699)
 
 ### Configuration
 

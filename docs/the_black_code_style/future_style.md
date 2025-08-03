@@ -29,8 +29,8 @@ Currently, the following features are included in the preview style:
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
   such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
   have been incorrectly collapsed.
-- `split_comprehension_in`: Split the `in` clause of list and dictionary comprehensions
-  onto its own line if it would otherwise exceed the maximum line length.
+- `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
+  across lines if it would otherwise exceed the maximum line length.
 
 (labels/unstable-features)=
 

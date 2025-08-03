@@ -4,7 +4,6 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Final, Optional, Union
 
-from black.mode import Mode, Preview
 from black.nodes import (
     BRACKET,
     CLOSING_BRACKETS,
@@ -30,8 +29,6 @@ Priority = int
 
 COMPREHENSION_PRIORITY: Final = 20
 COMMA_PRIORITY: Final = 18
-TERNARY_PRIORITY: Final = 16
-COMP_IN_PRIORITY: Final = 15
 LOGIC_PRIORITY: Final = 14
 STRING_PRIORITY: Final = 12
 COMPARATOR_PRIORITY: Final = 10
@@ -70,7 +67,7 @@ class BracketTracker:
     _lambda_argument_depths: list[int] = field(default_factory=list)
     invisible: list[Leaf] = field(default_factory=list)
 
-    def mark(self, leaf: Leaf, mode: Mode) -> None:
+    def mark(self, leaf: Leaf) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
 
         All leaves receive an int `bracket_depth` field that stores how deep
@@ -114,7 +111,7 @@ class BracketTracker:
                 self.invisible.append(leaf)
         leaf.bracket_depth = self.depth
         if self.depth == 0:
-            delim = is_split_before_delimiter(leaf, mode, self.previous)
+            delim = is_split_before_delimiter(leaf, self.previous)
             if delim and self.previous is not None:
                 self.delimiters[id(self.previous)] = delim
             else:
@@ -232,9 +229,7 @@ def is_split_after_delimiter(leaf: Leaf) -> Priority:
     return 0
 
 
-def is_split_before_delimiter(
-    leaf: Leaf, mode: Mode, previous: Optional[Leaf] = None
-) -> Priority:
+def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
     """Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would
@@ -294,14 +289,6 @@ def is_split_before_delimiter(
     ):
         return COMPREHENSION_PRIORITY
 
-    if (
-        Preview.split_comprehension_in in mode
-        and leaf.value == "in"
-        and leaf.parent
-        and leaf.parent.type in {syms.comp_for, syms.old_comp_for}
-    ):
-        return COMP_IN_PRIORITY
-
     if leaf.value in {"if", "else"} and leaf.parent and leaf.parent.type == syms.test:
         return TERNARY_PRIORITY
 
@@ -338,7 +325,7 @@ def is_split_before_delimiter(
     return 0
 
 
-def max_delimiter_priority_in_atom(node: LN, mode: Mode) -> Priority:
+def max_delimiter_priority_in_atom(node: LN) -> Priority:
     """Return maximum delimiter priority inside `node`.
 
     This is specific to atoms with contents contained in a pair of parentheses.
@@ -355,10 +342,10 @@ def max_delimiter_priority_in_atom(node: LN, mode: Mode) -> Priority:
     bt = BracketTracker()
     for c in node.children[1:-1]:
         if isinstance(c, Leaf):
-            bt.mark(c, mode)
+            bt.mark(c)
         else:
             for leaf in c.leaves():
-                bt.mark(leaf, mode)
+                bt.mark(leaf)
     try:
         return bt.max_delimiter_priority()
 

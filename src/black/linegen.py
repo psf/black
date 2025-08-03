@@ -250,7 +250,6 @@ class LineGenerator(Visitor[Line]):
                         maybe_make_parens_invisible_in_atom(
                             child,
                             parent=node,
-                            mode=self.mode,
                             remove_brackets_around_comma=False,
                         )
                     else:
@@ -271,7 +270,6 @@ class LineGenerator(Visitor[Line]):
                     if maybe_make_parens_invisible_in_atom(
                         child,
                         parent=node,
-                        mode=self.mode,
                         remove_brackets_around_comma=False,
                     ):
                         wrap_in_parentheses(node, child, visible=False)
@@ -365,7 +363,7 @@ class LineGenerator(Visitor[Line]):
             ):
                 wrap_in_parentheses(node, leaf)
 
-        remove_await_parens(node, self.mode)
+        remove_await_parens(node)
 
         yield from self.visit_default(node)
 
@@ -412,9 +410,7 @@ class LineGenerator(Visitor[Line]):
         def foo(a: (int), b: (float) = 7): ...
         """
         assert len(node.children) == 3
-        if maybe_make_parens_invisible_in_atom(
-            node.children[2], parent=node, mode=self.mode
-        ):
+        if maybe_make_parens_invisible_in_atom(node.children[2], parent=node):
             wrap_in_parentheses(node, node.children[2], visible=False)
 
         yield from self.visit_default(node)
@@ -520,9 +516,7 @@ class LineGenerator(Visitor[Line]):
                 first.type == token.LBRACE and last.type == token.RBRACE
             ):
                 # Lists or sets of one item
-                maybe_make_parens_invisible_in_atom(
-                    node.children[1], parent=node, mode=self.mode
-                )
+                maybe_make_parens_invisible_in_atom(node.children[1], parent=node)
 
         yield from self.visit_default(node)
 
@@ -573,6 +567,16 @@ class LineGenerator(Visitor[Line]):
         # fstring_end.value = quote
 
         # yield from self.visit_default(node)
+
+    def visit_comp_for(self, node: Node) -> Iterator[Line]:
+        if Preview.wrap_comprehension_in in self.mode:
+            normalize_invisible_parens(
+                node, parens_after={"in"}, mode=self.mode, features=self.features
+            )
+        yield from self.visit_default(node)
+
+    def visit_old_comp_for(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_comp_for(node)
 
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
@@ -1438,13 +1442,18 @@ def normalize_invisible_parens(  # noqa: C901
                 and child.prev_sibling.value == "for"
             ):
                 if maybe_make_parens_invisible_in_atom(
-                    child, parent=node, mode=mode, remove_brackets_around_comma=True
+                    child,
+                    parent=node,
+                    remove_brackets_around_comma=True,
                 ):
                     wrap_in_parentheses(node, child, visible=False)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
-                remove_with_parens(child, node, mode)
+                remove_with_parens(child, node)
             elif child.type == syms.atom:
-                if maybe_make_parens_invisible_in_atom(child, parent=node, mode=mode):
+                if maybe_make_parens_invisible_in_atom(
+                    child,
+                    parent=node,
+                ):
                     wrap_in_parentheses(node, child, visible=False)
             elif is_one_tuple(child):
                 wrap_in_parentheses(node, child, visible=True)
@@ -1495,7 +1504,7 @@ def _normalize_import_from(parent: Node, child: LN, index: int) -> None:
         parent.append_child(Leaf(token.RPAR, ""))
 
 
-def remove_await_parens(node: Node, mode: Mode) -> None:
+def remove_await_parens(node: Node) -> None:
     if node.children[0].type == token.AWAIT and len(node.children) > 1:
         if (
             node.children[1].type == syms.atom
@@ -1504,7 +1513,6 @@ def remove_await_parens(node: Node, mode: Mode) -> None:
             if maybe_make_parens_invisible_in_atom(
                 node.children[1],
                 parent=node,
-                mode=mode,
                 remove_brackets_around_comma=True,
             ):
                 wrap_in_parentheses(node, node.children[1], visible=False)
@@ -1573,7 +1581,7 @@ def _maybe_wrap_cms_in_parens(
         node.insert_child(1, new_child)
 
 
-def remove_with_parens(node: Node, parent: Node, mode: Mode) -> None:
+def remove_with_parens(node: Node, parent: Node) -> None:
     """Recursively hide optional parens in `with` statements."""
     # Removing all unnecessary parentheses in with statements in one pass is a tad
     # complex as different variations of bracketed statements result in pretty
@@ -1593,26 +1601,32 @@ def remove_with_parens(node: Node, parent: Node, mode: Mode) -> None:
     #                                                 # contains multiple asexpr_test(s)
     if node.type == syms.atom:
         if maybe_make_parens_invisible_in_atom(
-            node, parent=parent, mode=mode, remove_brackets_around_comma=True
+            node,
+            parent=parent,
+            remove_brackets_around_comma=True,
         ):
             wrap_in_parentheses(parent, node, visible=False)
         if isinstance(node.children[1], Node):
-            remove_with_parens(node.children[1], node, mode)
+            remove_with_parens(node.children[1], node)
     elif node.type == syms.testlist_gexp:
         for child in node.children:
             if isinstance(child, Node):
-                remove_with_parens(child, node, mode)
+                remove_with_parens(child, node)
     elif node.type == syms.asexpr_test and not any(
         leaf.type == token.COLONEQUAL for leaf in node.leaves()
     ):
         if maybe_make_parens_invisible_in_atom(
-            node.children[0], parent=node, mode=mode, remove_brackets_around_comma=True
+            node.children[0],
+            parent=node,
+            remove_brackets_around_comma=True,
         ):
             wrap_in_parentheses(node, node.children[0], visible=False)
 
 
 def maybe_make_parens_invisible_in_atom(
-    node: LN, parent: LN, mode: Mode, remove_brackets_around_comma: bool = False
+    node: LN,
+    parent: LN,
+    remove_brackets_around_comma: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
@@ -1636,7 +1650,7 @@ def maybe_make_parens_invisible_in_atom(
             # around a tuple, however, can be a bit overzealous so we provide
             # and option to skip this check for `for` and `with` statements.
             not remove_brackets_around_comma
-            and max_delimiter_priority_in_atom(node, mode) >= COMMA_PRIORITY
+            and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
         )
         or is_tuple_containing_walrus(node)
         or is_tuple_containing_star(node)
@@ -1677,7 +1691,6 @@ def maybe_make_parens_invisible_in_atom(
         maybe_make_parens_invisible_in_atom(
             middle,
             parent=parent,
-            mode=mode,
             remove_brackets_around_comma=remove_brackets_around_comma,
         )
 
