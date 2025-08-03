@@ -1,4 +1,4 @@
-# flags: --unstable --line-length=79
+# flags: --preview --line-length=79
 
 [a for graph_path_expression in refined_constraint.condition_as_predicate.variables]
 [
