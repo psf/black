@@ -30,8 +30,7 @@ Currently, the following features are included in the preview style:
   such as `def foo(): return "mock"  # fmt: skip`, where previously the declaration
   would have been incorrectly collapsed.
 - `remove_parens_around_except_types`: Remove parentheses around multiple exception
-  types in `except` and `except*` clauses when not using the as clause. See PEP 758 for
-  details.
+  types in `except` and `except*` without `as`. See PEP 758 for details.
 
 (labels/unstable-features)=
 

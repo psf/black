@@ -27,7 +27,7 @@ from black.lines import (
     is_line_short_enough,
     line_to_string,
 )
-from black.mode import Feature, Mode, Preview, supports_feature
+from black.mode import Feature, Mode, Preview
 from black.nodes import (
     ASSIGNMENTS,
     BRACKETS,
@@ -1679,19 +1679,10 @@ def maybe_make_parens_invisible_in_atom(
             and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
             # Skip this check in Preview mode in order to
             # Remove parentheses around multiple exception types in except and
-            # except* clauses when not using the as clause. See PEP 758 for details.
+            # except* without as. See PEP 758 for details.
             and not (
-                # If mode.target_versions is empty, supports_feature becomes all([]),
-                # which returns True and can unintentionally enable this feature.
-                # To avoid this, we ensure mode.target_versions is not empty.
-                (
-                    mode.target_versions
-                    and supports_feature(
-                        mode.target_versions, Feature.UNPARENTHESIZED_EXCEPT_TYPES
-                    )
-                    or Feature.UNPARENTHESIZED_EXCEPT_TYPES in features
-                )
-                and Preview.remove_parens_around_except_types in mode
+                Preview.remove_parens_around_except_types in mode
+                and Feature.UNPARENTHESIZED_EXCEPT_TYPES in features
                 # is a tuple
                 and is_tuple(node)
                 # has a parent node
