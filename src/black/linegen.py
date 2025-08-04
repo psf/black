@@ -568,6 +568,16 @@ class LineGenerator(Visitor[Line]):
 
         # yield from self.visit_default(node)
 
+    def visit_comp_for(self, node: Node) -> Iterator[Line]:
+        if Preview.wrap_comprehension_in in self.mode:
+            normalize_invisible_parens(
+                node, parens_after={"in"}, mode=self.mode, features=self.features
+            )
+        yield from self.visit_default(node)
+
+    def visit_old_comp_for(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_comp_for(node)
+
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         self.current_line = Line(mode=self.mode)

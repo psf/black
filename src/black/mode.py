@@ -207,6 +207,7 @@ class Preview(Enum):
     multiline_string_handling = auto()
     always_one_newline_after_import = auto()
     fix_fmt_skip_in_one_liners = auto()
+    wrap_comprehension_in = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
