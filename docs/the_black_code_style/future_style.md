@@ -29,6 +29,8 @@ Currently, the following features are included in the preview style:
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
   such as `def foo(): return "mock"  # fmt: skip`, where previously the declaration
   would have been incorrectly collapsed.
+- `remove_parens_around_except_types`: Remove parentheses around multiple exception
+  types in `except` and `except*` without `as`. See PEP 758 for details.
 
 (labels/unstable-features)=
 

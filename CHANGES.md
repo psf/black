@@ -32,6 +32,8 @@
 - Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
 - Fix a bug where `string_processing` would not split f-strings directly after
   expressions (#4680)
+- Remove parentheses around multiple exception types in `except` and `except*` without
+  `as`. (#4720)
 
 ### Configuration
 
