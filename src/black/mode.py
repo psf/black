@@ -190,7 +190,9 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
 
 
 def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
-    return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
+    return bool(target_versions) and all(
+        feature in VERSION_TO_FEATURES[version] for version in target_versions
+    )
 
 
 class Preview(Enum):
