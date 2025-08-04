@@ -236,8 +236,8 @@ def get_flags_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--target-version",
-        action="append",
-        type=lambda val: TargetVersion[val.upper()],
+        action="store",
+        type=lambda val: (TargetVersion[val.upper()],),
         default=(),
     )
     parser.add_argument("--line-length", default=DEFAULT_LINE_LENGTH, type=int)
@@ -258,7 +258,7 @@ def get_flags_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Minimum version of Python where this test case is parseable. If this is"
-            " set, the test case will be run twice: once with the specified"
+            " set, the test case will be run twice: once without the specified"
             " --target-version, and once with --target-version set to exactly the"
             " specified version. This ensures that Black's autodetection of the target"
             " version works correctly."
