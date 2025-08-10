@@ -30,6 +30,9 @@ lcomp3 = [
     if element is not None
 ]
 
+# Don't remove parens around ternaries
+expected = [i for i in (a if b else c)]
+
 # Nested arrays
 # First in will not be split because it would still be too long
 [[
@@ -107,6 +110,9 @@ lcomp3 = [
     # right
     if element is not None
 ]
+
+# Don't remove parens around ternaries
+expected = [i for i in (a if b else c)]
 
 # Nested arrays
 # First in will not be split because it would still be too long

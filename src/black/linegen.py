@@ -1449,7 +1449,13 @@ def normalize_invisible_parens(  # noqa: C901
                     wrap_in_parentheses(node, child, visible=False)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node)
-            elif child.type == syms.atom:
+            elif child.type == syms.atom and not (
+                "in" in parens_after
+                and len(child.children) == 3
+                and is_lpar_token(child.children[0])
+                and is_rpar_token(child.children[-1])
+                and child.children[1].type == syms.test
+            ):
                 if maybe_make_parens_invisible_in_atom(
                     child,
                     parent=node,
