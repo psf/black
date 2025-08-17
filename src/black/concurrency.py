@@ -4,6 +4,8 @@ Formatting many files at once via multiprocessing. Contains entrypoint and utili
 NOTE: this module is only imported if we need to format several files at once.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
