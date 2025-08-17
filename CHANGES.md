@@ -52,7 +52,7 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
-- Avoid using an extra process when running with only one worker
+- Avoid using an extra process when running with only one worker (#4734)
 
 ### Output
 
