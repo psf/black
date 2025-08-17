@@ -96,8 +96,8 @@ def reformat_many(
         except (ImportError, NotImplementedError, OSError):
             # we arrive here if the underlying system does not support multi-processing
             # like in AWS Lambda or Termux, in which case we gracefully fallback to
-            # a ThreadPoolExecutor with just a single worker (more workers would not do us
-            # any good due to the Global Interpreter Lock)
+            # a ThreadPoolExecutor with just a single worker (more workers would not do
+            # us any good due to the Global Interpreter Lock)
             pass
 
     if executor is None:
