@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'release'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up latest Python
         uses: actions/setup-python@v5
@@ -46,7 +46,7 @@ jobs:
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Keep cibuildwheel version in sync with below
       - name: Install cibuildwheel and pypyp
         run: |
@@ -90,7 +90,7 @@ jobs:
         include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       # Keep cibuildwheel version in sync with above
       - uses: pypa/cibuildwheel@v2.23.3
         with:
@@ -118,7 +118,7 @@ jobs:
 
     steps:
       - name: Checkout stable branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: stable
           fetch-depth: 0

@@ -35,7 +35,7 @@ jobs:
         os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -76,7 +76,7 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Send finished signal to Coveralls
         uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
@@ -94,7 +94,7 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up latest Python
         uses: actions/setup-python@v5
