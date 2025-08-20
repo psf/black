@@ -22,6 +22,7 @@
 - Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
   (#4676)
 - Fix crash on parenthesized expression inside a type parameter bound (#4684)
+- Normalize newlines on format to first newline in file (#4710)
 
 ### Preview style
 

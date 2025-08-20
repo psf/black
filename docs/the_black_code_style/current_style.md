@@ -417,8 +417,8 @@ file that are not enforced yet but might be in a future version of the formatter
 
 ### Line endings
 
-_Black_ will normalize line endings (`\n` or `\r\n`) based on the first line ending of
-the file.
+_Black_ will normalize line endings (`\n` or `\r\n` or `\r`) based on the first line
+ending of the file.
 
 ### Form feed characters
 
