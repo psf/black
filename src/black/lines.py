@@ -484,10 +484,10 @@ class Line:
         leaves = iter(self.leaves)
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
-        res += ''.join(str(leaf) for leaf in leaves)
+        res += "".join(str(leaf) for leaf in leaves)
         comments_iter = itertools.chain.from_iterable(self.comments.values())
         comments = [str(comment) for comment in comments_iter]
-        res += ''.join(comments)
+        res += "".join(comments)
 
         return res + "\n"
 
