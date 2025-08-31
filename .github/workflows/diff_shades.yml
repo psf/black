@@ -129,14 +129,14 @@ jobs:
           path: ${{ matrix.target-analysis }}
 
       - name: Generate summary file (PR only)
-        if: github.event_name == 'pull_request' && matrix.mode == 'preview-changes'
+        if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
         run: >
           python helper.py comment-body ${{ matrix.baseline-analysis }}
           ${{ matrix.target-analysis }} ${{ matrix.baseline-sha }}
           ${{ matrix.target-sha }} ${{ github.event.pull_request.number }}
 
       - name: Upload summary file (PR only)
-        if: github.event_name == 'pull_request' && matrix.mode == 'preview-changes'
+        if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
         uses: actions/upload-artifact@v4
         with:
           name: .pr-comment.json
