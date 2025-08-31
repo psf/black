@@ -129,14 +129,6 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
 
-        # Preserve CRLF line endings
-        nl = req_str.find("\n")
-        if nl > 0 and req_str[nl - 1] == "\r":
-            formatted_str = formatted_str.replace("\n", "\r\n")
-            # If, after swapping line endings, nothing changed, then say so
-            if formatted_str == req_str:
-                raise black.NothingChanged
-
         # Put the source first line back
         req_str = header + req_str
         formatted_str = header + formatted_str
