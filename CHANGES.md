@@ -22,6 +22,8 @@
 - Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
   (#4676)
 - Fix crash on parenthesized expression inside a type parameter bound (#4684)
+- Fix crash when using line ranges excluding indented single line decorated items
+  (#4670)
 
 ### Preview style
 
