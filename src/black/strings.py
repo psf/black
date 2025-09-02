@@ -102,7 +102,7 @@ def get_string_prefix(string: str) -> str:
             prefix.append(char)
         else:
             break
-    return ''.join(prefix)
+    return "".join(prefix)
 
 
 def assert_is_leaf_string(string: str) -> None:
