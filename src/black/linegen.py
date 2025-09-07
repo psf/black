@@ -1482,7 +1482,7 @@ def normalize_invisible_parens(  # noqa: C901
                 and is_lpar_token(child.children[0])
                 and is_rpar_token(child.children[-1])
                 and child.children[1].type == syms.test
-            ):=
+            ):
                 if maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
                 ):
