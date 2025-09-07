@@ -4,6 +4,8 @@ Formatting many files at once via multiprocessing. Contains entrypoint and utili
 NOTE: this module is only imported if we need to format several files at once.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
@@ -80,20 +82,25 @@ def reformat_many(
     """Reformat multiple files using a ProcessPoolExecutor."""
     maybe_install_uvloop()
 
-    executor: Executor
     if workers is None:
         workers = int(os.environ.get("BLACK_NUM_WORKERS", 0))
         workers = workers or os.cpu_count() or 1
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         workers = min(workers, 60)
-    try:
-        executor = ProcessPoolExecutor(max_workers=workers)
-    except (ImportError, NotImplementedError, OSError):
-        # we arrive here if the underlying system does not support multi-processing
-        # like in AWS Lambda or Termux, in which case we gracefully fallback to
-        # a ThreadPoolExecutor with just a single worker (more workers would not do us
-        # any good due to the Global Interpreter Lock)
+
+    executor: Executor | None = None
+    if workers > 1:
+        try:
+            executor = ProcessPoolExecutor(max_workers=workers)
+        except (ImportError, NotImplementedError, OSError):
+            # we arrive here if the underlying system does not support multi-processing
+            # like in AWS Lambda or Termux, in which case we gracefully fallback to
+            # a ThreadPoolExecutor with just a single worker (more workers would not do
+            # us any good due to the Global Interpreter Lock)
+            pass
+
+    if executor is None:
         executor = ThreadPoolExecutor(max_workers=1)
 
     loop = asyncio.new_event_loop()

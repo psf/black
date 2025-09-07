@@ -21,6 +21,9 @@
 - Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
 - Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
   (#4676)
+- Fix crash on parenthesized expression inside a type parameter bound (#4684)
+- Fix crash when using line ranges excluding indented single line decorated items
+  (#4670)
 
 ### Preview style
 
@@ -28,9 +31,12 @@
 
 - Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
   be formatted (#4552)
+- Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
 - Fix a bug where `string_processing` would not split f-strings directly after
   expressions (#4680)
 - Wrap the `in` clause of comprehensions across lines if necessary (#4699)
+- Remove parentheses around multiple exception types in `except` and `except*` without
+  `as`. (#4720)
 
 ### Configuration
 
@@ -51,6 +57,8 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Avoid using an extra process when running with only one worker (#4734)
 
 ### Output
 
@@ -73,6 +81,8 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Add FAQ entry for windows emoji not displaying (#4714)
 
 ## 25.1.0
 
@@ -1643,7 +1653,6 @@ and the first release covered by our new
 ## 18.9b0
 
 - numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
-
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
 
   - added `--skip-numeric-underscore-normalization` to disable the above behavior and
@@ -1693,7 +1702,6 @@ and the first release covered by our new
 - typing stub files (`.pyi`) now have blank lines added after constants (#340)
 
 - `# fmt: off` and `# fmt: on` are now much more dependable:
-
   - they now work also within bracket pairs (#329)
 
   - they now correctly work across function/class boundaries (#335)
