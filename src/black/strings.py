@@ -96,13 +96,13 @@ def get_string_prefix(string: str) -> str:
     """
     assert_is_leaf_string(string)
 
-    prefix = ""
-    prefix_idx = 0
-    while string[prefix_idx] in STRING_PREFIX_CHARS:
-        prefix += string[prefix_idx]
-        prefix_idx += 1
-
-    return prefix
+    prefix = []
+    for char in string:
+        if char in STRING_PREFIX_CHARS:
+            prefix.append(char)
+        else:
+            break
+    return "".join(prefix)
 
 
 def assert_is_leaf_string(string: str) -> None:

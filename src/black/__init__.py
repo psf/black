@@ -1225,9 +1225,12 @@ def _format_str_once(
         future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    context_manager_features = {
+    line_generation_features = {
         feature
-        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
+        for feature in {
+            Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+            Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+        }
         if supports_feature(versions, feature)
     }
     normalize_fmt_off(src_node, mode, lines)
@@ -1235,7 +1238,7 @@ def _format_str_once(
         # This should be called after normalize_fmt_off.
         convert_unchanged_lines(src_node, lines)
 
-    line_generator = LineGenerator(mode=mode, features=context_manager_features)
+    line_generator = LineGenerator(mode=mode, features=line_generation_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
@@ -1395,13 +1398,6 @@ def get_features_used(  # noqa: C901
         elif n.type == syms.match_stmt:
             features.add(Feature.PATTERN_MATCHING)
 
-        elif (
-            n.type == syms.except_clause
-            and len(n.children) >= 2
-            and n.children[1].type == token.STAR
-        ):
-            features.add(Feature.EXCEPT_STAR)
-
         elif n.type in {syms.subscriptlist, syms.trailer} and any(
             child.type == syms.star_expr for child in n.children
         ):
@@ -1422,6 +1418,32 @@ def get_features_used(  # noqa: C901
             and n.children[-2].type == token.EQUAL
         ):
             features.add(Feature.TYPE_PARAM_DEFAULTS)
+
+        elif (
+            n.type == syms.except_clause
+            and len(n.children) >= 2
+            and (
+                n.children[1].type == token.STAR or n.children[1].type == syms.testlist
+            )
+        ):
+            is_star_except = n.children[1].type == token.STAR
+
+            if is_star_except:
+                features.add(Feature.EXCEPT_STAR)
+
+            # Presence of except* pushes as clause 1 index back
+            has_as_clause = (
+                len(n.children) >= is_star_except + 3
+                and n.children[is_star_except + 2].type == token.NAME
+                and n.children[is_star_except + 2].value == "as"  # type: ignore
+            )
+
+            # If there's no 'as' clause and the except expression is a testlist.
+            if not has_as_clause and (
+                (is_star_except and n.children[2].type == syms.testlist)
+                or (not is_star_except and n.children[1].type == syms.testlist)
+            ):
+                features.add(Feature.UNPARENTHESIZED_EXCEPT_TYPES)
 
     return features
 

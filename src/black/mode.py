@@ -25,6 +25,7 @@ class TargetVersion(Enum):
     PY311 = 11
     PY312 = 12
     PY313 = 13
+    PY314 = 14
 
     def pretty(self) -> str:
         assert self.name[:2] == "PY"
@@ -53,6 +54,7 @@ class Feature(Enum):
     TYPE_PARAMS = 18
     FSTRING_PARSING = 19
     TYPE_PARAM_DEFAULTS = 20
+    UNPARENTHESIZED_EXCEPT_TYPES = 21
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -186,10 +188,35 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.FSTRING_PARSING,
         Feature.TYPE_PARAM_DEFAULTS,
     },
+    TargetVersion.PY314: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.FSTRING_PARSING,
+        Feature.TYPE_PARAM_DEFAULTS,
+        Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+    },
 }
 
 
 def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
+    if not target_versions:
+        raise ValueError("target_versions must not be empty")
+
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
@@ -205,6 +232,10 @@ class Preview(Enum):
     always_one_newline_after_import = auto()
     fix_fmt_skip_in_one_liners = auto()
     standardize_type_comments = auto()
+    wrap_comprehension_in = auto()
+    # Remove parentheses around multiple exception types in except and
+    # except* without as. See PEP 758 for details.
+    remove_parens_around_except_types = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
