@@ -231,6 +231,7 @@ class Preview(Enum):
     multiline_string_handling = auto()
     always_one_newline_after_import = auto()
     fix_fmt_skip_in_one_liners = auto()
+    wrap_comprehension_in = auto()
     # Remove parentheses around multiple exception types in except and
     # except* without as. See PEP 758 for details.
     remove_parens_around_except_types = auto()

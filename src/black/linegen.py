@@ -579,6 +579,16 @@ class LineGenerator(Visitor[Line]):
 
         # yield from self.visit_default(node)
 
+    def visit_comp_for(self, node: Node) -> Iterator[Line]:
+        if Preview.wrap_comprehension_in in self.mode:
+            normalize_invisible_parens(
+                node, parens_after={"in"}, mode=self.mode, features=self.features
+            )
+        yield from self.visit_default(node)
+
+    def visit_old_comp_for(self, node: Node) -> Iterator[Line]:
+        yield from self.visit_comp_for(node)
+
     def __post_init__(self) -> None:
         """You are in a twisty little maze of passages."""
         self.current_line = Line(mode=self.mode)
@@ -1466,7 +1476,13 @@ def normalize_invisible_parens(  # noqa: C901
                     wrap_in_parentheses(node, child, visible=False)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node, mode=mode, features=features)
-            elif child.type == syms.atom:
+            elif child.type == syms.atom and not (
+                "in" in parens_after
+                and len(child.children) == 3
+                and is_lpar_token(child.children[0])
+                and is_rpar_token(child.children[-1])
+                and child.children[1].type == syms.test
+            ):
                 if maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
                 ):
