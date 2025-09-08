@@ -30,9 +30,7 @@ Currently, the following features are included in the preview style:
   such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
   have been incorrectly collapsed.
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
-  across lines if it would otherwise exceed the maximum line length. such as
-  `def foo(): return "mock"  # fmt: skip`, where previously the declaration would have
-  been incorrectly collapsed.
+  across lines if it would otherwise exceed the maximum line length.
 - `remove_parens_around_except_types`: Remove parentheses around multiple exception
   types in `except` and `except*` without `as`. See PEP 758 for details.
 
