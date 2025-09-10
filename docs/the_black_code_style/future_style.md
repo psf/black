@@ -27,8 +27,12 @@ Currently, the following features are included in the preview style:
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
   ([see below](labels/wrap-long-dict-values))
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
-  such as `def foo(): return "mock"  # fmt: skip`, where previously the declaration
-  would have been incorrectly collapsed.
+  such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
+  have been incorrectly collapsed.
+- `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
+  across lines if it would otherwise exceed the maximum line length.
+- `remove_parens_around_except_types`: Remove parentheses around multiple exception
+  types in `except` and `except*` without `as`. See PEP 758 for details.
 
 (labels/unstable-features)=
 
@@ -152,7 +156,7 @@ plain strings. f-strings will not be merged if they contain internal quotes and 
 change their quotation mark style. User-made splits are respected when they do not
 exceed the line length limit. Line continuation backslashes are converted into
 parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
-this feature istracked in [this issue](https://github.com/psf/black/issues/2188).
+this feature is tracked in [this issue](https://github.com/psf/black/issues/2188).
 
 (labels/multiline-string-handling)=
 

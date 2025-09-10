@@ -71,7 +71,7 @@ class Line:
         if not has_value:
             return
 
-        if token.COLON == leaf.type and self.is_class_paren_empty:
+        if leaf.type == token.COLON and self.is_class_paren_empty:
             del self.leaves[-2:]
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
@@ -484,10 +484,10 @@ class Line:
         leaves = iter(self.leaves)
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
-        for leaf in leaves:
-            res += str(leaf)
-        for comment in itertools.chain.from_iterable(self.comments.values()):
-            res += str(comment)
+        res += "".join(str(leaf) for leaf in leaves)
+        comments_iter = itertools.chain.from_iterable(self.comments.values())
+        comments = [str(comment) for comment in comments_iter]
+        res += "".join(comments)
 
         return res + "\n"
 
@@ -872,6 +872,12 @@ def is_line_short_enough(  # noqa: C901
             max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
 
         if is_multiline_string(leaf):
+            if leaf.parent and (
+                leaf.parent.type == syms.test
+                or (leaf.parent.parent and leaf.parent.parent.type == syms.dictsetmaker)
+            ):
+                # Keep ternary and dictionary values parenthesized
+                return False
             if len(multiline_string_contexts) > 0:
                 # >1 multiline string cannot fit on a single line - force split
                 return False

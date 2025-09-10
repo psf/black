@@ -96,13 +96,13 @@ def get_string_prefix(string: str) -> str:
     """
     assert_is_leaf_string(string)
 
-    prefix = ""
-    prefix_idx = 0
-    while string[prefix_idx] in STRING_PREFIX_CHARS:
-        prefix += string[prefix_idx]
-        prefix_idx += 1
-
-    return prefix
+    prefix = []
+    for char in string:
+        if char in STRING_PREFIX_CHARS:
+            prefix.append(char)
+        else:
+            break
+    return "".join(prefix)
 
 
 def assert_is_leaf_string(string: str) -> None:
@@ -153,7 +153,7 @@ def normalize_string_prefix(s: str) -> str:
     )
 
     # Python syntax guarantees max 2 prefixes and that one of them is "r"
-    if len(new_prefix) == 2 and "r" != new_prefix[0].lower():
+    if len(new_prefix) == 2 and new_prefix[0].lower() != "r":
         new_prefix = new_prefix[::-1]
     return f"{new_prefix}{match.group(2)}"
 

@@ -154,10 +154,9 @@ def make_comment(content: str) -> str:
 
     if content[0] == "#":
         content = content[1:]
-    NON_BREAKING_SPACE = " "
     if (
         content
-        and content[0] == NON_BREAKING_SPACE
+        and content[0] == "\N{NO-BREAK SPACE}"
         and not content.lstrip().startswith("type:")
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
@@ -343,7 +342,7 @@ def _generate_ignored_nodes_from_fmt_skip(
         # Traversal process (starting at the `# fmt: skip` node):
         # 1. Move to the `prev_sibling` of the current node.
         # 2. If `prev_sibling` has children, go to its rightmost leaf.
-        # 3. If there’s no `prev_sibling`, move up to the parent
+        # 3. If there's no `prev_sibling`, move up to the parent
         # node and repeat.
         # 4. Continue until:
         #    a. You encounter an `INDENT` or `NEWLINE` node (indicates
