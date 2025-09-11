@@ -27,8 +27,8 @@ Currently, the following features are included in the preview style:
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
   ([see below](labels/wrap-long-dict-values))
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
-  such as `def foo(): return "mock" # fmt: skip`, where previously the declaration
-  would have been incorrectly collapsed.
+  such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
+  have been incorrectly collapsed.
 - `standardize_type_comments`: Format type comments which have zero or more spaces
   between `#` and `type:` or between `type:` and value to `# type: (value)`
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
