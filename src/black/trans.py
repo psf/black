@@ -334,6 +334,9 @@ class CustomSplit:
     break_idx: int
 
 
+CustomSplitMapKey = tuple[StringID, str]
+
+
 @trait
 class CustomSplitMapMixin:
     """
@@ -342,13 +345,12 @@ class CustomSplitMapMixin:
     the resultant substrings go over the configured max line length.
     """
 
-    _Key: ClassVar = tuple[StringID, str]
-    _CUSTOM_SPLIT_MAP: ClassVar[dict[_Key, tuple[CustomSplit, ...]]] = defaultdict(
-        tuple
+    _CUSTOM_SPLIT_MAP: ClassVar[dict[CustomSplitMapKey, tuple[CustomSplit, ...]]] = (
+        defaultdict(tuple)
     )
 
     @staticmethod
-    def _get_key(string: str) -> "CustomSplitMapMixin._Key":
+    def _get_key(string: str) -> CustomSplitMapKey:
         """
         Returns:
             A unique identifier that is used internally to map @string to a
