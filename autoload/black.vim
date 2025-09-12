@@ -61,7 +61,16 @@ def _get_pip(venv_path):
 def _get_virtualenv_site_packages(venv_path, pyver):
   if sys.platform[:3] == "win":
     return venv_path / 'Lib' / 'site-packages'
-  return venv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
+  if venv_path.exists() and not (venv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}').exists():
+    # The virtualenv already exists but it doesn't seem to have the expected
+    # Python version, so we disregard the requested `pyver` and
+    # discover the real Python interpreter from this virtualenv
+    import subprocess
+    result = subprocess.run([_get_python_binary(venv_path, pyver), "--version"], stdout=subprocess.PIPE, text=True)
+    venv_version = result.stdout.split(" ")[1].strip().split(".")
+    return venv_path / 'lib' / f'python{venv_version[0]}.{venv_version[1]}' / 'site-packages'
+  else:
+    return venv_path / 'lib' / f'python{pyver[0]}.{pyver[1]}' / 'site-packages'
 
 def _initialize_black_env(upgrade=False):
   if vim.eval("g:black_use_virtualenv ? 'true' : 'false'") == "false":
@@ -120,7 +129,10 @@ def _initialize_black_env(upgrade=False):
   return True
 
 if _initialize_black_env():
-  import black
+  try:
+    import black
+  except ImportError:
+    print(f"Could not import black from any of: {', '.join(sys.path)}.")
   import time
 
 def get_target_version(tv):
