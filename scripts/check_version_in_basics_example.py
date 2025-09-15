@@ -8,27 +8,27 @@ import os
 import sys
 
 import commonmark
-from bs4 import BeautifulSoup  # type: ignore[import-untyped]
+from bs4 import BeautifulSoup
 
 
 def main(changes: str, the_basics: str) -> None:
     changes_html = commonmark.commonmark(changes)
     changes_soup = BeautifulSoup(changes_html, "html.parser")
     headers = changes_soup.find_all("h2")
-    tags = [header.string for header in headers if header.string != "Unreleased"]
+    tags = [header.string for header in headers if header.string != "Unreleased"]  # type: ignore[union-attr]
     latest_tag = tags[0]
 
     the_basics_html = commonmark.commonmark(the_basics)
     the_basics_soup = BeautifulSoup(the_basics_html, "html.parser")
     version_examples = [
-        code_block.string
+        code_block.string  # type: ignore[union-attr]
         for code_block in the_basics_soup.find_all(class_="language-console")
-        if "$ black --version" in code_block.string
+        if "$ black --version" in code_block.string  # type: ignore[union-attr, operator]
     ]
 
     for tag in tags:
         for version_example in version_examples:
-            if tag in version_example and tag != latest_tag:
+            if tag in version_example and tag != latest_tag:  # type: ignore[operator]
                 print(
                     "Please set the version in the ``black --version`` "
                     "examples from ``the_basics.md`` to be the latest one.\n"

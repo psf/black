@@ -58,6 +58,7 @@ repos:
           - hypothesis
           - aiohttp >= 3.7.4
           - types-commonmark
+          - beautifulsoup4
           - urllib3
           - hypothesmith
       - id: mypy
