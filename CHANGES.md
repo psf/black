@@ -83,6 +83,7 @@
      don't need a changelog entry. -->
 
 - Add FAQ entry for windows emoji not displaying (#4714)
+- Removed outdated VIM plugin installation instructions from the documentation to prevent confusion for users. (#2781)
 
 ## 25.1.0
 
