@@ -2088,10 +2088,7 @@ class BlackTestCase(BlackBaseTestCase):
         mode = Mode(enabled_features={Preview.normalize_cr_newlines})
         newline_types = ["A\n", "A\r\n", "A\r"]
         for test_case in itertools.permutations(newline_types):
-            assert (
-                black.format_str("".join(test_case), mode=mode)
-                == test_case[0] * 3
-            )
+            assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
 
 
 class TestCaching:
