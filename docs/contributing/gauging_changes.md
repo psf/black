@@ -27,20 +27,20 @@ workflow that analyzes and compares two revisions of _Black_ according to these 
 | On PRs                | latest commit on `main` | PR commit with `main` merged |
 | On pushes (main only) | latest PyPI version     | the pushed commit            |
 
-For pushes to main, there's only one analysis job named `preview-changes` where the
-preview style is used for all projects.
+For pushes to main, there's only one analysis job named `preview-new-changes` where the
+unstable style is used for all projects.
 
 For PRs they get one more analysis job: `assert-no-changes`. It's similar to
-`preview-changes` but runs with the stable code style. It will fail if changes were
+`preview-new-changes` but runs with the stable code style. It will fail if changes were
 made. This makes sure code won't be reformatted again and again within the same year in
 accordance to Black's stability policy.
 
-Additionally for PRs, a PR comment will be posted embedding a summary of the preview
-changes and links to further information. If there's a pre-existing diff-shades comment,
-it'll be updated instead the next time the workflow is triggered on the same PR.
+Additionally for PRs, a PR comment will be posted embedding a summary previewing the
+changes in the unstable style and links to further information. The next time the
+workflow is triggered on the same PR, it'll update the pre-existing diff-shades comment.
 
 ```{note}
-The `preview-changes` job will only fail intentionally if while analyzing a file failed to
+The `preview-new-changes` job will only fail intentionally if while analyzing a file failed to
 format. Otherwise a failure indicates a bug in the workflow.
 ```
 

@@ -22,6 +22,8 @@
 - Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
   (#4676)
 - Fix crash on parenthesized expression inside a type parameter bound (#4684)
+- Fix crash when using line ranges excluding indented single line decorated items
+  (#4670)
 
 ### Preview style
 
@@ -32,7 +34,11 @@
 - Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
 - Fix a bug where `string_processing` would not split f-strings directly after
   expressions (#4680)
-- Normalize newlines on format to first newline in file (#4710)
+- Wrap the `in` clause of comprehensions across lines if necessary (#4699)
+- Remove parentheses around multiple exception types in `except` and `except*` without
+  `as`. (#4720)
+- Add `\r` style newlines to the potenial newlines to normalize file newlines both from
+  and to (#4710)
 
 ### Configuration
 
@@ -53,6 +59,8 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Avoid using an extra process when running with only one worker (#4734)
 
 ### Output
 
@@ -75,6 +83,8 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Add FAQ entry for windows emoji not displaying (#4714)
 
 ## 25.1.0
 
