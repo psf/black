@@ -2058,17 +2058,17 @@ class BlackTestCase(BlackBaseTestCase):
                 "try:\\\r# type: ignore\n pass\nfinally:\n pass\n",
                 mode=black.FileMode(),
             )
-            == "try:  # type: ignore\r    pass\rfinally:\r    pass\r"
+            == "try:  # type: ignore\n    pass\nfinally:\n    pass\n"
         )
-        assert black.format_str("{\r}", mode=black.FileMode()) == "{}\r"
-        assert black.format_str("pass #\r#\n", mode=black.FileMode()) == "pass  #\r#\r"
+        assert black.format_str("{\r}", mode=black.FileMode()) == "{}\n"
+        assert black.format_str("pass #\r#\n", mode=black.FileMode()) == "pass  #\n#\n"
 
-        assert black.format_str("x=\\\r\n1", mode=black.FileMode()) == "x = 1\r\n"
+        assert black.format_str("x=\\\r\n1", mode=black.FileMode()) == "x = 1\n"
         assert black.format_str("x=\\\n1", mode=black.FileMode()) == "x = 1\n"
-        assert black.format_str("x=\\\r1", mode=black.FileMode()) == "x = 1\r"
+        assert black.format_str("x=\\\r1", mode=black.FileMode()) == "x = 1\n"
         assert (
             black.format_str("class A\\\r\n:...", mode=black.FileMode())
-            == "class A: ...\r\n"
+            == "class A: ...\n"
         )
         assert (
             black.format_str("class A\\\n:...", mode=black.FileMode())
@@ -2076,14 +2076,15 @@ class BlackTestCase(BlackBaseTestCase):
         )
         assert (
             black.format_str("class A\\\r:...", mode=black.FileMode())
-            == "class A: ...\r"
+            == "class A: ...\n"
         )
 
-    def test_newline_type_detection(self) -> None:
+    def test_preview_newline_type_detection(self) -> None:
+        mode = Mode(enabled_features={Preview.normalize_cr_newlines})
         newline_types = ["A\n", "A\r\n", "A\r"]
         for test_case in itertools.permutations(newline_types):
             assert (
-                black.format_str("".join(test_case), mode=black.FileMode())
+                black.format_str("".join(test_case), mode=mode)
                 == test_case[0] * 3
             )
 

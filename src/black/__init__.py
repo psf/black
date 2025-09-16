@@ -946,7 +946,7 @@ def format_file_in_place(
     with open(src, "rb") as buf:
         if mode.skip_source_first_line:
             header = buf.readline()
-        src_contents, encoding, newline = decode_bytes(buf.read())
+        src_contents, encoding, newline = decode_bytes(buf.read(), mode)
     try:
         dst_contents = format_file_contents(
             src_contents, fast=fast, mode=mode, lines=lines
@@ -1008,9 +1008,11 @@ def format_stdin_to_stdout(
     then = datetime.now(timezone.utc)
 
     if content is None:
-        src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
-    else:
+        src, encoding, newline = decode_bytes(sys.stdin.buffer.read(), mode)
+    elif Preview.normalize_cr_newlines in mode:
         src, encoding, newline = content, "utf-8", "\n"
+    else:
+        src, encoding, newline = content, "utf-8", ""
 
     dst = src
     try:
@@ -1026,8 +1028,12 @@ def format_stdin_to_stdout(
         )
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content
-            if dst and dst[-1] != "\n" and dst[-1] != "\r":
-                dst += newline
+            if Preview.normalize_cr_newlines in mode:
+                if dst and dst[-1] != "\n" and dst[-1] != "\r":
+                    dst += newline
+            else:
+                if dst and dst[-1] != "\n":
+                    dst += "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
@@ -1217,11 +1223,17 @@ def format_str(
 def _format_str_once(
     src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
-    normalized_contents, _, newline_type = decode_bytes(src_contents.encode("utf-8"))
+    if Preview.normalize_cr_newlines in mode:
+        normalized_contents, _, newline_type = decode_bytes(
+            src_contents.encode("utf-8"), mode
+        )
 
-    src_node = lib2to3_parse(
-        normalized_contents.lstrip(), target_versions=mode.target_versions
-    )
+        src_node = lib2to3_parse(
+            normalized_contents.lstrip(), target_versions=mode.target_versions
+        )
+    else:
+        src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
+
     dst_blocks: list[LinesBlock] = []
     if mode.target_versions:
         versions = mode.target_versions
@@ -1263,13 +1275,25 @@ def _format_str_once(
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
     if not dst_contents:
-        if "\n" in normalized_contents:
-            return newline_type
+        if Preview.normalize_cr_newlines in mode:
+            if "\n" in normalized_contents:
+                return newline_type
+        else:
+            # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
+            # and check if normalized_content has more than one line
+            normalized_content, _, newline = decode_bytes(
+                src_contents.encode("utf-8"), mode
+            )
+            if "\n" in normalized_content:
+                return newline
         return ""
-    return "".join(dst_contents).replace("\n", newline_type)
+    if Preview.normalize_cr_newlines in mode:
+        return "".join(dst_contents).replace("\n", newline_type)
+    else:
+        return "".join(dst_contents)
 
 
-def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
+def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine]:
     """Return a tuple of (decoded_contents, encoding, newline).
 
     `newline` is either CRLF or LF but `decoded_contents` is decoded with
@@ -1280,21 +1304,24 @@ def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
     if not lines:
         return "", encoding, "\n"
 
-    if lines[0][-2:] == b"\r\n":
-        if b"\r" in lines[0][:-2]:
-            newline = "\r"
+    if Preview.normalize_cr_newlines in mode:
+        if lines[0][-2:] == b"\r\n":
+            if b"\r" in lines[0][:-2]:
+                newline = "\r"
+            else:
+                newline = "\r\n"
+        elif lines[0][-1:] == b"\n":
+            if b"\r" in lines[0][:-1]:
+                newline = "\r"
+            else:
+                newline = "\n"
         else:
-            newline = "\r\n"
-    elif lines[0][-1:] == b"\n":
-        if b"\r" in lines[0][:-1]:
-            newline = "\r"
-        else:
-            newline = "\n"
+            if b"\r" in lines[0]:
+                newline = "\r"
+            else:
+                newline = "\n"
     else:
-        if b"\r" in lines[0]:
-            newline = "\r"
-        else:
-            newline = "\n"
+        newline = "\r\n" if lines[0][-2:] == b"\r\n" else "\n"
 
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:

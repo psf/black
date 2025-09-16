@@ -29,6 +29,8 @@ Currently, the following features are included in the preview style:
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
   such as `def foo(): return "mock"  # fmt: skip`, where previously the declaration
   would have been incorrectly collapsed.
+- `normalize_cr_newlines`: Add `\r` style newlines to the potenial newlines to normalize
+  file newlines both from and to.
 
 (labels/unstable-features)=
 

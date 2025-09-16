@@ -22,7 +22,6 @@
 - Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
   (#4676)
 - Fix crash on parenthesized expression inside a type parameter bound (#4684)
-- Normalize newlines on format to first newline in file (#4710)
 
 ### Preview style
 
@@ -33,6 +32,7 @@
 - Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
 - Fix a bug where `string_processing` would not split f-strings directly after
   expressions (#4680)
+- Normalize newlines on format to first newline in file (#4710)
 
 ### Configuration
 
