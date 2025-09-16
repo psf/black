@@ -87,7 +87,8 @@
           "always_one_newline_after_import",
           "fix_fmt_skip_in_one_liners",
           "wrap_comprehension_in",
-          "remove_parens_around_except_types"
+          "remove_parens_around_except_types",
+          "normalize_cr_newlines"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
