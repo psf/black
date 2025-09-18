@@ -1,7 +1,9 @@
 import json
 from typing import IO, Any
+from importlib.metadata import version as imp_version
 
 import click
+from packaging.version import Version
 
 import black
 
@@ -38,6 +40,9 @@ def generate_schema_from_click(
         result[name]["description"] = param.help
 
         if param.default is not None and not param.multiple:
+            if Version(imp_version("click")) >= Version("8.3.0"):
+                if param.default is click._utils.UNSET:
+                    continue
             result[name]["default"] = param.default
 
     return result
