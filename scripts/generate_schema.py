@@ -1,6 +1,6 @@
 import json
-from typing import IO, Any
 from importlib.metadata import version as imp_version
+from typing import IO, Any
 
 import click
 from packaging.version import Version
