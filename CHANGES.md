@@ -1,14 +1,13 @@
 # Change Log
 
-## Unreleased
+## 25.9.0
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
+- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
+  (#4676)
 
 ### Stable style
-
-<!-- Changes that affect Black's stable style -->
 
 - Fix crash while formatting a long `del` statement containing tuples (#4628)
 - Fix crash while formatting expressions using the walrus operator in complex `with`
@@ -19,15 +18,11 @@
 - Fix crash when formatting a `\` followed by a `\r` followed by a comment (#4663)
 - Fix crash on a `\\r\n` (#4673)
 - Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
-- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
-  (#4676)
 - Fix crash on parenthesized expression inside a type parameter bound (#4684)
 - Fix crash when using line ranges excluding indented single line decorated items
   (#4670)
 
 ### Preview style
-
-<!-- Changes that affect Black's preview style -->
 
 - Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
   be formatted (#4552)
@@ -40,17 +35,7 @@
 - Add `\r` style newlines to the potential newlines to normalize file newlines both from
   and to (#4710)
 
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
 ### Parser
-
-<!-- Changes to the parser or to version autodetection -->
 
 - Rewrite tokenizer to improve performance and compliance (#4536)
 - Fix bug where certain unusual expressions (e.g., lambdas) were not accepted in type
@@ -58,21 +43,9 @@
 
 ### Performance
 
-<!-- Changes that improve Black's performance. -->
-
 - Avoid using an extra process when running with only one worker (#4734)
 
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
 - Enhance GitHub Action `psf/black` to read Black version from an additional section in
@@ -80,9 +53,6 @@
 - Build gallery docker image with python3-slim and reduce image size (#4686)
 
 ### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 - Add FAQ entry for windows emoji not displaying (#4714)
 
