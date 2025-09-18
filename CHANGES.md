@@ -37,6 +37,8 @@
 - Wrap the `in` clause of comprehensions across lines if necessary (#4699)
 - Remove parentheses around multiple exception types in `except` and `except*` without
   `as`. (#4720)
+- Add `\r` style newlines to the potential newlines to normalize file newlines both from
+  and to (#4710)
 
 ### Configuration
 

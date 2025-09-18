@@ -3,6 +3,7 @@
 import asyncio
 import inspect
 import io
+import itertools
 import logging
 import multiprocessing
 import os
@@ -2082,6 +2083,12 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_str("class A\\\r:...", mode=black.FileMode())
             == "class A: ...\n"
         )
+
+    def test_preview_newline_type_detection(self) -> None:
+        mode = Mode(enabled_features={Preview.normalize_cr_newlines})
+        newline_types = ["A\n", "A\r\n", "A\r"]
+        for test_case in itertools.permutations(newline_types):
+            assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
 
 
 class TestCaching:
