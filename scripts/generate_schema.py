@@ -41,7 +41,7 @@ def generate_schema_from_click(
 
         if param.default is not None and not param.multiple:
             if Version(imp_version("click")) >= Version("8.3.0"):
-                if param.default is click._utils.UNSET:
+                if param.default is click._utils.UNSET:  # ignore[attr-defined]
                     continue
             result[name]["default"] = param.default
 
