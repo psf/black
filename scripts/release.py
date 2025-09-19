@@ -148,10 +148,10 @@ class SourceFiles:
         )
 
         # Remove all comments
-        changes_string = re.sub(r"^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
+        changes_string = re.sub(r"(?m)^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
 
         # Remove empty subheadings
-        changes_string = re.sub(r"^###.+\n\n(?=#)", "", changes_string)
+        changes_string = re.sub(r"(?m)^###.+\n\n(?=#)", "", changes_string)
 
         with self.changes_path.open("w", encoding="utf-8") as cfp:
             cfp.write(changes_string)
