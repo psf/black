@@ -70,9 +70,8 @@ To cut a release:
       description box
 1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
    will handle the rest
-1. Once CI is done add + PR a new empty template for the next
-   release to CHANGES.md _(Template is able to be copy pasted from release.py should we
-   fail)_
+1. Once CI is done add + PR a new empty template for the next release to CHANGES.md
+   _(Template is able to be copy pasted from release.py should we fail)_
    1. `python3 scripts/release.py --add-changes-template|-a [--debug]`
    1. Should that fail, please return to copy + paste
 1. At this point, you're basically done. It's good practice to go and [watch and verify
