@@ -14,7 +14,7 @@ import sys
 
 import commonmark
 import yaml
-from bs4 import BeautifulSoup  # type: ignore[import-untyped]
+from bs4 import BeautifulSoup
 
 
 def main(changes: str, source_version_control: str) -> None:
@@ -22,7 +22,7 @@ def main(changes: str, source_version_control: str) -> None:
     changes_soup = BeautifulSoup(changes_html, "html.parser")
     headers = changes_soup.find_all("h2")
     latest_tag, *_ = [
-        header.string for header in headers if header.string != "Unreleased"
+        header.string for header in headers if header.string != "Unreleased"  # type: ignore[union-attr]
     ]
 
     source_version_control_html = commonmark.commonmark(source_version_control)
@@ -30,7 +30,7 @@ def main(changes: str, source_version_control: str) -> None:
         source_version_control_html, "html.parser"
     )
     pre_commit_repos = yaml.safe_load(
-        source_version_control_soup.find(class_="language-yaml").string
+        source_version_control_soup.find(class_="language-yaml").string  # type: ignore[union-attr]
     )["repos"]
 
     for repo in pre_commit_repos:
