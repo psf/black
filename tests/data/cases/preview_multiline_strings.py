@@ -157,7 +157,6 @@ Please use `--build-option` instead,
 `--global-option` is reserved to flags like `--verbose` or `--quiet`.
 """
 
-
 assert some_var == expected_result, """
 test
 """

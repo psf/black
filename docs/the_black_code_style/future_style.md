@@ -106,9 +106,9 @@ foobar
 """.replace("\n", "")
 ```
 
-(labels/unstable-features)=
-
 ## Unstable style
+
+(labels/unstable-style)=
 
 In the past, the preview style included some features with known bugs, so that we were
 unable to move these features to the stable style. Therefore, such features are now
@@ -118,6 +118,8 @@ stabilized only if issues with them are fixed. If bugs are discovered in a `--pr
 feature, it is demoted to the `--unstable` style. To avoid thrash when a feature is
 demoted from the `--preview` to the `--unstable` style, users can use the
 `--enable-unstable-feature` flag to enable specific unstable features.
+
+(labels/unstable-features)=
 
 The unstable style additionally includes the following features:
 
