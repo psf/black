@@ -14,6 +14,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
