@@ -10,12 +10,12 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix bug where module doc strings would be treated as normal strings if preceeded by
-  comments (#4764)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
+- Fix bug where module doc strings would be treated as normal strings if preceeded by
+  comments (#4764)
 
 ### Configuration
 

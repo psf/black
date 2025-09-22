@@ -559,9 +559,20 @@ class EmptyLineTracker:
         before, after = self._maybe_empty_lines(current_line)
         previous_after = self.previous_block.after if self.previous_block else 0
         before = max(0, before - previous_after)
-        # Always have one empty line after a module docstring
-        if self._line_is_module_docstring(current_line):
-            before = 1
+        if Preview.fix_module_docstring_detection in self.Mode:
+            # Always have one empty line after a module docstring
+            if self._line_is_module_docstring(current_line):
+                before = 1
+        else:
+            if (
+                # Always have one empty line after a module docstring
+                self.previous_block
+                and self.previous_block.previous_block is None
+                and len(self.previous_block.original_line.leaves) == 1
+                and self.previous_block.original_line.is_docstring
+                and not (current_line.is_class or current_line.is_def)
+            ):
+                before = 1
 
         block = LinesBlock(
             mode=self.mode,
