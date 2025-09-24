@@ -27,13 +27,14 @@ unstable = true
 # NOTE: You don't need this in your own Black configuration.
 
 [build-system]
-requires = ["hatchling>=1.20.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
+requires = ["hatchling>=1.27.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
 
 [project]
 name = "black"
 description = "The uncompromising code formatter."
 license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.9"
 authors = [
   { name = "Łukasz Langa", email = "lukasz@langa.pl" },
@@ -51,7 +52,6 @@ classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: Console",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
