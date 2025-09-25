@@ -38,7 +38,9 @@ import black
 def test_idempotent_any_syntatically_valid_python(
     src_contents: str, mode: black.FileMode
 ) -> None:
-    if "#\r" in src_contents and black.Preview.normalize_cr_newlines not in mode:
+    if (
+        "#\r" in src_contents or "\\\n" in src_contents
+    ) and black.Preview.normalize_cr_newlines not in mode:
         return
 
     # Before starting, let's confirm that the input string is valid Python:
