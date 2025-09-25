@@ -8,6 +8,7 @@ a coverage-guided fuzzer I'm working on.
 import hypothesmith
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
+
 import black
 
 
