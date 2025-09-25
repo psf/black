@@ -35,6 +35,8 @@ Currently, the following features are included in the preview style:
   types in `except` and `except*` without `as`. See PEP 758 for details.
 - `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
   normalize file newlines both from and to.
+- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
+  strings if preceeded by comments.
 
 (labels/unstable-features)=
 
