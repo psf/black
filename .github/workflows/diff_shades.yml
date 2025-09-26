@@ -144,7 +144,7 @@ jobs:
           diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
 
   compare:
-    name: analysis / ${{ matrix.mode }}
+    name: compare / ${{ matrix.mode }}
     needs: ["configure", "analysis-base", "analysis-target"]
     if: success() || failure()
     runs-on: ubuntu-latest
@@ -157,6 +157,8 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: actions/download-artifact@v5
+        with:
+          merge-multiple: true
 
       - name: Assert files exist
         run: |
