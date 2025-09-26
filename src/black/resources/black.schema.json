@@ -88,7 +88,8 @@
           "fix_fmt_skip_in_one_liners",
           "wrap_comprehension_in",
           "remove_parens_around_except_types",
-          "normalize_cr_newlines"
+          "normalize_cr_newlines",
+          "fix_module_docstring_detection"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."

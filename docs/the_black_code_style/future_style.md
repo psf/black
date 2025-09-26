@@ -28,7 +28,9 @@ Currently, the following features are included in the preview style:
   normalize file newlines both from and to.
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
-
+- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
+  strings if preceeded by comments.
+  
 (labels/wrap-long-dict-values)=
 
 ### Improved parentheses management in dicts
