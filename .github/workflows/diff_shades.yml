@@ -12,6 +12,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
+env:
+  HATCH_BUILD_HOOKS_ENABLE: "1"
+  # Clang is less picky with the C code it's given than gcc (and may generate faster
+  # binaries too).
+  CC: clang-18
+
 jobs:
   configure:
     runs-on: ubuntu-latest
@@ -20,6 +26,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
@@ -33,19 +40,12 @@ jobs:
         id: set-config
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >
-          python scripts/diff_shades_gha_helper.py config ${{ github.event_name }}
-          ${{ matrix.mode }}
+        run: python scripts/diff_shades_gha_helper.py config ${{ github.event_name }}
 
-  analysis:
-    name: analysis / ${{ matrix.mode }}
+  analysis-base:
+    name: analysis / base / ${{ matrix.mode }}
     needs: configure
     runs-on: ubuntu-latest
-    env:
-      HATCH_BUILD_HOOKS_ENABLE: "1"
-      # Clang is less picky with the C code it's given than gcc (and may
-      # generate faster binaries too).
-      CC: clang-18
     strategy:
       fail-fast: false
       matrix:
@@ -62,12 +62,9 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install diff-shades and support dependencies
+      - name: Install diff-shades
         run: |
           python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
-          python -m pip install 'click>=8.1.7' packaging urllib3
-          # After checking out old revisions, this might not exist so we'll use a copy.
-          cat scripts/diff_shades_gha_helper.py > helper.py
           git config user.name "diff-shades-gha"
           git config user.email "diff-shades-gha@example.com"
 
@@ -92,6 +89,34 @@ jobs:
           diff-shades analyze -v --work-dir projects-cache/
           ${{ matrix.baseline-analysis }} ${{ matrix.force-flag }}
 
+      - name: Upload baseline analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.baseline-analysis }}
+          path: ${{ matrix.baseline-analysis }}
+
+  analysis-target:
+    name: analysis / target / ${{ matrix.mode }}
+    needs: configure
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.configure.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install diff-shades
+        run: |
+          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+          git config user.name "diff-shades-gha"
+          git config user.email "diff-shades-gha@example.com"
+
       - name: Build and install target revision
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -102,8 +127,50 @@ jobs:
       - name: Analyze target revision
         run: >
           diff-shades analyze -v --work-dir projects-cache/
-          ${{ matrix.target-analysis }} --repeat-projects-from
-          ${{ matrix.baseline-analysis }} ${{ matrix.force-flag }}
+          ${{ matrix.target-analysis }} ${{ matrix.force-flag }}
+
+      - name: Upload target analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target-analysis }}
+          path: ${{ matrix.target-analysis }}
+
+      - name: Check for failed files for target revision
+        run: >
+          diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
+
+  compare:
+    name: analysis / ${{ matrix.mode }}
+    needs: ["configure", "analysis-base", "analysis-target"]
+    if: success() || failure()
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.configure.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v5
+
+      - name: Assert files exist
+        run: |
+          if ! [ -f "${{ matrix.baseline-analysis }}" ]; then
+            exit 1
+          fi
+          if ! [ -f "${{ matrix.target-analysis }}" ]; then
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install diff-shades
+        run:
+          python -m pip install
+          https://github.com/ichard26/diff-shades/archive/stable.zip
 
       - name: Generate HTML diff report
         run: >
@@ -115,18 +182,6 @@ jobs:
         with:
           name: ${{ matrix.mode }}-diff.html
           path: diff.html
-
-      - name: Upload baseline analysis
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.baseline-analysis }}
-          path: ${{ matrix.baseline-analysis }}
-
-      - name: Upload target analysis
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.target-analysis }}
-          path: ${{ matrix.target-analysis }}
 
       - name: Generate summary file (PR only)
         if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
@@ -147,9 +202,3 @@ jobs:
         run: >
           diff-shades compare --check ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
           || (echo "Please verify you didn't change the stable code style unintentionally!" && exit 1)
-
-      - name: Check for failed files for target revision
-        # Even if the previous step failed, we should still check for failed files.
-        if: always()
-        run: >
-          diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
