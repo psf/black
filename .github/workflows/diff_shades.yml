@@ -210,6 +210,7 @@ jobs:
         with:
           name: .pr-comment.json
           path: .pr-comment.json
+          include-hidden-files: true
 
       - name: Verify zero changes (PR only)
         if: matrix.mode == 'assert-no-changes'
