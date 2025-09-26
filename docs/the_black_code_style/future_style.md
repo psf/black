@@ -30,7 +30,7 @@ Currently, the following features are included in the preview style:
   multiline strings ([see below](labels/multiline-string-handling))
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceeded by comments.
-  
+
 (labels/wrap-long-dict-values)=
 
 ### Improved parentheses management in dicts
