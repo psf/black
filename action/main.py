@@ -72,7 +72,7 @@ def read_version_specifier_from_pyproject() -> str:
         if "." in version:
             return f"=={version}"
         else:
-            return f"~={version}"
+            return f"~={version}.0"
 
     arrays = [
         *pyproject.get("dependency-groups", {}).values(),
