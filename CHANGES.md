@@ -45,7 +45,7 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 - Enhance GitHub Action `psf/black` to support the `required-version`
-  major-version-only "stability" format when using pyproject.toml
+  major-version-only "stability" format when using pyproject.toml (#4770)
 
 ### Documentation
 
