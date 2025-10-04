@@ -46,17 +46,17 @@ To cut a release:
    - `release.py` will calculate this and log to stderr for you copy paste pleasure
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
    - Run `python3 scripts/release.py [--debug]` to generate most changes
-1. If `release.py` fail manually edit; otherwise, yay, skip this step!
+1. If `release.py` fails manually edit; otherwise, yay, skip this step!
    1. Replace the `## Unreleased` header with the version number
    1. Remove any empty sections for the current release
    1. (_optional_) Read through and copy-edit the changelog (eg. by moving entries,
       fixing typos, or rephrasing entries)
    1. Double-check that no changelog entries since the last release were put in the
-      wrong section (e.g., run `git diff <last release> CHANGES.md`)
+      wrong section (e.g., run `git diff origin/stable CHANGES.md`)
    1. Update references to the latest version in
       {doc}`/integrations/source_version_control` and
       {doc}`/usage_and_configuration/the_basics`
-   - Example PR: [GH-3139]
+   - Example PR: [GH-4563]
 1. Once the release PR is merged, wait until all CI passes
    - If CI does not pass, **stop** and investigate the failure(s) as generally we'd want
      to fix failing CI before cutting a release
@@ -64,14 +64,14 @@ To cut a release:
    1. Click `Choose a tag` and type in the version number, then select the
       `Create new tag: YY.M.N on publish` option that appears
    1. Verify that the new tag targets the `main` branch
-   1. You can leave the release title blank, GitHub will default to the tag name
+   1. Make sure the release title is set to the version (`YY.M.N`), as otherwise the
+      default title is the last commit's title
    1. Copy and paste the _raw changelog Markdown_ for the current release into the
       description box
 1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
    will handle the rest
-1. Once CI is done add + commit (git push - No review) a new empty template for the next
-   release to CHANGES.md _(Template is able to be copy pasted from release.py should we
-   fail)_
+1. Once CI is done add + PR a new empty template for the next release to CHANGES.md
+   _(Template is able to be copy pasted from release.py should we fail)_
    1. `python3 scripts/release.py --add-changes-template|-a [--debug]`
    1. Should that fail, please return to copy + paste
 1. At this point, you're basically done. It's good practice to go and [watch and verify
@@ -158,7 +158,7 @@ This also runs on each push to `main`.
 [build]: https://pypa-build.readthedocs.io/
 [calver]: https://calver.org
 [cibuildwheel]: https://cibuildwheel.readthedocs.io/
-[gh-3139]: https://github.com/psf/black/pull/3139
+[gh-4563]: https://github.com/psf/black/pull/4563
 [github actions]: https://github.com/features/actions
 [github release]: https://github.com/psf/black/releases
 [new-release]: https://github.com/psf/black/releases/new
