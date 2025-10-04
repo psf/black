@@ -41,6 +41,9 @@
 
 <!-- Changes to blackd -->
 
+- Implemented BlackDClient. This simple python client allows to easily send formatting
+  requests to blackd (#3721)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
