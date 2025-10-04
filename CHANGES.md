@@ -25,6 +25,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Now GitHub actions build arm binaries
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
