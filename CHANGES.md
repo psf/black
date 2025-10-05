@@ -19,6 +19,7 @@
 
 - Format multi-line list concatenations symmetrically when the right-hand side is a list
   concatenation and the line would exceed the configured line length (#260)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

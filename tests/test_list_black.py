@@ -1,4 +1,5 @@
-from black import format_str, FileMode
+from black import FileMode, format_str
+
 
 def test_list_concatenation_multiline():
     source = '''

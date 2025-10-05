@@ -3,10 +3,10 @@
 Black formats list concatenations that must be split across multiple lines in a
 symmetric, parenthesized style to improve readability.
 
-When an assignment’s right-hand side is a concatenation of two list displays or
-list comprehensions and the entire statement would exceed the configured line
-length, Black will wrap the right-hand side in parentheses and place the `+`
-operator at the start of the following line.
+When an assignment’s right-hand side is a concatenation of two list displays or list
+comprehensions and the entire statement would exceed the configured line length, Black
+will wrap the right-hand side in parentheses and place the `+` operator at the start of
+the following line.
 
 ## Example
 
@@ -31,8 +31,8 @@ search_fields = (
 
 - Applies when:
   - The statement is an assignment (`=`).
-  - The right-hand side is a binary `+` expression where both operands are list
-    displays (e.g., `[1, 2]`) or list comprehensions.
+  - The right-hand side is a binary `+` expression where both operands are list displays
+    (e.g., `[1, 2]`) or list comprehensions.
   - The whole line would otherwise exceed the configured line length.
 - The entire right-hand side is wrapped in parentheses, with:
   - The first list on its own line.
