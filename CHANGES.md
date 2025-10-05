@@ -25,7 +25,7 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Now GitHub actions build arm binaries
+- Now GitHub actions build arm binaries (#4773)
 
 ### Parser
 
