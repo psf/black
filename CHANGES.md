@@ -10,6 +10,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix bug where python 3.12 generics syntax split line happens weirdly (#4740)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
