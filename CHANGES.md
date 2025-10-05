@@ -17,7 +17,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Fix bug where module docstrings would be treated as normal strings if preceeded by
-  comments (#4764)
+  comments (#4777)
 
 ### Configuration
 
