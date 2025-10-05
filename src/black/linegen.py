@@ -641,6 +641,108 @@ def transform_line(
 
     `features` are syntactical features that may be used in the output.
     """
+    # BEGIN: symmetric list-concatenation formatting (psf/black#260)
+    try:
+        leaves = line.leaves
+        if not leaves:
+            raise Exception()
+
+        # If the current string fits on one line, don't change anything.
+        line_str_pre = line_to_string(line)
+        if is_line_short_enough(line, mode=mode, line_str=line_str_pre):
+            raise Exception()
+
+        # Find the assignment '='
+        eq_i = next((i for i, lf in enumerate(leaves) if lf.type == token.EQUAL), None)
+        if eq_i is None:
+            raise Exception()
+
+        # Find the first '+' after '='
+        plus_i = next(
+            (i for i, lf in enumerate(leaves[eq_i + 1 :], start=eq_i + 1) if lf.type == token.PLUS),
+            None,
+        )
+        if plus_i is None:
+            raise Exception()
+
+        # Identify left/right tokens around '+', skipping standalone comments
+        li = plus_i - 1
+        while li > eq_i and leaves[li].type == STANDALONE_COMMENT:
+            li -= 1
+        ri = plus_i + 1
+        while ri < len(leaves) and leaves[ri].type == STANDALONE_COMMENT:
+            ri += 1
+        if not (eq_i < li < plus_i and plus_i < ri < len(leaves)):
+            raise Exception()
+
+        # Only act if it's [..] + [..]
+        left_is_list = leaves[li].type == token.RSQB
+        right_is_list = leaves[ri].type == token.LSQB
+        if not (left_is_list and right_is_list):
+            raise Exception()
+
+        indent_inner = "\n" + " " * (4 * (line.depth + 1))
+        indent_base = "\n" + " " * (4 * line.depth)
+
+        first_rhs_i = eq_i + 1
+
+        # Case 1: RHS is already wrapped in invisible parens: make them visible and break symmetrically
+        if leaves[first_rhs_i].type == token.LPAR and leaves[first_rhs_i].value == "":
+            lpar = leaves[first_rhs_i]
+            rpar = next(
+                (lf for lf in leaves if lf.type == token.RPAR and lf.opening_bracket is lpar),
+                None,
+            )
+            if rpar is not None:
+                # Make parentheses visible
+                lpar.value = "("
+                rpar.value = ")"
+
+                # First token inside '(' to a new indented line
+                first_inside = leaves[first_rhs_i + 1]
+                first_inside.prefix = indent_inner
+
+                # Put '+' on its own line with inner indentation
+                leaves[plus_i].prefix = indent_inner
+
+                # Force token after '+' to not carry over an extra newline
+                if plus_i + 1 < len(leaves):
+                    leaves[plus_i + 1].prefix = " "
+
+                # Close with base indentation (no leading newline to avoid blank line)
+                rpar.prefix = indent_base.lstrip("\n")
+
+        # Case 2: No parens on RHS: add visible parens and break symmetrically
+        elif leaves[first_rhs_i].type != token.LPAR:
+            from blib2to3.pytree import Leaf
+
+            # Insert '(' right after '='; preserve original spacing on '(' and move first RHS to indented newline
+            lpar = Leaf(token.LPAR, "(")
+            lpar.prefix = leaves[first_rhs_i].prefix
+            leaves[first_rhs_i].prefix = indent_inner
+            leaves.insert(first_rhs_i, lpar)
+
+            # '+' index shifts if it’s after insertion point
+            if plus_i >= first_rhs_i:
+                plus_i += 1
+
+            # Break before '+'
+            leaves[plus_i].prefix = indent_inner
+            # Ensure token after '+' is on same line, avoid double newline
+            if plus_i + 1 < len(leaves):
+                leaves[plus_i + 1].prefix = " "
+
+            # Append ')' at end with base indentation (no leading newline to avoid blank line)
+            rpar = Leaf(token.RPAR, ")")
+            rpar.prefix = indent_base.lstrip("\n")
+            leaves.append(rpar)
+
+        # If RHS starts with visible '(', assume it's already formatted; do nothing.
+    except Exception:
+        # If detection fails or doesn't apply, skip custom logic entirely.
+        pass
+    # END: symmetric list-concatenation formatting
+
     if line.is_comment:
         yield line
         return
