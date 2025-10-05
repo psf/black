@@ -47,6 +47,8 @@
 
 - Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
   "stability" format when using pyproject.toml (#4770)
+- Improve error message for vim plugin users. It now handles independently vim version
+- Vim: Warn on unsupported Vim and Python versions independently (#4772)
 - Vim: Print the import paths when importing black fails (#4675)
 - Vim: Fix handling of virtualenvs that have a different Python version (#4675)
 
