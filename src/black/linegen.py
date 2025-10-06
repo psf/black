@@ -835,8 +835,8 @@ def left_hand_split(
             current_leaves.append(leaf)
             if current_leaves is head_leaves:
                 if leaf.type == leaf_type and (
-                    Preview.fix_type_expansion_split
-                    and not (leaf_type == token.LPAR and depth > 0)
+                    Preview.fix_type_expansion_split not in mode
+                    or not (leaf_type == token.LPAR and depth > 0)
                 ):
                     matching_bracket = leaf
                     current_leaves = body_leaves
