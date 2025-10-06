@@ -274,13 +274,6 @@ or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 Plugin 'psf/black'
 ```
 
-and execute the following in a terminal:
-
-```console
-$ cd ~/.vim/bundle/black
-$ git checkout origin/stable -b stable
-```
-
 ##### Arch Linux
 
 On Arch Linux, the plugin is shipped with the
