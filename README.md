@@ -17,15 +17,18 @@
 
 ---
 
-_Black_ is an **uncompromising Python code formatter**.  
-By using it, you **cede control over minutiae of hand-formatting** — in return, you gain:
-- ⚡ **Speed and consistency** across projects  
-- 🧠 **Freedom from pycodestyle nagging**  
-- 🕒 **Time and mental energy saved**  
+_Black_ is an **uncompromising Python code formatter**.
+By using it, you **cede control over minutiae of hand-formatting** — in return, you
+gain:
 
-Blackened code looks the same everywhere — once you get used to it, you’ll focus purely on **logic and design**, not indentation or spacing.
+- ⚡ **Speed and consistency** across projects
+- 🧠 **Freedom from pycodestyle nagging**
+- 🕒 **Time and mental energy saved**
 
-Try it out on the **[Black Playground](https://black.vercel.app)** or watch the  
+Blackened code looks the same everywhere — once you get used to it, you’ll focus purely
+on **logic and design**, not indentation or spacing.
+
+Try it out on the **[Black Playground](https://black.vercel.app)** or watch the
 🎥 [PyCon 2019 Talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 
 ---
@@ -33,6 +36,9 @@ Try it out on the **[Black Playground](https://black.vercel.app)** or watch the
 ## 🚀 Installation & Usage
 
 ### Installation
+
 You can install _Black_ with **pip**:
+
 ```bash
 pip install black
+```
