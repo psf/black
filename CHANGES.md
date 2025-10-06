@@ -10,14 +10,14 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix bug where python 3.12 generics syntax split line happens weirdly (#4740)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix bug where python 3.12 generics syntax split line happens weirdly (#4740)
+
 - Fix bug where module docstrings would be treated as normal strings if preceeded by
-  comments (#4777)
+  comments (#4764)
 
 ### Configuration
 
