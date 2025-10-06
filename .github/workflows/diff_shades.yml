@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   configure:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       matrix: ${{ steps.set-config.outputs.matrix }}
 
@@ -40,7 +40,7 @@ jobs:
   analysis:
     name: analysis / ${{ matrix.mode }}
     needs: configure
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       HATCH_BUILD_HOOKS_ENABLE: "1"
       # Clang is less picky with the C code it's given than gcc (and may
