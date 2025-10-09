@@ -237,6 +237,7 @@ class Preview(Enum):
     remove_parens_around_except_types = auto()
     normalize_cr_newlines = auto()
     fix_module_docstring_detection = auto()
+    fix_type_expansion_split = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

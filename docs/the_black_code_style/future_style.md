@@ -37,6 +37,7 @@ Currently, the following features are included in the preview style:
   normalize file newlines both from and to.
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceeded by comments.
+- `fix_type_expansion_split`: Fix type expansions split in generic functions.
 
 (labels/unstable-features)=
 

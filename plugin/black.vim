@@ -20,12 +20,21 @@ if exists("g:load_black")
 endif
 
 if v:version < 700 || !has('python3')
-    func! __BLACK_MISSING()
-        echo "The black.vim plugin requires vim7.0+ with Python 3.9 support."
+    func! __ERROR()
+        let messages = []
+
+        if v:version < 700
+          call add(messages, "vim7.0+")
+        endif
+        if !has('python3')
+          call add(messages, "Python 3.9 support")
+        endif
+
+        echo "The black.vim plugin requires" join(messages, " and ")
     endfunc
-    command! Black :call __BLACK_MISSING()
-    command! BlackUpgrade :call __BLACK_MISSING()
-    command! BlackVersion :call __BLACK_MISSING()
+    command! Black :call __ERROR()
+    command! BlackUpgrade :call __ERROR()
+    command! BlackVersion :call __ERROR()
     finish
 endif
 
