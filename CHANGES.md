@@ -43,7 +43,7 @@
 <!-- Changes to blackd -->
 
 - Implemented BlackDClient. This simple python client allows to easily send formatting
-  requests to blackd (#3721)
+  requests to blackd (#4774)
 
 ### Integrations
 
