@@ -164,7 +164,7 @@ async def schedule_formatting(
                 executor, format_file_in_place, src, fast, mode, write_back, lock
             )
         ): src
-        for src in sorted(sources)
+        for src in sorted(sources, key=lambda f: (-f.stat().st_size, f))
     }
     pending = tasks.keys()
     try:
