@@ -26,6 +26,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Releases now include arm64 Linux binaries (#4773)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
