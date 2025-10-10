@@ -4,7 +4,7 @@ blib2to3 Node/Leaf transformation-related utility functions.
 
 import sys
 from collections.abc import Iterator
-from typing import Final, Generic, Literal, Optional, TypeVar, Union
+from typing import Any, Final, Generic, Literal, Optional, TypeVar, Union, cast
 
 if sys.version_info >= (3, 10):
     from typing import TypeGuard
@@ -172,7 +172,8 @@ class Visitor(Generic[T]):
         if visitf:
             yield from visitf(node)
         else:
-            yield from self.visit_default(node)
+            # TODO: make a repro and file against mypyc
+            yield from cast(Any, self.visit_default)(node)
 
     def visit_default(self, node: LN) -> Iterator[T]:
         """Default `visit_*()` implementation. Recurses to children of `node`."""
