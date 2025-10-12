@@ -16,6 +16,7 @@
 
 - Fix bug where module docstrings would be treated as normal strings if preceeded by
   comments (#4764)
+- Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
 
 ### Configuration
 
@@ -24,6 +25,8 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Releases now include arm64 Linux binaries (#4773)
 
 ### Parser
 
@@ -47,6 +50,10 @@
 
 - Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
   "stability" format when using pyproject.toml (#4770)
+- Improve error message for vim plugin users. It now handles independently vim version
+- Vim: Warn on unsupported Vim and Python versions independently (#4772)
+- Vim: Print the import paths when importing black fails (#4675)
+- Vim: Fix handling of virtualenvs that have a different Python version (#4675)
 
 ### Documentation
 
