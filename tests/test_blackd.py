@@ -233,7 +233,7 @@ class BlackDClientTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
         return blackd.make_app()
 
-    async def test_unformated_code(self) -> None:
+    async def test_unformatted_code(self) -> None:
         client = blackd.client.BlackDClient(self.client.make_url("/"))
         unformatted_code = "def hello(): print('Hello, World!')"
         expected = 'def hello():\n    print("Hello, World!")\n'
@@ -241,7 +241,7 @@ class BlackDClientTestCase(AioHTTPTestCase):
 
         self.assertEqual(formatted_code, expected)
 
-    async def test_formated_code(self) -> None:
+    async def test_formatted_code(self) -> None:
         client = blackd.client.BlackDClient(self.client.make_url("/"))
         initial_code = 'def hello():\n    print("Hello, World!")\n'
         expected = 'def hello():\n    print("Hello, World!")\n'

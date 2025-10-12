@@ -28,7 +28,7 @@ class BlackDClient:
         :param line_length: The maximum line length.
             Corresponds to the ``--line-length`` CLI option.
         :param skip_source_first_line: True to skip the first line of the source.
-            Corresponds to the ``--skip-string-normalization`` CLI option.
+            Corresponds to the ``--skip-source-first-line`` CLI option.
         :param skip_string_normalization: True to skip string normalization.
             Corresponds to the ``--skip-string-normalization`` CLI option.
         :param skip_magic_trailing_comma: True to skip magic trailing comma.
