@@ -15,15 +15,15 @@ def main(changes: str, the_basics: str) -> None:
     changes_html = commonmark.commonmark(changes)
     changes_soup = BeautifulSoup(changes_html, "html.parser")
     headers = changes_soup.find_all("h2")
-    tags = [header.string for header in headers if header.string != "Unreleased"]  # type: ignore[union-attr]
+    tags = [header.string for header in headers if header.string != "Unreleased"]
     latest_tag = tags[0]
 
     the_basics_html = commonmark.commonmark(the_basics)
     the_basics_soup = BeautifulSoup(the_basics_html, "html.parser")
     version_examples = [
-        code_block.string  # type: ignore[union-attr]
+        code_block.string
         for code_block in the_basics_soup.find_all(class_="language-console")
-        if "$ black --version" in code_block.string  # type: ignore[union-attr, operator]
+        if "$ black --version" in code_block.string
     ]
 
     for tag in tags:
