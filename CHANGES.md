@@ -10,34 +10,14 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix crash while formatting a long `del` statement containing tuples (#4628)
-- Fix crash while formatting expressions using the walrus operator in complex `with`
-  statements (#4630)
-- Handle `# fmt: skip` followed by a comment at the end of file (#4635)
-- Fix crash when a tuple appears in the `as` clause of a `with` statement (#4634)
-- Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
-- Fix crash when formatting a `\` followed by a `\r` followed by a comment (#4663)
-- Fix crash on a `\\r\n` (#4673)
-- Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
-- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
-  (#4676)
-- Fix crash on parenthesized expression inside a type parameter bound (#4684)
-- Fix crash when using line ranges excluding indented single line decorated items
-  (#4670)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
-  be formatted (#4552)
+- Fix bug where module docstrings would be treated as normal strings if preceeded by
+  comments (#4764)
+- Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
 - Standardize type comments to form `# type: <value>` (#4645)
-- Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
-- Fix a bug where `string_processing` would not split f-strings directly after
-  expressions (#4680)
-- Wrap the `in` clause of comprehensions across lines if necessary (#4699)
-- Remove parentheses around multiple exception types in `except` and `except*` without
-  `as`. (#4720)
 
 ### Configuration
 
@@ -47,19 +27,15 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Releases now include arm64 Linux binaries (#4773)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
 
-- Rewrite tokenizer to improve performance and compliance (#4536)
-- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted in type
-  parameter bounds and defaults. (#4602)
-
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
-
-- Avoid using an extra process when running with only one worker (#4734)
 
 ### Output
 
@@ -73,15 +49,71 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
+  "stability" format when using pyproject.toml (#4770)
+- Improve error message for vim plugin users. It now handles independently vim version
+- Vim: Warn on unsupported Vim and Python versions independently (#4772)
+- Vim: Print the import paths when importing black fails (#4675)
+- Vim: Fix handling of virtualenvs that have a different Python version (#4675)
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## 25.9.0
+
+### Highlights
+
+- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
+  (#4676)
+
+### Stable style
+
+- Fix crash while formatting a long `del` statement containing tuples (#4628)
+- Fix crash while formatting expressions using the walrus operator in complex `with`
+  statements (#4630)
+- Handle `# fmt: skip` followed by a comment at the end of file (#4635)
+- Fix crash when a tuple appears in the `as` clause of a `with` statement (#4634)
+- Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
+- Fix crash when formatting a `\` followed by a `\r` followed by a comment (#4663)
+- Fix crash on a `\\r\n` (#4673)
+- Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
+- Fix crash on parenthesized expression inside a type parameter bound (#4684)
+- Fix crash when using line ranges excluding indented single line decorated items
+  (#4670)
+
+### Preview style
+
+- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
+  be formatted (#4552)
+- Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
+- Fix a bug where `string_processing` would not split f-strings directly after
+  expressions (#4680)
+- Wrap the `in` clause of comprehensions across lines if necessary (#4699)
+- Remove parentheses around multiple exception types in `except` and `except*` without
+  `as`. (#4720)
+- Add `\r` style newlines to the potential newlines to normalize file newlines both from
+  and to (#4710)
+
+### Parser
+
+- Rewrite tokenizer to improve performance and compliance (#4536)
+- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted in type
+  parameter bounds and defaults. (#4602)
+
+### Performance
+
+- Avoid using an extra process when running with only one worker (#4734)
+
+### Integrations
+
 - Fix the version check in the vim file to reject Python 3.8 (#4567)
 - Enhance GitHub Action `psf/black` to read Black version from an additional section in
   pyproject.toml: `[project.dependency-groups]` (#4606)
 - Build gallery docker image with python3-slim and reduce image size (#4686)
 
 ### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 - Add FAQ entry for windows emoji not displaying (#4714)
 

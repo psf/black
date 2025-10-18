@@ -236,6 +236,9 @@ class Preview(Enum):
     # Remove parentheses around multiple exception types in except and
     # except* without as. See PEP 758 for details.
     remove_parens_around_except_types = auto()
+    normalize_cr_newlines = auto()
+    fix_module_docstring_detection = auto()
+    fix_type_expansion_split = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

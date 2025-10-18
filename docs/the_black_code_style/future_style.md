@@ -35,6 +35,11 @@ Currently, the following features are included in the preview style:
   across lines if it would otherwise exceed the maximum line length.
 - `remove_parens_around_except_types`: Remove parentheses around multiple exception
   types in `except` and `except*` without `as`. See PEP 758 for details.
+- `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
+  normalize file newlines both from and to.
+- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
+  strings if preceeded by comments.
+- `fix_type_expansion_split`: Fix type expansions split in generic functions.
 
 (labels/unstable-features)=
 
