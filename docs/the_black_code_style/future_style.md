@@ -29,6 +29,8 @@ Currently, the following features are included in the preview style:
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
   such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
   have been incorrectly collapsed.
+- `standardize_type_comments`: Format type comments which have zero or more spaces
+  between `#` and `type:` or between `type:` and value to `# type: (value)`
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
   across lines if it would otherwise exceed the maximum line length.
 - `remove_parens_around_except_types`: Remove parentheses around multiple exception
@@ -37,6 +39,7 @@ Currently, the following features are included in the preview style:
   normalize file newlines both from and to.
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceeded by comments.
+- `fix_type_expansion_split`: Fix type expansions split in generic functions.
 
 (labels/unstable-features)=
 
