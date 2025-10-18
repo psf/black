@@ -231,12 +231,14 @@ class Preview(Enum):
     multiline_string_handling = auto()
     always_one_newline_after_import = auto()
     fix_fmt_skip_in_one_liners = auto()
+    standardize_type_comments = auto()
     wrap_comprehension_in = auto()
     # Remove parentheses around multiple exception types in except and
     # except* without as. See PEP 758 for details.
     remove_parens_around_except_types = auto()
     normalize_cr_newlines = auto()
     fix_module_docstring_detection = auto()
+    fix_type_expansion_split = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
@@ -316,3 +318,18 @@ class Mode:
             features_and_magics,
         ]
         return ".".join(parts)
+
+    def __hash__(self) -> int:
+        return hash((
+            frozenset(self.target_versions),
+            self.line_length,
+            self.string_normalization,
+            self.is_pyi,
+            self.is_ipynb,
+            self.skip_source_first_line,
+            self.magic_trailing_comma,
+            frozenset(self.python_cell_magics),
+            self.preview,
+            self.unstable,
+            frozenset(self.enabled_features),
+        ))

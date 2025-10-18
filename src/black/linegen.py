@@ -140,7 +140,7 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node):
+            for comment in generate_comments(node, mode=self.mode):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -834,7 +834,10 @@ def left_hand_split(
                 current_leaves = tail_leaves if body_leaves else head_leaves
             current_leaves.append(leaf)
             if current_leaves is head_leaves:
-                if leaf.type == leaf_type:
+                if leaf.type == leaf_type and (
+                    Preview.fix_type_expansion_split not in mode
+                    or not (leaf_type == token.LPAR and depth > 0)
+                ):
                     matching_bracket = leaf
                     current_leaves = body_leaves
         if matching_bracket and tail_leaves:
@@ -1417,7 +1420,7 @@ def normalize_invisible_parens(  # noqa: C901
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False):
+    for pc in list_comments(node.prefix, is_endmarker=False, mode=mode):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
@@ -1745,7 +1748,7 @@ def maybe_make_parens_invisible_in_atom(
         if (
             # If the prefix of `middle` includes a type comment with
             # ignore annotation, then we do not remove the parentheses
-            not is_type_ignore_comment_string(middle.prefix.strip())
+            not is_type_ignore_comment_string(middle.prefix.strip(), mode=mode)
         ):
             first.value = ""
             last.value = ""
