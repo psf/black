@@ -321,6 +321,78 @@ def generate_ignored_nodes(
             container = container.next_sibling
 
 
+def _find_compound_statement_context(
+    parent: Optional[LN],
+) -> tuple[Optional[Node], Optional[Node]]:
+    """Find compound statement and suite nodes for fmt: skip handling."""
+    if parent is None or parent.type != syms.simple_stmt:
+        return None, None
+
+    # Case 1: simple_stmt -> suite -> compound_stmt (after reformatting)
+    if (parent.parent is not None
+            and parent.parent.type == syms.suite
+            and parent.parent.parent is not None):
+        assert isinstance(parent.parent, Node)
+        suite_node = parent.parent
+        assert isinstance(suite_node.parent, Node)
+        compound_parent = suite_node.parent
+        return compound_parent, suite_node
+
+    # Case 2: simple_stmt -> compound_stmt (original structure)
+    compound_types = (
+        syms.if_stmt, syms.while_stmt, syms.for_stmt,
+        syms.try_stmt, syms.with_stmt, syms.funcdef, syms.classdef
+    )
+    if (parent.parent is not None
+            and parent.parent.type in compound_types):
+        assert isinstance(parent.parent, Node)
+        compound_parent = parent.parent
+        # Find the suite node in the compound statement
+        for child in compound_parent.children:
+            if child.type == syms.suite:
+                assert isinstance(child, Node)
+                return compound_parent, child
+
+    return None, None
+
+
+def _get_compound_statement_header(
+    compound_parent: Node, suite_node: Node, parent: LN
+) -> list[LN]:
+    """Get header nodes for compound statement if it should be preserved."""
+    compound_types = (
+        syms.if_stmt, syms.while_stmt, syms.for_stmt,
+        syms.try_stmt, syms.with_stmt, syms.funcdef, syms.classdef
+    )
+    if compound_parent.type not in compound_types:
+        return []
+
+    # Check if this is a single-line compound statement
+    stmt_children = [
+        child for child in suite_node.children
+        if child.type not in (token.NEWLINE, token.INDENT, token.DEDENT)
+    ]
+
+    single_line_body = (
+        len(stmt_children) == 1
+        and (stmt_children[0] == parent
+             or any(c == parent for c in stmt_children[0].children
+                    if hasattr(stmt_children[0], 'children')))
+    )
+
+    if not single_line_body:
+        return []
+
+    # Include the compound statement header
+    header_leaves: list[LN] = []
+    for child in compound_parent.children:
+        if child == suite_node:
+            break
+        if child.type not in (token.NEWLINE, token.INDENT):
+            header_leaves.extend(child.leaves())
+    return header_leaves
+
+
 def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
@@ -382,6 +454,17 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             if current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
+        # Special handling for compound statements with semicolon-separated bodies
+        compound_parent, suite_node = _find_compound_statement_context(parent)
+        if (compound_parent is not None
+                and suite_node is not None
+                and parent is not None):
+            header_nodes = _get_compound_statement_header(
+                compound_parent, suite_node, parent
+            )
+            if header_nodes:
+                ignored_nodes = header_nodes + ignored_nodes
+
         yield from ignored_nodes
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
