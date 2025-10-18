@@ -117,7 +117,7 @@ def config(event: Literal["push", "pull_request"]) -> None:
     import diff_shades  # type: ignore[import-not-found]
 
     if event == "push":
-        jobs = [{"mode": "preview-new-changes", "force-flag": "--force-unstable-style"}]
+        jobs = [{"mode": "preview-new-changes", "force-flag": "--force-preview-style"}]
         # Push on main, let's use PyPI Black as the baseline.
         baseline_name = str(get_pypi_version())
         baseline_cmd = f"git checkout {baseline_name}"
@@ -128,7 +128,7 @@ def config(event: Literal["push", "pull_request"]) -> None:
 
     elif event == "pull_request":
         jobs = [
-            {"mode": "preview-new-changes", "force-flag": "--force-unstable-style"},
+            {"mode": "preview-new-changes", "force-flag": "--force-preview-style"},
             {"mode": "assert-no-changes", "force-flag": "--force-stable-style"},
         ]
         # PR, let's use main as the baseline.
