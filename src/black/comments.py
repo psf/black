@@ -329,9 +329,11 @@ def _find_compound_statement_context(
         return None, None
 
     # Case 1: simple_stmt -> suite -> compound_stmt (after reformatting)
-    if (parent.parent is not None
-            and parent.parent.type == syms.suite
-            and parent.parent.parent is not None):
+    if (
+        parent.parent is not None
+        and parent.parent.type == syms.suite
+        and parent.parent.parent is not None
+    ):
         assert isinstance(parent.parent, Node)
         suite_node = parent.parent
         assert isinstance(suite_node.parent, Node)
@@ -340,11 +342,15 @@ def _find_compound_statement_context(
 
     # Case 2: simple_stmt -> compound_stmt (original structure)
     compound_types = (
-        syms.if_stmt, syms.while_stmt, syms.for_stmt,
-        syms.try_stmt, syms.with_stmt, syms.funcdef, syms.classdef
+        syms.if_stmt,
+        syms.while_stmt,
+        syms.for_stmt,
+        syms.try_stmt,
+        syms.with_stmt,
+        syms.funcdef,
+        syms.classdef,
     )
-    if (parent.parent is not None
-            and parent.parent.type in compound_types):
+    if parent.parent is not None and parent.parent.type in compound_types:
         assert isinstance(parent.parent, Node)
         compound_parent = parent.parent
         # In original single-line structure, the simple_stmt IS the body
@@ -359,8 +365,13 @@ def _get_compound_statement_header(
 ) -> list[LN]:
     """Get header nodes for compound statement if it should be preserved."""
     compound_types = (
-        syms.if_stmt, syms.while_stmt, syms.for_stmt,
-        syms.try_stmt, syms.with_stmt, syms.funcdef, syms.classdef
+        syms.if_stmt,
+        syms.while_stmt,
+        syms.for_stmt,
+        syms.try_stmt,
+        syms.with_stmt,
+        syms.funcdef,
+        syms.classdef,
     )
     if compound_parent.type not in compound_types:
         return []
@@ -370,9 +381,9 @@ def _get_compound_statement_header(
     if suite_node.type == syms.suite:
         # After reformatting, check if the suite contains semicolons
         for child in suite_node.children:
-            if hasattr(child, 'children'):
+            if hasattr(child, "children"):
                 for grandchild in child.children:
-                    if getattr(grandchild, 'type', None) == token.SEMI:
+                    if getattr(grandchild, "type", None) == token.SEMI:
                         has_semicolon = True
                         break
             if has_semicolon:
@@ -380,7 +391,7 @@ def _get_compound_statement_header(
     else:
         # Original structure - check the simple_stmt for semicolons
         for child in suite_node.children:
-            if getattr(child, 'type', None) == token.SEMI:
+            if getattr(child, "type", None) == token.SEMI:
                 has_semicolon = True
                 break
 
@@ -392,18 +403,21 @@ def _get_compound_statement_header(
     if suite_node.type == syms.suite:
         # Case 1: After reformatting, body is in a suite
         stmt_children = [
-            child for child in suite_node.children
+            child
+            for child in suite_node.children
             if child.type not in (token.NEWLINE, token.INDENT, token.DEDENT)
         ]
-        single_line_body = (
-            len(stmt_children) == 1
-            and (stmt_children[0] == parent
-                 or any(c == parent for c in stmt_children[0].children
-                        if hasattr(stmt_children[0], 'children')))
+        single_line_body = len(stmt_children) == 1 and (
+            stmt_children[0] == parent
+            or any(
+                c == parent
+                for c in stmt_children[0].children
+                if hasattr(stmt_children[0], "children")
+            )
         )
     else:
         # Case 2: Original structure, suite_node is the simple_stmt body
-        single_line_body = (suite_node == parent)
+        single_line_body = suite_node == parent
 
     if not single_line_body:
         return []
@@ -481,9 +495,11 @@ def _generate_ignored_nodes_from_fmt_skip(
                 current_node = current_node.parent
         # Special handling for compound statements with semicolon-separated bodies
         compound_parent, suite_node = _find_compound_statement_context(parent)
-        if (compound_parent is not None
-                and suite_node is not None
-                and parent is not None):
+        if (
+            compound_parent is not None
+            and suite_node is not None
+            and parent is not None
+        ):
             header_nodes = _get_compound_statement_header(
                 compound_parent, suite_node, parent
             )
