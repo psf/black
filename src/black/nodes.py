@@ -14,7 +14,7 @@ else:
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
@@ -931,27 +931,44 @@ def is_async_stmt_or_funcdef(leaf: Leaf) -> bool:
     )
 
 
-def is_type_comment(leaf: Leaf) -> bool:
+def is_type_comment(leaf: Leaf, mode: Mode) -> bool:
     """Return True if the given leaf is a type comment. This function should only
     be used for general type comments (excluding ignore annotations, which should
     use `is_type_ignore_comment`). Note that general type comments are no longer
     used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_comment_string(v, mode)
 
 
-def is_type_ignore_comment(leaf: Leaf) -> bool:
+def is_type_comment_string(value: str, mode: Mode) -> bool:
+    if Preview.standardize_type_comments in mode:
+        is_valid = value.startswith("#") and value[1:].lstrip().startswith("type:")
+    else:
+        is_valid = value.startswith("# type:")
+    return is_valid
+
+
+def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
     """Return True if the given leaf is a type comment with ignore annotation."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(v)
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(
+        v, mode
+    )
 
 
-def is_type_ignore_comment_string(value: str) -> bool:
+def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
     ignore annotation."""
-    return value.startswith("# type: ignore")
+    if Preview.standardize_type_comments in mode:
+        is_valid = is_type_comment_string(value, mode) and value.split(":", 1)[
+            1
+        ].lstrip().startswith("ignore")
+    else:
+        is_valid = value.startswith("# type: ignore")
+
+    return is_valid
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:

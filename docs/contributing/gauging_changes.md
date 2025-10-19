@@ -28,7 +28,7 @@ workflow that analyzes and compares two revisions of _Black_ according to these 
 | On pushes (main only) | latest PyPI version     | the pushed commit            |
 
 For pushes to main, there's only one analysis job named `preview-new-changes` where the
-unstable style is used for all projects.
+preview style is used for all projects.
 
 For PRs they get one more analysis job: `assert-no-changes`. It's similar to
 `preview-new-changes` but runs with the stable code style. It will fail if changes were
@@ -36,7 +36,7 @@ made. This makes sure code won't be reformatted again and again within the same 
 accordance to Black's stability policy.
 
 Additionally for PRs, a PR comment will be posted embedding a summary previewing the
-changes in the unstable style and links to further information. The next time the
+changes in the preview style and links to further information. The next time the
 workflow is triggered on the same PR, it'll update the pre-existing diff-shades comment.
 
 ```{note}

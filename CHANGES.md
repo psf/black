@@ -14,9 +14,11 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
 - Fix bug where module docstrings would be treated as normal strings if preceeded by
   comments (#4764)
 - Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
+- Standardize type comments to form `# type: <value>` (#4645)
 
 ### Configuration
 
