@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
