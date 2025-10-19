@@ -18,6 +18,8 @@ LOG = logging.getLogger(__name__)
 NEW_VERSION_CHANGELOG_TEMPLATE = """\
 ## Unreleased
 
+<!-- PR authors: please include the PR number in the changelog entry, not the issue number -->
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
