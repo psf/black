@@ -205,7 +205,7 @@ def comment_details(run_id: str) -> None:
 
     set_output("needs-comment", "true")
     jobs = http_get(data["jobs_url"])["jobs"]
-    job = next(j for j in jobs if j["name"] == "analysis / preview-new-changes")
+    job = next(j for j in jobs if j["name"] == "compare / preview-new-changes")
     diff_step = next(s for s in job["steps"] if s["name"] == DIFF_STEP_NAME)
     diff_url = job["html_url"] + f"#step:{diff_step['number']}:1"
 
