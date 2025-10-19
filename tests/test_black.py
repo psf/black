@@ -3,6 +3,7 @@
 import asyncio
 import inspect
 import io
+import itertools
 import logging
 import multiprocessing
 import os
@@ -84,8 +85,7 @@ def cache_dir(exists: bool = True) -> Iterator[Path]:
 
 @contextmanager
 def event_loop() -> Iterator[None]:
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
+    loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
         yield
@@ -119,7 +119,7 @@ class BlackRunner(CliRunner):
         if Version(imp_version("click")) >= Version("8.2.0"):
             super().__init__()
         else:
-            super().__init__(mix_stderr=False)
+            super().__init__(mix_stderr=False)  # type: ignore
 
 
 def invokeBlack(
@@ -423,21 +423,6 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertEqual(expected, actual, msg)
 
     @patch("black.dump_to_file", dump_to_stderr)
-    def test_async_as_identifier(self) -> None:
-        source_path = get_case_path("miscellaneous", "async_as_identifier")
-        _, source, expected = read_data_from_file(source_path)
-        actual = fs(source)
-        self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major < 3 or (major <= 3 and minor < 7):
-            black.assert_equivalent(source, actual)
-        black.assert_stable(source, actual, DEFAULT_MODE)
-        # ensure black can parse this when the target is 3.6
-        self.invokeBlack([str(source_path), "--target-version", "py36"])
-        # but not on 3.7, because async/await is no longer an identifier
-        self.invokeBlack([str(source_path), "--target-version", "py37"], exit_code=123)
-
-    @patch("black.dump_to_file", dump_to_stderr)
     def test_python37(self) -> None:
         source_path = get_case_path("cases", "python37")
         _, source, expected = read_data_from_file(source_path)
@@ -449,8 +434,6 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
-        # but not on 3.6, because we use async as a reserved keyword
-        self.invokeBlack([str(source_path), "--target-version", "py36"], exit_code=123)
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -1541,6 +1524,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1550,6 +1534,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
@@ -1561,6 +1546,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1571,6 +1557,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1585,6 +1572,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             (
@@ -1601,6 +1589,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY311,
                     TargetVersion.PY312,
                     TargetVersion.PY313,
+                    TargetVersion.PY314,
                 ],
             ),
             ("==3.8.*", [TargetVersion.PY38]),
@@ -1907,7 +1896,8 @@ class BlackTestCase(BlackBaseTestCase):
             args = ["--safe", "--code", code]
             result = CliRunner().invoke(black.main, args)
 
-            self.compare_results(result, error_msg, 123)
+            assert error_msg == result.output
+            assert result.exit_code == 123
 
     def test_code_option_fast(self) -> None:
         """Test that the code option ignores errors when the sanity checks fail."""
@@ -2063,6 +2053,42 @@ class BlackTestCase(BlackBaseTestCase):
         assert lines_with_leading_tabs_expanded("\tx") == [f"{tab}x"]
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
         assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
+
+    def test_carriage_return_edge_cases(self) -> None:
+        # These tests are here instead of in the normal cases because
+        # of git's newline normalization and because it's hard to
+        # get `\r` vs `\r\n` vs `\n` to display properly
+        assert (
+            black.format_str(
+                "try:\\\r# type: ignore\n pass\nfinally:\n pass\n",
+                mode=black.FileMode(),
+            )
+            == "try:  # type: ignore\n    pass\nfinally:\n    pass\n"
+        )
+        assert black.format_str("{\r}", mode=black.FileMode()) == "{}\n"
+        assert black.format_str("pass #\r#\n", mode=black.FileMode()) == "pass  #\n#\n"
+
+        assert black.format_str("x=\\\r\n1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\n1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\r1", mode=black.FileMode()) == "x = 1\n"
+        assert (
+            black.format_str("class A\\\r\n:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+        assert (
+            black.format_str("class A\\\n:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+        assert (
+            black.format_str("class A\\\r:...", mode=black.FileMode())
+            == "class A: ...\n"
+        )
+
+    def test_preview_newline_type_detection(self) -> None:
+        mode = Mode(enabled_features={Preview.normalize_cr_newlines})
+        newline_types = ["A\n", "A\r\n", "A\r"]
+        for test_case in itertools.permutations(newline_types):
+            assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
 
 
 class TestCaching:

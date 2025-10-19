@@ -93,6 +93,8 @@ Support for formatting Python 2 code was removed in version 22.0. While we've ma
 plans to stop supporting older Python 3 minor versions immediately, their support might
 also be removed some time in the future without a deprecation period.
 
+`await`/`async` as soft keywords/indentifiers are no longer supported as of 25.9.0.
+
 Runtime support for 3.6 was removed in version 22.10.0, for 3.7 in version 23.7.0, and
 for 3.8 in version 24.10.0.
 
@@ -135,3 +137,13 @@ wheels (including the pure Python wheel), so this command will use the [sdist].
 [mypyc]: https://mypyc.readthedocs.io/en/latest/
 [sdist]:
   https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist
+
+## Why are emoji not displaying correctly on Windows?
+
+When using Windows, the emoji in _Black_'s output may not display correctly. This is not
+fixable from _Black_'s end.
+
+Instead, run your chosen command line/shell through [Windows Terminal], which will
+properly handle rendering the emoji.
+
+[Windows Terminal]: https://github.com/microsoft/terminal

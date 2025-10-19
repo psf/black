@@ -8,6 +8,7 @@ Tool to help automate changes needed in commits during and after releases
 
 import argparse
 import logging
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -117,7 +118,7 @@ class SourceFiles:
         """Add the template to CHANGES.md if it does not exist"""
         LOG.info(f"Adding template to {self.changes_path}")
 
-        with self.changes_path.open("r") as cfp:
+        with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
         if "## Unreleased" in changes_string:
@@ -129,7 +130,7 @@ class SourceFiles:
             f"# Change Log\n\n{NEW_VERSION_CHANGELOG_TEMPLATE}",
         )
 
-        with self.changes_path.open("w") as cfp:
+        with self.changes_path.open("w", encoding="utf-8") as cfp:
             cfp.write(templated_changes_string)
 
         LOG.info(f"Added template to {self.changes_path}")
@@ -138,23 +139,22 @@ class SourceFiles:
     def cleanup_changes_template_for_release(self) -> None:
         LOG.info(f"Cleaning up {self.changes_path}")
 
-        with self.changes_path.open("r") as cfp:
+        with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
         # Change Unreleased to next version
-        versioned_changes = changes_string.replace(
+        changes_string = changes_string.replace(
             "## Unreleased", f"## {self.next_version}"
         )
 
-        # Remove all comments (subheadings are harder - Human required still)
-        no_comments_changes = []
-        for line in versioned_changes.splitlines():
-            if line.startswith("<!--") or line.endswith("-->"):
-                continue
-            no_comments_changes.append(line)
+        # Remove all comments
+        changes_string = re.sub(r"(?m)^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
 
-        with self.changes_path.open("w") as cfp:
-            cfp.write("\n".join(no_comments_changes) + "\n")
+        # Remove empty subheadings
+        changes_string = re.sub(r"(?m)^###.+\n\n(?=#)", "", changes_string)
+
+        with self.changes_path.open("w", encoding="utf-8") as cfp:
+            cfp.write(changes_string)
 
         LOG.debug(f"Finished Cleaning up {self.changes_path}")
 
@@ -186,14 +186,14 @@ class SourceFiles:
         for doc_path in self.version_doc_paths:
             LOG.info(f"Updating black version to {self.next_version} in {doc_path}")
 
-            with doc_path.open("r") as dfp:
+            with doc_path.open("r", encoding="utf-8") as dfp:
                 doc_string = dfp.read()
 
             next_version_doc = doc_string.replace(
                 self.current_version, self.next_version
             )
 
-            with doc_path.open("w") as dfp:
+            with doc_path.open("w", encoding="utf-8") as dfp:
                 dfp.write(next_version_doc)
 
             LOG.debug(

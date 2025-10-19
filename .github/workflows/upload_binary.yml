@@ -13,9 +13,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-22.04, macos-latest]
+        os: [windows-2025, ubuntu-22.04, ubuntu-22.04-arm, macos-latest]
         include:
-          - os: windows-2019
+          - os: windows-2025
             pathsep: ";"
             asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
@@ -23,16 +23,20 @@ jobs:
             pathsep: ":"
             asset_name: black_linux
             executable_mime: "application/x-executable"
+          - os: ubuntu-22.04-arm
+            pathsep: ":"
+            asset_name: black_linux-arm
+            executable_mime: "application/x-executable"
           - os: macos-latest
             pathsep: ":"
             asset_name: black_macos
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up latest Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12.4"
 

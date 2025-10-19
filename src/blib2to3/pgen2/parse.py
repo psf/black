@@ -9,6 +9,7 @@ See Parser/parser.c in the Python distribution for additional info on
 how this parsing engine works.
 
 """
+
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Optional, Union, cast
@@ -89,18 +90,12 @@ class Recorder:
             self.parser.is_backtracking = is_backtracking
 
     def add_token(self, tok_type: int, tok_val: str, raw: bool = False) -> None:
-        func: Callable[..., Any]
-        if raw:
-            func = self.parser._addtoken
-        else:
-            func = self.parser.addtoken
-
         for ilabel in self.ilabels:
             with self.switch_to(ilabel):
-                args = [tok_type, tok_val, self.context]
                 if raw:
-                    args.insert(0, ilabel)
-                func(*args)
+                    self.parser._addtoken(ilabel, tok_type, tok_val, self.context)
+                else:
+                    self.parser.addtoken(tok_type, tok_val, self.context)
 
     def determine_route(
         self, value: Optional[str] = None, force: bool = False

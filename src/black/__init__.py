@@ -184,9 +184,7 @@ def spellcheck_pyproject_toml_keys(
 ) -> None:
     invalid_keys: list[str] = []
     available_config_options = {param.name for param in ctx.command.params}
-    for key in config_keys:
-        if key not in available_config_options:
-            invalid_keys.append(key)
+    invalid_keys = [key for key in config_keys if key not in available_config_options]
     if invalid_keys:
         keys_str = ", ".join(map(repr, invalid_keys))
         out(
@@ -778,7 +776,7 @@ def get_sources(
                 continue
 
             if is_stdin:
-                path = Path(f"{STDIN_PLACEHOLDER}{str(path)}")
+                path = Path(f"{STDIN_PLACEHOLDER}{path}")
 
             if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 warn=verbose or not quiet
@@ -948,7 +946,7 @@ def format_file_in_place(
     with open(src, "rb") as buf:
         if mode.skip_source_first_line:
             header = buf.readline()
-        src_contents, encoding, newline = decode_bytes(buf.read())
+        src_contents, encoding, newline = decode_bytes(buf.read(), mode)
     try:
         dst_contents = format_file_contents(
             src_contents, fast=fast, mode=mode, lines=lines
@@ -1010,7 +1008,9 @@ def format_stdin_to_stdout(
     then = datetime.now(timezone.utc)
 
     if content is None:
-        src, encoding, newline = decode_bytes(sys.stdin.buffer.read())
+        src, encoding, newline = decode_bytes(sys.stdin.buffer.read(), mode)
+    elif Preview.normalize_cr_newlines in mode:
+        src, encoding, newline = content, "utf-8", "\n"
     else:
         src, encoding, newline = content, "utf-8", ""
 
@@ -1028,8 +1028,12 @@ def format_stdin_to_stdout(
         )
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content
-            if dst and dst[-1] != "\n":
-                dst += "\n"
+            if Preview.normalize_cr_newlines in mode:
+                if dst and dst[-1] != "\n" and dst[-1] != "\r":
+                    dst += newline
+            else:
+                if dst and dst[-1] != "\n":
+                    dst += "\n"
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
@@ -1219,7 +1223,17 @@ def format_str(
 def _format_str_once(
     src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
-    src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
+    if Preview.normalize_cr_newlines in mode:
+        normalized_contents, _, newline_type = decode_bytes(
+            src_contents.encode("utf-8"), mode
+        )
+
+        src_node = lib2to3_parse(
+            normalized_contents.lstrip(), target_versions=mode.target_versions
+        )
+    else:
+        src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
+
     dst_blocks: list[LinesBlock] = []
     if mode.target_versions:
         versions = mode.target_versions
@@ -1227,9 +1241,12 @@ def _format_str_once(
         future_imports = get_future_imports(src_node)
         versions = detect_target_versions(src_node, future_imports=future_imports)
 
-    context_manager_features = {
+    line_generation_features = {
         feature
-        for feature in {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
+        for feature in {
+            Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+            Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+        }
         if supports_feature(versions, feature)
     }
     normalize_fmt_off(src_node, mode, lines)
@@ -1237,7 +1254,7 @@ def _format_str_once(
         # This should be called after normalize_fmt_off.
         convert_unchanged_lines(src_node, lines)
 
-    line_generator = LineGenerator(mode=mode, features=context_manager_features)
+    line_generator = LineGenerator(mode=mode, features=line_generation_features)
     elt = EmptyLineTracker(mode=mode)
     split_line_features = {
         feature
@@ -1261,16 +1278,25 @@ def _format_str_once(
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
     if not dst_contents:
-        # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
-        # and check if normalized_content has more than one line
-        normalized_content, _, newline = decode_bytes(src_contents.encode("utf-8"))
-        if "\n" in normalized_content:
-            return newline
+        if Preview.normalize_cr_newlines in mode:
+            if "\n" in normalized_contents:
+                return newline_type
+        else:
+            # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
+            # and check if normalized_content has more than one line
+            normalized_content, _, newline = decode_bytes(
+                src_contents.encode("utf-8"), mode
+            )
+            if "\n" in normalized_content:
+                return newline
         return ""
-    return "".join(dst_contents)
+    if Preview.normalize_cr_newlines in mode:
+        return "".join(dst_contents).replace("\n", newline_type)
+    else:
+        return "".join(dst_contents)
 
 
-def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
+def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine]:
     """Return a tuple of (decoded_contents, encoding, newline).
 
     `newline` is either CRLF or LF but `decoded_contents` is decoded with
@@ -1281,7 +1307,25 @@ def decode_bytes(src: bytes) -> tuple[FileContent, Encoding, NewLine]:
     if not lines:
         return "", encoding, "\n"
 
-    newline = "\r\n" if b"\r\n" == lines[0][-2:] else "\n"
+    if Preview.normalize_cr_newlines in mode:
+        if lines[0][-2:] == b"\r\n":
+            if b"\r" in lines[0][:-2]:
+                newline = "\r"
+            else:
+                newline = "\r\n"
+        elif lines[0][-1:] == b"\n":
+            if b"\r" in lines[0][:-1]:
+                newline = "\r"
+            else:
+                newline = "\n"
+        else:
+            if b"\r" in lines[0]:
+                newline = "\r"
+            else:
+                newline = "\n"
+    else:
+        newline = "\r\n" if lines[0][-2:] == b"\r\n" else "\n"
+
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:
         return tiow.read(), encoding, newline
@@ -1397,13 +1441,6 @@ def get_features_used(  # noqa: C901
         elif n.type == syms.match_stmt:
             features.add(Feature.PATTERN_MATCHING)
 
-        elif (
-            n.type == syms.except_clause
-            and len(n.children) >= 2
-            and n.children[1].type == token.STAR
-        ):
-            features.add(Feature.EXCEPT_STAR)
-
         elif n.type in {syms.subscriptlist, syms.trailer} and any(
             child.type == syms.star_expr for child in n.children
         ):
@@ -1424,6 +1461,32 @@ def get_features_used(  # noqa: C901
             and n.children[-2].type == token.EQUAL
         ):
             features.add(Feature.TYPE_PARAM_DEFAULTS)
+
+        elif (
+            n.type == syms.except_clause
+            and len(n.children) >= 2
+            and (
+                n.children[1].type == token.STAR or n.children[1].type == syms.testlist
+            )
+        ):
+            is_star_except = n.children[1].type == token.STAR
+
+            if is_star_except:
+                features.add(Feature.EXCEPT_STAR)
+
+            # Presence of except* pushes as clause 1 index back
+            has_as_clause = (
+                len(n.children) >= is_star_except + 3
+                and n.children[is_star_except + 2].type == token.NAME
+                and n.children[is_star_except + 2].value == "as"  # type: ignore
+            )
+
+            # If there's no 'as' clause and the except expression is a testlist.
+            if not has_as_clause and (
+                (is_star_except and n.children[2].type == syms.testlist)
+                or (not is_star_except and n.children[1].type == syms.testlist)
+            ):
+                features.add(Feature.UNPARENTHESIZED_EXCEPT_TYPES)
 
     return features
 

@@ -140,7 +140,7 @@ class ParserGenerator:
                 if label in self.first:
                     fset = self.first[label]
                     if fset is None:
-                        raise ValueError("recursion for rule %r" % name)
+                        raise ValueError(f"recursion for rule {name!r}")
                 else:
                     self.calcfirst(label)
                     fset = self.first[label]
@@ -155,8 +155,8 @@ class ParserGenerator:
             for symbol in itsfirst:
                 if symbol in inverse:
                     raise ValueError(
-                        "rule %s is ambiguous; %s is in the first sets of %s as well"
-                        " as %s" % (name, symbol, label, inverse[symbol])
+                        f"rule {name} is ambiguous; {symbol} is in the first sets of"
+                        f" {label} as well as {inverse[symbol]}"
                     )
                 inverse[symbol] = label
         self.first[name] = totalset
@@ -237,16 +237,16 @@ class ParserGenerator:
                     j = len(todo)
                     todo.append(next)
                 if label is None:
-                    print("    -> %d" % j)
+                    print(f"    -> {j}")
                 else:
-                    print("    %s -> %d" % (label, j))
+                    print(f"    {label} -> {j}")
 
     def dump_dfa(self, name: str, dfa: Sequence["DFAState"]) -> None:
         print("Dump of DFA for", name)
         for i, state in enumerate(dfa):
             print("  State", i, state.isfinal and "(final)" or "")
             for label, next in sorted(state.arcs.items()):
-                print("    %s -> %d" % (label, dfa.index(next)))
+                print(f"    {label} -> {dfa.index(next)}")
 
     def simplify_dfa(self, dfa: list["DFAState"]) -> None:
         # This is not theoretically optimal, but works well enough.
@@ -330,15 +330,12 @@ class ParserGenerator:
             return a, z
         else:
             self.raise_error(
-                "expected (...) or NAME or STRING, got %s/%s", self.type, self.value
+                f"expected (...) or NAME or STRING, got {self.type}/{self.value}"
             )
-            raise AssertionError
 
     def expect(self, type: int, value: Optional[Any] = None) -> str:
         if self.type != type or (value is not None and self.value != value):
-            self.raise_error(
-                "expected %s/%s, got %s/%s", type, value, self.type, self.value
-            )
+            self.raise_error(f"expected {type}/{value}, got {self.type}/{self.value}")
         value = self.value
         self.gettoken()
         return value
@@ -350,12 +347,7 @@ class ParserGenerator:
         self.type, self.value, self.begin, self.end, self.line = tup
         # print token.tok_name[self.type], repr(self.value)
 
-    def raise_error(self, msg: str, *args: Any) -> NoReturn:
-        if args:
-            try:
-                msg = msg % args
-            except Exception:
-                msg = " ".join([msg] + list(map(str, args)))
+    def raise_error(self, msg: str) -> NoReturn:
         raise SyntaxError(
             msg, (str(self.filename), self.end[0], self.end[1], self.line)
         )

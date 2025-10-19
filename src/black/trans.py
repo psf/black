@@ -334,6 +334,9 @@ class CustomSplit:
     break_idx: int
 
 
+CustomSplitMapKey = tuple[StringID, str]
+
+
 @trait
 class CustomSplitMapMixin:
     """
@@ -342,13 +345,12 @@ class CustomSplitMapMixin:
     the resultant substrings go over the configured max line length.
     """
 
-    _Key: ClassVar = tuple[StringID, str]
-    _CUSTOM_SPLIT_MAP: ClassVar[dict[_Key, tuple[CustomSplit, ...]]] = defaultdict(
-        tuple
+    _CUSTOM_SPLIT_MAP: ClassVar[dict[CustomSplitMapKey, tuple[CustomSplit, ...]]] = (
+        defaultdict(tuple)
     )
 
     @staticmethod
-    def _get_key(string: str) -> "CustomSplitMapMixin._Key":
+    def _get_key(string: str) -> CustomSplitMapKey:
         """
         Returns:
             A unique identifier that is used internally to map @string to a
@@ -584,7 +586,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 <= i
                 < previous_merged_string_idx + previous_merged_num_of_strings
             ):
-                for comment_leaf in line.comments_after(LL[i]):
+                for comment_leaf in line.comments_after(leaf):
                     new_line.append(comment_leaf, preformatted=True)
                 continue
 
@@ -1706,10 +1708,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             yield Ok(last_line)
 
     def _iter_nameescape_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
-        """
+        r"""
         Yields:
             All ranges of @string which, if @string were to be split there,
-            would result in the splitting of an \\N{...} expression (which is NOT
+            would result in the splitting of an \N{...} expression (which is NOT
             allowed).
         """
         # True - the previous backslash was unescaped
@@ -1755,7 +1757,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         ]
         for it in iterators:
             for begin, end in it:
-                illegal_indices.update(range(begin, end + 1))
+                illegal_indices.update(range(begin, end))
         return illegal_indices
 
     def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
