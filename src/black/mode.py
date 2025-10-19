@@ -244,8 +244,6 @@ class Preview(Enum):
 UNSTABLE_FEATURES: set[Preview] = {
     # Many issues, see summary in https://github.com/psf/black/issues/4042
     Preview.string_processing,
-    # See issue #4159
-    Preview.multiline_string_handling,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,
 }
