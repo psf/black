@@ -347,11 +347,8 @@ def _find_compound_statement_context(
             and parent.parent.type in compound_types):
         assert isinstance(parent.parent, Node)
         compound_parent = parent.parent
-        # Find the suite node in the compound statement
-        for child in compound_parent.children:
-            if child.type == syms.suite:
-                assert isinstance(child, Node)
-                return compound_parent, child
+        # In original single-line structure, the simple_stmt IS the body
+        return compound_parent, parent
 
     return None, None
 
@@ -367,18 +364,45 @@ def _get_compound_statement_header(
     if compound_parent.type not in compound_types:
         return []
 
-    # Check if this is a single-line compound statement
-    stmt_children = [
-        child for child in suite_node.children
-        if child.type not in (token.NEWLINE, token.INDENT, token.DEDENT)
-    ]
+    # Check if the body contains semicolon-separated statements
+    has_semicolon = False
+    if suite_node.type == syms.suite:
+        # After reformatting, check if the suite contains semicolons
+        for child in suite_node.children:
+            if hasattr(child, 'children'):
+                for grandchild in child.children:
+                    if getattr(grandchild, 'type', None) == token.SEMI:
+                        has_semicolon = True
+                        break
+            if has_semicolon:
+                break
+    else:
+        # Original structure - check the simple_stmt for semicolons
+        for child in suite_node.children:
+            if getattr(child, 'type', None) == token.SEMI:
+                has_semicolon = True
+                break
 
-    single_line_body = (
-        len(stmt_children) == 1
-        and (stmt_children[0] == parent
-             or any(c == parent for c in stmt_children[0].children
-                    if hasattr(stmt_children[0], 'children')))
-    )
+    # Only apply our fix for compound statements with semicolon-separated bodies
+    if not has_semicolon:
+        return []
+
+    # Check if this is a single-line compound statement
+    if suite_node.type == syms.suite:
+        # Case 1: After reformatting, body is in a suite
+        stmt_children = [
+            child for child in suite_node.children
+            if child.type not in (token.NEWLINE, token.INDENT, token.DEDENT)
+        ]
+        single_line_body = (
+            len(stmt_children) == 1
+            and (stmt_children[0] == parent
+                 or any(c == parent for c in stmt_children[0].children
+                        if hasattr(stmt_children[0], 'children')))
+        )
+    else:
+        # Case 2: Original structure, suite_node is the simple_stmt body
+        single_line_body = (suite_node == parent)
 
     if not single_line_body:
         return []
