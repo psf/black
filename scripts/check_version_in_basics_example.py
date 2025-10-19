@@ -8,7 +8,7 @@ import os
 import sys
 
 import commonmark
-from bs4 import BeautifulSoup  # type: ignore[import-untyped]
+from bs4 import BeautifulSoup
 
 
 def main(changes: str, the_basics: str) -> None:
@@ -28,7 +28,7 @@ def main(changes: str, the_basics: str) -> None:
 
     for tag in tags:
         for version_example in version_examples:
-            if tag in version_example and tag != latest_tag:
+            if tag in version_example and tag != latest_tag:  # type: ignore[operator]
                 print(
                     "Please set the version in the ``black --version`` "
                     "examples from ``the_basics.md`` to be the latest one.\n"
