@@ -250,8 +250,9 @@ This option is mainly for editor integrations, such as "Format Selection".
 
 ```{note}
 Due to [#4052](https://github.com/psf/black/issues/4052), `--line-ranges` might format
-extra lines outside of the ranges when ther are unformatted lines with the exact
-content. It also disables _Black_'s formatting stability check in `--safe` mode.
+extra lines outside of the ranges when there are unformatted lines with the exact
+formatted content next to the requested lines. It also disables _Black_'s formatting
+stability check in `--safe` mode.
 ```
 
 #### `--fast` / `--safe`
@@ -269,8 +270,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 25.1.0 (compiled: yes)
-$ black --required-version 25.1.0 -c "format = 'this'"
+black, 25.9.0 (compiled: yes)
+$ black --required-version 25.9.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -295,6 +296,9 @@ A regular expression that matches files and directories that should be excluded 
 recursive searches. An empty value means no paths are excluded. Use forward slashes for
 directories on all platforms (Windows, too). By default, Black also ignores all paths
 listed in `.gitignore`. Changing this value will override all default exclusions.
+
+Default Exclusions:
+`['.direnv', '.eggs', '.git', '.hg', '.ipynb_checkpoints',  '.mypy_cache', '.nox', '.pytest_cache', '.ruff_cache', '.tox', '.svn', '.venv', '.vscode',  '__pypackages__', '_build', 'buck-out', 'build', 'dist', 'venv'] `
 
 If the regular expression contains newlines, it is treated as a
 [verbose regular expression](https://docs.python.org/3/library/re.html#re.VERBOSE). This
@@ -323,6 +327,8 @@ A regular expression that matches files and directories that should be included 
 recursive searches. An empty value means all files are included regardless of the name.
 Use forward slashes for directories on all platforms (Windows, too). Overrides all
 exclusions, including from `.gitignore` and command line options.
+
+Default Inclusions: `['.pyi', '.ipynb']`
 
 #### `-W`, `--workers`
 
@@ -366,7 +372,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 25.1.0
+black, 25.9.0
 ```
 
 #### `--config`

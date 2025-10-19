@@ -14,8 +14,11 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip`
-  would still be formatted (#4552)
+- Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
+- Fix bug where module docstrings would be treated as normal strings if preceeded by
+  comments (#4764)
+- Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
+- Standardize type comments to form `# type: <value>` (#4645)
 
 ### Configuration
 
@@ -25,12 +28,11 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Releases now include arm64 Linux binaries (#4773)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
-
-- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted
-  in type parameter bounds and defaults. (#4602)
 
 ### Performance
 
@@ -48,19 +50,80 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Fix the version check in the vim file to reject Python 3.8 (#4567)
+- Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
+  "stability" format when using pyproject.toml (#4770)
+- Improve error message for vim plugin users. It now handles independently vim version
+- Vim: Warn on unsupported Vim and Python versions independently (#4772)
+- Vim: Print the import paths when importing black fails (#4675)
+- Vim: Fix handling of virtualenvs that have a different Python version (#4675)
 
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+## 25.9.0
+
+### Highlights
+
+- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
+  (#4676)
+
+### Stable style
+
+- Fix crash while formatting a long `del` statement containing tuples (#4628)
+- Fix crash while formatting expressions using the walrus operator in complex `with`
+  statements (#4630)
+- Handle `# fmt: skip` followed by a comment at the end of file (#4635)
+- Fix crash when a tuple appears in the `as` clause of a `with` statement (#4634)
+- Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
+- Fix crash when formatting a `\` followed by a `\r` followed by a comment (#4663)
+- Fix crash on a `\\r\n` (#4673)
+- Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
+- Fix crash on parenthesized expression inside a type parameter bound (#4684)
+- Fix crash when using line ranges excluding indented single line decorated items
+  (#4670)
+
+### Preview style
+
+- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
+  be formatted (#4552)
+- Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
+- Fix a bug where `string_processing` would not split f-strings directly after
+  expressions (#4680)
+- Wrap the `in` clause of comprehensions across lines if necessary (#4699)
+- Remove parentheses around multiple exception types in `except` and `except*` without
+  `as`. (#4720)
+- Add `\r` style newlines to the potential newlines to normalize file newlines both from
+  and to (#4710)
+
+### Parser
+
+- Rewrite tokenizer to improve performance and compliance (#4536)
+- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted in type
+  parameter bounds and defaults. (#4602)
+
+### Performance
+
+- Avoid using an extra process when running with only one worker (#4734)
+
+### Integrations
+
+- Fix the version check in the vim file to reject Python 3.8 (#4567)
+- Enhance GitHub Action `psf/black` to read Black version from an additional section in
+  pyproject.toml: `[project.dependency-groups]` (#4606)
+- Build gallery docker image with python3-slim and reduce image size (#4686)
+
+### Documentation
+
+- Add FAQ entry for windows emoji not displaying (#4714)
+
 ## 25.1.0
 
 ### Highlights
 
-This release introduces the new 2025 stable style (#4558), stabilizing
-the following changes:
+This release introduces the new 2025 stable style (#4558), stabilizing the following
+changes:
 
 - Normalize casing of Unicode escape characters in strings to lowercase (#2916)
 - Fix inconsistencies in whether certain strings are detected as docstrings (#4095)
@@ -68,15 +131,16 @@ the following changes:
 - Remove redundant parentheses in if guards for case blocks (#4214)
 - Add parentheses to if clauses in case blocks when the line is too long (#4269)
 - Whitespace before `# fmt: skip` comments is no longer normalized (#4146)
-- Fix line length computation for certain expressions that involve the power operator (#4154)
+- Fix line length computation for certain expressions that involve the power operator
+  (#4154)
 - Check if there is a newline before the terminating quotes of a docstring (#4185)
 - Fix type annotation spacing between `*` and more complex type variable tuple (#4440)
 
 The following changes were not in any previous release:
 
 - Remove parentheses around sole list items (#4312)
-- Generic function definitions are now formatted more elegantly: parameters are
-  split over multiple lines first instead of type parameter definitions (#4553)
+- Generic function definitions are now formatted more elegantly: parameters are split
+  over multiple lines first instead of type parameter definitions (#4553)
 
 ### Stable style
 
@@ -1623,7 +1687,6 @@ and the first release covered by our new
 ## 18.9b0
 
 - numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
-
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
 
   - added `--skip-numeric-underscore-normalization` to disable the above behavior and
@@ -1673,7 +1736,6 @@ and the first release covered by our new
 - typing stub files (`.pyi`) now have blank lines added after constants (#340)
 
 - `# fmt: off` and `# fmt: on` are now much more dependable:
-
   - they now work also within bracket pairs (#329)
 
   - they now correctly work across function/class boundaries (#335)

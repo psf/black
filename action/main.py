@@ -68,9 +68,14 @@ def read_version_specifier_from_pyproject() -> str:
 
     version = pyproject.get("tool", {}).get("black", {}).get("required-version")
     if version is not None:
-        return f"=={version}"
+        # Match the two supported usages of `required-version`:
+        if "." in version:
+            return f"=={version}"
+        else:
+            return f"~={version}.0"
 
     arrays = [
+        *pyproject.get("dependency-groups", {}).values(),
         pyproject.get("project", {}).get("dependencies"),
         *pyproject.get("project", {}).get("optional-dependencies", {}).values(),
     ]

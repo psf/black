@@ -71,7 +71,7 @@ class Line:
         if not has_value:
             return
 
-        if token.COLON == leaf.type and self.is_class_paren_empty:
+        if leaf.type == token.COLON and self.is_class_paren_empty:
             del self.leaves[-2:]
         if self.leaves and not preformatted:
             # Note: at this point leaf.prefix should be empty except for
@@ -286,9 +286,9 @@ class Line:
         comment_seen = False
         for leaf_id, comments in self.comments.items():
             for comment in comments:
-                if is_type_comment(comment):
+                if is_type_comment(comment, mode=self.mode):
                     if comment_seen or (
-                        not is_type_ignore_comment(comment)
+                        not is_type_ignore_comment(comment, mode=self.mode)
                         and leaf_id not in ignored_ids
                     ):
                         return True
@@ -325,7 +325,7 @@ class Line:
             # line.
             for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
-                    if is_type_ignore_comment(comment):
+                    if is_type_ignore_comment(comment, mode=self.mode):
                         return True
 
         return False
@@ -400,7 +400,7 @@ class Line:
             and not last_leaf.value
             and last_leaf.parent
             and len(list(last_leaf.parent.leaves())) <= 3
-            and not is_type_comment(comment)
+            and not is_type_comment(comment, mode=self.mode)
         ):
             # Comments on an optional parens wrapping a single leaf should belong to
             # the wrapped node except if it's a type comment. Pinning the comment like
@@ -484,10 +484,10 @@ class Line:
         leaves = iter(self.leaves)
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
-        for leaf in leaves:
-            res += str(leaf)
-        for comment in itertools.chain.from_iterable(self.comments.values()):
-            res += str(comment)
+        res += "".join(str(leaf) for leaf in leaves)
+        comments_iter = itertools.chain.from_iterable(self.comments.values())
+        comments = [str(comment) for comment in comments_iter]
+        res += "".join(comments)
 
         return res + "\n"
 
@@ -559,15 +559,20 @@ class EmptyLineTracker:
         before, after = self._maybe_empty_lines(current_line)
         previous_after = self.previous_block.after if self.previous_block else 0
         before = max(0, before - previous_after)
-        if (
+        if Preview.fix_module_docstring_detection in self.mode:
             # Always have one empty line after a module docstring
-            self.previous_block
-            and self.previous_block.previous_block is None
-            and len(self.previous_block.original_line.leaves) == 1
-            and self.previous_block.original_line.is_docstring
-            and not (current_line.is_class or current_line.is_def)
-        ):
-            before = 1
+            if self._line_is_module_docstring(current_line):
+                before = 1
+        else:
+            if (
+                # Always have one empty line after a module docstring
+                self.previous_block
+                and self.previous_block.previous_block is None
+                and len(self.previous_block.original_line.leaves) == 1
+                and self.previous_block.original_line.is_docstring
+                and not (current_line.is_class or current_line.is_def)
+            ):
+                before = 1
 
         block = LinesBlock(
             mode=self.mode,
@@ -594,6 +599,22 @@ class EmptyLineTracker:
         self.previous_line = current_line
         self.previous_block = block
         return block
+
+    def _line_is_module_docstring(self, current_line: Line) -> bool:
+        previous_block = self.previous_block
+        if not previous_block:
+            return False
+        if (
+            len(previous_block.original_line.leaves) != 1
+            or not previous_block.original_line.is_docstring
+            or current_line.is_class
+            or current_line.is_def
+        ):
+            return False
+        while previous_block := previous_block.previous_block:
+            if not previous_block.original_line.is_comment:
+                return False
+        return True
 
     def _maybe_empty_lines(self, current_line: Line) -> tuple[int, int]:  # noqa: C901
         max_allowed = 1
@@ -872,6 +893,12 @@ def is_line_short_enough(  # noqa: C901
             max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
 
         if is_multiline_string(leaf):
+            if leaf.parent and (
+                leaf.parent.type == syms.test
+                or (leaf.parent.parent and leaf.parent.parent.type == syms.dictsetmaker)
+            ):
+                # Keep ternary and dictionary values parenthesized
+                return False
             if len(multiline_string_contexts) > 0:
                 # >1 multiline string cannot fit on a single line - force split
                 return False
