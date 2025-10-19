@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-<!-- PR authors: please include the PR number in the changelog entry, not the issue number -->
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
 
 ### Highlights
 

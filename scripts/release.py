@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from __future__ import annotations
-
 """
 Tool to help automate changes needed in commits during and after releases
 """
+
+from __future__ import annotations
 
 import argparse
 import logging
@@ -18,7 +18,8 @@ LOG = logging.getLogger(__name__)
 NEW_VERSION_CHANGELOG_TEMPLATE = """\
 ## Unreleased
 
-<!-- PR authors: please include the PR number in the changelog entry, not the issue number -->
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
 
 ### Highlights
 
