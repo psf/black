@@ -348,6 +348,7 @@ def _find_compound_statement_context(
         assert isinstance(parent.parent, Node)
         compound_parent = parent.parent
         # In original single-line structure, the simple_stmt IS the body
+        assert isinstance(parent, Node)  # simple_stmt is always a Node
         return compound_parent, parent
 
     return None, None
