@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, ubuntu-22.04, macos-latest]
+        os: [windows-2025, ubuntu-22.04, ubuntu-22.04-arm, macos-latest]
         include:
           - os: windows-2025
             pathsep: ";"
@@ -22,6 +22,10 @@ jobs:
           - os: ubuntu-22.04
             pathsep: ":"
             asset_name: black_linux
+            executable_mime: "application/x-executable"
+          - os: ubuntu-22.04-arm
+            pathsep: ":"
+            asset_name: black_linux-arm
             executable_mime: "application/x-executable"
           - os: macos-latest
             pathsep: ":"
