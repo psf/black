@@ -9,15 +9,6 @@ CLI flag. At the end of each year, these changes may be adopted into the default
 as described in [The Black Code Style](index.md). Because the functionality is
 experimental, feedback and issue reports are highly encouraged!
 
-In the past, the preview style included some features with known bugs, so that we were
-unable to move these features to the stable style. Therefore, such features are now
-moved to the `--unstable` style. All features in the `--preview` style are expected to
-make it to next year's stable style; features in the `--unstable` style will be
-stabilized only if issues with them are fixed. If bugs are discovered in a `--preview`
-feature, it is demoted to the `--unstable` style. To avoid thrash when a feature is
-demoted from the `--preview` to the `--unstable` style, users can use the
-`--enable-unstable-feature` flag to enable specific unstable features.
-
 (labels/preview-features)=
 
 Currently, the following features are included in the preview style:
@@ -29,6 +20,8 @@ Currently, the following features are included in the preview style:
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
   such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
   have been incorrectly collapsed.
+- `standardize_type_comments`: Format type comments which have zero or more spaces
+  between `#` and `type:` or between `type:` and value to `# type: (value)`
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
   across lines if it would otherwise exceed the maximum line length.
 - `remove_parens_around_except_types`: Remove parentheses around multiple exception
@@ -38,17 +31,10 @@ Currently, the following features are included in the preview style:
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceeded by comments.
 - `fix_type_expansion_split`: Fix type expansions split in generic functions.
-
-(labels/unstable-features)=
-
-The unstable style additionally includes the following features:
-
-- `string_processing`: split long string literals and related changes
-  ([see below](labels/string-processing))
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
-- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
-  brackets ([see below](labels/hug-parens))
+- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
+  strings if preceeded by comments.
 
 (labels/wrap-long-dict-values)=
 
@@ -76,6 +62,78 @@ my_dict = {
     "another key": short_value,
 }
 ```
+
+(labels/multiline-string-handling)=
+
+### Improved multiline string handling
+
+_Black_ is smarter when formatting multiline strings, especially in function arguments,
+to avoid introducing extra line breaks. Previously, it would always consider multiline
+strings as not fitting on a single line. With this new feature, _Black_ looks at the
+context around the multiline string to decide if it should be inlined or split to a
+separate line. For example, when a multiline string is passed to a function, _Black_
+will only split the multiline string if a line is too long or if multiple arguments are
+being passed.
+
+For example, _Black_ will reformat
+
+```python
+textwrap.dedent(
+    """\
+    This is a
+    multiline string
+"""
+)
+```
+
+to:
+
+```python
+textwrap.dedent("""\
+    This is a
+    multiline string
+""")
+```
+
+And:
+
+```python
+MULTILINE = """
+foobar
+""".replace(
+    "\n", ""
+)
+```
+
+to:
+
+```python
+MULTILINE = """
+foobar
+""".replace("\n", "")
+```
+
+## Unstable style
+
+(labels/unstable-style)=
+
+In the past, the preview style included some features with known bugs, so that we were
+unable to move these features to the stable style. Therefore, such features are now
+moved to the `--unstable` style. All features in the `--preview` style are expected to
+make it to next year's stable style; features in the `--unstable` style will be
+stabilized only if issues with them are fixed. If bugs are discovered in a `--preview`
+feature, it is demoted to the `--unstable` style. To avoid thrash when a feature is
+demoted from the `--preview` to the `--unstable` style, users can use the
+`--enable-unstable-feature` flag to enable specific unstable features.
+
+(labels/unstable-features)=
+
+The unstable style additionally includes the following features:
+
+- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
+  brackets ([see below](labels/hug-parens))
+- `string_processing`: split long string literals and related changes
+  ([see below](labels/string-processing))
 
 (labels/hug-parens)=
 
@@ -158,121 +216,6 @@ foo(
 _Black_ will split long string literals and merge short ones. Parentheses are used where
 appropriate. When split, parts of f-strings that don't need formatting are converted to
 plain strings. f-strings will not be merged if they contain internal quotes and it would
-change their quotation mark style. User-made splits are respected when they do not
-exceed the line length limit. Line continuation backslashes are converted into
+change their quotation mark style. Line continuation backslashes are converted into
 parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
 this feature is tracked in [this issue](https://github.com/psf/black/issues/2188).
-
-(labels/multiline-string-handling)=
-
-### Improved multiline string handling
-
-_Black_ is smarter when formatting multiline strings, especially in function arguments,
-to avoid introducing extra line breaks. Previously, it would always consider multiline
-strings as not fitting on a single line. With this new feature, _Black_ looks at the
-context around the multiline string to decide if it should be inlined or split to a
-separate line. For example, when a multiline string is passed to a function, _Black_
-will only split the multiline string if a line is too long or if multiple arguments are
-being passed.
-
-For example, _Black_ will reformat
-
-```python
-textwrap.dedent(
-    """\
-    This is a
-    multiline string
-"""
-)
-```
-
-to:
-
-```python
-textwrap.dedent("""\
-    This is a
-    multiline string
-""")
-```
-
-And:
-
-```python
-MULTILINE = """
-foobar
-""".replace(
-    "\n", ""
-)
-```
-
-to:
-
-```python
-MULTILINE = """
-foobar
-""".replace("\n", "")
-```
-
-Implicit multiline strings are special, because they can have inline comments. Strings
-without comments are merged, for example
-
-```python
-s = (
-    "An "
-    "implicit "
-    "multiline "
-    "string"
-)
-```
-
-becomes
-
-```python
-s = "An implicit multiline string"
-```
-
-A comment on any line of the string (or between two string lines) will block the
-merging, so
-
-```python
-s = (
-    "An "  # Important comment concerning just this line
-    "implicit "
-    "multiline "
-    "string"
-)
-```
-
-and
-
-```python
-s = (
-    "An "
-    "implicit "
-    # Comment in between
-    "multiline "
-    "string"
-)
-```
-
-will not be merged. Having the comment after or before the string lines (but still
-inside the parens) will merge the string. For example
-
-```python
-s = (  # Top comment
-    "An "
-    "implicit "
-    "multiline "
-    "string"
-    # Bottom comment
-)
-```
-
-becomes
-
-```python
-s = (  # Top comment
-    "An implicit multiline string"
-    # Bottom comment
-)
-```

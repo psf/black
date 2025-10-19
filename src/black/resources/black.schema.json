@@ -86,6 +86,7 @@
           "multiline_string_handling",
           "always_one_newline_after_import",
           "fix_fmt_skip_in_one_liners",
+          "standardize_type_comments",
           "wrap_comprehension_in",
           "remove_parens_around_except_types",
           "normalize_cr_newlines",
