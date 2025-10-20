@@ -45,6 +45,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Write unchanged content to stdout when excluding formating from stdin using pipes
+  (#4610)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -62,7 +65,6 @@
 - Vim: Warn on unsupported Vim and Python versions independently (#4772)
 - Vim: Print the import paths when importing black fails (#4675)
 - Vim: Fix handling of virtualenvs that have a different Python version (#4675)
-- Write unchanged content to stdout when excluding formating from stdin using pipes (#4609)
 
 ### Documentation
 
