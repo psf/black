@@ -509,8 +509,9 @@ def validate_regex(
     "--nocache",
     is_flag=True,
     help=(
-        "Do not use the cache when formatting files. This forces Black to reformat all files and not skip any unchanged file"
-        " Also prevents Black from updating the cache after formatting."
+        "Do not use the cache when formatting files. This forces Black to reformat all"
+        " files and not skip any unchanged file Also prevents Black from updating the"
+        " cache after formatting."
     ),
 )
 @click.pass_context
@@ -703,8 +704,8 @@ def main(  # noqa: C901
                 write_back=write_back,
                 mode=mode,
                 report=report,
-                    lines=lines,
-                    nocache=nocache,
+                lines=lines,
+                nocache=nocache,
             )
         else:
             from black.concurrency import reformat_many

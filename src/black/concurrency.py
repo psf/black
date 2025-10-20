@@ -107,18 +107,18 @@ def reformat_many(
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-            loop.run_until_complete(
-                schedule_formatting(
-                    sources=sources,
-                    fast=fast,
-                    write_back=write_back,
-                    mode=mode,
-                    report=report,
-                    loop=loop,
-                    executor=executor,
-                    nocache=nocache,
-                )
+        loop.run_until_complete(
+            schedule_formatting(
+                sources=sources,
+                fast=fast,
+                write_back=write_back,
+                mode=mode,
+                report=report,
+                loop=loop,
+                executor=executor,
+                nocache=nocache,
             )
+        )
     finally:
         try:
             shutdown(loop)
