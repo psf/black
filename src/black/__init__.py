@@ -506,7 +506,7 @@ def validate_regex(
     help="Read configuration options from a configuration file.",
 )
 @click.option(
-    "--nocache",
+    "--no-cache",
     is_flag=True,
     help=(
         "Do not use the cache when formatting files. This forces Black to reformat all"
@@ -545,7 +545,7 @@ def main(  # noqa: C901
     workers: Optional[int],
     src: tuple[str, ...],
     config: Optional[str],
-    nocache: bool,
+    no_cache: bool,
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
@@ -705,7 +705,7 @@ def main(  # noqa: C901
                 mode=mode,
                 report=report,
                 lines=lines,
-                nocache=nocache,
+                no_cache=no_cache,
             )
         else:
             from black.concurrency import reformat_many
@@ -720,7 +720,7 @@ def main(  # noqa: C901
                 mode=mode,
                 report=report,
                 workers=workers,
-                nocache=nocache,
+                no_cache=no_cache,
             )
 
     if verbose or not quiet:
@@ -871,7 +871,7 @@ def reformat_one(
     report: "Report",
     *,
     lines: Collection[tuple[int, int]] = (),
-    nocache: bool = False,
+    no_cache: bool = False,
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -901,15 +901,18 @@ def reformat_one(
             ):
                 changed = Changed.YES
         else:
-            cache = None if nocache else Cache.read(mode)
-            if not nocache and write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
+            cache = None if no_cache else Cache.read(mode)
+            if cache is not None and write_back not in (
+                WriteBack.DIFF,
+                WriteBack.COLOR_DIFF,
+            ):
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
-            if not nocache and (
+            if cache is not None and (
                 (write_back is WriteBack.YES and changed is not Changed.CACHED)
                 or (write_back is WriteBack.CHECK and changed is Changed.NO)
             ):
