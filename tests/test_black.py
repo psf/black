@@ -2233,8 +2233,8 @@ class TestCaching:
             cache_file = get_cache_file(mode)
             assert not cache_file.exists()
 
-    def test_nocache_flag_prevents_writes(self) -> None:
-        """--nocache should neither read nor write the cache; always do fresh analysis."""
+    def test_no_cache_flag_prevents_writes(self) -> None:
+        """--no-cache should neither read nor write the cache"""
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
@@ -2246,8 +2246,8 @@ class TestCaching:
                 patch.object(black.Cache, "read") as read_cache,
                 patch.object(black.Cache, "write") as write_cache,
             ):
-                # Pass --nocache; it should neither read nor write
-                invokeBlack([str(src), "--nocache"])
+                # Pass --no-cache; it should neither read nor write
+                invokeBlack([str(src), "--no-cache"])
                 read_cache.assert_not_called()
                 write_cache.assert_not_called()
 
