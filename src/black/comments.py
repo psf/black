@@ -8,6 +8,7 @@ from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
+    STATEMENT,
     WHITESPACE,
     container_of,
     first_leaf_of,
@@ -25,6 +26,10 @@ LN = Union[Leaf, Node]
 FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
 FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
 FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
+
+# Compound statements we care about for fmt: skip handling
+# (excludes except_clause and case_block which aren't standalone compound statements)
+_COMPOUND_STATEMENTS: Final = STATEMENT - {syms.except_clause, syms.case_block}
 
 COMMENT_EXCEPTIONS = " !:#'"
 _COMMENT_PREFIX = "# "
@@ -322,112 +327,99 @@ def generate_ignored_nodes(
 
 
 def _find_compound_statement_context(
-    parent: Optional[LN],
-) -> tuple[Optional[Node], Optional[Node]]:
-    """Find compound statement and suite nodes for fmt: skip handling."""
+    parent: Optional[LN], mode: Mode
+) -> Optional[Node]:
+    """Return the body node of a compound statement if we should respect fmt: skip.
+    
+    This handles one-line compound statements like:
+        if condition: body  # fmt: skip
+    
+    When Black expands such statements, they temporarily look like:
+        if condition:
+            body  # fmt: skip
+    
+    In both cases, we want to return the body node (either the simple_stmt directly
+    or the suite containing it).
+    """
+    if Preview.fix_fmt_skip_in_one_liners not in mode:
+        return None
+        
     if parent is None or parent.type != syms.simple_stmt:
-        return None, None
+        return None
 
-    # Case 1: simple_stmt -> suite -> compound_stmt (after reformatting)
+    assert isinstance(parent, Node)
+
+    # Case 1: Expanded form after Black's initial formatting pass.
+    # The one-liner has been split across multiple lines:
+    #     if True:
+    #         print("a"); print("b")  # fmt: skip
+    # Structure: compound_stmt -> suite -> simple_stmt
     if (
-        parent.parent is not None
+        isinstance(parent.parent, Node)
         and parent.parent.type == syms.suite
-        and parent.parent.parent is not None
+        and isinstance(parent.parent.parent, Node)
+        and parent.parent.parent.type in _COMPOUND_STATEMENTS
     ):
-        assert isinstance(parent.parent, Node)
-        suite_node = parent.parent
-        assert isinstance(suite_node.parent, Node)
-        compound_parent = suite_node.parent
-        return compound_parent, suite_node
+        return parent.parent
 
-    # Case 2: simple_stmt -> compound_stmt (original structure)
-    compound_types = (
-        syms.if_stmt,
-        syms.while_stmt,
-        syms.for_stmt,
-        syms.try_stmt,
-        syms.with_stmt,
-        syms.funcdef,
-        syms.classdef,
-    )
-    if parent.parent is not None and parent.parent.type in compound_types:
-        assert isinstance(parent.parent, Node)
-        compound_parent = parent.parent
-        # In original single-line structure, the simple_stmt IS the body
-        assert isinstance(parent, Node)  # simple_stmt is always a Node
-        return compound_parent, parent
+    # Case 2: Original one-line form from the input source.
+    # The statement is still on a single line:
+    #     if True: print("a"); print("b")  # fmt: skip
+    # Structure: compound_stmt -> simple_stmt
+    if (
+        isinstance(parent.parent, Node)
+        and parent.parent.type in _COMPOUND_STATEMENTS
+    ):
+        return parent
 
-    return None, None
+    return None
 
 
-def _get_compound_statement_header(
-    compound_parent: Node, suite_node: Node, parent: LN
-) -> list[LN]:
-    """Get header nodes for compound statement if it should be preserved."""
-    compound_types = (
-        syms.if_stmt,
-        syms.while_stmt,
-        syms.for_stmt,
-        syms.try_stmt,
-        syms.with_stmt,
-        syms.funcdef,
-        syms.classdef,
-    )
-    if compound_parent.type not in compound_types:
+def _should_keep_compound_statement_inline(
+    body_node: Node, simple_stmt_parent: Node
+) -> bool:
+    """Check if a compound statement should be kept on one line.
+    
+    Returns True only for compound statements with semicolon-separated bodies,
+    like: if True: print("a"); print("b")  # fmt: skip
+    """
+    # Check if there are semicolons in the body
+    for leaf in body_node.leaves():
+        if leaf.type == token.SEMI:
+            # Verify it's a single-line body (one simple_stmt)
+            if body_node.type == syms.suite:
+                # After formatting: check suite has one simple_stmt child
+                simple_stmts = [
+                    child
+                    for child in body_node.children
+                    if child.type == syms.simple_stmt
+                ]
+                return len(simple_stmts) == 1 and simple_stmts[0] is simple_stmt_parent
+            else:
+                # Original form: body_node IS the simple_stmt
+                return body_node is simple_stmt_parent
+    return False
+
+
+def _get_compound_statement_header(body_node: Node, simple_stmt_parent: Node) -> list[LN]:
+    """Get header nodes for a compound statement that should be preserved inline."""
+    if not _should_keep_compound_statement_inline(body_node, simple_stmt_parent):
         return []
-
-    # Check if the body contains semicolon-separated statements
-    has_semicolon = False
-    if suite_node.type == syms.suite:
-        # After reformatting, check if the suite contains semicolons
-        for child in suite_node.children:
-            if hasattr(child, "children"):
-                for grandchild in child.children:
-                    if getattr(grandchild, "type", None) == token.SEMI:
-                        has_semicolon = True
-                        break
-            if has_semicolon:
-                break
-    else:
-        # Original structure - check the simple_stmt for semicolons
-        for child in suite_node.children:
-            if getattr(child, "type", None) == token.SEMI:
-                has_semicolon = True
-                break
-
-    # Only apply our fix for compound statements with semicolon-separated bodies
-    if not has_semicolon:
+    
+    # Get the compound statement (parent of body)
+    compound_stmt = body_node.parent
+    if compound_stmt is None or compound_stmt.type not in _COMPOUND_STATEMENTS:
         return []
-
-    # Check if this is a single-line compound statement
-    if suite_node.type == syms.suite:
-        # Case 1: After reformatting, body is in a suite
-        stmt_children = [
-            child
-            for child in suite_node.children
-            if child.type not in (token.NEWLINE, token.INDENT, token.DEDENT)
-        ]
-        single_line_body = len(stmt_children) == 1 and (
-            stmt_children[0] == parent
-            or any(
-                c == parent
-                for c in stmt_children[0].children
-                if hasattr(stmt_children[0], "children")
-            )
-        )
-    else:
-        # Case 2: Original structure, suite_node is the simple_stmt body
-        single_line_body = suite_node == parent
-
-    if not single_line_body:
-        return []
-
-    # Include the compound statement header
+    
+    # Collect all header leaves before the body
     header_leaves: list[LN] = []
-    for child in compound_parent.children:
-        if child == suite_node:
+    for child in compound_stmt.children:
+        if child is body_node:
             break
-        if child.type not in (token.NEWLINE, token.INDENT):
+        if isinstance(child, Leaf):
+            if child.type not in (token.NEWLINE, token.INDENT):
+                header_leaves.append(child)
+        else:
             header_leaves.extend(child.leaves())
     return header_leaves
 
@@ -494,15 +486,9 @@ def _generate_ignored_nodes_from_fmt_skip(
             if current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
         # Special handling for compound statements with semicolon-separated bodies
-        compound_parent, suite_node = _find_compound_statement_context(parent)
-        if (
-            compound_parent is not None
-            and suite_node is not None
-            and parent is not None
-        ):
-            header_nodes = _get_compound_statement_header(
-                compound_parent, suite_node, parent
-            )
+        body_node = _find_compound_statement_context(parent, mode)
+        if body_node is not None and isinstance(parent, Node):
+            header_nodes = _get_compound_statement_header(body_node, parent)
             if header_nodes:
                 ignored_nodes = header_nodes + ignored_nodes
 
