@@ -45,6 +45,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Write unchanged content to stdout when excluding formating from stdin using pipes
+  (#4610)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
