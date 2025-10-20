@@ -78,6 +78,7 @@ def reformat_many(
     mode: Mode,
     report: Report,
     workers: Optional[int],
+    nocache: bool = False,
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
     maybe_install_uvloop()
@@ -106,17 +107,18 @@ def reformat_many(
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     try:
-        loop.run_until_complete(
-            schedule_formatting(
-                sources=sources,
-                fast=fast,
-                write_back=write_back,
-                mode=mode,
-                report=report,
-                loop=loop,
-                executor=executor,
+            loop.run_until_complete(
+                schedule_formatting(
+                    sources=sources,
+                    fast=fast,
+                    write_back=write_back,
+                    mode=mode,
+                    report=report,
+                    loop=loop,
+                    executor=executor,
+                    nocache=nocache,
+                )
             )
-        )
     finally:
         try:
             shutdown(loop)
@@ -134,6 +136,7 @@ async def schedule_formatting(
     report: "Report",
     loop: asyncio.AbstractEventLoop,
     executor: "Executor",
+    nocache: bool = False,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
@@ -142,8 +145,8 @@ async def schedule_formatting(
     `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
-    cache = Cache.read(mode)
-    if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
+    cache = None if nocache else Cache.read(mode)
+    if not nocache and write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         sources, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
@@ -194,5 +197,5 @@ async def schedule_formatting(
                 report.done(src, changed)
     if cancelled:
         await asyncio.gather(*cancelled, return_exceptions=True)
-    if sources_to_cache:
+    if sources_to_cache and not nocache and cache is not None:
         cache.write(sources_to_cache)
