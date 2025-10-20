@@ -11,7 +11,6 @@ from collections.abc import (
     Iterator,
     MutableMapping,
     Sequence,
-    Sized,
 )
 from contextlib import contextmanager
 from dataclasses import replace
