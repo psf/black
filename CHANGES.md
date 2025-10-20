@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
@@ -45,6 +48,9 @@
 ### _Blackd_
 
 <!-- Changes to blackd -->
+
+- Implemented BlackDClient. This simple python client allows to easily send formatting
+  requests to blackd (#4774)
 
 ### Integrations
 

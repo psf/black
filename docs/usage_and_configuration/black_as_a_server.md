@@ -27,12 +27,28 @@ formatting requests.
 
 ```
 
-There is no official `blackd` client tool (yet!). You can test that blackd is working
-using `curl`:
+You can test that blackd is working using `curl`:
 
 ```sh
 blackd --bind-port 9090 &  # or let blackd choose a port
 curl -s -XPOST "localhost:9090" -d "print('valid')"
+```
+
+Or using the python client:
+
+```python
+import asyncio
+
+from blackd.client import BlackDClient
+
+async def main():
+    client = BlackDClient(url="http://127.0.0.1:9090")
+    unformatted_code = "def hello(): print('Hello, World!')"
+    formatted_code = await client.format_code(unformatted_code)
+    print(formatted_code)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Protocol
