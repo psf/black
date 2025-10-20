@@ -330,20 +330,20 @@ def _find_compound_statement_context(
     parent: Optional[LN], mode: Mode
 ) -> Optional[Node]:
     """Return the body node of a compound statement if we should respect fmt: skip.
-    
+
     This handles one-line compound statements like:
         if condition: body  # fmt: skip
-    
+
     When Black expands such statements, they temporarily look like:
         if condition:
             body  # fmt: skip
-    
+
     In both cases, we want to return the body node (either the simple_stmt directly
     or the suite containing it).
     """
     if Preview.fix_fmt_skip_in_one_liners not in mode:
         return None
-        
+
     if parent is None or parent.type != syms.simple_stmt:
         return None
 
@@ -379,7 +379,7 @@ def _should_keep_compound_statement_inline(
     body_node: Node, simple_stmt_parent: Node
 ) -> bool:
     """Check if a compound statement should be kept on one line.
-    
+
     Returns True only for compound statements with semicolon-separated bodies,
     like: if True: print("a"); print("b")  # fmt: skip
     """
@@ -405,12 +405,12 @@ def _get_compound_statement_header(body_node: Node, simple_stmt_parent: Node) ->
     """Get header nodes for a compound statement that should be preserved inline."""
     if not _should_keep_compound_statement_inline(body_node, simple_stmt_parent):
         return []
-    
+
     # Get the compound statement (parent of body)
     compound_stmt = body_node.parent
     if compound_stmt is None or compound_stmt.type not in _COMPOUND_STATEMENTS:
         return []
-    
+
     # Collect all header leaves before the body
     header_leaves: list[LN] = []
     for child in compound_stmt.children:
