@@ -509,8 +509,8 @@ def validate_regex(
     "--no-cache",
     is_flag=True,
     help=(
-    "Skip reading and writing the cache, forcing Black to reformat all"
-    " included files."
+        "Skip reading and writing the cache, forcing Black to reformat all"
+        " included files."
     ),
 )
 @click.pass_context
