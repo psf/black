@@ -509,9 +509,8 @@ def validate_regex(
     "--no-cache",
     is_flag=True,
     help=(
-        "Do not use the cache when formatting files. This forces Black to reformat all"
-        " files and not skip any unchanged file Also prevents Black from updating the"
-        " cache after formatting."
+         "Skip reading and writing the cache, forcing Black to reformat all"
+         " included files."
     ),
 )
 @click.pass_context
