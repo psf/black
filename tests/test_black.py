@@ -2255,9 +2255,7 @@ class TestCaching:
         """Formatting multiple files with --no-cache should not read or write cache
         and should format files normally."""
         mode = DEFAULT_MODE
-        with (
-            cache_dir() as workspace,
-        ):
+        with (cache_dir() as workspace,):
             one = (workspace / "one.py").resolve()
             one.write_text("print('hello')", encoding="utf-8")
             two = (workspace / "two.py").resolve()
