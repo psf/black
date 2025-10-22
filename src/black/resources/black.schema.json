@@ -150,6 +150,11 @@
       "type": "boolean",
       "description": "Emit messages about files that were not changed or were ignored due to exclusion patterns. If Black is using a configuration file, a message detailing which one it is using will be emitted.",
       "default": false
+    },
+    "no-cache": {
+      "type": "boolean",
+      "description": "Skip reading and writing the cache, forcing Black to reformat all included files.",
+      "default": false
     }
   }
 }
