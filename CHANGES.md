@@ -15,6 +15,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when standalone comment is within parentheses in lambda default arguments
+  (#4658)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
