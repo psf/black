@@ -9,6 +9,8 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Enable base 3.14 support (#4804)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
@@ -59,6 +61,7 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Enable 3.14 base CI (#4804)
 - Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
   "stability" format when using pyproject.toml (#4770)
 - Improve error message for vim plugin users. It now handles independently vim version
