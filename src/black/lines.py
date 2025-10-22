@@ -64,8 +64,8 @@ class Line:
         """
         has_value = (
             leaf.type in BRACKETS
-            # empty fstring-middles must not be truncated
-            or leaf.type == token.FSTRING_MIDDLE
+            # empty fstring and tstring middles must not be truncated
+            or leaf.type in (token.FSTRING_MIDDLE, token.TSTRING_MIDDLE)
             or bool(leaf.value.strip())
         )
         if not has_value:
