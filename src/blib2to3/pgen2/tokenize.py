@@ -41,9 +41,6 @@ from blib2to3.pgen2.token import (
     FSTRING_END,
     FSTRING_MIDDLE,
     FSTRING_START,
-    TSTRING_END,
-    TSTRING_MIDDLE,
-    TSTRING_START,
     INDENT,
     NAME,
     NEWLINE,
@@ -51,6 +48,9 @@ from blib2to3.pgen2.token import (
     NUMBER,
     OP,
     STRING,
+    TSTRING_END,
+    TSTRING_MIDDLE,
+    TSTRING_START,
     tok_name,
 )
 
