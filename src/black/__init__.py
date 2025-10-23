@@ -90,6 +90,19 @@ NewLine = str
 
 
 class WriteBack(Enum):
+    """
+    Represents the different write-back modes used by Black when formatting code.
+
+    These modes control whether changes are written to files, shown as diffs,
+    checked without writing, or previewed with color highlighting.
+
+    Attributes:
+        NO (int): Do not write back any changes.
+        YES (int): Overwrite the original file with formatted code.
+        DIFF (int): Show a diff of changes without modifying the file (preview mode).
+        CHECK (int): Check if the file would be reformatted without writing changes.
+        COLOR_DIFF (int): Show a colored diff of the changes in the terminal (preview mode).
+    """
     NO = 0
     YES = 1
     DIFF = 2
@@ -97,6 +110,7 @@ class WriteBack(Enum):
     COLOR_DIFF = 4
 
     @classmethod
+
     def from_configuration(
         cls, *, check: bool, diff: bool, color: bool = False
     ) -> "WriteBack":
@@ -181,6 +195,21 @@ def read_pyproject_toml(
 def spellcheck_pyproject_toml_keys(
     ctx: click.Context, config_keys: list[str], config_file_path: str
 ) -> None:
+    """
+    Validate the provided configuration keys against the available command options.
+
+    This function checks whether each key in `config_keys` exists as a valid
+    parameter in the given Click command context. If any invalid keys are found,
+    it outputs a warning message with the offending keys and their source file.
+
+    Args:
+        ctx (click.Context): The Click command context containing available parameters.
+        config_keys (list[str]): A list of configuration keys to validate.
+        config_file_path (str): Path to the configuration file being checked.
+
+    Returns:
+        None: Prints a warning if invalid keys are detected.
+    """
     invalid_keys: list[str] = []
     available_config_options = {param.name for param in ctx.command.params}
     invalid_keys = [key for key in config_keys if key not in available_config_options]
@@ -190,6 +219,7 @@ def spellcheck_pyproject_toml_keys(
             f"Invalid config keys detected: {keys_str} (in {config_file_path})",
             fg="red",
         )
+
 
 
 def target_version_option_callback(
@@ -1554,10 +1584,21 @@ def get_future_imports(node: Node) -> set[str]:
 
 
 def _black_info() -> str:
+    """
+    Return a string containing Black and Python version information.
+
+    This function provides details about the currently installed Black version
+    and the Python implementation and version being used. Useful for logging
+    or diagnostic purposes.
+
+    Returns:
+        str: A formatted string with Black version and Python implementation/version.
+    """
     return (
         f"Black {__version__} on "
         f"Python ({platform.python_implementation()}) {platform.python_version()}"
     )
+
 
 
 def assert_equivalent(src: str, dst: str) -> None:

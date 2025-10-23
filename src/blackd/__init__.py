@@ -92,11 +92,27 @@ def executor() -> Executor:
 
 
 def make_app() -> web.Application:
+    """
+    Create and configure the Black web application for previewing code formatting.
+
+    This function sets up an aiohttp web application to handle Python code
+    formatting requests. It includes:
+
+    - CORS middleware that allows specific headers, including Black headers
+      and "Content-Type".
+    - A POST route at "/" that processes formatting requests using the executor.
+      This enables previewing how the code would be formatted without
+      modifying the original files.
+
+    Returns:
+        web.Application: A configured aiohttp web application ready to run.
+    """
     app = web.Application(
         middlewares=[cors(allow_headers=(*BLACK_HEADERS, "Content-Type"))]
     )
     app.add_routes([web.post("/", partial(handle, executor=executor()))])
     return app
+
 
 
 async def handle(request: web.Request, executor: Executor) -> web.Response:
