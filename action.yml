@@ -1,11 +1,10 @@
 name: "Black"
 description: "The uncompromising Python code formatter."
 author: "Łukasz Langa and contributors to Black"
+
 inputs:
   options:
-    description:
-      "Options passed to Black. Use `black --help` to see available options. Default:
-      '--check --diff'"
+    description: "Options passed to Black. Use `black --help` to see available options. Default: '--check --diff'"
     required: false
     default: "--check --diff"
   src:
@@ -13,39 +12,42 @@ inputs:
     required: false
     default: "."
   jupyter:
-    description:
-      "Set this option to true to include Jupyter Notebook files. Default: false"
+    description: "Set this option to true to include Jupyter Notebook files. Default: false"
     required: false
     default: false
   black_args:
     description: "[DEPRECATED] Black input arguments."
     required: false
     default: ""
-    deprecationMessage:
-      "Input `with.black_args` is deprecated. Use `with.options` and `with.src` instead."
+    deprecationMessage: "Input `with.black_args` is deprecated. Use `with.options` and `with.src` instead."
   version:
     description: 'Python Version specifier (PEP440) - e.g. "21.5b1"'
     required: false
     default: ""
   use_pyproject:
-    description: Read Black version specifier from pyproject.toml if `true`.
+    description: "Read Black version specifier from pyproject.toml if `true`."
     required: false
     default: "false"
   summary:
     description: "Whether to add the output to the workflow summary"
     required: false
     default: true
+
 branding:
   color: "black"
   icon: "check-circle"
+
 runs:
   using: composite
   steps:
-    - name: black
+    - id: black
+      name: Run Black
+      shell: bash
       run: |
-        # Even when black fails, do not close the shell
+        # Continue even if Black fails
         set +e
 
+        # Choose correct Python runner
         if [ "$RUNNER_OS" == "Windows" ]; then
           runner="python"
         else
@@ -67,6 +69,7 @@ runs:
 
         # Exit with the exit-code returned by Black
         exit ${exit_code}
+
       env:
         # TODO: Remove once https://github.com/actions/runner/issues/665 is fixed.
         INPUT_OPTIONS: ${{ inputs.options }}
@@ -76,4 +79,3 @@ runs:
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_USE_PYPROJECT: ${{ inputs.use_pyproject }}
         pythonioencoding: utf-8
-      shell: bash
