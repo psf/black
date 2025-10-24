@@ -4,7 +4,9 @@ author: "Łukasz Langa and contributors to Black"
 
 inputs:
   options:
-    description: "Options passed to Black. Use `black --help` to see available options. Default: '--check --diff'"
+    description:
+      "Options passed to Black. Use `black --help` to see available options. Default:
+      '--check --diff'"
     required: false
     default: "--check --diff"
   src:
@@ -12,14 +14,16 @@ inputs:
     required: false
     default: "."
   jupyter:
-    description: "Set this option to true to include Jupyter Notebook files. Default: false"
+    description:
+      "Set this option to true to include Jupyter Notebook files. Default: false"
     required: false
     default: false
   black_args:
     description: "[DEPRECATED] Black input arguments."
     required: false
     default: ""
-    deprecationMessage: "Input `with.black_args` is deprecated. Use `with.options` and `with.src` instead."
+    deprecationMessage:
+      "Input `with.black_args` is deprecated. Use `with.options` and `with.src` instead."
   version:
     description: 'Python Version specifier (PEP440) - e.g. "21.5b1"'
     required: false
