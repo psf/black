@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Enable base 3.14 support (#4804)
 - Add support for the new Python 3.14 t-string syntax introduced by PEP 750 (#4805)
 
 ### Stable style
@@ -16,9 +20,11 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
 - Fix bug where module docstrings would be treated as normal strings if preceeded by
   comments (#4764)
 - Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
+- Standardize type comments to form `# type: <value>` (#4645)
 
 ### Configuration
 
@@ -42,14 +48,21 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Write unchanged content to stdout when excluding formating from stdin using pipes
+  (#4610)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
+
+- Implemented BlackDClient. This simple python client allows to easily send formatting
+  requests to blackd (#4774)
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Enable 3.14 base CI (#4804)
 - Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
   "stability" format when using pyproject.toml (#4770)
 - Improve error message for vim plugin users. It now handles independently vim version
