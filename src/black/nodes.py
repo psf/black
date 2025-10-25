@@ -793,8 +793,8 @@ def is_fstring(node: Node) -> bool:
     return node.type == syms.fstring
 
 
-def fstring_to_string(node: Node) -> Leaf:
-    """Converts an fstring node back to a string node."""
+def fstring_tstring_to_string(node: Node) -> Leaf:
+    """Converts an fstring or tstring node back to a string node."""
     string_without_prefix = str(node)[len(node.prefix) :]
     string_leaf = Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
     string_leaf.lineno = node.get_lineno() or 0
@@ -804,7 +804,7 @@ def fstring_to_string(node: Node) -> Leaf:
 def is_multiline_string(node: LN) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
     if isinstance(node, Node) and is_fstring(node):
-        leaf = fstring_to_string(node)
+        leaf = fstring_tstring_to_string(node)
     elif isinstance(node, Leaf):
         leaf = node
     else:
