@@ -6,6 +6,8 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Add support for the new Python 3.14 t-string syntax introduced by PEP 750 (#4805)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
