@@ -16,9 +16,9 @@
 <!-- Changes that affect Black's stable style -->
 
 - Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#1245)
-- Comments containing fmt directives (`fmt:skip`, `fmt:off`, `fmt:on`) now preserve their
-  exact formatting instead of being normalized. For example, `#fmt:skip` is no longer
-  changed to `# fmt:skip` (#1245)
+- Comments containing fmt directives (`fmt:skip`, `fmt:off`, `fmt:on`) now preserve
+  their exact formatting instead of being normalized. For example, `#fmt:skip` is no
+  longer changed to `# fmt:skip` (#1245)
 
 ### Preview style
 
