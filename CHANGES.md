@@ -42,6 +42,7 @@
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Releases now include arm64 Linux binaries (#4773)
+- Releases now include arm64 Windows binaries and wheels (#4814)
 
 ### Parser
 
