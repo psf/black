@@ -3,6 +3,9 @@ name: Publish executables
 on:
   release:
     types: [published]
+  workflow-dispatch:
+  
+  
 
 permissions:
   contents: write # actions/upload-release-asset needs this.
@@ -21,7 +24,7 @@ jobs:
             executable_mime: "application/vnd.microsoft.portable-executable"
           - os: windows-11-arm
             pathsep: ";"
-            asset_name: black_windows.exe
+            asset_name: black_windows-arm.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
           - os: ubuntu-22.04
             pathsep: ":"
@@ -60,7 +63,7 @@ jobs:
           ./dist/${{ matrix.asset_name }} --version
           ./dist/${{ matrix.asset_name }} src --verbose
 
-      - name: Upload binary as release asset
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/${{ matrix.asset_name }}
+      # - name: Upload binary as release asset
+      #   uses: softprops/action-gh-release@v2
+      #   with:
+      #     files: dist/${{ matrix.asset_name }}
