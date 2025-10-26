@@ -24,6 +24,8 @@
   comments (#4764)
 - Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
 - Standardize type comments to form `# type: <value>` (#4645)
+- Fix `fix_fmt_skip_in_one_liners` preview feature to respect `# fmt: skip` for compound
+  statements with semicolon-separated bodies (#4800)
 
 ### Configuration
 

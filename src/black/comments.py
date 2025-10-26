@@ -8,6 +8,7 @@ from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
+    STATEMENT,
     WHITESPACE,
     container_of,
     first_leaf_of,
@@ -25,6 +26,10 @@ LN = Union[Leaf, Node]
 FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
 FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
 FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
+
+# Compound statements we care about for fmt: skip handling
+# (excludes except_clause and case_block which aren't standalone compound statements)
+_COMPOUND_STATEMENTS: Final = STATEMENT - {syms.except_clause, syms.case_block}
 
 COMMENT_EXCEPTIONS = " !:#'"
 _COMMENT_PREFIX = "# "
@@ -321,6 +326,98 @@ def generate_ignored_nodes(
             container = container.next_sibling
 
 
+def _find_compound_statement_context(parent: Node) -> Optional[Node]:
+    """Return the body node of a compound statement if we should respect fmt: skip.
+
+    This handles one-line compound statements like:
+        if condition: body  # fmt: skip
+
+    When Black expands such statements, they temporarily look like:
+        if condition:
+            body  # fmt: skip
+
+    In both cases, we want to return the body node (either the simple_stmt directly
+    or the suite containing it).
+    """
+    if parent.type != syms.simple_stmt:
+        return None
+
+    if not isinstance(parent.parent, Node):
+        return None
+
+    # Case 1: Expanded form after Black's initial formatting pass.
+    # The one-liner has been split across multiple lines:
+    #     if True:
+    #         print("a"); print("b")  # fmt: skip
+    # Structure: compound_stmt -> suite -> simple_stmt
+    if (
+        parent.parent.type == syms.suite
+        and isinstance(parent.parent.parent, Node)
+        and parent.parent.parent.type in _COMPOUND_STATEMENTS
+    ):
+        return parent.parent
+
+    # Case 2: Original one-line form from the input source.
+    # The statement is still on a single line:
+    #     if True: print("a"); print("b")  # fmt: skip
+    # Structure: compound_stmt -> simple_stmt
+    if parent.parent.type in _COMPOUND_STATEMENTS:
+        return parent
+
+    return None
+
+
+def _should_keep_compound_statement_inline(
+    body_node: Node, simple_stmt_parent: Node
+) -> bool:
+    """Check if a compound statement should be kept on one line.
+
+    Returns True only for compound statements with semicolon-separated bodies,
+    like: if True: print("a"); print("b")  # fmt: skip
+    """
+    # Check if there are semicolons in the body
+    for leaf in body_node.leaves():
+        if leaf.type == token.SEMI:
+            # Verify it's a single-line body (one simple_stmt)
+            if body_node.type == syms.suite:
+                # After formatting: check suite has one simple_stmt child
+                simple_stmts = [
+                    child
+                    for child in body_node.children
+                    if child.type == syms.simple_stmt
+                ]
+                return len(simple_stmts) == 1 and simple_stmts[0] is simple_stmt_parent
+            else:
+                # Original form: body_node IS the simple_stmt
+                return body_node is simple_stmt_parent
+    return False
+
+
+def _get_compound_statement_header(
+    body_node: Node, simple_stmt_parent: Node
+) -> list[LN]:
+    """Get header nodes for a compound statement that should be preserved inline."""
+    if not _should_keep_compound_statement_inline(body_node, simple_stmt_parent):
+        return []
+
+    # Get the compound statement (parent of body)
+    compound_stmt = body_node.parent
+    if compound_stmt is None or compound_stmt.type not in _COMPOUND_STATEMENTS:
+        return []
+
+    # Collect all header leaves before the body
+    header_leaves: list[LN] = []
+    for child in compound_stmt.children:
+        if child is body_node:
+            break
+        if isinstance(child, Leaf):
+            if child.type not in (token.NEWLINE, token.INDENT):
+                header_leaves.append(child)
+        else:
+            header_leaves.extend(child.leaves())
+    return header_leaves
+
+
 def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
@@ -382,6 +479,14 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             if current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
+        # Special handling for compound statements with semicolon-separated bodies
+        if Preview.fix_fmt_skip_in_one_liners in mode and isinstance(parent, Node):
+            body_node = _find_compound_statement_context(parent)
+            if body_node is not None:
+                header_nodes = _get_compound_statement_header(body_node, parent)
+                if header_nodes:
+                    ignored_nodes = header_nodes + ignored_nodes
+
         yield from ignored_nodes
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
