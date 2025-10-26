@@ -604,8 +604,12 @@ def _contains_fmt_directive(
     comment_line: str, directives: set[str] = FMT_OFF | FMT_ON | FMT_SKIP
 ) -> bool:
     """
-    Checks if the given comment contains format directives alone or paired with other comments.
-    Defaults to checking all directives (skip, off, on, yapf), but can be narrowed to specific ones.
+    Checks if the given comment contains format directives, alone or paired with
+    other comments.
+
+    Defaults to checking all directives (skip, off, on, yapf), but can be
+    narrowed to specific ones.
+
     Matching styles:
       # foobar                    <-- single comment
       # foobar # foobar # foobar  <-- multiple comments
