@@ -366,10 +366,7 @@ def _find_compound_statement_context(
     # The statement is still on a single line:
     #     if True: print("a"); print("b")  # fmt: skip
     # Structure: compound_stmt -> simple_stmt
-    if (
-        isinstance(parent.parent, Node)
-        and parent.parent.type in _COMPOUND_STATEMENTS
-    ):
+    if isinstance(parent.parent, Node) and parent.parent.type in _COMPOUND_STATEMENTS:
         return parent
 
     return None
@@ -401,7 +398,9 @@ def _should_keep_compound_statement_inline(
     return False
 
 
-def _get_compound_statement_header(body_node: Node, simple_stmt_parent: Node) -> list[LN]:
+def _get_compound_statement_header(
+    body_node: Node, simple_stmt_parent: Node
+) -> list[LN]:
     """Get header nodes for a compound statement that should be preserved inline."""
     if not _should_keep_compound_statement_inline(body_node, simple_stmt_parent):
         return []
