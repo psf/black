@@ -143,6 +143,31 @@ def normalize_trailing_prefix(leaf: LN, total_consumed: int) -> None:
     leaf.prefix = ""
 
 
+def _contains_fmt_directive(comment_line: str) -> bool:
+    """
+    Checks if the given comment contains any fmt directive (skip, off, on, yapf).
+    Similar to _contains_fmt_skip_comment but checks all fmt directives.
+    """
+    all_fmt_directives = FMT_OFF | FMT_ON | FMT_SKIP
+
+    # Parse comment into semantic blocks (handles multiple comments and semicolon-separated lists)
+    semantic_comment_blocks = [
+        comment_line,
+        *[
+            _COMMENT_PREFIX + comment.strip()
+            for comment in comment_line.split(_COMMENT_PREFIX)[1:]
+        ],
+        *[
+            _COMMENT_PREFIX + comment.strip()
+            for comment in comment_line.strip(_COMMENT_PREFIX).split(
+                _COMMENT_LIST_SEPARATOR
+            )
+        ],
+    ]
+
+    return any(comment in all_fmt_directives for comment in semantic_comment_blocks)
+
+
 def make_comment(content: str, mode: Mode) -> str:
     """Return a consistently formatted comment from the given `content` string.
 
@@ -150,10 +175,17 @@ def make_comment(content: str, mode: Mode) -> str:
     space between the hash sign and the content.
 
     If `content` didn't start with a hash sign, one is provided.
+
+    Comments containing fmt directives are preserved exactly as-is to respect
+    user intent (e.g., `#no space # fmt: skip` stays as-is).
     """
     content = content.rstrip()
     if not content:
         return "#"
+
+    # Preserve comments with fmt directives exactly as-is
+    if content.startswith("#") and _contains_fmt_directive(content):
+        return content
 
     if content[0] == "#":
         content = content[1:]
@@ -211,13 +243,110 @@ def convert_one_fmt_off_pair(
             if comment.type != STANDALONE_COMMENT:
                 prev = preceding_leaf(leaf)
                 if prev:
-                    if is_fmt_off and prev.type not in WHITESPACE:
+                    # Treat STANDALONE_COMMENT nodes as whitespace for this check,
+                    # since they represent preserved fmt:off/on blocks
+                    if is_fmt_off and prev.type not in WHITESPACE and prev.type != STANDALONE_COMMENT:
                         continue
                     if is_fmt_skip and prev.type in WHITESPACE:
                         continue
 
             ignored_nodes = list(generate_ignored_nodes(leaf, comment, mode))
             if not ignored_nodes:
+                # When there are ONLY comments between `# fmt: off` and `# fmt: on`,
+                # `generate_ignored_nodes()` returns empty because comments don't create
+                # AST nodes - they exist as strings in node prefixes.
+                # This is a special case where both directives and all content between them
+                # exist in the prefix of a single leaf (e.g., ENDMARKER for file-level,
+                # or the first leaf of the next statement for nested cases).
+                # We detect this and create a STANDALONE_COMMENT to preserve formatting.
+                # Note: visit_default in linegen.py has special handling to preserve
+                # the indentation of these STANDALONE_COMMENT nodes.
+                # See issue #1245.
+                if is_fmt_off:
+                    all_comments = list_comments(leaf.prefix, is_endmarker=False, mode=mode)
+
+                    # Find the first fmt:off and its matching fmt:on in the same prefix
+                    fmt_off_idx = None
+                    fmt_on_idx = None
+                    for idx, c in enumerate(all_comments):
+                        # Find the first fmt:off directive
+                        if fmt_off_idx is None and c.value in FMT_OFF:
+                            fmt_off_idx = idx
+                        # Find the first fmt:on after the fmt:off
+                        if fmt_off_idx is not None and idx > fmt_off_idx and c.value in FMT_ON:
+                            fmt_on_idx = idx
+                            break
+
+                    # Only proceed if we found both directives in the same prefix
+                    if fmt_on_idx is not None and fmt_off_idx is not None:
+                        # Use the comments we found, not the original comment object
+                        comment = all_comments[fmt_off_idx]
+                        # Extract the original source between fmt: off and fmt: on
+                        fmt_on_comment = all_comments[fmt_on_idx]
+                        # Get the original text from the prefix
+                        original_prefix = leaf.prefix
+
+                        # Extract content between fmt: off and fmt: on from original source.
+                        # `consumed` represents the position in the prefix string after
+                        # consuming this comment (including its newline).
+                        # We include everything from after fmt: off through fmt: on.
+                        start_pos = comment.consumed
+                        end_pos = fmt_on_comment.consumed
+
+                        # Get the original content between the directives (including fmt: on)
+                        content_between_and_fmt_on = original_prefix[start_pos:end_pos]
+
+                        # Build the hidden value with original formatting preserved.
+                        # Structure: "# fmt: off\n<original content>\n# fmt: on\n"
+                        # This entire block will be stored as a STANDALONE_COMMENT node,
+                        # bypassing all comment normalization.
+                        hidden_value = comment.value + "\n" + content_between_and_fmt_on
+
+                        # Remove trailing newline since visit_STANDALONE_COMMENT in linegen.py
+                        # will call yield from self.line() after appending the node, which
+                        # adds a newline. Keeping the trailing newline here would create
+                        # an extra blank line.
+                        if hidden_value.endswith("\n"):
+                            hidden_value = hidden_value[:-1]
+
+                        # The new prefix should be everything before fmt: off
+                        standalone_comment_prefix = original_prefix[:previous_consumed] + "\n" * comment.newlines
+
+                        # Keep indentation of fmt: off comment by preserving original whitespace.
+                        # Extract the whitespace before the comment directive.
+                        fmt_off_prefix = original_prefix.split(comment.value)[0]
+                        if "\n" in fmt_off_prefix:
+                            # Take only the whitespace after the last newline (i.e., the indentation)
+                            fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
+                        standalone_comment_prefix += fmt_off_prefix
+
+                        # The new leaf prefix should be everything after fmt: on
+                        leaf.prefix = original_prefix[fmt_on_comment.consumed:]
+
+                        # Insert the STANDALONE_COMMENT
+                        parent = leaf.parent
+                        assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (prefix only)"
+
+                        # Find the index of the leaf in its parent
+                        leaf_idx = None
+                        for idx, child in enumerate(parent.children):
+                            if child is leaf:
+                                leaf_idx = idx
+                                break
+
+                        assert leaf_idx is not None, "INTERNAL ERROR: fmt: on/off handling (leaf index)"
+
+                        parent.insert_child(
+                            leaf_idx,
+                            Leaf(
+                                STANDALONE_COMMENT,
+                                hidden_value,
+                                prefix=standalone_comment_prefix,
+                                fmt_pass_converted_first_leaf=None,
+                            ),
+                        )
+                        return True
+
                 continue
 
             first = ignored_nodes[0]  # Can be a container node with the `leaf`.
