@@ -227,6 +227,18 @@ All done! ✨ 🍰 ✨
 1 file would be reformatted.
 ```
 
+#### `--no-cache`
+
+Do not consult or update Black's per-user cache during this run. When `--no-cache` is
+specified, Black will perform fresh analysis for all files and will neither read from
+nor write to the cache. This is helpful for reproducing formatting results from a clean
+run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
+every time.
+
+Example:
+
+python -m black --no-cache .
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.

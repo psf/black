@@ -29,6 +29,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Add `no_cache` option to control caching behavior. (#4803)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
