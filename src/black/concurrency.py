@@ -16,7 +16,7 @@ from collections.abc import Iterable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from mypy_extensions import mypyc_attr
 
@@ -143,11 +143,15 @@ async def schedule_formatting(
     :func:`format_file_in_place`.
     """
     cache = Cache.read(mode)
-    if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-        sources, cached = cache.filtered_cached(sources)
+
+    if write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
+        sources_with_stats: Union[set[Path], set[tuple[Optional[os.stat_result], Path]]] = sources
+    else:
+        sources_with_stats, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
-    if not sources:
+
+    if not sources_with_stats:
         return
 
     cancelled = []
@@ -164,7 +168,7 @@ async def schedule_formatting(
                 executor, format_file_in_place, src, fast, mode, write_back, lock
             )
         ): src
-        for src in sorted(sources, key=lambda f: (-f.stat().st_size, f))
+        for _, src in sorted(sources_with_stats, key=_sources_sort_key)
     }
     pending = tasks.keys()
     try:
@@ -196,3 +200,18 @@ async def schedule_formatting(
         await asyncio.gather(*cancelled, return_exceptions=True)
     if sources_to_cache:
         cache.write(sources_to_cache)
+
+
+def _sources_sort_key(
+    source: Union[Path, tuple[Optional[os.stat_result], Path]],
+) -> tuple[int, Path]:
+    if isinstance(source, tuple):
+        stat, src = source
+    else:
+        src = source
+        stat = None
+
+    if not stat:
+        stat = src.stat()
+
+    return -stat.st_size, src

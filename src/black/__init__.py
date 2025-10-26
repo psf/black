@@ -904,7 +904,7 @@ def reformat_one(
         else:
             cache = Cache.read(mode)
             if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
-                if not cache.is_changed(src):
+                if not cache.is_changed(src)[0]:
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
