@@ -383,19 +383,22 @@ class LineGenerator(Visitor[Line]):
     def visit_STANDALONE_COMMENT(self, leaf: Leaf) -> Iterator[Line]:
         if not self.current_line.bracket_tracker.any_open_brackets():
             yield from self.line()
-        # STANDALONE_COMMENT nodes created by our special handling in normalize_fmt_off
-        # for comment-only blocks have fmt:off as the first line and fmt:on as the last line
-        # (each directive on its own line, not embedded in other text).
-        # These should be appended directly without calling visit_default, which
-        # would process their prefix and lose indentation.
-        # Normal STANDALONE_COMMENT nodes go through visit_default.
+        # STANDALONE_COMMENT nodes created by our special handling in
+        # normalize_fmt_off for comment-only blocks have fmt:off as the first
+        # line and fmt:on as the last line (each directive on its own line,
+        # not embedded in other text). These should be appended directly
+        # without calling visit_default, which would process their prefix and
+        # lose indentation. Normal STANDALONE_COMMENT nodes go through
+        # visit_default.
         value = leaf.value
         lines = value.splitlines()
         if len(lines) >= 2:
-            # Check if first line (after stripping whitespace) is exactly a fmt:off directive
+            # Check if first line (after stripping whitespace) is exactly a
+            # fmt:off directive
             first_line = lines[0].lstrip()
             first_is_fmt_off = first_line in FMT_OFF
-            # Check if last line (after stripping whitespace) is exactly a fmt:on directive
+            # Check if last line (after stripping whitespace) is exactly a
+            # fmt:on directive
             last_line = lines[-1].lstrip()
             last_is_fmt_on = last_line in FMT_ON
             is_fmt_off_block = first_is_fmt_off and last_is_fmt_on
