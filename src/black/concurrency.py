@@ -16,7 +16,7 @@ from collections.abc import Iterable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from mypy_extensions import mypyc_attr
 
@@ -150,7 +150,9 @@ async def schedule_formatting(
         WriteBack.DIFF,
         WriteBack.COLOR_DIFF,
     ):
-        sources_with_stats: Union[set[Path], set[tuple[Optional[os.stat_result], Path]]] = sources
+        sources_with_stats: Iterable[tuple[Optional[os.stat_result], Path]] = (
+            (None, src) for src in sources
+        )
     else:
         sources_with_stats, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
@@ -208,13 +210,9 @@ async def schedule_formatting(
 
 
 def _sources_sort_key(
-    source: Union[Path, tuple[Optional[os.stat_result], Path]],
+    source: tuple[Optional[os.stat_result], Path],
 ) -> tuple[int, Path]:
-    if isinstance(source, tuple):
-        stat, src = source
-    else:
-        src = source
-        stat = None
+    stat, src = source
 
     if not stat:
         stat = src.stat()
