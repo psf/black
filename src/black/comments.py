@@ -8,9 +8,11 @@ from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
+    STATEMENT,
     WHITESPACE,
     container_of,
     first_leaf_of,
+    is_type_comment_string,
     make_simple_prefix,
     preceding_leaf,
     syms,
@@ -24,6 +26,10 @@ LN = Union[Leaf, Node]
 FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
 FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
 FMT_ON: Final = {"# fmt: on", "# fmt:on", "# yapf: enable"}
+
+# Compound statements we care about for fmt: skip handling
+# (excludes except_clause and case_block which aren't standalone compound statements)
+_COMPOUND_STATEMENTS: Final = STATEMENT - {syms.except_clause, syms.case_block}
 
 COMMENT_EXCEPTIONS = " !:#'"
 _COMMENT_PREFIX = "# "
@@ -50,7 +56,7 @@ class ProtoComment:
     leading_whitespace: str  # leading whitespace before the comment, if any
 
 
-def generate_comments(leaf: LN) -> Iterator[Leaf]:
+def generate_comments(leaf: LN, mode: Mode) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
     Comments in lib2to3 are shoved into the whitespace prefix.  This happens
@@ -70,7 +76,9 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
     are emitted with a fake STANDALONE_COMMENT token identifier.
     """
     total_consumed = 0
-    for pc in list_comments(leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER):
+    for pc in list_comments(
+        leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER, mode=mode
+    ):
         total_consumed = pc.consumed
         prefix = make_simple_prefix(pc.newlines, pc.form_feed)
         yield Leaf(pc.type, pc.value, prefix=prefix)
@@ -78,7 +86,7 @@ def generate_comments(leaf: LN) -> Iterator[Leaf]:
 
 
 @lru_cache(maxsize=4096)
-def list_comments(prefix: str, *, is_endmarker: bool) -> list[ProtoComment]:
+def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoComment]:
     """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
     result: list[ProtoComment] = []
     if not prefix or "#" not in prefix:
@@ -109,7 +117,7 @@ def list_comments(prefix: str, *, is_endmarker: bool) -> list[ProtoComment]:
             comment_type = token.COMMENT  # simple trailing comment
         else:
             comment_type = STANDALONE_COMMENT
-        comment = make_comment(line)
+        comment = make_comment(line, mode=mode)
         result.append(
             ProtoComment(
                 type=comment_type,
@@ -140,26 +148,42 @@ def normalize_trailing_prefix(leaf: LN, total_consumed: int) -> None:
     leaf.prefix = ""
 
 
-def make_comment(content: str) -> str:
+def make_comment(content: str, mode: Mode) -> str:
     """Return a consistently formatted comment from the given `content` string.
 
     All comments (except for "##", "#!", "#:", '#'") should have a single
     space between the hash sign and the content.
 
     If `content` didn't start with a hash sign, one is provided.
+
+    Comments containing fmt directives are preserved exactly as-is to respect
+    user intent (e.g., `#no space # fmt: skip` stays as-is).
     """
     content = content.rstrip()
     if not content:
         return "#"
+
+    # Preserve comments with fmt directives exactly as-is
+    if content.startswith("#") and _contains_fmt_directive(content):
+        return content
 
     if content[0] == "#":
         content = content[1:]
     if (
         content
         and content[0] == "\N{NO-BREAK SPACE}"
-        and not content.lstrip().startswith("type:")
+        and not is_type_comment_string("# " + content.lstrip(), mode=mode)
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
+    if (
+        Preview.standardize_type_comments in mode
+        and content
+        and "\N{NO-BREAK SPACE}" not in content
+        and is_type_comment_string("#" + content, mode=mode)
+    ):
+        type_part, value_part = content.split(":", 1)
+        content = type_part.strip() + ": " + value_part.strip()
+
     if content and content[0] not in COMMENT_EXCEPTIONS:
         content = " " + content
     return "#" + content
@@ -174,6 +198,126 @@ def normalize_fmt_off(
         try_again = convert_one_fmt_off_pair(node, mode, lines)
 
 
+def _should_process_fmt_comment(
+    comment: ProtoComment, leaf: Leaf
+) -> tuple[bool, bool, bool]:
+    """Check if comment should be processed for fmt handling.
+
+    Returns (should_process, is_fmt_off, is_fmt_skip).
+    """
+    is_fmt_off = _contains_fmt_directive(comment.value, FMT_OFF)
+    is_fmt_skip = _contains_fmt_directive(comment.value, FMT_SKIP)
+
+    if not is_fmt_off and not is_fmt_skip:
+        return False, False, False
+
+    # Invalid use when `# fmt: off` is applied before a closing bracket
+    if is_fmt_off and leaf.type in CLOSING_BRACKETS:
+        return False, False, False
+
+    return True, is_fmt_off, is_fmt_skip
+
+
+def _is_valid_standalone_fmt_comment(
+    comment: ProtoComment, leaf: Leaf, is_fmt_off: bool, is_fmt_skip: bool
+) -> bool:
+    """Check if comment is a valid standalone fmt directive.
+
+    We only want standalone comments. If there's no previous leaf or if
+    the previous leaf is indentation, it's a standalone comment in disguise.
+    """
+    if comment.type == STANDALONE_COMMENT:
+        return True
+
+    prev = preceding_leaf(leaf)
+    if not prev:
+        return True
+
+    # Treat STANDALONE_COMMENT nodes as whitespace for check
+    if is_fmt_off and prev.type not in WHITESPACE and prev.type != STANDALONE_COMMENT:
+        return False
+    if is_fmt_skip and prev.type in WHITESPACE:
+        return False
+
+    return True
+
+
+def _handle_comment_only_fmt_block(
+    leaf: Leaf,
+    comment: ProtoComment,
+    previous_consumed: int,
+    mode: Mode,
+) -> bool:
+    """Handle fmt:off/on blocks that contain only comments.
+
+    Returns True if a block was converted, False otherwise.
+    """
+    all_comments = list_comments(leaf.prefix, is_endmarker=False, mode=mode)
+
+    # Find the first fmt:off and its matching fmt:on
+    fmt_off_idx = None
+    fmt_on_idx = None
+    for idx, c in enumerate(all_comments):
+        if fmt_off_idx is None and c.value in FMT_OFF:
+            fmt_off_idx = idx
+        if fmt_off_idx is not None and idx > fmt_off_idx and c.value in FMT_ON:
+            fmt_on_idx = idx
+            break
+
+    # Only proceed if we found both directives
+    if fmt_on_idx is None or fmt_off_idx is None:
+        return False
+
+    comment = all_comments[fmt_off_idx]
+    fmt_on_comment = all_comments[fmt_on_idx]
+    original_prefix = leaf.prefix
+
+    # Build the hidden value
+    start_pos = comment.consumed
+    end_pos = fmt_on_comment.consumed
+    content_between_and_fmt_on = original_prefix[start_pos:end_pos]
+    hidden_value = comment.value + "\n" + content_between_and_fmt_on
+
+    if hidden_value.endswith("\n"):
+        hidden_value = hidden_value[:-1]
+
+    # Build the standalone comment prefix
+    standalone_comment_prefix = (
+        original_prefix[:previous_consumed] + "\n" * comment.newlines
+    )
+
+    fmt_off_prefix = original_prefix.split(comment.value)[0]
+    if "\n" in fmt_off_prefix:
+        fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
+    standalone_comment_prefix += fmt_off_prefix
+
+    # Update leaf prefix
+    leaf.prefix = original_prefix[fmt_on_comment.consumed :]
+
+    # Insert the STANDALONE_COMMENT
+    parent = leaf.parent
+    assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (prefix only)"
+
+    leaf_idx = None
+    for idx, child in enumerate(parent.children):
+        if child is leaf:
+            leaf_idx = idx
+            break
+
+    assert leaf_idx is not None, "INTERNAL ERROR: fmt: on/off handling (leaf index)"
+
+    parent.insert_child(
+        leaf_idx,
+        Leaf(
+            STANDALONE_COMMENT,
+            hidden_value,
+            prefix=standalone_comment_prefix,
+            fmt_pass_converted_first_leaf=None,
+        ),
+    )
+    return True
+
+
 def convert_one_fmt_off_pair(
     node: Node, mode: Mode, lines: Collection[tuple[int, int]]
 ) -> bool:
@@ -183,81 +327,111 @@ def convert_one_fmt_off_pair(
     """
     for leaf in node.leaves():
         previous_consumed = 0
-        for comment in list_comments(leaf.prefix, is_endmarker=False):
-            is_fmt_off = comment.value in FMT_OFF
-            is_fmt_skip = _contains_fmt_skip_comment(comment.value, mode)
-            if (not is_fmt_off and not is_fmt_skip) or (
-                # Invalid use when `# fmt: off` is applied before a closing bracket.
-                is_fmt_off
-                and leaf.type in CLOSING_BRACKETS
+        for comment in list_comments(leaf.prefix, is_endmarker=False, mode=mode):
+            should_process, is_fmt_off, is_fmt_skip = _should_process_fmt_comment(
+                comment, leaf
+            )
+            if not should_process:
+                previous_consumed = comment.consumed
+                continue
+
+            if not _is_valid_standalone_fmt_comment(
+                comment, leaf, is_fmt_off, is_fmt_skip
             ):
                 previous_consumed = comment.consumed
                 continue
-            # We only want standalone comments. If there's no previous leaf or
-            # the previous leaf is indentation, it's a standalone comment in
-            # disguise.
-            if comment.type != STANDALONE_COMMENT:
-                prev = preceding_leaf(leaf)
-                if prev:
-                    if is_fmt_off and prev.type not in WHITESPACE:
-                        continue
-                    if is_fmt_skip and prev.type in WHITESPACE:
-                        continue
 
             ignored_nodes = list(generate_ignored_nodes(leaf, comment, mode))
+
+            # Handle comment-only blocks
+            if not ignored_nodes and is_fmt_off:
+                if _handle_comment_only_fmt_block(
+                    leaf, comment, previous_consumed, mode
+                ):
+                    return True
+                continue
+
+            # Need actual nodes to process
             if not ignored_nodes:
                 continue
 
-            first = ignored_nodes[0]  # Can be a container node with the `leaf`.
-            parent = first.parent
-            prefix = first.prefix
-            if comment.value in FMT_OFF:
-                first.prefix = prefix[comment.consumed :]
-            if is_fmt_skip:
-                first.prefix = ""
-                standalone_comment_prefix = prefix
-            else:
-                standalone_comment_prefix = (
-                    prefix[:previous_consumed] + "\n" * comment.newlines
-                )
-            hidden_value = "".join(str(n) for n in ignored_nodes)
-            comment_lineno = leaf.lineno - comment.newlines
-            if comment.value in FMT_OFF:
-                fmt_off_prefix = ""
-                if len(lines) > 0 and not any(
-                    line[0] <= comment_lineno <= line[1] for line in lines
-                ):
-                    # keeping indentation of comment by preserving original whitespaces.
-                    fmt_off_prefix = prefix.split(comment.value)[0]
-                    if "\n" in fmt_off_prefix:
-                        fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
-                standalone_comment_prefix += fmt_off_prefix
-                hidden_value = comment.value + "\n" + hidden_value
-            if is_fmt_skip:
-                hidden_value += comment.leading_whitespace + comment.value
-            if hidden_value.endswith("\n"):
-                # That happens when one of the `ignored_nodes` ended with a NEWLINE
-                # leaf (possibly followed by a DEDENT).
-                hidden_value = hidden_value[:-1]
-            first_idx: Optional[int] = None
-            for ignored in ignored_nodes:
-                index = ignored.remove()
-                if first_idx is None:
-                    first_idx = index
-            assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (1)"
-            assert first_idx is not None, "INTERNAL ERROR: fmt: on/off handling (2)"
-            parent.insert_child(
-                first_idx,
-                Leaf(
-                    STANDALONE_COMMENT,
-                    hidden_value,
-                    prefix=standalone_comment_prefix,
-                    fmt_pass_converted_first_leaf=first_leaf_of(first),
-                ),
+            # Handle regular fmt blocks
+
+            _handle_regular_fmt_block(
+                ignored_nodes,
+                comment,
+                previous_consumed,
+                is_fmt_skip,
+                lines,
+                leaf,
             )
             return True
 
     return False
+
+
+def _handle_regular_fmt_block(
+    ignored_nodes: list[LN],
+    comment: ProtoComment,
+    previous_consumed: int,
+    is_fmt_skip: bool,
+    lines: Collection[tuple[int, int]],
+    leaf: Leaf,
+) -> None:
+    """Handle fmt blocks with actual AST nodes."""
+    first = ignored_nodes[0]  # Can be a container node with the `leaf`.
+    parent = first.parent
+    prefix = first.prefix
+
+    if comment.value in FMT_OFF:
+        first.prefix = prefix[comment.consumed :]
+    if is_fmt_skip:
+        first.prefix = ""
+        standalone_comment_prefix = prefix
+    else:
+        standalone_comment_prefix = prefix[:previous_consumed] + "\n" * comment.newlines
+
+    hidden_value = "".join(str(n) for n in ignored_nodes)
+    comment_lineno = leaf.lineno - comment.newlines
+
+    if comment.value in FMT_OFF:
+        fmt_off_prefix = ""
+        if len(lines) > 0 and not any(
+            line[0] <= comment_lineno <= line[1] for line in lines
+        ):
+            # keeping indentation of comment by preserving original whitespaces.
+            fmt_off_prefix = prefix.split(comment.value)[0]
+            if "\n" in fmt_off_prefix:
+                fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
+        standalone_comment_prefix += fmt_off_prefix
+        hidden_value = comment.value + "\n" + hidden_value
+
+    if is_fmt_skip:
+        hidden_value += comment.leading_whitespace + comment.value
+
+    if hidden_value.endswith("\n"):
+        # That happens when one of the `ignored_nodes` ended with a NEWLINE
+        # leaf (possibly followed by a DEDENT).
+        hidden_value = hidden_value[:-1]
+
+    first_idx: Optional[int] = None
+    for ignored in ignored_nodes:
+        index = ignored.remove()
+        if first_idx is None:
+            first_idx = index
+
+    assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (1)"
+    assert first_idx is not None, "INTERNAL ERROR: fmt: on/off handling (2)"
+
+    parent.insert_child(
+        first_idx,
+        Leaf(
+            STANDALONE_COMMENT,
+            hidden_value,
+            prefix=standalone_comment_prefix,
+            fmt_pass_converted_first_leaf=first_leaf_of(first),
+        ),
+    )
 
 
 def generate_ignored_nodes(
@@ -268,18 +442,18 @@ def generate_ignored_nodes(
     If comment is skip, returns leaf only.
     Stops at the end of the block.
     """
-    if _contains_fmt_skip_comment(comment.value, mode):
+    if _contains_fmt_directive(comment.value, FMT_SKIP):
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment, mode)
         return
     container: Optional[LN] = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
-        if is_fmt_on(container):
+        if is_fmt_on(container, mode=mode):
             return
 
         # fix for fmt: on in children
-        if children_contains_fmt_on(container):
+        if children_contains_fmt_on(container, mode=mode):
             for index, child in enumerate(container.children):
-                if isinstance(child, Leaf) and is_fmt_on(child):
+                if isinstance(child, Leaf) and is_fmt_on(child, mode=mode):
                     if child.type in CLOSING_BRACKETS:
                         # This means `# fmt: on` is placed at a different bracket level
                         # than `# fmt: off`. This is an invalid use, but as a courtesy,
@@ -290,12 +464,14 @@ def generate_ignored_nodes(
                 if (
                     child.type == token.INDENT
                     and index < len(container.children) - 1
-                    and children_contains_fmt_on(container.children[index + 1])
+                    and children_contains_fmt_on(
+                        container.children[index + 1], mode=mode
+                    )
                 ):
                     # This means `# fmt: on` is placed right after an indentation
                     # level, and we shouldn't swallow the previous INDENT token.
                     return
-                if children_contains_fmt_on(child):
+                if children_contains_fmt_on(child, mode=mode):
                     return
                 yield child
         else:
@@ -307,6 +483,98 @@ def generate_ignored_nodes(
             container = container.next_sibling
 
 
+def _find_compound_statement_context(parent: Node) -> Optional[Node]:
+    """Return the body node of a compound statement if we should respect fmt: skip.
+
+    This handles one-line compound statements like:
+        if condition: body  # fmt: skip
+
+    When Black expands such statements, they temporarily look like:
+        if condition:
+            body  # fmt: skip
+
+    In both cases, we want to return the body node (either the simple_stmt directly
+    or the suite containing it).
+    """
+    if parent.type != syms.simple_stmt:
+        return None
+
+    if not isinstance(parent.parent, Node):
+        return None
+
+    # Case 1: Expanded form after Black's initial formatting pass.
+    # The one-liner has been split across multiple lines:
+    #     if True:
+    #         print("a"); print("b")  # fmt: skip
+    # Structure: compound_stmt -> suite -> simple_stmt
+    if (
+        parent.parent.type == syms.suite
+        and isinstance(parent.parent.parent, Node)
+        and parent.parent.parent.type in _COMPOUND_STATEMENTS
+    ):
+        return parent.parent
+
+    # Case 2: Original one-line form from the input source.
+    # The statement is still on a single line:
+    #     if True: print("a"); print("b")  # fmt: skip
+    # Structure: compound_stmt -> simple_stmt
+    if parent.parent.type in _COMPOUND_STATEMENTS:
+        return parent
+
+    return None
+
+
+def _should_keep_compound_statement_inline(
+    body_node: Node, simple_stmt_parent: Node
+) -> bool:
+    """Check if a compound statement should be kept on one line.
+
+    Returns True only for compound statements with semicolon-separated bodies,
+    like: if True: print("a"); print("b")  # fmt: skip
+    """
+    # Check if there are semicolons in the body
+    for leaf in body_node.leaves():
+        if leaf.type == token.SEMI:
+            # Verify it's a single-line body (one simple_stmt)
+            if body_node.type == syms.suite:
+                # After formatting: check suite has one simple_stmt child
+                simple_stmts = [
+                    child
+                    for child in body_node.children
+                    if child.type == syms.simple_stmt
+                ]
+                return len(simple_stmts) == 1 and simple_stmts[0] is simple_stmt_parent
+            else:
+                # Original form: body_node IS the simple_stmt
+                return body_node is simple_stmt_parent
+    return False
+
+
+def _get_compound_statement_header(
+    body_node: Node, simple_stmt_parent: Node
+) -> list[LN]:
+    """Get header nodes for a compound statement that should be preserved inline."""
+    if not _should_keep_compound_statement_inline(body_node, simple_stmt_parent):
+        return []
+
+    # Get the compound statement (parent of body)
+    compound_stmt = body_node.parent
+    if compound_stmt is None or compound_stmt.type not in _COMPOUND_STATEMENTS:
+        return []
+
+    # Collect all header leaves before the body
+    header_leaves: list[LN] = []
+    for child in compound_stmt.children:
+        if child is body_node:
+            break
+        if isinstance(child, Leaf):
+            if child.type not in (token.NEWLINE, token.INDENT):
+                header_leaves.append(child)
+        else:
+            header_leaves.extend(child.leaves())
+    return header_leaves
+
+
 def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
@@ -316,7 +584,7 @@ def _generate_ignored_nodes_from_fmt_skip(
     ignored_nodes: list[LN] = []
     # Need to properly format the leaf prefix to compare it to comment.value,
     # which is also formatted
-    comments = list_comments(leaf.prefix, is_endmarker=False)
+    comments = list_comments(leaf.prefix, is_endmarker=False, mode=mode)
     if not comments or comment.value != comments[0].value:
         return
     if prev_sibling is not None:
@@ -368,6 +636,14 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             if current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
+        # Special handling for compound statements with semicolon-separated bodies
+        if Preview.fix_fmt_skip_in_one_liners in mode and isinstance(parent, Node):
+            body_node = _find_compound_statement_context(parent)
+            if body_node is not None:
+                header_nodes = _get_compound_statement_header(body_node, parent)
+                if header_nodes:
+                    ignored_nodes = header_nodes + ignored_nodes
+
         yield from ignored_nodes
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
@@ -392,12 +668,12 @@ def _generate_ignored_nodes_from_fmt_skip(
         yield from iter(ignored_nodes)
 
 
-def is_fmt_on(container: LN) -> bool:
+def is_fmt_on(container: LN, mode: Mode) -> bool:
     """Determine whether formatting is switched on within a container.
     Determined by whether the last `# fmt:` comment is `on` or `off`.
     """
     fmt_on = False
-    for comment in list_comments(container.prefix, is_endmarker=False):
+    for comment in list_comments(container.prefix, is_endmarker=False, mode=mode):
         if comment.value in FMT_ON:
             fmt_on = True
         elif comment.value in FMT_OFF:
@@ -405,11 +681,11 @@ def is_fmt_on(container: LN) -> bool:
     return fmt_on
 
 
-def children_contains_fmt_on(container: LN) -> bool:
+def children_contains_fmt_on(container: LN, mode: Mode) -> bool:
     """Determine if children have formatting switched on."""
     for child in container.children:
         leaf = first_leaf_of(child)
-        if leaf is not None and is_fmt_on(leaf):
+        if leaf is not None and is_fmt_on(leaf, mode=mode):
             return True
 
     return False
@@ -429,13 +705,20 @@ def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
     return False
 
 
-def _contains_fmt_skip_comment(comment_line: str, mode: Mode) -> bool:
+def _contains_fmt_directive(
+    comment_line: str, directives: set[str] = FMT_OFF | FMT_ON | FMT_SKIP
+) -> bool:
     """
-    Checks if the given comment contains FMT_SKIP alone or paired with other comments.
+    Checks if the given comment contains format directives, alone or paired with
+    other comments.
+
+    Defaults to checking all directives (skip, off, on, yapf), but can be
+    narrowed to specific ones.
+
     Matching styles:
-      # fmt:skip                           <-- single comment
-      # noqa:XXX # fmt:skip # a nice line  <-- multiple comments (Preview)
-      # pylint:XXX; fmt:skip               <-- list of comments (; separated, Preview)
+      # foobar                    <-- single comment
+      # foobar # foobar # foobar  <-- multiple comments
+      # foobar; foobar            <-- list of comments (; separated)
     """
     semantic_comment_blocks = [
         comment_line,
@@ -451,4 +734,4 @@ def _contains_fmt_skip_comment(comment_line: str, mode: Mode) -> bool:
         ],
     ]
 
-    return any(comment in FMT_SKIP for comment in semantic_comment_blocks)
+    return any(comment in directives for comment in semantic_comment_blocks)

@@ -86,6 +86,7 @@
           "multiline_string_handling",
           "always_one_newline_after_import",
           "fix_fmt_skip_in_one_liners",
+          "standardize_type_comments",
           "wrap_comprehension_in",
           "remove_parens_around_except_types",
           "normalize_cr_newlines",
@@ -148,6 +149,11 @@
     "verbose": {
       "type": "boolean",
       "description": "Emit messages about files that were not changed or were ignored due to exclusion patterns. If Black is using a configuration file, a message detailing which one it is using will be emitted.",
+      "default": false
+    },
+    "no-cache": {
+      "type": "boolean",
+      "description": "Skip reading and writing the cache, forcing Black to reformat all included files.",
       "default": false
     }
   }

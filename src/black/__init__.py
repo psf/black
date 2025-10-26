@@ -11,7 +11,6 @@ from collections.abc import (
     Iterator,
     MutableMapping,
     Sequence,
-    Sized,
 )
 from contextlib import contextmanager
 from dataclasses import replace
@@ -506,6 +505,14 @@ def validate_regex(
     callback=read_pyproject_toml,
     help="Read configuration options from a configuration file.",
 )
+@click.option(
+    "--no-cache",
+    is_flag=True,
+    help=(
+        "Skip reading and writing the cache, forcing Black to reformat all"
+        " included files."
+    ),
+)
 @click.pass_context
 def main(  # noqa: C901
     ctx: click.Context,
@@ -537,6 +544,7 @@ def main(  # noqa: C901
     workers: Optional[int],
     src: tuple[str, ...],
     config: Optional[str],
+    no_cache: bool,
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
@@ -681,13 +689,12 @@ def main(  # noqa: C901
         except GitWildMatchPatternError:
             ctx.exit(1)
 
-        path_empty(
-            sources,
-            "No Python files are present to be formatted. Nothing to do 😴",
-            quiet,
-            verbose,
-            ctx,
-        )
+        if not sources:
+            if verbose or not quiet:
+                out("No Python files are present to be formatted. Nothing to do 😴")
+            if "-" in src:
+                sys.stdout.write(sys.stdin.read())
+            ctx.exit(0)
 
         if len(sources) == 1:
             reformat_one(
@@ -697,6 +704,7 @@ def main(  # noqa: C901
                 mode=mode,
                 report=report,
                 lines=lines,
+                no_cache=no_cache,
             )
         else:
             from black.concurrency import reformat_many
@@ -711,6 +719,7 @@ def main(  # noqa: C901
                 mode=mode,
                 report=report,
                 workers=workers,
+                no_cache=no_cache,
             )
 
     if verbose or not quiet:
@@ -820,18 +829,6 @@ def get_sources(
     return sources
 
 
-def path_empty(
-    src: Sized, msg: str, quiet: bool, verbose: bool, ctx: click.Context
-) -> None:
-    """
-    Exit if there is no `src` provided for formatting
-    """
-    if not src:
-        if verbose or not quiet:
-            out(msg)
-        ctx.exit(0)
-
-
 def reformat_code(
     content: str,
     fast: bool,
@@ -873,6 +870,7 @@ def reformat_one(
     report: "Report",
     *,
     lines: Collection[tuple[int, int]] = (),
+    no_cache: bool = False,
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -902,16 +900,20 @@ def reformat_one(
             ):
                 changed = Changed.YES
         else:
-            cache = Cache.read(mode)
-            if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
+            cache = None if no_cache else Cache.read(mode)
+            if cache is not None and write_back not in (
+                WriteBack.DIFF,
+                WriteBack.COLOR_DIFF,
+            ):
                 if not cache.is_changed(src)[0]:
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
-            if (write_back is WriteBack.YES and changed is not Changed.CACHED) or (
-                write_back is WriteBack.CHECK and changed is Changed.NO
+            if cache is not None and (
+                (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                or (write_back is WriteBack.CHECK and changed is Changed.NO)
             ):
                 cache.write([src])
         report.done(src, changed)

@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, ubuntu-22.04, macos-latest]
+        os: [windows-2025, ubuntu-22.04, ubuntu-22.04-arm, macos-latest]
         include:
           - os: windows-2025
             pathsep: ";"
@@ -22,6 +22,10 @@ jobs:
           - os: ubuntu-22.04
             pathsep: ":"
             asset_name: black_linux
+            executable_mime: "application/x-executable"
+          - os: ubuntu-22.04-arm
+            pathsep: ":"
+            asset_name: black_linux-arm
             executable_mime: "application/x-executable"
           - os: macos-latest
             pathsep: ":"
@@ -53,11 +57,6 @@ jobs:
           ./dist/${{ matrix.asset_name }} src --verbose
 
       - name: Upload binary as release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/${{ matrix.asset_name }}
-          asset_name: ${{ matrix.asset_name }}
-          asset_content_type: ${{ matrix.executable_mime }}
+          files: dist/${{ matrix.asset_name }}

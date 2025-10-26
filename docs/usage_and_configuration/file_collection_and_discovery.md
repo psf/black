@@ -29,6 +29,17 @@ in the directory you're running _Black_ from, set `BLACK_CACHE_DIR=.cache/black`
 _Black_ will then write the above files to `.cache/black`. Note that `BLACK_CACHE_DIR`
 will take precedence over `XDG_CACHE_HOME` if both are set.
 
+### Disabling the cache with --no-cache
+
+If you need Black to always perform a fresh analysis and not consult or update the
+on-disk cache, use the `--no-cache` flag. When provided, Black will neither read from
+nor write to the per-user cache. This is useful for debugging, for CI runs where you
+want a deterministic fresh run, or when you suspect cache corruption.
+
+Example:
+
+python -m black --no-cache .
+
 ## .gitignore
 
 If `--exclude` is not set, _Black_ will automatically ignore files and directories in

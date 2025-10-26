@@ -2,29 +2,46 @@
 
 ## Unreleased
 
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
+
+- Enable base 3.14 support (#4804)
 
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#4811)
+- Comments containing fmt directives now preserve their exact formatting instead of
+  being normalized (#4811)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
 - Fix bug where module docstrings would be treated as normal strings if preceeded by
   comments (#4764)
 - Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
+- Standardize type comments to form `# type: <value>` (#4645)
+- Fix `fix_fmt_skip_in_one_liners` preview feature to respect `# fmt: skip` for compound
+  statements with semicolon-separated bodies (#4800)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
+- Add `no_cache` option to control caching behavior. (#4803)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Releases now include arm64 Linux binaries (#4773)
 
 ### Parser
 
@@ -40,14 +57,21 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Write unchanged content to stdout when excluding formating from stdin using pipes
+  (#4610)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
+
+- Implemented BlackDClient. This simple python client allows to easily send formatting
+  requests to blackd (#4774)
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Enable 3.14 base CI (#4804)
 - Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
   "stability" format when using pyproject.toml (#4770)
 - Improve error message for vim plugin users. It now handles independently vim version
