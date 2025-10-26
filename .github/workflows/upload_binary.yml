@@ -3,7 +3,7 @@ name: Publish executables
 on:
   release:
     types: [published]
-  workflow-dispatch:
+  workflow_dispatch:
   
   
 
