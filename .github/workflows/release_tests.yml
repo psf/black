@@ -11,6 +11,7 @@ on:
       - .github/workflows/release_tests.yml
       - release.py
       - release_tests.py
+  workflow_dispatch:
 
 jobs:
   build:
