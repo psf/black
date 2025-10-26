@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - win-arm64
 
 permissions:
   contents: read
