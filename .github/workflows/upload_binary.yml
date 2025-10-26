@@ -3,9 +3,6 @@ name: Publish executables
 on:
   release:
     types: [published]
-  push:
-  
-  
 
 permissions:
   contents: write # actions/upload-release-asset needs this.
@@ -63,7 +60,7 @@ jobs:
           ./dist/${{ matrix.asset_name }} --version
           ./dist/${{ matrix.asset_name }} src --verbose
 
-      # - name: Upload binary as release asset
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     files: dist/${{ matrix.asset_name }}
+      - name: Upload binary as release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ matrix.asset_name }}
