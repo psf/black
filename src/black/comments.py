@@ -326,9 +326,7 @@ def generate_ignored_nodes(
             container = container.next_sibling
 
 
-def _find_compound_statement_context(
-    parent: Optional[LN], mode: Mode
-) -> Optional[Node]:
+def _find_compound_statement_context(parent: Node) -> Optional[Node]:
     """Return the body node of a compound statement if we should respect fmt: skip.
 
     This handles one-line compound statements like:
@@ -341,13 +339,11 @@ def _find_compound_statement_context(
     In both cases, we want to return the body node (either the simple_stmt directly
     or the suite containing it).
     """
-    if Preview.fix_fmt_skip_in_one_liners not in mode:
+    if parent.type != syms.simple_stmt:
         return None
 
-    if parent is None or parent.type != syms.simple_stmt:
+    if not isinstance(parent.parent, Node):
         return None
-
-    assert isinstance(parent, Node)
 
     # Case 1: Expanded form after Black's initial formatting pass.
     # The one-liner has been split across multiple lines:
@@ -355,8 +351,7 @@ def _find_compound_statement_context(
     #         print("a"); print("b")  # fmt: skip
     # Structure: compound_stmt -> suite -> simple_stmt
     if (
-        isinstance(parent.parent, Node)
-        and parent.parent.type == syms.suite
+        parent.parent.type == syms.suite
         and isinstance(parent.parent.parent, Node)
         and parent.parent.parent.type in _COMPOUND_STATEMENTS
     ):
@@ -366,7 +361,7 @@ def _find_compound_statement_context(
     # The statement is still on a single line:
     #     if True: print("a"); print("b")  # fmt: skip
     # Structure: compound_stmt -> simple_stmt
-    if isinstance(parent.parent, Node) and parent.parent.type in _COMPOUND_STATEMENTS:
+    if parent.parent.type in _COMPOUND_STATEMENTS:
         return parent
 
     return None
@@ -485,11 +480,12 @@ def _generate_ignored_nodes_from_fmt_skip(
             if current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
         # Special handling for compound statements with semicolon-separated bodies
-        body_node = _find_compound_statement_context(parent, mode)
-        if body_node is not None and isinstance(parent, Node):
-            header_nodes = _get_compound_statement_header(body_node, parent)
-            if header_nodes:
-                ignored_nodes = header_nodes + ignored_nodes
+        if Preview.fix_fmt_skip_in_one_liners in mode and isinstance(parent, Node):
+            body_node = _find_compound_statement_context(parent)
+            if body_node is not None:
+                header_nodes = _get_compound_statement_header(body_node, parent)
+                if header_nodes:
+                    ignored_nodes = header_nodes + ignored_nodes
 
         yield from ignored_nodes
     elif (
