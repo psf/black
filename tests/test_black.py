@@ -2233,6 +2233,53 @@ class TestCaching:
             cache_file = get_cache_file(mode)
             assert not cache_file.exists()
 
+    def test_no_cache_flag_prevents_writes(self) -> None:
+        """--no-cache should neither read nor write the cache"""
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            src.write_text("print('hello')", encoding="utf-8")
+            cache = black.Cache.read(mode)
+            # Pre-populate cache so the file is considered cached
+            cache.write([src])
+            with (
+                patch.object(black.Cache, "read") as read_cache,
+                patch.object(black.Cache, "write") as write_cache,
+            ):
+                # Pass --no-cache; it should neither read nor write
+                invokeBlack([str(src), "--no-cache"])
+                read_cache.assert_not_called()
+                write_cache.assert_not_called()
+
+    def test_no_cache_with_multiple_files(self) -> None:
+        """Formatting multiple files with --no-cache should not read or write cache
+        and should format files normally."""
+        mode = DEFAULT_MODE
+        with (cache_dir() as workspace,):
+            one = (workspace / "one.py").resolve()
+            one.write_text("print('hello')", encoding="utf-8")
+            two = (workspace / "two.py").resolve()
+            two.write_text("print('hello')", encoding="utf-8")
+
+            # Pre-populate cache for `one` so it would normally be skipped
+            cache = black.Cache.read(mode)
+            cache.write([one])
+
+            with (
+                patch.object(black.Cache, "read") as read_cache,
+                patch.object(black.Cache, "write") as write_cache,
+            ):
+                # Run Black over the directory with --no-cache
+                invokeBlack([str(workspace), "--no-cache"])
+
+                # Cache should not be consulted or updated
+                read_cache.assert_not_called()
+                write_cache.assert_not_called()
+
+            # Both files should have been formatted (double quotes + newline)
+            assert one.read_text(encoding="utf-8") == 'print("hello")\n'
+            assert two.read_text(encoding="utf-8") == 'print("hello")\n'
+
     def test_read_cache_no_cachefile(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir():
