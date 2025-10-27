@@ -90,7 +90,7 @@ jobs:
           -v --work-dir projects-cache/ ${{ matrix.force-flag }}
 
       - name: Upload baseline analysis
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.baseline-analysis }}
           path: ${{ matrix.baseline-analysis }}
@@ -151,7 +151,7 @@ jobs:
           -v --work-dir projects-cache/ ${{ matrix.force-flag }}
 
       - name: Upload target analysis
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.target-analysis }}
           path: ${{ matrix.target-analysis }}
@@ -191,7 +191,7 @@ jobs:
           ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
 
       - name: Upload diff report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.mode }}-diff.html
           path: diff.html
@@ -206,7 +206,7 @@ jobs:
 
       - name: Upload summary file (PR only)
         if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: .pr-comment.json
           path: .pr-comment.json
