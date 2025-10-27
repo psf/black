@@ -140,6 +140,8 @@ ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
     STANDALONE_COMMENT,
     token.FSTRING_MIDDLE,
     token.FSTRING_END,
+    token.TSTRING_MIDDLE,
+    token.TSTRING_END,
     token.BANG,
 }
 
@@ -207,7 +209,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
     }:
         return NO
 
-    if t == token.LBRACE and p.type == syms.fstring_replacement_field:
+    if t == token.LBRACE and p.type in (
+        syms.fstring_replacement_field,
+        syms.tstring_replacement_field,
+    ):
         return NO
 
     prev = leaf.prev_sibling
@@ -395,7 +400,6 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
                 return NO
 
-        # TODO: add fstring here?
         elif t in {token.NAME, token.NUMBER, token.STRING}:
             return NO
 
@@ -789,8 +793,8 @@ def is_fstring(node: Node) -> bool:
     return node.type == syms.fstring
 
 
-def fstring_to_string(node: Node) -> Leaf:
-    """Converts an fstring node back to a string node."""
+def fstring_tstring_to_string(node: Node) -> Leaf:
+    """Converts an fstring or tstring node back to a string node."""
     string_without_prefix = str(node)[len(node.prefix) :]
     string_leaf = Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
     string_leaf.lineno = node.get_lineno() or 0
@@ -800,7 +804,7 @@ def fstring_to_string(node: Node) -> Leaf:
 def is_multiline_string(node: LN) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
     if isinstance(node, Node) and is_fstring(node):
-        leaf = fstring_to_string(node)
+        leaf = fstring_tstring_to_string(node)
     elif isinstance(node, Leaf):
         leaf = node
     else:
