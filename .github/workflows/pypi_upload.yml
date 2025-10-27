@@ -97,7 +97,7 @@ jobs:
           only: ${{ matrix.only }}
 
       - name: Upload wheels as workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.only }}-mypyc-wheels
           path: ./wheelhouse/*.whl
