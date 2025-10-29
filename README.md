@@ -48,7 +48,6 @@ If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 pip install git+https://github.com/psf/black
 ```
 
-
 ### Usage
 
 To get started right away with sensible defaults:
