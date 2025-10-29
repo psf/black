@@ -44,7 +44,10 @@ If you want to format Jupyter Notebooks, install with `pip install "black[jupyte
 
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
-`pip install git+https://github.com/psf/black`
+```bash
+pip install git+https://github.com/psf/black
+```
+
 
 ### Usage
 
