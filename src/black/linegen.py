@@ -440,8 +440,7 @@ class LineGenerator(Visitor[Line]):
 
         def foo(a: (int), b: (float) = 7): ...
         """
-        assert len(node.children) == 3
-        if maybe_make_parens_invisible_in_atom(
+        if len(node.children) == 3 and maybe_make_parens_invisible_in_atom(
             node.children[2], parent=node, mode=self.mode, features=self.features
         ):
             wrap_in_parentheses(node, node.children[2], visible=False)
