@@ -52,9 +52,10 @@ class Feature(Enum):
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
     TYPE_PARAMS = 18
-    FSTRING_PARSING = 19
+    # FSTRING_PARSING = 19  # unused
     TYPE_PARAM_DEFAULTS = 20
     UNPARENTHESIZED_EXCEPT_TYPES = 21
+    T_STRINGS = 22
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -165,7 +166,6 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
-        Feature.FSTRING_PARSING,
     },
     TargetVersion.PY313: {
         Feature.F_STRINGS,
@@ -185,7 +185,6 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
-        Feature.FSTRING_PARSING,
         Feature.TYPE_PARAM_DEFAULTS,
     },
     TargetVersion.PY314: {
@@ -206,9 +205,9 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
-        Feature.FSTRING_PARSING,
         Feature.TYPE_PARAM_DEFAULTS,
         Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+        Feature.T_STRINGS,
     },
 }
 
