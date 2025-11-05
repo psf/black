@@ -42,10 +42,6 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 _Black_ can be installed by running `pip install black`. It requires Python 3.9+ to run.
 If you want to format Jupyter Notebooks, install with `pip install "black[jupyter]"`.
 
-If you can't wait for the latest _hotness_ and want to install from GitHub, use:
-
-`pip install git+https://github.com/psf/black`
-
 ### Usage
 
 To get started right away with sensible defaults:
@@ -181,7 +177,7 @@ Use the badge in your project's README.md:
 
 Using the badge in README.rst:
 
-```
+```rst
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
 ```

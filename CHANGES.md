@@ -16,6 +16,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#4811)
+- Comments containing fmt directives now preserve their exact formatting instead of
+  being normalized (#4811)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -25,10 +29,14 @@
   comments (#4764)
 - Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
 - Standardize type comments to form `# type: <value>` (#4645)
+- Fix `fix_fmt_skip_in_one_liners` preview feature to respect `# fmt: skip` for compound
+  statements with semicolon-separated bodies (#4800)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Add `no_cache` option to control caching behavior. (#4803)
 
 ### Packaging
 
