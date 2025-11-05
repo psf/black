@@ -171,7 +171,10 @@ class Driver:
             # FSTRING_MIDDLE and TSTRING_MIDDLE are the only token that can end with a
             # newline, and `end` will point to the next line. For that case, don't
             # increment lineno.
-            if value.endswith("\n") and type != token.FSTRING_MIDDLE:
+            if value.endswith("\n") and type not in (
+                token.FSTRING_MIDDLE,
+                token.TSTRING_MIDDLE,
+            ):
                 lineno += 1
                 column = 0
         else:
