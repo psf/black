@@ -70,7 +70,7 @@ dependencies = [
   "packaging>=22.0",
   "pathspec>=0.9.0",
   "platformdirs>=2",
-  "pytokens @ git+https://github.com/tusharsadhwani/pytokens@py314",
+  "pytokens>=0.3.0",
   "tomli>=1.1.0; python_version < '3.11'",
   "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
@@ -97,9 +97,6 @@ Documentation = "https://black.readthedocs.io/"
 Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
 Repository = "https://github.com/psf/black"
 Issues = "https://github.com/psf/black/issues"
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
