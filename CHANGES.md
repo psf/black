@@ -10,6 +10,7 @@
 <!-- Include any especially major or disruptive changes here -->
 
 - Enable base 3.14 support (#4804)
+- Add support for the new Python 3.14 t-string syntax introduced by PEP 750 (#4805)
 
 ### Stable style
 
