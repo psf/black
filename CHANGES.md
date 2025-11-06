@@ -18,6 +18,7 @@
 - Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#4811)
 - Comments containing fmt directives now preserve their exact formatting instead of
   being normalized (#4811)
+- Fix `fmt: skip` skipping the line after instead of the line it's on (#4821)
 
 ### Preview style
 
@@ -30,6 +31,8 @@
 - Standardize type comments to form `# type: <value>` (#4645)
 - Fix `fix_fmt_skip_in_one_liners` preview feature to respect `# fmt: skip` for compound
   statements with semicolon-separated bodies (#4800)
+- Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements and annotated
+  parameters (#4821)
 
 ### Configuration
 
