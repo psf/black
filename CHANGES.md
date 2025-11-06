@@ -18,7 +18,6 @@
 - Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#4811)
 - Comments containing fmt directives now preserve their exact formatting instead of
   being normalized (#4811)
-- Fix `fmt: skip` skipping the line after instead of the line it's on (#4822)
 
 ### Preview style
 
