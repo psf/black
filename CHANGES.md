@@ -73,6 +73,8 @@
 - Enable 3.14 base CI (#4804)
 - Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
   "stability" format when using pyproject.toml (#4770)
+- Add `output-file` input to GitHub Action `psf/black` to write formatter output to a file
+  for artifact capture and log cleanliness (#4824)
 - Improve error message for vim plugin users. It now handles independently vim version
 - Vim: Warn on unsupported Vim and Python versions independently (#4772)
 - Vim: Print the import paths when importing black fails (#4675)
