@@ -37,8 +37,8 @@ inputs:
     default: true
   output-file:
     description: >
-      Optional path to write Black output to a file in addition to stdout.
-      Useful for keeping GitHub Actions logs clean when using --diff or --check.
+      Optional path to write Black output to a file in addition to stdout. Useful for
+      keeping GitHub Actions logs clean when using --diff or --check.
     required: false
     default: ""
 branding:
