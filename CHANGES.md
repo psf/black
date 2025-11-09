@@ -33,7 +33,7 @@
 
 ### Output
 
-- Write unchanged content to stdout when excluding formating from stdin using pipes
+- Write unchanged content to stdout when excluding formatting from stdin using pipes
   (#4610)
 
 ### _Blackd_
