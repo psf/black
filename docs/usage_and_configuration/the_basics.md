@@ -235,10 +235,6 @@ nor write to the cache. This is helpful for reproducing formatting results from 
 run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
 every time.
 
-Example:
-
-python -m black --no-cache .
-
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
