@@ -71,11 +71,10 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           {
-            cibuildwheel --print-build-identifiers --platform linux \
-            | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
+            CIBW_BUILD="cp39-*" cibuildwheel --print-build-identifiers --platform linux | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
+            CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows | pyp 'json.dumps({"only": x, "os": "windows-latest"})'
           } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
-          CIBW_BUILD: "cp39-* cp313-*"
           CIBW_ARCHS_LINUX: x86_64
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
