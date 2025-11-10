@@ -168,7 +168,7 @@ skip = [
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
-test-requires = ["pytest>=9"]
+test-requires = ["pytest>=7"]
 test-command = 'pytest {project} -k "not incompatible_with_mypyc"'
 test-extras = ["d"," jupyter"]
 # Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't
