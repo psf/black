@@ -98,8 +98,6 @@ jobs:
       - uses: pypa/cibuildwheel@v3.2.1
         with:
           only: ${{ matrix.only }}
-        env:
-          CIBW_TEST_REQUIRES_WINDOWS: "pytest^<9.0"
 
       - name: Upload wheels as workflow artifacts
         uses: actions/upload-artifact@v5
