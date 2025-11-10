@@ -53,7 +53,7 @@ repos:
           # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
           - packaging >= 22.0
           - platformdirs >= 2.1.0
-          - pytokens >= 0.1.10
+          - pytokens >= 0.3.0
           - pytest
           - hypothesis
           - aiohttp >= 3.7.4

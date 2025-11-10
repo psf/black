@@ -898,6 +898,9 @@ class BlackTestCase(BlackBaseTestCase):
         self.check_features_used(
             "with ((a, ((b as c)))): pass", {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         )
+        self.check_features_used(
+            "x = t'foo {f'bar'}'", {Feature.T_STRINGS, Feature.F_STRINGS}
+        )
 
     def check_features_used(self, source: str, expected: set[Feature]) -> None:
         node = black.lib2to3_parse(source)

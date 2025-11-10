@@ -1248,6 +1248,7 @@ def _format_str_once(
         for feature in {
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+            Feature.T_STRINGS,
         }
         if supports_feature(versions, feature)
     }
@@ -1364,6 +1365,8 @@ def get_features_used(  # noqa: C901
     for n in node.pre_order():
         if n.type == token.FSTRING_START:
             features.add(Feature.F_STRINGS)
+        elif n.type == token.TSTRING_START:
+            features.add(Feature.T_STRINGS)
         elif (
             n.type == token.RBRACE
             and n.parent is not None

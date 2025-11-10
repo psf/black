@@ -70,7 +70,7 @@ dependencies = [
   "packaging>=22.0",
   "pathspec>=0.9.0",
   "platformdirs>=2",
-  "pytokens>=0.1.10",
+  "pytokens>=0.3.0",
   "tomli>=1.1.0; python_version < '3.11'",
   "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
@@ -157,12 +157,18 @@ build-verbosity = 1
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp3*"
-skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*"]
+skip = [
+    "*-manylinux_i686",
+    "*-musllinux_*",
+    "*-win32",
+    "pp*",
+    "cp31?t-*",  # mypyc doesn't have great support for free threaded builds
+]
 
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
-test-requires = ["pytest>=6.1.1"]
+test-requires = ["pytest>=6.1.1,<9.0"]
 test-command = 'pytest {project} -k "not incompatible_with_mypyc"'
 test-extras = ["d"," jupyter"]
 # Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't

@@ -38,7 +38,6 @@ from blib2to3.pgen2.token import (
     COMMENT,
     DEDENT,
     ENDMARKER,
-    ERRORTOKEN,
     FSTRING_END,
     FSTRING_MIDDLE,
     FSTRING_START,
@@ -49,6 +48,9 @@ from blib2to3.pgen2.token import (
     NUMBER,
     OP,
     STRING,
+    TSTRING_END,
+    TSTRING_MIDDLE,
+    TSTRING_START,
     tok_name,
 )
 
@@ -91,6 +93,9 @@ TOKEN_TYPE_MAP = {
     TokenType.fstring_start: FSTRING_START,
     TokenType.fstring_middle: FSTRING_MIDDLE,
     TokenType.fstring_end: FSTRING_END,
+    TokenType.tstring_start: TSTRING_START,
+    TokenType.tstring_middle: TSTRING_MIDDLE,
+    TokenType.tstring_end: TSTRING_END,
     TokenType.endmarker: ENDMARKER,
 }
 
@@ -186,6 +191,9 @@ def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenIn
                         source_line,
                     )
             else:
+                token_type = TOKEN_TYPE_MAP.get(token.type)
+                if token_type is None:
+                    raise ValueError(f"Unknown token type: {token.type!r}")
                 yield (
                     TOKEN_TYPE_MAP[token.type],
                     token_str,
