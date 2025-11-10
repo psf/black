@@ -157,7 +157,13 @@ build-verbosity = 1
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp3*"
-skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*"]
+skip = [
+    "*-manylinux_i686",
+    "*-musllinux_*",
+    "*-win32",
+    "pp*",
+    "cp31?t-*",  # mypyc doesn't have great support for free threaded builds
+]
 
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
