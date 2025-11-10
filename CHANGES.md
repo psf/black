@@ -80,6 +80,7 @@
 ### Packaging
 
 - Releases now include arm64 Linux binaries (#4773)
+- Releases now include arm64 Windows binaries and wheels (#4814)
 
 ### Output
 
