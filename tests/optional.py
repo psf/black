@@ -73,7 +73,8 @@ def pytest_configure(config: "Config") -> None:
     if isinstance(ot_ini, str):
         ot_ini = ot_ini.strip().split("\n")
     marker_re = re.compile(r"^\s*(?P<no>no_)?(?P<marker>\w+)(:\s*(?P<description>.*))?")
-    for ot in ot_ini:
+    # getattr shim here is so that we support both pytest>=9 and pytest<9
+    for ot in getattr(ot_ini, "value", ot_ini):
         m = marker_re.match(ot)
         if not m:
             raise ValueError(f"{ot!r} doesn't match pytest marker syntax")
