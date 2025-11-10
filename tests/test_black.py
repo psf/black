@@ -922,7 +922,7 @@ class BlackTestCase(BlackBaseTestCase):
             ("a = 1 + 2\nfrom something import annotations", set()),
             ("from __future__ import x, y", set()),
         ]:
-            with self.subTest(src=src, features=features):
+            with self.subTest(src=src, features=sorted(f.value for f in features)):
                 node = black.lib2to3_parse(src)
                 future_imports = black.get_future_imports(node)
                 self.assertEqual(

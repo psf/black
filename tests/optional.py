@@ -21,20 +21,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import pytest
-
-try:
-    from pytest import StashKey
-except ImportError:
-    # pytest < 7
-    #
-    # "isort: skip" is needed or it moves the "type: ignore" to the following line
-    # because of the line length, and then mypy complains.
-    # Of course, adding the "isort: skip" means that
-    # flake8-bugbear then also complains about the line length,
-    # so we *also* need a "noqa" comment for good measure :)
-    from _pytest.store import (  # type: ignore[import-not-found, no-redef]  # isort: skip  # noqa: B950
-        StoreKey as StashKey,
-    )
+from pytest import StashKey
 
 log = logging.getLogger(__name__)
 
@@ -73,7 +60,8 @@ def pytest_configure(config: "Config") -> None:
     if isinstance(ot_ini, str):
         ot_ini = ot_ini.strip().split("\n")
     marker_re = re.compile(r"^\s*(?P<no>no_)?(?P<marker>\w+)(:\s*(?P<description>.*))?")
-    for ot in ot_ini:
+    # getattr shim here is so that we support both pytest>=9 and pytest<9
+    for ot in getattr(ot_ini, "value", ot_ini):
         m = marker_re.match(ot)
         if not m:
             raise ValueError(f"{ot!r} doesn't match pytest marker syntax")
