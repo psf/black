@@ -21,20 +21,7 @@ from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import pytest
-
-try:
-    from pytest import StashKey
-except ImportError:
-    # pytest < 7
-    #
-    # "isort: skip" is needed or it moves the "type: ignore" to the following line
-    # because of the line length, and then mypy complains.
-    # Of course, adding the "isort: skip" means that
-    # flake8-bugbear then also complains about the line length,
-    # so we *also* need a "noqa" comment for good measure :)
-    from _pytest.store import (  # type: ignore[import-not-found, no-redef]  # isort: skip  # noqa: B950
-        StoreKey as StashKey,
-    )
+from pytest import StashKey
 
 log = logging.getLogger(__name__)
 
