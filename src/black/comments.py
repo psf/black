@@ -2,7 +2,7 @@ import re
 from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Final, Optional, Union
+from typing import Final, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (
@@ -414,7 +414,7 @@ def _handle_regular_fmt_block(
         # leaf (possibly followed by a DEDENT).
         hidden_value = hidden_value[:-1]
 
-    first_idx: Optional[int] = None
+    first_idx: int | None = None
     for ignored in ignored_nodes:
         index = ignored.remove()
         if first_idx is None:
@@ -445,7 +445,7 @@ def generate_ignored_nodes(
     if _contains_fmt_directive(comment.value, FMT_SKIP):
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment, mode)
         return
-    container: Optional[LN] = container_of(leaf)
+    container: LN | None = container_of(leaf)
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container, mode=mode):
             return
@@ -483,7 +483,7 @@ def generate_ignored_nodes(
             container = container.next_sibling
 
 
-def _find_compound_statement_context(parent: Node) -> Optional[Node]:
+def _find_compound_statement_context(parent: Node) -> Node | None:
     """Return the body node of a compound statement if we should respect fmt: skip.
 
     This handles one-line compound statements like:

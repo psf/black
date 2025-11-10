@@ -8,7 +8,6 @@ import re
 from collections.abc import Sequence
 from itertools import islice
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -19,7 +18,7 @@ DOCS_PATH = Path("docs/the_black_code_style/future_style.md")
 
 def check_feature_list(
     lines: Sequence[str], expected_feature_names: set[str], label: str
-) -> Optional[str]:
+) -> str | None:
     start_index = lines.index(f"(labels/{label}-features)=\n")
     if start_index == -1:
         return (
