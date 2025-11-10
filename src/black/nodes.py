@@ -2,14 +2,8 @@
 blib2to3 Node/Leaf transformation-related utility functions.
 """
 
-import sys
 from collections.abc import Iterator
-from typing import Final, Generic, Literal, Optional, TypeVar, Union
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
+from typing import Final, Generic, Literal, Optional, TypeGuard, TypeVar, Union
 
 from mypy_extensions import mypyc_attr
 

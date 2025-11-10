@@ -7,7 +7,7 @@
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py310']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -35,7 +35,7 @@ name = "black"
 description = "The uncompromising code formatter."
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   { name = "Łukasz Langa", email = "lukasz@langa.pl" },
 ]
@@ -55,7 +55,6 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -153,10 +152,10 @@ options = { debug_level = "0" }
 build-verbosity = 1
 
 # So these are the environments we target:
-# - Python: CPython 3.9+ only
+# - Python: CPython 3.10+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
-build = "cp3*"
+build = "cp31*"
 skip = [
     "*-manylinux_i686",
     "*-musllinux_*",
@@ -229,7 +228,7 @@ branch = true
 # Specify the target platform details in config, so your developers are
 # free to run mypy on Windows, Linux, or macOS and get consistent
 # results.
-python_version = "3.9"
+python_version = "3.10"
 mypy_path = "src"
 strict = true
 strict_bytes = true

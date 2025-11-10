@@ -41,7 +41,7 @@ this = "code"
 And run it with these arguments:
 
 ```sh
-$ black file.py --target-version py39
+$ black file.py --target-version py310
 ```
 
 The resulting error is:

@@ -27,7 +27,7 @@ if v:version < 700 || !has('python3')
           call add(messages, "vim7.0+")
         endif
         if !has('python3')
-          call add(messages, "Python 3.9 support")
+          call add(messages, "Python 3.10 support")
         endif
 
         echo "The black.vim plugin requires" join(messages, " and ")
@@ -81,11 +81,11 @@ endif
 
 function BlackComplete(ArgLead, CmdLine, CursorPos)
   return [
-\    'target_version=py39',
 \    'target_version=py310',
 \    'target_version=py311',
 \    'target_version=py312',
 \    'target_version=py313',
+\    'target_version=py314',
 \  ]
 endfunction
 

@@ -31,16 +31,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12.10", "3.13", "3.14", "pypy-3.9"]
+        python-version: ["3.10", "3.11", "3.12.10", "3.13", "3.14", "pypy-3.11"]
         os: [ubuntu-latest, macOS-latest, windows-latest, windows-11-arm]
         exclude:
-          # setup-python only supports 3.11+ on arm64 windows
-          - os: windows-11-arm
-            python-version: "3.9"
+          # setup-python only supports CPython 3.11+ on arm64 windows
           - os: windows-11-arm
             python-version: "3.10"
           - os: windows-11-arm
-            python-version: "pypy-3.9"
+            python-version: "pypy-3.11"
 
     steps:
       - uses: actions/checkout@v5

@@ -5,15 +5,9 @@ import collections
 import dataclasses
 import re
 import secrets
-import sys
 from functools import lru_cache
 from importlib.util import find_spec
-from typing import Optional
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
+from typing import Optional, TypeGuard
 
 from black.mode import Mode
 from black.output import out
