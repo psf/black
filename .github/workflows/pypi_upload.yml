@@ -73,11 +73,10 @@ jobs:
           github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           {
-            cibuildwheel --print-build-identifiers --platform linux \
-            | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
+            CIBW_BUILD="cp39-*" cibuildwheel --print-build-identifiers --platform linux | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
+            CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows | pyp 'json.dumps({"only": x, "os": "windows-latest"})'
           } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
-          CIBW_BUILD: "cp39-* cp313-*"
           CIBW_ARCHS_LINUX: x86_64
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
@@ -98,7 +97,7 @@ jobs:
         with:
           only: ${{ matrix.only }}
         env:
-          CIBW_TEST_REQUIRES_WINDOWS: "pytest>=6.1.1,^<9.0"
+          CIBW_TEST_REQUIRES_WINDOWS: "pytest^<9.0"
 
       - name: Upload wheels as workflow artifacts
         uses: actions/upload-artifact@v5
