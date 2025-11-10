@@ -151,6 +151,7 @@ options = { debug_level = "0" }
 
 [tool.cibuildwheel]
 build-verbosity = 1
+build-frontend = "build[uv]"
 
 # So these are the environments we target:
 # - Python: CPython 3.9+ only
