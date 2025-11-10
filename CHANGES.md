@@ -1,20 +1,13 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
+## 25.11.0
 
 ### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
 
 - Enable base 3.14 support (#4804)
 - Add support for the new Python 3.14 t-string syntax introduced by PEP 750 (#4805)
 
 ### Stable style
-
-<!-- Changes that affect Black's stable style -->
 
 - Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#4811)
 - Comments containing fmt directives now preserve their exact formatting instead of
@@ -22,10 +15,8 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
-
 - Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
-- Fix bug where module docstrings would be treated as normal strings if preceeded by
+- Fix bug where module docstrings would be treated as normal strings if preceded by
   comments (#4764)
 - Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
 - Standardize type comments to form `# type: <value>` (#4645)
@@ -34,41 +25,23 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - Add `no_cache` option to control caching behavior. (#4803)
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
 - Releases now include arm64 Linux binaries (#4773)
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
-
-- Write unchanged content to stdout when excluding formating from stdin using pipes
+- Write unchanged content to stdout when excluding formatting from stdin using pipes
   (#4610)
 
 ### _Blackd_
-
-<!-- Changes to blackd -->
 
 - Implemented BlackDClient. This simple python client allows to easily send formatting
   requests to blackd (#4774)
 
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Enable 3.14 base CI (#4804)
 - Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
@@ -77,11 +50,6 @@
 - Vim: Warn on unsupported Vim and Python versions independently (#4772)
 - Vim: Print the import paths when importing black fails (#4675)
 - Vim: Fix handling of virtualenvs that have a different Python version (#4675)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 25.9.0
 
