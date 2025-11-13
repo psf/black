@@ -12,7 +12,7 @@ how this parsing engine works.
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Union, cast
+from typing import TYPE_CHECKING, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
