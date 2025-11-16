@@ -411,7 +411,7 @@ class LineGenerator(Visitor[Line]):
 
             # Only process prefix comments if there actually is a prefix with comments
             fmt_directives = {
-                'fmt: off', 'fmt:off', 'fmt: on', 'fmt:on', 
+                'fmt: off', 'fmt:off', 'fmt: on', 'fmt:on',
                 'yapf: disable', 'yapf: enable'
             }
             if leaf.prefix and any(
