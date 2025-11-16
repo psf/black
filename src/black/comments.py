@@ -337,13 +337,19 @@ def convert_one_fmt_off_pair(
     for leaf in node.leaves():
         # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on processing
         # to avoid reprocessing them in subsequent iterations
+<<<<<<< HEAD
         if (
             leaf.type == STANDALONE_COMMENT
             and hasattr(leaf, 'fmt_pass_converted_first_leaf')
             and leaf.fmt_pass_converted_first_leaf is None
         ):
+=======
+        if (leaf.type == STANDALONE_COMMENT and
+            hasattr(leaf, 'fmt_pass_converted_first_leaf') and
+            leaf.fmt_pass_converted_first_leaf is None):
+>>>>>>> bb94598fb1257056c778eb3ac8e3a40bf51ba2af
             continue
-            
+
         previous_consumed = 0
         for comment in list_comments(leaf.prefix, is_endmarker=False, mode=mode):
             should_process, is_fmt_off, is_fmt_skip = _should_process_fmt_comment(

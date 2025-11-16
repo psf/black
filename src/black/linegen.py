@@ -406,23 +406,29 @@ class LineGenerator(Visitor[Line]):
             is_fmt_off_block = False
         if is_fmt_off_block:
             # This is a fmt:off/on block from normalize_fmt_off - we still need
-            # to process any prefix comments (like markdown comments) but append 
+            # to process any prefix comments (like markdown comments) but append
             # the fmt block itself directly to preserve its formatting
-            
+
             # Only process prefix comments if there actually is a prefix with comments
+<<<<<<< HEAD
             fmt_directives = {'fmt: off', 'fmt:off', 'fmt: on', 'fmt:on', 'yapf: disable', 'yapf: enable'}
             if leaf.prefix and any(
                 line.strip().startswith('#')
                 and line.strip().lstrip('#').strip() not in fmt_directives
                 for line in leaf.prefix.split('\n')
             ):
+=======
+            if leaf.prefix and any(line.strip().startswith('#') and
+                                 not line.strip().lstrip('#').strip() in ('fmt: off', 'fmt:off', 'fmt: on', 'fmt:on', 'yapf: disable', 'yapf: enable')
+                                 for line in leaf.prefix.split('\n')):
+>>>>>>> bb94598fb1257056c778eb3ac8e3a40bf51ba2af
                 for comment in generate_comments(leaf, mode=self.mode):
                     yield from self.line()
                     self.current_line.append(comment)
                     yield from self.line()
                 # Clear the prefix since we've processed it as comments above
                 leaf.prefix = ""
-            
+
             self.current_line.append(leaf)
             yield from self.line()
         else:
