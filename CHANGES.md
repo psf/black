@@ -13,6 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix bug where comments preceding `# fmt: off`/`# fmt: on` blocks were incorrectly
+  removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4843)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
