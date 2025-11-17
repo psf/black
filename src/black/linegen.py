@@ -17,7 +17,13 @@ from black.brackets import (
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
-from black.comments import FMT_OFF, FMT_ON, _contains_fmt_directive, generate_comments, list_comments
+from black.comments import (
+    FMT_OFF,
+    FMT_ON,
+    _contains_fmt_directive,
+    generate_comments,
+    list_comments,
+)
 from black.lines import (
     Line,
     RHSResult,
