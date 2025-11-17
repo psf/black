@@ -428,9 +428,7 @@ class BlackTestCase(BlackBaseTestCase):
         _, source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 7):
-            black.assert_equivalent(source, actual)
+        black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
@@ -1758,16 +1756,13 @@ class BlackTestCase(BlackBaseTestCase):
         if system() == "Windows":
             return
 
-        # https://bugs.python.org/issue33660
-        # Can be removed when we drop support for Python 3.8.5
         root = Path("/")
-        with change_directory(root):
-            path = Path("workspace") / "project"
-            report = black.Report(verbose=True)
-            resolves_outside = black.resolves_outside_root_or_cannot_stat(
-                path, root, report
-            )
-            self.assertIs(resolves_outside, False)
+        path = Path("workspace") / "project"
+        report = black.Report(verbose=True)
+        resolves_outside = black.resolves_outside_root_or_cannot_stat(
+            path, root, report
+        )
+        self.assertIs(resolves_outside, False)
 
     def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
         if system() != "Windows":

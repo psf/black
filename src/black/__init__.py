@@ -12,7 +12,7 @@ from collections.abc import (
     MutableMapping,
     Sequence,
 )
-from contextlib import contextmanager
+from contextlib import nullcontext
 from dataclasses import replace
 from datetime import datetime, timezone
 from enum import Enum
@@ -1638,15 +1638,6 @@ def assert_stable(
             " pass of the formatter.  Please report a bug on"
             f" https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
-
-
-@contextmanager
-def nullcontext() -> Iterator[None]:
-    """Return an empty context manager.
-
-    To be used like `nullcontext` in Python 3.7.
-    """
-    yield
 
 
 def patched_main() -> None:
