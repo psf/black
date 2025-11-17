@@ -3,7 +3,7 @@
 
 import os
 from collections.abc import Iterator, Sequence
-from typing import IO, Any, NoReturn, Optional, Union
+from typing import IO, Any, NoReturn, Union
 
 from blib2to3.pgen2 import grammar, token, tokenize
 from blib2to3.pgen2.tokenize import TokenInfo
@@ -19,9 +19,9 @@ class ParserGenerator:
     filename: Path
     stream: IO[str]
     generator: Iterator[TokenInfo]
-    first: dict[str, Optional[dict[str, int]]]
+    first: dict[str, dict[str, int] | None]
 
-    def __init__(self, filename: Path, stream: Optional[IO[str]] = None) -> None:
+    def __init__(self, filename: Path, stream: IO[str] | None = None) -> None:
         close_stream = None
         if stream is None:
             stream = open(filename, encoding="utf-8")
@@ -163,7 +163,7 @@ class ParserGenerator:
 
     def parse(self) -> tuple[dict[str, list["DFAState"]], str]:
         dfas = {}
-        startsymbol: Optional[str] = None
+        startsymbol: str | None = None
         # MSTART: (NEWLINE | RULE)* ENDMARKER
         while self.type != token.ENDMARKER:
             while self.type == token.NEWLINE:
@@ -333,7 +333,7 @@ class ParserGenerator:
                 f"expected (...) or NAME or STRING, got {self.type}/{self.value}"
             )
 
-    def expect(self, type: int, value: Optional[Any] = None) -> str:
+    def expect(self, type: int, value: Any | None = None) -> str:
         if self.type != type or (value is not None and self.value != value):
             self.raise_error(f"expected {type}/{value}, got {self.type}/{self.value}")
         value = self.value
@@ -354,12 +354,12 @@ class ParserGenerator:
 
 
 class NFAState:
-    arcs: list[tuple[Optional[str], "NFAState"]]
+    arcs: list[tuple[str | None, "NFAState"]]
 
     def __init__(self) -> None:
         self.arcs = []  # list of (label, NFAState) pairs
 
-    def addarc(self, next: "NFAState", label: Optional[str] = None) -> None:
+    def addarc(self, next: "NFAState", label: str | None = None) -> None:
         assert label is None or isinstance(label, str)
         assert isinstance(next, NFAState)
         self.arcs.append((label, next))

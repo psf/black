@@ -8,7 +8,7 @@ from collections.abc import Collection, Iterator
 from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
-from typing import Optional, Union, cast
+from typing import Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
@@ -303,7 +303,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
-        prev_type: Optional[int] = None
+        prev_type: int | None = None
         for child in node.children:
             if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
                 wrap_in_parentheses(node, child, visible=False)
@@ -667,7 +667,7 @@ def _hugging_power_ops_line_to_string(
     line: Line,
     features: Collection[Feature],
     mode: Mode,
-) -> Optional[str]:
+) -> str | None:
     try:
         return line_to_string(next(hug_power_op(line, features, mode)))
     except CannotTransform:
@@ -849,7 +849,7 @@ def left_hand_split(
         body_leaves: list[Leaf] = []
         head_leaves: list[Leaf] = []
         current_leaves = head_leaves
-        matching_bracket: Optional[Leaf] = None
+        matching_bracket: Leaf | None = None
         depth = 0
         for index, leaf in enumerate(line.leaves):
             if index == 2 and leaf.type == token.LSQB:
@@ -936,8 +936,8 @@ def _first_right_hand_split(
     body_leaves: list[Leaf] = []
     head_leaves: list[Leaf] = []
     current_leaves = tail_leaves
-    opening_bracket: Optional[Leaf] = None
-    closing_bracket: Optional[Leaf] = None
+    opening_bracket: Leaf | None = None
+    closing_bracket: Leaf | None = None
     for leaf in reversed(line.leaves):
         if current_leaves is body_leaves:
             if leaf is opening_bracket:
@@ -958,7 +958,7 @@ def _first_right_hand_split(
     body_leaves.reverse()
     head_leaves.reverse()
 
-    body: Optional[Line] = None
+    body: Line | None = None
     if (
         Preview.hug_parens_with_braces_and_square_brackets in line.mode
         and tail_leaves[0].value
@@ -1296,7 +1296,7 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
     return split_wrapper
 
 
-def _get_last_non_comment_leaf(line: Line) -> Optional[int]:
+def _get_last_non_comment_leaf(line: Line) -> int | None:
     for leaf_idx in range(len(line.leaves) - 1, 0, -1):
         if line.leaves[leaf_idx].type != STANDALONE_COMMENT:
             return leaf_idx
@@ -1632,7 +1632,7 @@ def _maybe_wrap_cms_in_parens(
         or node.children[1].type == syms.atom
     ):
         return
-    colon_index: Optional[int] = None
+    colon_index: int | None = None
     for i in range(2, len(node.children)):
         if node.children[i].type == token.COLON:
             colon_index = i
@@ -1865,8 +1865,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
         yield omit
 
     length = 4 * line.depth
-    opening_bracket: Optional[Leaf] = None
-    closing_bracket: Optional[Leaf] = None
+    opening_bracket: Leaf | None = None
+    closing_bracket: Leaf | None = None
     inner_brackets: set[LeafID] = set()
     for index, leaf, leaf_length in line.enumerate_with_length(is_reversed=True):
         length += leaf_length

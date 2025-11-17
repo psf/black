@@ -18,7 +18,7 @@ import itertools
 import logging
 import re
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from pytest import StashKey
@@ -54,14 +54,27 @@ def pytest_configure(config: "Config") -> None:
 
     Use the syntax in https://docs.pytest.org/en/stable/mark.html#registering-marks.
     """
-    ot_ini = config.inicfg.get("optional-tests") or []
-    ot_markers = set()
+    # Extract the configured optional-tests from pytest's ini config in a
+    # version-agnostic way. Depending on pytest version, the value can be a
+    # string, a list of strings, or a ConfigValue wrapper (with a `.value` attr).
+    raw_ot_ini: Any = config.inicfg.get("optional-tests")
+    ot_ini_lines: list[str] = []
+    if raw_ot_ini:
+        value = getattr(raw_ot_ini, "value", raw_ot_ini)
+        if isinstance(value, str):
+            ot_ini_lines = value.strip().split("\n")
+        elif isinstance(value, list):
+            # Best-effort coercion to strings; pytest inis are textual.
+            ot_ini_lines = [str(v) for v in value]
+        else:
+            # Fallback: ignore unexpected shapes (non-iterable, etc.).
+            ot_ini_lines = []
+
+    ot_markers: set[str] = set()
     ot_run: set[str] = set()
-    if isinstance(ot_ini, str):
-        ot_ini = ot_ini.strip().split("\n")
     marker_re = re.compile(r"^\s*(?P<no>no_)?(?P<marker>\w+)(:\s*(?P<description>.*))?")
-    # getattr shim here is so that we support both pytest>=9 and pytest<9
-    for ot in getattr(ot_ini, "value", ot_ini):
+    # Iterate over configured markers discovered above.
+    for ot in ot_ini_lines:
         m = marker_re.match(ot)
         if not m:
             raise ValueError(f"{ot!r} doesn't match pytest marker syntax")
