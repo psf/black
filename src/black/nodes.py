@@ -2,14 +2,8 @@
 blib2to3 Node/Leaf transformation-related utility functions.
 """
 
-import sys
 from collections.abc import Iterator
-from typing import Final, Generic, Literal, Optional, TypeVar, Union
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
+from typing import Final, Generic, Literal, TypeGuard, TypeVar, Union
 
 from mypy_extensions import mypyc_attr
 
@@ -432,7 +426,7 @@ def make_simple_prefix(nl_count: int, form_feed: bool, empty_line: str = "\n") -
     return empty_line * nl_count
 
 
-def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
+def preceding_leaf(node: LN | None) -> Leaf | None:
     """Return the first leaf that precedes `node`, if any."""
     while node:
         res = node.prev_sibling
@@ -450,7 +444,7 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     return None
 
 
-def prev_siblings_are(node: Optional[LN], tokens: list[Optional[NodeType]]) -> bool:
+def prev_siblings_are(node: LN | None, tokens: list[NodeType | None]) -> bool:
     """Return if the `node` and its previous siblings match types against the provided
     list of tokens; the provided `node`has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
@@ -466,7 +460,7 @@ def prev_siblings_are(node: Optional[LN], tokens: list[Optional[NodeType]]) -> b
     return prev_siblings_are(node.prev_sibling, tokens[:-1])
 
 
-def parent_type(node: Optional[LN]) -> Optional[NodeType]:
+def parent_type(node: LN | None) -> NodeType | None:
     """
     Returns:
         @node.parent.type, if @node is not None and has a parent.
@@ -479,9 +473,9 @@ def parent_type(node: Optional[LN]) -> Optional[NodeType]:
     return node.parent.type
 
 
-def child_towards(ancestor: Node, descendant: LN) -> Optional[LN]:
+def child_towards(ancestor: Node, descendant: LN) -> LN | None:
     """Return the child of `ancestor` that contains `descendant`."""
-    node: Optional[LN] = descendant
+    node: LN | None = descendant
     while node and node.parent != ancestor:
         node = node.parent
     return node
@@ -529,7 +523,7 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def first_leaf_of(node: LN) -> Optional[Leaf]:
+def first_leaf_of(node: LN) -> Leaf | None:
     """Returns the first leaf of the node tree."""
     if isinstance(node, Leaf):
         return node
@@ -993,7 +987,7 @@ def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> Non
     parent.insert_child(index, new_child)
 
 
-def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
+def unwrap_singleton_parenthesis(node: LN) -> LN | None:
     """Returns `wrapped` if `node` is of the shape ( wrapped ).
 
     Parenthesis can be optional. Returns None otherwise"""
@@ -1053,7 +1047,7 @@ def is_part_of_annotation(leaf: Leaf) -> bool:
     return get_annotation_type(leaf) is not None
 
 
-def first_leaf(node: LN) -> Optional[Leaf]:
+def first_leaf(node: LN) -> Leaf | None:
     """Returns the first leaf of the ancestor node."""
     if isinstance(node, Leaf):
         return node
@@ -1063,7 +1057,7 @@ def first_leaf(node: LN) -> Optional[Leaf]:
         return first_leaf(node.children[0])
 
 
-def last_leaf(node: LN) -> Optional[Leaf]:
+def last_leaf(node: LN) -> Leaf | None:
     """Returns the last leaf of the ancestor node."""
     if isinstance(node, Leaf):
         return node

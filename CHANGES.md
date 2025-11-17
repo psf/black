@@ -9,6 +9,8 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Black no longer supports running with Python 3.9 (#4842)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->

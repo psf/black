@@ -75,7 +75,7 @@ jobs:
           github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           {
-            CIBW_BUILD="cp39-*" cibuildwheel --print-build-identifiers --platform linux | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
+            CIBW_BUILD="cp310-*" cibuildwheel --print-build-identifiers --platform linux | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
             CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows | pyp 'json.dumps({"only": x, "os": "windows-latest"})'
           } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
