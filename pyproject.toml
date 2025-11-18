@@ -127,7 +127,7 @@ enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
   # TODO: change once mypy 1.19 is released
-  "mypy @ git+https://github.com/python/mypy@e1643aec5229e37cf62700dabae294b9a5344c97",
+  "mypy @ git+https://github.com/python/mypy@0c6593b117ae3be29d9549c7baa81f591953836c",
   "click>=8.1.7",
 ]
 require-runtime-dependencies = true
