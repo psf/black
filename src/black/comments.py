@@ -339,7 +339,7 @@ def convert_one_fmt_off_pair(
         # to avoid reprocessing them in subsequent iterations
         if (
             leaf.type == STANDALONE_COMMENT
-            and hasattr(leaf, 'fmt_pass_converted_first_leaf')
+            and hasattr(leaf, "fmt_pass_converted_first_leaf")
             and leaf.fmt_pass_converted_first_leaf is None
         ):
             continue

@@ -417,9 +417,9 @@ class LineGenerator(Visitor[Line]):
 
             # Only process prefix comments if there actually is a prefix with comments
             if leaf.prefix and any(
-                line.strip().startswith('#')
+                line.strip().startswith("#")
                 and not _contains_fmt_directive(line.strip())
-                for line in leaf.prefix.split('\n')
+                for line in leaf.prefix.split("\n")
             ):
                 for comment in generate_comments(leaf, mode=self.mode):
                     yield from self.line()
