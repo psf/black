@@ -86,7 +86,7 @@ def lib2to3_parse(
                 f"Line {lineno}, Column {column}\n"
                 f"\n    {faulty_line}\n"
                 f"    {' ' * (column - 1)}^\n"
-                f"\nTip: This often means you are missing a ':' or have invalid syntax.\n"
+                f"\nMissing a ':' or Invalid Syntax\n"
             )
 
         except TokenError as te:
