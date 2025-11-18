@@ -23,7 +23,7 @@ def main(changes: str, the_basics: str) -> None:
     version_examples = [
         code_block.string
         for code_block in the_basics_soup.find_all(class_="language-console")
-        if "$ black --version" in code_block.string
+        if "$ black --version" in code_block.string  # type: ignore[operator]
     ]
 
     for tag in tags:
