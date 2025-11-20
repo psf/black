@@ -94,6 +94,7 @@ class BracketTracker:
             and leaf.type in CLOSING_BRACKETS
             and (self.depth, leaf.type) not in self.bracket_match
         ):
+            leaf.bracket_depth = self.depth
             return
 
         self.maybe_decrement_after_for_loop_variable(leaf)

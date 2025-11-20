@@ -17,7 +17,13 @@ from black.brackets import (
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
-from black.comments import FMT_OFF, FMT_ON, generate_comments, list_comments
+from black.comments import (
+    FMT_OFF,
+    FMT_ON,
+    _contains_fmt_directive,
+    generate_comments,
+    list_comments,
+)
 from black.lines import (
     Line,
     RHSResult,
@@ -396,11 +402,11 @@ class LineGenerator(Visitor[Line]):
             # Check if first line (after stripping whitespace) is exactly a
             # fmt:off directive
             first_line = lines[0].lstrip()
-            first_is_fmt_off = first_line in FMT_OFF
+            first_is_fmt_off = _contains_fmt_directive(first_line, FMT_OFF)
             # Check if last line (after stripping whitespace) is exactly a
             # fmt:on directive
             last_line = lines[-1].lstrip()
-            last_is_fmt_on = last_line in FMT_ON
+            last_is_fmt_on = _contains_fmt_directive(last_line, FMT_ON)
             is_fmt_off_block = first_is_fmt_off and last_is_fmt_on
         else:
             is_fmt_off_block = False
@@ -1463,7 +1469,7 @@ def normalize_invisible_parens(  # noqa: C901
     existing visible parentheses for other tuples and generator expressions.
     """
     for pc in list_comments(node.prefix, is_endmarker=False, mode=mode):
-        if pc.value in FMT_OFF:
+        if _contains_fmt_directive(pc.value, FMT_OFF):
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
 
