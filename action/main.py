@@ -15,6 +15,7 @@ JUPYTER = os.getenv("INPUT_JUPYTER") == "true"
 BLACK_ARGS = os.getenv("INPUT_BLACK_ARGS", default="")
 VERSION = os.getenv("INPUT_VERSION", default="")
 USE_PYPROJECT = os.getenv("INPUT_USE_PYPROJECT") == "true"
+OUTPUT_FILE = os.getenv("OUTPUT_FILE", default="")
 
 BLACK_VERSION_RE = re.compile(r"^black([^A-Z0-9._-]+.*)$", re.IGNORECASE)
 EXTRAS_RE = re.compile(r"\[.*\]")
@@ -181,5 +182,16 @@ else:
         encoding="utf-8",
     )
 shutil.rmtree(ENV_PATH, ignore_errors=True)
+
+# Write output to file if specified
+if OUTPUT_FILE:
+    try:
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            f.write(proc.stdout)
+        print(f"Black output written to {OUTPUT_FILE}")
+    except Exception as e:
+        print(f"::error::Failed to write output to {OUTPUT_FILE}: {e}", file=sys.stderr)
+        sys.exit(1)
+
 print(proc.stdout)
 sys.exit(proc.returncode)
