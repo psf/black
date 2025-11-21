@@ -281,9 +281,18 @@ def _handle_comment_only_fmt_block(
     if hidden_value.endswith("\n"):
         hidden_value = hidden_value[:-1]
 
-    # Build the standalone comment prefix
+    # Build the standalone comment prefix - preserve all content before fmt:off
+    # including any comments that precede it
+    if fmt_off_idx == 0:
+        # No comments before fmt:off, use previous_consumed
+        pre_fmt_off_consumed = previous_consumed
+    else:
+        # Use the consumed position of the last comment before fmt:off
+        # This preserves all comments and content before the fmt:off directive
+        pre_fmt_off_consumed = all_comments[fmt_off_idx - 1].consumed
+
     standalone_comment_prefix = (
-        original_prefix[:previous_consumed] + "\n" * comment.newlines
+        original_prefix[:pre_fmt_off_consumed] + "\n" * comment.newlines
     )
 
     fmt_off_prefix = original_prefix.split(comment.value)[0]
@@ -326,6 +335,15 @@ def convert_one_fmt_off_pair(
     Returns True if a pair was converted.
     """
     for leaf in node.leaves():
+        # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on processing
+        # to avoid reprocessing them in subsequent iterations
+        if (
+            leaf.type == STANDALONE_COMMENT
+            and hasattr(leaf, "fmt_pass_converted_first_leaf")
+            and leaf.fmt_pass_converted_first_leaf is None
+        ):
+            continue
+
         previous_consumed = 0
         for comment in list_comments(leaf.prefix, is_endmarker=False, mode=mode):
             should_process, is_fmt_off, is_fmt_skip = _should_process_fmt_comment(
