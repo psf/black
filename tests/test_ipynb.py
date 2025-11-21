@@ -547,3 +547,17 @@ def test_unable_to_replace_magics(monkeypatch: MonkeyPatch) -> None:
         AssertionError, match="Black was not able to replace IPython magic"
     ):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
+def test_jupytext_markdown_cell_type_indicator() -> None:
+    """Test that Jupytext markdown cell type indicators are preserved.
+    
+    Jupytext uses `%% [cell_type]` syntax to indicate cell types in percent format.
+    These should not be treated as IPython magics and should be preserved.
+    See issue #4843.
+    """
+    src = "%% [markdown]\nfmt: off\nfmt: on"
+    # This should not raise NothingChanged, but should process normally
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    # The cell type indicator should be preserved
+    assert "%% [markdown]" in result

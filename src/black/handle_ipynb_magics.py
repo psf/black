@@ -80,6 +80,12 @@ def validate_cell(src: str, mode: Mode) -> None:
         raise NothingChanged
 
     line = _get_code_start(src)
+    
+    # Check if this is a Jupytext cell type indicator (e.g., %% [markdown])
+    # These should be preserved as they're not actual IPython magics
+    if line.startswith("%% [") and line.endswith("]"):
+        return
+
     if line.startswith("%%") and (
         line.split(maxsplit=1)[0][2:]
         not in PYTHON_CELL_MAGICS | mode.python_cell_magics
