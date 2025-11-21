@@ -8,7 +8,7 @@ import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional, Union
 
 from platformdirs import user_cache_dir
 
@@ -99,33 +99,38 @@ class Cache:
         hash = Cache.hash_digest(path)
         return FileData(stat.st_mtime, stat.st_size, hash)
 
-    def is_changed(self, source: Path) -> bool:
-        """Check if source has changed compared to cached version."""
+    def is_changed(self, source: Path) -> tuple[bool, Optional[os.stat_result]]:
+        """Check if source has changed compared to cached version.
+
+        Also returns the stat result that was used."""
         res_src = source.resolve()
         old = self.file_data.get(str(res_src))
         if old is None:
-            return True
+            return True, None
 
         st = res_src.stat()
         if st.st_size != old.st_size:
-            return True
+            return True, st
         if st.st_mtime != old.st_mtime:
             new_hash = Cache.hash_digest(res_src)
             if new_hash != old.hash:
-                return True
-        return False
+                return True, st
+        return False, st
 
-    def filtered_cached(self, sources: Iterable[Path]) -> tuple[set[Path], set[Path]]:
+    def filtered_cached(
+        self, sources: Iterable[Path]
+    ) -> tuple[set[tuple[Optional[os.stat_result], Path]], set[Path]]:
         """Split an iterable of paths in `sources` into two sets.
 
-        The first contains paths of files that modified on disk or are not in the
-        cache. The other contains paths to non-modified files.
+        The first contains paths and stat results of files that modified on disk
+        or are not in the cache. The other contains paths to non-modified files.
         """
-        changed: set[Path] = set()
+        changed: set[tuple[Optional[os.stat_result], Path]] = set()
         done: set[Path] = set()
         for src in sources:
-            if self.is_changed(src):
-                changed.add(src)
+            is_changed, stat = self.is_changed(src)
+            if is_changed:
+                changed.add((stat, src))
             else:
                 done.add(src)
         return changed, done
