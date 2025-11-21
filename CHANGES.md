@@ -22,7 +22,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#)
+- Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
 
 ### Configuration
 
