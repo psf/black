@@ -720,18 +720,4 @@ def _contains_fmt_directive(
       # foobar # foobar # foobar  <-- multiple comments
       # foobar; foobar            <-- list of comments (; separated)
     """
-    semantic_comment_blocks = [
-        comment_line,
-        *[
-            _COMMENT_PREFIX + comment.strip()
-            for comment in comment_line.split(_COMMENT_PREFIX)[1:]
-        ],
-        *[
-            _COMMENT_PREFIX + comment.strip()
-            for comment in comment_line.strip(_COMMENT_PREFIX).split(
-                _COMMENT_LIST_SEPARATOR
-            )
-        ],
-    ]
-
-    return any(comment in directives for comment in semantic_comment_blocks)
+    return any(directive in comment_line for directive in directives)
