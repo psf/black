@@ -551,7 +551,7 @@ def test_unable_to_replace_magics(monkeypatch: MonkeyPatch) -> None:
 
 def test_jupytext_markdown_cell_type_indicator() -> None:
     """Test that Jupytext markdown cell type indicators are preserved.
-    
+
     Jupytext uses `%% [cell_type]` syntax to indicate cell types in percent format.
     These should not be treated as IPython magics and should be preserved.
     See issue #4843.

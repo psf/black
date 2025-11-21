@@ -1,4 +1,5 @@
 import pytest
+
 from black import Mode, format_str
 
 
