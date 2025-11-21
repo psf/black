@@ -22,7 +22,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#)
+- Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
 
 ### Configuration
 
