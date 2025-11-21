@@ -22,6 +22,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
