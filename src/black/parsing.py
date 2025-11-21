@@ -81,7 +81,9 @@ def lib2to3_parse(
             except IndexError:
                 faulty_line = "<line number missing in source>"
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse{tv_str}: {lineno}:{column}: {faulty_line}"
+                f"\nSyntax error detected by Black\n"
+                f"File: {tv_str}\n"
+                f"{faulty_line}\n\t^"
             )
 
         except TokenError as te:
