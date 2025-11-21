@@ -652,19 +652,18 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             # Special case for with expressions
             # Without this, we can stuck inside the asexpr_test's children's children
-            parent = current_node.parent
             if (
-                parent
-                and parent.type == syms.asexpr_test
-                and parent.parent
-                and parent.parent.type == syms.with_stmt
+                current_node.parent
+                and current_node.parent.type == syms.asexpr_test
+                and current_node.parent.parent
+                and current_node.parent.parent.type == syms.with_stmt
             ):
-                current_node = parent
+                current_node = current_node.parent
 
             ignored_nodes.insert(0, current_node)
 
-            if current_node.prev_sibling is None and parent is not None:
-                current_node = parent
+            if current_node.prev_sibling is None and current_node.parent is not None:
+                current_node = current_node.parent
 
         # Special handling for compound statements with semicolon-separated bodies
         if Preview.fix_fmt_skip_in_one_liners in mode and isinstance(parent, Node):
