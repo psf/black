@@ -20,10 +20,11 @@ from black.brackets import (
 from black.comments import (
     FMT_OFF,
     FMT_ON,
-    _contains_fmt_directive,
+    contains_fmt_directive,
     generate_comments,
     list_comments,
 )
+
 from black.lines import (
     Line,
     RHSResult,
@@ -400,8 +401,8 @@ class LineGenerator(Visitor[Line]):
         lines = value.splitlines()
         is_fmt_off_block = (
             len(lines) >= 2
-            and _contains_fmt_directive(lines[0], FMT_OFF)
-            and _contains_fmt_directive(lines[0], FMT_ON)
+            and contains_fmt_directive(lines[0], FMT_OFF)
+            and contains_fmt_directive(lines[0], FMT_ON)
         )
         if is_fmt_off_block:
             # This is a fmt:off/on block from normalize_fmt_off - we still need
@@ -411,7 +412,7 @@ class LineGenerator(Visitor[Line]):
             # Only process prefix comments if there actually is a prefix with comments
             if leaf.prefix and any(
                 line.strip().startswith("#")
-                and not _contains_fmt_directive(line.strip())
+                and not contains_fmt_directive(line.strip())
                 for line in leaf.prefix.split("\n")
             ):
                 for comment in generate_comments(leaf, mode=self.mode):
@@ -1477,7 +1478,7 @@ def normalize_invisible_parens(  # noqa: C901
     existing visible parentheses for other tuples and generator expressions.
     """
     for pc in list_comments(node.prefix, is_endmarker=False, mode=mode):
-        if _contains_fmt_directive(pc.value, FMT_OFF):
+        if contains_fmt_directive(pc.value, FMT_OFF):
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
 
