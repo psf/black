@@ -6,6 +6,7 @@ from typing import Final, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (
+    BRACKETS,
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
@@ -650,6 +651,13 @@ def _generate_ignored_nodes_from_fmt_skip(
             leaf_nodes = list(current_node.prev_sibling.leaves())
             current_node = leaf_nodes[-1] if leaf_nodes else current_node
 
+            if (
+                current_node.type in BRACKETS
+                and current_node.parent
+                and current_node.parent.type == syms.atom
+            ):
+                current_node = current_node.parent
+
             if current_node.type in (token.NEWLINE, token.INDENT):
                 current_node.prefix = ""
                 break
@@ -658,6 +666,7 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             if current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
+
         # Special handling for compound statements with semicolon-separated bodies
         if Preview.fix_fmt_skip_in_one_liners in mode and isinstance(parent, Node):
             body_node = _find_compound_statement_context(parent)
