@@ -768,5 +768,3 @@ def contains_fmt_directive(
     ]
 
     return any(comment in directives for comment in semantic_comment_blocks)
-[] False
-[] False
