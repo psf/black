@@ -6,6 +6,7 @@ from typing import Final, Union
 
 from black.mode import Mode, Preview
 from black.nodes import (
+    BRACKETS,
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
@@ -605,6 +606,10 @@ def _generate_ignored_nodes_from_fmt_skip(
     comments = list_comments(leaf.prefix, is_endmarker=False, mode=mode)
     if not comments or comment.value != comments[0].value:
         return
+
+    if not prev_sibling and parent and parent.prev_sibling:
+        prev_sibling = parent.prev_sibling
+
     if prev_sibling is not None:
         leaf.prefix = leaf.prefix[comment.consumed :]
 
@@ -645,6 +650,13 @@ def _generate_ignored_nodes_from_fmt_skip(
         while "\n" not in current_node.prefix and current_node.prev_sibling is not None:
             leaf_nodes = list(current_node.prev_sibling.leaves())
             current_node = leaf_nodes[-1] if leaf_nodes else current_node
+
+            if (
+                current_node.type in BRACKETS
+                and current_node.parent
+                and current_node.parent.type == syms.atom
+            ):
+                current_node = current_node.parent
 
             if current_node.type in (token.NEWLINE, token.INDENT):
                 current_node.prefix = ""
