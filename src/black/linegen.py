@@ -24,7 +24,6 @@ from black.comments import (
     generate_comments,
     list_comments,
 )
-
 from black.lines import (
     Line,
     RHSResult,
