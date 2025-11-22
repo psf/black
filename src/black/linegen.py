@@ -401,7 +401,7 @@ class LineGenerator(Visitor[Line]):
         is_fmt_off_block = (
             len(lines) >= 2
             and contains_fmt_directive(lines[0], FMT_OFF)
-            and contains_fmt_directive(lines[0], FMT_ON)
+            and contains_fmt_directive(lines[-1], FMT_ON)
         )
         if is_fmt_off_block:
             # This is a fmt:off/on block from normalize_fmt_off - we still need
