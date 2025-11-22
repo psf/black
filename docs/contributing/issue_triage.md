@@ -97,6 +97,33 @@ rigorous about it. Just follow your judgement on what labels make sense for the
 specific PR (if any even make sense).
 ```
 
+## CI-related labels
+
+### Label: `ci: build all wheels`
+
+This label is used by maintainers or triage users to request a full wheel build for a pull request.
+
+#### Important behavior
+
+Applying this label **does not automatically trigger GitHub Actions CI**.  
+A new commit must be pushed after applying the label to start the workflow  
+(even an empty commit works).
+
+#### Why this workflow behaves this way
+
+Black avoids triggering heavy CI jobs for label events due to:
+
+- security considerations (e.g., forks with limited permissions)
+- resource usage concerns
+- the high cost of full wheel builds
+
+Because of these constraints, wheel builds only start when a commit event occurs.
+
+#### Who should use this label
+
+Only maintainers or triage users should apply the `ci: build all wheels` label.  
+Normal contributors generally cannot use this label and do not need to apply it.
+
 ## Projects
 
 For more general and broad goals we use projects to track work. Some may be longterm
