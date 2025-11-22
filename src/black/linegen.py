@@ -398,18 +398,11 @@ class LineGenerator(Visitor[Line]):
         # visit_default.
         value = leaf.value
         lines = value.splitlines()
-        if len(lines) >= 2:
-            # Check if first line (after stripping whitespace) is exactly a
-            # fmt:off directive
-            first_line = lines[0].lstrip()
-            first_is_fmt_off = first_line in FMT_OFF
-            # Check if last line (after stripping whitespace) is exactly a
-            # fmt:on directive
-            last_line = lines[-1].lstrip()
-            last_is_fmt_on = last_line in FMT_ON
-            is_fmt_off_block = first_is_fmt_off and last_is_fmt_on
-        else:
-            is_fmt_off_block = False
+        is_fmt_off_block = (
+            len(lines) >= 2
+            and _contains_fmt_directive(lines[0], FMT_OFF)
+            and _contains_fmt_directive(lines[0], FMT_ON)
+        )
         if is_fmt_off_block:
             # This is a fmt:off/on block from normalize_fmt_off - we still need
             # to process any prefix comments (like markdown comments) but append
@@ -1484,7 +1477,7 @@ def normalize_invisible_parens(  # noqa: C901
     existing visible parentheses for other tuples and generator expressions.
     """
     for pc in list_comments(node.prefix, is_endmarker=False, mode=mode):
-        if pc.value in FMT_OFF:
+        if _contains_fmt_directive(pc.value, FMT_OFF):
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
 

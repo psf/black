@@ -258,9 +258,13 @@ def _handle_comment_only_fmt_block(
     fmt_off_idx = None
     fmt_on_idx = None
     for idx, c in enumerate(all_comments):
-        if fmt_off_idx is None and c.value in FMT_OFF:
+        if fmt_off_idx is None and _contains_fmt_directive(c.value, FMT_OFF):
             fmt_off_idx = idx
-        if fmt_off_idx is not None and idx > fmt_off_idx and c.value in FMT_ON:
+        if (
+            fmt_off_idx is not None
+            and idx > fmt_off_idx
+            and _contains_fmt_directive(c.value, FMT_ON)
+        ):
             fmt_on_idx = idx
             break
 
@@ -401,7 +405,7 @@ def _handle_regular_fmt_block(
     parent = first.parent
     prefix = first.prefix
 
-    if comment.value in FMT_OFF:
+    if _contains_fmt_directive(comment.value, FMT_OFF):
         first.prefix = prefix[comment.consumed :]
     if is_fmt_skip:
         first.prefix = ""
@@ -412,7 +416,7 @@ def _handle_regular_fmt_block(
     hidden_value = "".join(str(n) for n in ignored_nodes)
     comment_lineno = leaf.lineno - comment.newlines
 
-    if comment.value in FMT_OFF:
+    if _contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
         if len(lines) > 0 and not any(
             line[0] <= comment_lineno <= line[1] for line in lines
@@ -703,9 +707,9 @@ def is_fmt_on(container: LN, mode: Mode) -> bool:
     """
     fmt_on = False
     for comment in list_comments(container.prefix, is_endmarker=False, mode=mode):
-        if comment.value in FMT_ON:
+        if _contains_fmt_directive(comment.value, FMT_ON):
             fmt_on = True
-        elif comment.value in FMT_OFF:
+        elif _contains_fmt_directive(comment.value, FMT_OFF):
             fmt_on = False
     return fmt_on
 
@@ -764,3 +768,5 @@ def _contains_fmt_directive(
     ]
 
     return any(comment in directives for comment in semantic_comment_blocks)
+[] False
+[] False
