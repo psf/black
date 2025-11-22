@@ -10,3 +10,12 @@ j =     1 # fmt: skip
 while j < 10: j += 1  # fmt: skip
 
 b = [c for c in "A very long string that would normally generate some kind of collapse, since it is this long"] # fmt: skip
+
+t = (
+    {
+        "foo":"very long string",
+        "bar":"another very long string",
+        "baz":"we should run out of space by now",
+    },  # fmt: skip
+    {"foo": "bar"},
+)
