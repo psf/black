@@ -97,20 +97,24 @@ rigorous about it. Just follow your judgement on what labels make sense for the
 specific PR (if any even make sense).
 ```
 
-```md
+````md
 ## CI-related labels
 
 ### Label: `ci: build all wheels`
 
-This label is used by maintainers or triage users to request a full wheel build for a pull request.
+This label is used by maintainers or triage users to request a full wheel build for a
+pull request.
 
 #### Important behavior
-Applying this label **does not automatically trigger GitHub Actions CI**.  
-A new commit must be pushed after applying the label in order to start the workflow  
+
+Applying this label **does not automatically trigger GitHub Actions CI**.
+A new commit must be pushed after applying the label in order to start the workflow
 (even an empty commit works).
 
 #### Why this workflow behaves this way
+
 Black avoids triggering heavy CI jobs from label events due to:
+
 - security considerations (e.g., forks with limited permissions)
 - resource usage concerns
 - the high cost of full wheel builds
@@ -118,7 +122,8 @@ Black avoids triggering heavy CI jobs from label events due to:
 Because of this, wheel builds only start when a commit event occurs.
 
 #### Who should use this label
-Only maintainers or triage users should apply the `ci: build all wheels` label.  
+
+Only maintainers or triage users should apply the `ci: build all wheels` label.
 Normal contributors generally cannot and do not need to use it.
 
 ## Projects
@@ -130,6 +135,7 @@ more focused and have a definite end (like the "Getting to beta" project).
 ```{note}
 To modify GitHub Projects you need the [Write repository permission level or higher](https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-permission-levels-for-an-organization#repository-access-for-each-permission-level).
 ```
+````
 
 ## Closing issues
 
