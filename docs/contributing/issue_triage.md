@@ -95,35 +95,12 @@ We also have a few standalone labels:
 We do use labels for PRs, in particular the `skip news` label, but we aren't that
 rigorous about it. Just follow your judgement on what labels make sense for the
 specific PR (if any even make sense).
-```
 
-## CI-related labels
+**ci: build all wheels**
 
-### Label: `ci: build all wheels`
-
-This label is used by maintainers or triage users to request a full wheel build for a
-pull request.
-
-#### Important behavior
-
-Applying this label **does not automatically trigger GitHub Actions CI**.
-A new commit must be pushed after applying the label to start the workflow
-(even an empty commit works).
-
-#### Why this workflow behaves this way
-
-Black avoids triggering heavy CI jobs for label events due to:
-
-- security considerations (e.g., forks with limited permissions)
-- resource usage concerns
-- the high cost of full wheel builds
-
-Because of these constraints, wheel builds only start when a commit event occurs.
-
-#### Who should use this label
-
-Only maintainers or triage users should apply the `ci: build all wheels` label.
-Normal contributors generally cannot use this label and do not need to apply it.
+Black does not build wheels for every platform on each pull request because the full build matrix is expensive.  
+Maintainers may apply this label when a full wheel build is needed, such as to debug platform-specific issues.  
+After the label is added, the workflow starts only when a new commit is pushed (even an empty commit).
 
 ## Projects
 
