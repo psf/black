@@ -9,8 +9,6 @@ from pathlib import Path
 from click import style
 
 from black.output import err, out
-
-
 from black.parsing import InvalidInput
 
 
