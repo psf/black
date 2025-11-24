@@ -1751,13 +1751,13 @@ def remove_with_parens(
 
 def _atom_has_magic_trailing_comma(node: LN, mode: Mode) -> bool:
     """Check if an atom node has a magic trailing comma.
-    
+
     Returns True for single-element tuples with trailing commas like (a,),
     which should be preserved to maintain their tuple type.
     """
     if not mode.magic_trailing_comma:
         return False
-    
+
     return is_one_tuple(node)
 
 
