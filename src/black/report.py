@@ -50,19 +50,23 @@ class Report:
                 out(msg, bold=False)
             self.same_count += 1
 
-    def failed(self, src: Path, message: str | InvalidInput) -> None:
+    def failed(
+        self, src: Path, message: str | InvalidInput | Exception
+    ) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
         if isinstance(message, InvalidInput):
             if message.lineno is not None and message.column is not None:
-                # Print a user-friendly multi-line error message similar to Python's syntax error
+                # Print user-friendly multi-line error message
                 err(f"Error: Cannot parse {src}")
                 err("")
-                err(f"black's parser found a syntax error on or near line {message.lineno}.")
+                err(
+                    f"black's parser found a syntax error on or near "
+                    f"line {message.lineno}."
+                )
                 err("")
                 err(f'  File "{src}", line {message.lineno}:')
                 if message.faulty_line:
                     err(f"    {message.faulty_line}")
-                    # Create pointer to the error column (add 4 spaces for indentation)
                     pointer = " " * (message.column + 4) + "^"
                     err(pointer)
                 err("")
