@@ -21,18 +21,12 @@ class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
     def __init__(
-        self, msg: str, *, lineno: int | None = None, column: int | None = None, faulty_line: str | None = None
-    ) -> None:
-        self.msg = msg
-        self.lineno = lineno
-        self.column = column
-        self.faulty_line = faulty_line
-
-    def __str__(self) -> str:
-        return self.msg
-
-    def __init__(
-        self, msg: str, *, lineno: int | None = None, column: int | None = None, faulty_line: str | None = None
+        self,
+        msg: str,
+        *,
+        lineno: int | None = None,
+        column: int | None = None,
+        faulty_line: str | None = None,
     ) -> None:
         self.msg = msg
         self.lineno = lineno

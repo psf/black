@@ -6,7 +6,7 @@ from click.testing import CliRunner
 import black
 
 
-def test_syntax_error_reporting(tmp_path):
+def test_syntax_error_reporting(tmp_path) -> None:  # type: ignore[no-untyped-def]
     src = tmp_path / "bad_syntax.py"
     src.write_text("def my_func()\n    pass", encoding="utf-8")
 
