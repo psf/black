@@ -25,7 +25,7 @@ jobs:
       matrix: ${{ steps.set-config.outputs.matrix }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v6
         with:
@@ -53,7 +53,7 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
@@ -106,7 +106,7 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
@@ -170,7 +170,7 @@ jobs:
         include: ${{ fromJson(needs.configure.outputs.matrix) }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/download-artifact@v6
         with:
