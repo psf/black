@@ -1,5 +1,6 @@
-import black
 from click.testing import CliRunner
+
+import black
 
 
 def test_syntax_error_reporting(tmp_path) -> None:  # type: ignore[no-untyped-def]

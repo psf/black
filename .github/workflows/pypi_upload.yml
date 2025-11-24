@@ -123,7 +123,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           path: all-wheels/
-          pattern: '*-*'
+          pattern: "*-*"
           merge-multiple: true
 
       - name: Set up Python for publishing
