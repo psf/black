@@ -141,18 +141,6 @@ def read_pyproject_toml(
         spellcheck_pyproject_toml_keys(ctx, list(config), value)
         # Sanitize the values to be Click friendly. For more information please see:
         # https://github.com/psf/black/issues/1458
-        # https://github.com/pallets/click/issues/1567
-        config = {
-            k: str(v) if not isinstance(v, (list, dict)) else v
-            for k, v in config.items()
-        }
-
-    target_version = config.get("target_version")
-    if target_version is not None and not isinstance(target_version, list):
-        raise click.BadOptionUsage(
-            "target-version", "Config key target-version must be a list"
-        )
-
     exclude = config.get("exclude")
     if exclude is not None and not isinstance(exclude, str):
         raise click.BadOptionUsage("exclude", "Config key exclude must be a string")
@@ -856,7 +844,7 @@ def reformat_code(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(path, str(exc))
+        report.failed(path, exc)
 
 
 # diff-shades depends on being to monkeypatch this function to operate. I know it's
@@ -920,7 +908,7 @@ def reformat_one(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(src, str(exc))
+        report.failed(src, exc)
 
 
 def format_file_in_place(
