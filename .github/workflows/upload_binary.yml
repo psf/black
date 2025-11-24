@@ -64,3 +64,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/${{ matrix.asset_name }}
+
+  # Mark binaries as complete for release coordination
+  binaries-complete:
+    name: All binaries uploaded
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Signal completion
+        run: echo "All platform binaries have been uploaded"

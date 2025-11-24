@@ -67,3 +67,13 @@ jobs:
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+
+  # Signal that docker build completed successfully
+  docker-complete:
+    name: Docker build complete
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Mark docker as done
+        run: echo "Docker images published successfully"
