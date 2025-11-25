@@ -103,9 +103,7 @@ def download_and_extract(package: str, version: str | None, directory: Path) -> 
     return directory / result_dir
 
 
-def get_package(
-    package: str, version: str | None, directory: Path
-) -> Path | None:
+def get_package(package: str, version: str | None, directory: Path) -> Path | None:
     try:
         return download_and_extract(package, version, directory)
     except Exception:
