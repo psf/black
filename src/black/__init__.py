@@ -8,7 +8,6 @@ import traceback
 from collections.abc import (
     Collection,
     Generator,
-    Iterator,
     MutableMapping,
     Sequence,
 )
