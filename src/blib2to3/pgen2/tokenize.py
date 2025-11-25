@@ -211,8 +211,8 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
 def printtoken(
     type: int, token: str, srow_col: Coord, erow_col: Coord, line: str
 ) -> None:  # for testing
-    (srow, scol) = srow_col
-    (erow, ecol) = erow_col
+    srow, scol = srow_col
+    erow, ecol = erow_col
     print(f"{srow},{scol}-{erow},{ecol}:\t{tok_name[type]}\t{token!r}")
 
 

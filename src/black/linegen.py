@@ -1524,9 +1524,25 @@ def normalize_invisible_parens(  # noqa: C901
         ):
             check_lpar = True
 
-        if index == 0 and isinstance(child, Node) and child.type == syms.atom:
-            if node.type == syms.expr_stmt:
-                check_lpar = True
+        # Check for assignment LHS with preview feature enabled
+        if (
+            Preview.remove_parens_from_assignment_lhs in mode
+            and index == 0
+            and isinstance(child, Node)
+            and child.type == syms.atom
+            and node.type == syms.expr_stmt
+            and not _atom_has_magic_trailing_comma(child, mode)
+            and not _is_atom_multiline(child)
+        ):
+            if maybe_make_parens_invisible_in_atom(
+                child,
+                parent=node,
+                mode=mode,
+                features=features,
+                remove_brackets_around_comma=True,
+                allow_star_expr=True,
+            ):
+                wrap_in_parentheses(node, child, visible=False)
 
         if check_lpar:
             if (
@@ -1546,22 +1562,6 @@ def normalize_invisible_parens(  # noqa: C901
                     wrap_in_parentheses(node, child, visible=False)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node, mode=mode, features=features)
-            elif (
-                child.type == syms.atom
-                and node.type == syms.expr_stmt
-                and index == 0
-                and not _atom_has_magic_trailing_comma(child, mode)
-                and not _is_atom_multiline(child)
-            ):
-                if maybe_make_parens_invisible_in_atom(
-                    child,
-                    parent=node,
-                    mode=mode,
-                    features=features,
-                    remove_brackets_around_comma=True,
-                    allow_star_expr=True,
-                ):
-                    wrap_in_parentheses(node, child, visible=False)
             elif child.type == syms.atom and not (
                 "in" in parens_after
                 and len(child.children) == 3
@@ -1763,10 +1763,13 @@ def _atom_has_magic_trailing_comma(node: LN, mode: Mode) -> bool:
 
 def _is_atom_multiline(node: LN) -> bool:
     """Check if an atom node is multiline (indicating intentional formatting)."""
-    if not isinstance(node, Node):
+    if not isinstance(node, Node) or len(node.children) < 3:
         return False
 
-    for child in node.pre_order():
+    # Check the middle child (between LPAR and RPAR) for newlines in its subtree
+    # The first child's prefix contains blank lines/comments before the opening paren
+    middle = node.children[1]
+    for child in middle.pre_order():
         if isinstance(child, Leaf) and "\n" in child.prefix:
             return True
 

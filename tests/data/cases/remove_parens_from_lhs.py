@@ -1,3 +1,4 @@
+# flags: --preview
 # Remove unnecessary parentheses from LHS of assignments
 
 
@@ -6,10 +7,10 @@ def a():
 
 
 # Single variable with unnecessary parentheses
-b = a()[0]
+(b) = a()[0]
 
 # Tuple unpacking with unnecessary parentheses
-c, *_ = a()
+(c, *_) = a()
 
 # These should not be changed - parentheses are necessary
 (d,) = a()  # single-element tuple
