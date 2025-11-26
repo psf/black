@@ -1,6 +1,11 @@
 name: Documentation
 
-on: [push, pull_request]
+on:
+  push:
+    paths: ["docs/**", "pyproject.toml", ".github/workflows/*"]
+
+  pull_request:
+    paths: ["docs/**", "pyproject.toml", ".github/workflows/*"]
 
 permissions:
   contents: read
