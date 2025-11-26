@@ -1524,6 +1524,26 @@ def normalize_invisible_parens(  # noqa: C901
         ):
             check_lpar = True
 
+        # Check for assignment LHS with preview feature enabled
+        if (
+            Preview.remove_parens_from_assignment_lhs in mode
+            and index == 0
+            and isinstance(child, Node)
+            and child.type == syms.atom
+            and node.type == syms.expr_stmt
+            and not _atom_has_magic_trailing_comma(child, mode)
+            and not _is_atom_multiline(child)
+        ):
+            if maybe_make_parens_invisible_in_atom(
+                child,
+                parent=node,
+                mode=mode,
+                features=features,
+                remove_brackets_around_comma=True,
+                allow_star_expr=True,
+            ):
+                wrap_in_parentheses(node, child, visible=False)
+
         if check_lpar:
             if (
                 child.type == syms.atom
@@ -1729,12 +1749,40 @@ def remove_with_parens(
             wrap_in_parentheses(node, node.children[0], visible=False)
 
 
+def _atom_has_magic_trailing_comma(node: LN, mode: Mode) -> bool:
+    """Check if an atom node has a magic trailing comma.
+
+    Returns True for single-element tuples with trailing commas like (a,),
+    which should be preserved to maintain their tuple type.
+    """
+    if not mode.magic_trailing_comma:
+        return False
+
+    return is_one_tuple(node)
+
+
+def _is_atom_multiline(node: LN) -> bool:
+    """Check if an atom node is multiline (indicating intentional formatting)."""
+    if not isinstance(node, Node) or len(node.children) < 3:
+        return False
+
+    # Check the middle child (between LPAR and RPAR) for newlines in its subtree
+    # The first child's prefix contains blank lines/comments before the opening paren
+    middle = node.children[1]
+    for child in middle.pre_order():
+        if isinstance(child, Leaf) and "\n" in child.prefix:
+            return True
+
+    return False
+
+
 def maybe_make_parens_invisible_in_atom(
     node: LN,
     parent: LN,
     mode: Mode,
     features: Collection[Feature],
     remove_brackets_around_comma: bool = False,
+    allow_star_expr: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
@@ -1780,7 +1828,7 @@ def maybe_make_parens_invisible_in_atom(
             )
         )
         or is_tuple_containing_walrus(node)
-        or is_tuple_containing_star(node)
+        or (not allow_star_expr and is_tuple_containing_star(node))
         or is_generator(node)
     ):
         return False
