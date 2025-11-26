@@ -163,7 +163,7 @@ jobs:
   compare:
     name: compare / ${{ matrix.mode }}
     needs: ["configure", "analysis-base", "analysis-target"]
-    if: !cancelled()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
