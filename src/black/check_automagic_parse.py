@@ -11,7 +11,7 @@ def is_ipython_magic(cell_source):
     lines = cell_source.strip().splitlines()
     if not lines:
         return False
-    
+
     first = lines[0].strip()
     return (
         first.startswith("%%") or  # cell magic
@@ -33,12 +33,12 @@ def check_cell_syntax(cell_source):
     try:
         ast.parse(cell_source)
         return "Valid Python"
-    
+
     except SyntaxError:
         if is_ipython_magic(cell_source):
             return "Skipped (IPython magic)"
         return "Syntax Error (Invalid Python)"
-    
+
     except ValueError as e:
         return f"ValueError: {e}"
 
