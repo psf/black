@@ -29,7 +29,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades and support dependencies
         run: |
@@ -60,7 +60,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades
         run: |
@@ -113,7 +113,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades
         run: |
@@ -163,6 +163,7 @@ jobs:
   compare:
     name: compare / ${{ matrix.mode }}
     needs: ["configure", "analysis-base", "analysis-target"]
+    if: !cancelled()
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -178,7 +179,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades and support dependencies
         run: |

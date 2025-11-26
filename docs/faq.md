@@ -95,8 +95,8 @@ also be removed some time in the future without a deprecation period.
 
 `await`/`async` as soft keywords/indentifiers are no longer supported as of 25.9.0.
 
-Runtime support for 3.6 was removed in version 22.10.0, for 3.7 in version 23.7.0, and
-for 3.8 in version 24.10.0.
+Runtime support for 3.6 was removed in version 22.10.0, for 3.7 in version 23.7.0, for
+3.8 in version 24.10.0, and for 3.9 in version 25.12.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 
