@@ -409,6 +409,17 @@ def _handle_regular_fmt_block(
     else:
         standalone_comment_prefix = prefix[:previous_consumed] + "\n" * comment.newlines
 
+    # Ensure STANDALONE_COMMENT nodes have trailing newlines when stringified
+    # This prevents multiple fmt: skip comments from being concatenated on one line
+    for node in ignored_nodes:
+        if isinstance(node, Leaf) and node.type == STANDALONE_COMMENT:
+            if not node.value.endswith("\n"):
+                node.value += "\n"
+        elif isinstance(node, Node):
+            for leaf in node.leaves():
+                if leaf.type == STANDALONE_COMMENT and not leaf.value.endswith("\n"):
+                    leaf.value += "\n"
+
     hidden_value = "".join(str(n) for n in ignored_nodes)
     comment_lineno = leaf.lineno - comment.newlines
 
