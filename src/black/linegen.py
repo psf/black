@@ -387,7 +387,8 @@ class LineGenerator(Visitor[Line]):
         yield from self.line()
 
     def visit_STANDALONE_COMMENT(self, leaf: Leaf) -> Iterator[Line]:
-        if not self.current_line.bracket_tracker.any_open_brackets():
+        any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
+        if not any_open_brackets:
             yield from self.line()
         # STANDALONE_COMMENT nodes created by our special handling in
         # normalize_fmt_off for comment-only blocks have fmt:off as the first
@@ -422,7 +423,8 @@ class LineGenerator(Visitor[Line]):
                 leaf.prefix = ""
 
             self.current_line.append(leaf)
-            yield from self.line()
+            if not any_open_brackets:
+                yield from self.line()
         else:
             # Normal standalone comment - process through visit_default
             yield from self.visit_default(leaf)
