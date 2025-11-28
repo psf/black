@@ -513,7 +513,7 @@ def validate_regex(
     ),
 )
 @click.pass_context
-def main(  # noqa: C901
+def main(
     ctx: click.Context,
     code: str | None,
     line_length: int,
@@ -1333,7 +1333,7 @@ def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine
         return tiow.read(), encoding, newline
 
 
-def get_features_used(  # noqa: C901
+def get_features_used(
     node: Node, *, future_imports: set[str] | None = None
 ) -> set[Feature]:
     """Return a set of (relatively) new Python features used in this file.

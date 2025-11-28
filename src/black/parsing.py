@@ -192,7 +192,7 @@ def _stringify_ast(node: ast.AST, parent_stack: list[ast.AST]) -> Iterator[str]:
 
     yield f"{'    ' * len(parent_stack)}{node.__class__.__name__}("
 
-    for field in sorted(node._fields):  # noqa: F402
+    for field in sorted(node._fields):
         # TypeIgnore has only one field 'lineno' which breaks this comparison
         if isinstance(node, ast.TypeIgnore):
             break

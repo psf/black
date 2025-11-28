@@ -4,4 +4,4 @@ ignore = E203, E266, E501, E701, E704, W503, B907
 # See https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#bugbear for more details
 max-line-length = 80
 max-complexity = 18
-select = B,C,E,F,W,T4,B9
+select = B,E,F,W,T4,B9

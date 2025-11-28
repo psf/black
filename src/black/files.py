@@ -29,7 +29,7 @@ from black.output import err
 from black.report import Report
 
 if TYPE_CHECKING:
-    import colorama  # noqa: F401
+    import colorama
 
 
 @lru_cache
