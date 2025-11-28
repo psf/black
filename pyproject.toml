@@ -126,8 +126,7 @@ macos-max-compat = true
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
-  # TODO: change once mypy 1.19 is released
-  "mypy @ git+https://github.com/python/mypy@03b12a1309b22f2aa5aa4c4fe1089b796b48adca",
+  "mypy==1.19.0",
   "click>=8.1.7",
 ]
 require-runtime-dependencies = true
