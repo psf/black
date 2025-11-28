@@ -17,11 +17,11 @@
 
 - Fix bug where comments preceding `# fmt: off`/`# fmt: on` blocks were incorrectly
   removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4845)
-- Fix `fmt: skip` skipping the line after instead of the line it's on (#4855)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+- Fix `fmt: skip` skipping the line after instead of the line it's on (#4855)
 
 ### Configuration
 
