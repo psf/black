@@ -21,6 +21,7 @@
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
 - Fix `fmt: skip` skipping the line after instead of the line it's on (#4855)
 
 ### Configuration
