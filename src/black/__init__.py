@@ -63,8 +63,9 @@ from black.mode import Mode as Mode  # re-exported
 from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import STARS, is_number_token, is_simple_decorator_expression, syms
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
-from black.parsing import (
+from black.parsing import (  # noqa F401
     ASTSafetyError,
+    InvalidInput,
     lib2to3_parse,
     parse_ast,
     stringify_ast,
