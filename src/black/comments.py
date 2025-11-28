@@ -661,6 +661,16 @@ def _generate_ignored_nodes_from_fmt_skip(
                 current_node.prefix = ""
                 break
 
+            # Special case for with expressions
+            # Without this, we can stuck inside the asexpr_test's children's children
+            if (
+                current_node.parent
+                and current_node.parent.type == syms.asexpr_test
+                and current_node.parent.parent
+                and current_node.parent.parent.type == syms.with_stmt
+            ):
+                current_node = current_node.parent
+
             ignored_nodes.insert(0, current_node)
 
             if current_node.prev_sibling is None and current_node.parent is not None:

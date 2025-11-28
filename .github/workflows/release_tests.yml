@@ -25,11 +25,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.13"]
-        os: [macOS-latest, ubuntu-latest, windows-latest, windows-11-arm]
+        python-version: ["3.12", "3.13", "3.14"]
+        os: [macOS-latest, ubuntu-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Give us all history, branches and tags
           fetch-depth: 0

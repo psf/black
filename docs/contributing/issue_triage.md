@@ -90,6 +90,10 @@ We also have a few standalone labels:
   to progress (will also show up in various GitHub pages)
 - **`skip news`**: for PRs that are trivial and don't need a CHANGELOG entry (and skips
   the CHANGELOG entry check)
+- **`ci: build all wheels`**: when a full wheel build is needed, such as to debug
+  platform-specific issues. Black does not build wheels for every platform on each pull
+  request because the full build matrix is expensive. After the label is added, the
+  workflow starts only when a new commit is pushed.
 
 ```{note}
 We do use labels for PRs, in particular the `skip news` label, but we aren't that

@@ -25,11 +25,11 @@ jobs:
       matrix: ${{ steps.set-config.outputs.matrix }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades and support dependencies
         run: |
@@ -53,14 +53,14 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades
         run: |
@@ -106,14 +106,14 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades
         run: |
@@ -163,6 +163,7 @@ jobs:
   compare:
     name: compare / ${{ matrix.mode }}
     needs: ["configure", "analysis-base", "analysis-target"]
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -170,7 +171,7 @@ jobs:
         include: ${{ fromJson(needs.configure.outputs.matrix) }}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: actions/download-artifact@v6
         with:
@@ -178,7 +179,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install diff-shades and support dependencies
         run: |

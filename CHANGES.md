@@ -23,6 +23,10 @@
 <!-- Changes that affect Black's preview style -->
 
 - Fix `fmt: skip` skipping the line after instead of the line it's on (#4855)
+- Remove unnecessary parentheses from the left-hand side of assignments while preserving
+  magic trailing commas and intentional multiline formatting (#4865)
+- Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
+- Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
 
 ### Configuration
 

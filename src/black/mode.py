@@ -233,11 +233,12 @@ class Preview(Enum):
     standardize_type_comments = auto()
     wrap_comprehension_in = auto()
     # Remove parentheses around multiple exception types in except and
-    # except* without as. See PEP 758 for details.
+    # except* without as. See PEP 758 for details.
     remove_parens_around_except_types = auto()
     normalize_cr_newlines = auto()
     fix_module_docstring_detection = auto()
     fix_type_expansion_split = auto()
+    remove_parens_from_assignment_lhs = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

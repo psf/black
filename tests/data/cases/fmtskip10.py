@@ -5,6 +5,7 @@ for i in range(10): print(i)  # fmt: skip
 if True: print("this"); print("that")  # fmt: skip
 while True: print("loop"); break  # fmt: skip
 for x in [1, 2]: print(x); print("done")  # fmt: skip
+def f(x: int): return x # fmt: skip
 
 j =     1 # fmt: skip
 while j < 10: j += 1  # fmt: skip
