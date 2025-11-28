@@ -63,9 +63,8 @@ from black.mode import Mode as Mode  # re-exported
 from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import STARS, is_number_token, is_simple_decorator_expression, syms
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
-from black.parsing import (  # noqa F401
+from black.parsing import (
     ASTSafetyError,
-    InvalidInput,
     lib2to3_parse,
     parse_ast,
     stringify_ast,
@@ -513,7 +512,7 @@ def validate_regex(
     ),
 )
 @click.pass_context
-def main(  # noqa: C901
+def main(
     ctx: click.Context,
     code: str | None,
     line_length: int,
@@ -1333,7 +1332,7 @@ def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine
         return tiow.read(), encoding, newline
 
 
-def get_features_used(  # noqa: C901
+def get_features_used(
     node: Node, *, future_imports: set[str] | None = None
 ) -> set[Feature]:
     """Return a set of (relatively) new Python features used in this file.

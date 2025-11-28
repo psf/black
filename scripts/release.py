@@ -68,7 +68,7 @@ NEW_VERSION_CHANGELOG_TEMPLATE = """\
 """
 
 
-class NoGitTagsError(Exception): ...  # noqa: E701,E761
+class NoGitTagsError(Exception): ...
 
 
 # TODO: Do better with alpha + beta releases

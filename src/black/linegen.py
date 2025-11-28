@@ -1472,7 +1472,7 @@ def standalone_comment_split(
         yield current_line
 
 
-def normalize_invisible_parens(  # noqa: C901
+def normalize_invisible_parens(
     node: Node, parens_after: set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
