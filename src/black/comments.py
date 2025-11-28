@@ -606,7 +606,7 @@ def _generate_ignored_nodes_from_fmt_skip(
     if not comments or comment.value != comments[0].value:
         return
 
-    if Preview.fix_fmt_skip_in_one_liners in mode and not prev_sibling and parent and parent.prev_sibling:
+    if Preview.fix_fmt_skip_in_one_liners in mode and not prev_sibling and parent:
         prev_sibling = parent.prev_sibling
 
     if prev_sibling is not None:
@@ -659,6 +659,9 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             if current_node.type in (token.NEWLINE, token.INDENT):
                 current_node.prefix = ""
+                break
+
+            if current_node.type == token.DEDENT:
                 break
 
             # Special case for with expressions
