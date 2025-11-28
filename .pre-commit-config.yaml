@@ -24,7 +24,7 @@ repos:
         additional_dependencies: *version_check_dependencies
 
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+    rev: 6.1.0
     hooks:
       - id: isort
 
@@ -74,7 +74,7 @@ repos:
         exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
