@@ -44,9 +44,9 @@ call to `git blame`.
 $ git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
 
-**The one caveat is that some online Git-repositories like GitLab do not yet support
-ignoring revisions using their native blame UI.** So blame information will be cluttered
-with a reformatting commit on those platforms. (If you'd like this feature, there's an
-open issue for [GitLab](https://gitlab.com/gitlab-org/gitlab/-/issues/31423)).
+**The one caveat is that some online Git-repositories do not yet support ignoring
+revisions using their native blame UI.** So blame information will be cluttered with a
+reformatting commit on those platforms.
 [GitHub supports `.git-blame-ignore-revs`](https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view)
 by default in blame views however.
+[GitLab supports this since version 17.10](https://about.gitlab.com/releases/2025/03/20/gitlab-17-10-released/#ignore-specific-revisions-in-git-blame)

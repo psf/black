@@ -8,7 +8,7 @@ from collections.abc import Collection, Iterator
 from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
-from typing import Optional, Union, cast
+from typing import Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
@@ -17,7 +17,13 @@ from black.brackets import (
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
 )
-from black.comments import FMT_OFF, generate_comments, list_comments
+from black.comments import (
+    FMT_OFF,
+    FMT_ON,
+    _contains_fmt_directive,
+    generate_comments,
+    list_comments,
+)
 from black.lines import (
     Line,
     RHSResult,
@@ -38,7 +44,7 @@ from black.nodes import (
     WHITESPACE,
     Visitor,
     ensure_visible,
-    fstring_to_string,
+    fstring_tstring_to_string,
     get_annotation_type,
     has_sibling_with_type,
     is_arith_like,
@@ -140,7 +146,7 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node):
+            for comment in generate_comments(node, mode=self.mode):
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -303,7 +309,7 @@ class LineGenerator(Visitor[Line]):
 
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
-        prev_type: Optional[int] = None
+        prev_type: int | None = None
         for child in node.children:
             if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
                 wrap_in_parentheses(node, child, visible=False)
@@ -383,7 +389,50 @@ class LineGenerator(Visitor[Line]):
     def visit_STANDALONE_COMMENT(self, leaf: Leaf) -> Iterator[Line]:
         if not self.current_line.bracket_tracker.any_open_brackets():
             yield from self.line()
-        yield from self.visit_default(leaf)
+        # STANDALONE_COMMENT nodes created by our special handling in
+        # normalize_fmt_off for comment-only blocks have fmt:off as the first
+        # line and fmt:on as the last line (each directive on its own line,
+        # not embedded in other text). These should be appended directly
+        # without calling visit_default, which would process their prefix and
+        # lose indentation. Normal STANDALONE_COMMENT nodes go through
+        # visit_default.
+        value = leaf.value
+        lines = value.splitlines()
+        if len(lines) >= 2:
+            # Check if first line (after stripping whitespace) is exactly a
+            # fmt:off directive
+            first_line = lines[0].lstrip()
+            first_is_fmt_off = first_line in FMT_OFF
+            # Check if last line (after stripping whitespace) is exactly a
+            # fmt:on directive
+            last_line = lines[-1].lstrip()
+            last_is_fmt_on = last_line in FMT_ON
+            is_fmt_off_block = first_is_fmt_off and last_is_fmt_on
+        else:
+            is_fmt_off_block = False
+        if is_fmt_off_block:
+            # This is a fmt:off/on block from normalize_fmt_off - we still need
+            # to process any prefix comments (like markdown comments) but append
+            # the fmt block itself directly to preserve its formatting
+
+            # Only process prefix comments if there actually is a prefix with comments
+            if leaf.prefix and any(
+                line.strip().startswith("#")
+                and not _contains_fmt_directive(line.strip())
+                for line in leaf.prefix.split("\n")
+            ):
+                for comment in generate_comments(leaf, mode=self.mode):
+                    yield from self.line()
+                    self.current_line.append(comment)
+                    yield from self.line()
+                # Clear the prefix since we've processed it as comments above
+                leaf.prefix = ""
+
+            self.current_line.append(leaf)
+            yield from self.line()
+        else:
+            # Normal standalone comment - process through visit_default
+            yield from self.visit_default(leaf)
 
     def visit_factor(self, node: Node) -> Iterator[Line]:
         """Force parentheses between a unary op and a binary power:
@@ -413,8 +462,7 @@ class LineGenerator(Visitor[Line]):
 
         def foo(a: (int), b: (float) = 7): ...
         """
-        assert len(node.children) == 3
-        if maybe_make_parens_invisible_in_atom(
+        if len(node.children) == 3 and maybe_make_parens_invisible_in_atom(
             node.children[2], parent=node, mode=self.mode, features=self.features
         ):
             wrap_in_parentheses(node, node.children[2], visible=False)
@@ -533,7 +581,22 @@ class LineGenerator(Visitor[Line]):
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
         # currently we don't want to format and split f-strings at all.
-        string_leaf = fstring_to_string(node)
+        string_leaf = fstring_tstring_to_string(node)
+        node.replace(string_leaf)
+        if "\\" in string_leaf.value and any(
+            "\\" in str(child)
+            for child in node.children
+            if child.type == syms.fstring_replacement_field
+        ):
+            # string normalization doesn't account for nested quotes,
+            # causing breakages. skip normalization when nested quotes exist
+            yield from self.visit_default(string_leaf)
+            return
+        yield from self.visit_STRING(string_leaf)
+
+    def visit_tstring(self, node: Node) -> Iterator[Line]:
+        # currently we don't want to format and split t-strings at all.
+        string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
         if "\\" in string_leaf.value and any(
             "\\" in str(child)
@@ -625,7 +688,7 @@ def _hugging_power_ops_line_to_string(
     line: Line,
     features: Collection[Feature],
     mode: Mode,
-) -> Optional[str]:
+) -> str | None:
     try:
         return line_to_string(next(hug_power_op(line, features, mode)))
     except CannotTransform:
@@ -807,7 +870,7 @@ def left_hand_split(
         body_leaves: list[Leaf] = []
         head_leaves: list[Leaf] = []
         current_leaves = head_leaves
-        matching_bracket: Optional[Leaf] = None
+        matching_bracket: Leaf | None = None
         depth = 0
         for index, leaf in enumerate(line.leaves):
             if index == 2 and leaf.type == token.LSQB:
@@ -894,8 +957,8 @@ def _first_right_hand_split(
     body_leaves: list[Leaf] = []
     head_leaves: list[Leaf] = []
     current_leaves = tail_leaves
-    opening_bracket: Optional[Leaf] = None
-    closing_bracket: Optional[Leaf] = None
+    opening_bracket: Leaf | None = None
+    closing_bracket: Leaf | None = None
     for leaf in reversed(line.leaves):
         if current_leaves is body_leaves:
             if leaf is opening_bracket:
@@ -916,7 +979,7 @@ def _first_right_hand_split(
     body_leaves.reverse()
     head_leaves.reverse()
 
-    body: Optional[Line] = None
+    body: Line | None = None
     if (
         Preview.hug_parens_with_braces_and_square_brackets in line.mode
         and tail_leaves[0].value
@@ -1254,7 +1317,7 @@ def dont_increase_indentation(split_func: Transformer) -> Transformer:
     return split_wrapper
 
 
-def _get_last_non_comment_leaf(line: Line) -> Optional[int]:
+def _get_last_non_comment_leaf(line: Line) -> int | None:
     for leaf_idx in range(len(line.leaves) - 1, 0, -1):
         if line.leaves[leaf_idx].type != STANDALONE_COMMENT:
             return leaf_idx
@@ -1409,7 +1472,7 @@ def standalone_comment_split(
         yield current_line
 
 
-def normalize_invisible_parens(  # noqa: C901
+def normalize_invisible_parens(
     node: Node, parens_after: set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
     """Make existing optional parentheses invisible or create new ones.
@@ -1420,7 +1483,7 @@ def normalize_invisible_parens(  # noqa: C901
     Standardizes on visible parentheses for single-element tuples, and keeps
     existing visible parentheses for other tuples and generator expressions.
     """
-    for pc in list_comments(node.prefix, is_endmarker=False):
+    for pc in list_comments(node.prefix, is_endmarker=False, mode=mode):
         if pc.value in FMT_OFF:
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
@@ -1460,6 +1523,26 @@ def normalize_invisible_parens(  # noqa: C901
             and child.type == syms.testlist_star_expr
         ):
             check_lpar = True
+
+        # Check for assignment LHS with preview feature enabled
+        if (
+            Preview.remove_parens_from_assignment_lhs in mode
+            and index == 0
+            and isinstance(child, Node)
+            and child.type == syms.atom
+            and node.type == syms.expr_stmt
+            and not _atom_has_magic_trailing_comma(child, mode)
+            and not _is_atom_multiline(child)
+        ):
+            if maybe_make_parens_invisible_in_atom(
+                child,
+                parent=node,
+                mode=mode,
+                features=features,
+                remove_brackets_around_comma=True,
+                allow_star_expr=True,
+            ):
+                wrap_in_parentheses(node, child, visible=False)
 
         if check_lpar:
             if (
@@ -1590,7 +1673,7 @@ def _maybe_wrap_cms_in_parens(
         or node.children[1].type == syms.atom
     ):
         return
-    colon_index: Optional[int] = None
+    colon_index: int | None = None
     for i in range(2, len(node.children)):
         if node.children[i].type == token.COLON:
             colon_index = i
@@ -1666,12 +1749,40 @@ def remove_with_parens(
             wrap_in_parentheses(node, node.children[0], visible=False)
 
 
+def _atom_has_magic_trailing_comma(node: LN, mode: Mode) -> bool:
+    """Check if an atom node has a magic trailing comma.
+
+    Returns True for single-element tuples with trailing commas like (a,),
+    which should be preserved to maintain their tuple type.
+    """
+    if not mode.magic_trailing_comma:
+        return False
+
+    return is_one_tuple(node)
+
+
+def _is_atom_multiline(node: LN) -> bool:
+    """Check if an atom node is multiline (indicating intentional formatting)."""
+    if not isinstance(node, Node) or len(node.children) < 3:
+        return False
+
+    # Check the middle child (between LPAR and RPAR) for newlines in its subtree
+    # The first child's prefix contains blank lines/comments before the opening paren
+    middle = node.children[1]
+    for child in middle.pre_order():
+        if isinstance(child, Leaf) and "\n" in child.prefix:
+            return True
+
+    return False
+
+
 def maybe_make_parens_invisible_in_atom(
     node: LN,
     parent: LN,
     mode: Mode,
     features: Collection[Feature],
     remove_brackets_around_comma: bool = False,
+    allow_star_expr: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
@@ -1717,7 +1828,7 @@ def maybe_make_parens_invisible_in_atom(
             )
         )
         or is_tuple_containing_walrus(node)
-        or is_tuple_containing_star(node)
+        or (not allow_star_expr and is_tuple_containing_star(node))
         or is_generator(node)
     ):
         return False
@@ -1748,7 +1859,7 @@ def maybe_make_parens_invisible_in_atom(
         if (
             # If the prefix of `middle` includes a type comment with
             # ignore annotation, then we do not remove the parentheses
-            not is_type_ignore_comment_string(middle.prefix.strip())
+            not is_type_ignore_comment_string(middle.prefix.strip(), mode=mode)
         ):
             first.value = ""
             last.value = ""
@@ -1823,8 +1934,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
         yield omit
 
     length = 4 * line.depth
-    opening_bracket: Optional[Leaf] = None
-    closing_bracket: Optional[Leaf] = None
+    opening_bracket: Leaf | None = None
+    closing_bracket: Leaf | None = None
     inner_brackets: set[LeafID] = set()
     for index, leaf, leaf_length in line.enumerate_with_length(is_reversed=True):
         length += leaf_length

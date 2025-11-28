@@ -5,15 +5,9 @@ import collections
 import dataclasses
 import re
 import secrets
-import sys
 from functools import lru_cache
 from importlib.util import find_spec
-from typing import Optional
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
+from typing import TypeGuard
 
 from black.mode import Mode
 from black.output import out
@@ -358,7 +352,7 @@ def _get_str_args(args: list[ast.expr]) -> list[str]:
 @dataclasses.dataclass(frozen=True)
 class CellMagic:
     name: str
-    params: Optional[str]
+    params: str | None
     body: str
 
     @property
@@ -388,7 +382,7 @@ class CellMagicFinder(ast.NodeVisitor):
     and we look for instances of the latter.
     """
 
-    def __init__(self, cell_magic: Optional[CellMagic] = None) -> None:
+    def __init__(self, cell_magic: CellMagic | None = None) -> None:
         self.cell_magic = cell_magic
 
     def visit_Expr(self, node: ast.Expr) -> None:

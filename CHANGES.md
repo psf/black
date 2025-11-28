@@ -2,21 +2,30 @@
 
 ## Unreleased
 
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
+
+- Black no longer supports running with Python 3.9 (#4842)
 
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix bug where comments preceding `# fmt: off`/`# fmt: on` blocks were incorrectly
+  removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4845)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix bug where module docstrings would be treated as normal strings if preceeded by
-  comments (#4764)
-- Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
+- Remove unnecessary parentheses from the left-hand side of assignments while preserving
+  magic trailing commas and intentional multiline formatting (#4865)
+- Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
+- Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
 
 ### Configuration
 
@@ -46,17 +55,64 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
-  "stability" format when using pyproject.toml (#4770)
-- Improve error message for vim plugin users. It now handles independently vim version
-- Vim: Warn on unsupported Vim and Python versions independently (#4772)
-- Vim: Print the import paths when importing black fails (#4675)
-- Vim: Fix handling of virtualenvs that have a different Python version (#4675)
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 25.11.0
+
+### Highlights
+
+- Enable base 3.14 support (#4804)
+- Add support for the new Python 3.14 t-string syntax introduced by PEP 750 (#4805)
+
+### Stable style
+
+- Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#4811)
+- Comments containing fmt directives now preserve their exact formatting instead of
+  being normalized (#4811)
+
+### Preview style
+
+- Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
+- Fix bug where module docstrings would be treated as normal strings if preceded by
+  comments (#4764)
+- Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
+- Standardize type comments to form `# type: <value>` (#4645)
+- Fix `fix_fmt_skip_in_one_liners` preview feature to respect `# fmt: skip` for compound
+  statements with semicolon-separated bodies (#4800)
+
+### Configuration
+
+- Add `no_cache` option to control caching behavior. (#4803)
+
+### Packaging
+
+- Releases now include arm64 Linux binaries (#4773)
+- Releases now include arm64 Windows binaries and wheels (#4814)
+
+### Output
+
+- Write unchanged content to stdout when excluding formatting from stdin using pipes
+  (#4610)
+
+### _Blackd_
+
+- Implemented BlackDClient. This simple python client allows to easily send formatting
+  requests to blackd (#4774)
+
+### Integrations
+
+- Enable 3.14 base CI (#4804)
+- Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
+  "stability" format when using pyproject.toml (#4770)
+- Add `output-file` input to GitHub Action `psf/black` to write formatter output to a
+  file for artifact capture and log cleanliness (#4824)
+- Improve error message for vim plugin users. It now handles independently vim version
+- Vim: Warn on unsupported Vim and Python versions independently (#4772)
+- Vim: Print the import paths when importing black fails (#4675)
+- Vim: Fix handling of virtualenvs that have a different Python version (#4675)
 
 ## 25.9.0
 

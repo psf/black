@@ -1,4 +1,4 @@
-# flags: --unstable
+# flags: --preview
 """cow
 say""",
 call(3, "dogsay", textwrap.dedent("""dove
@@ -156,24 +156,6 @@ msg = f"""The arguments {bad_arguments} were passed in.
 Please use `--build-option` instead,
 `--global-option` is reserved to flags like `--verbose` or `--quiet`.
 """
-
-this_will_become_one_line = (
-    "a"
-    "b"
-    "c"
-)
-
-this_will_stay_on_three_lines = (
-    "a"  # comment
-    "b"
-    "c"
-)
-
-this_will_also_become_one_line = (  # comment
-    "a"
-    "b"
-    "c"
-)
 
 assert some_var == expected_result, """
 test
@@ -450,16 +432,6 @@ msg = f"""The arguments {bad_arguments} were passed in.
 Please use `--build-option` instead,
 `--global-option` is reserved to flags like `--verbose` or `--quiet`.
 """
-
-this_will_become_one_line = "abc"
-
-this_will_stay_on_three_lines = (
-    "a"  # comment
-    "b"
-    "c"
-)
-
-this_will_also_become_one_line = "abc"  # comment
 
 assert some_var == expected_result, """
 test

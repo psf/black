@@ -24,10 +24,10 @@ from io import StringIO
 
 HUGE: int = 0x7FFFFFFF  # maximum repeat count, default max
 
-_type_reprs: dict[int, Union[str, int]] = {}
+_type_reprs: dict[int, str | int] = {}
 
 
-def type_repr(type_num: int) -> Union[str, int]:
+def type_repr(type_num: int) -> str | int:
     global _type_reprs
     if not _type_reprs:
         from . import pygram
@@ -125,7 +125,7 @@ class Base:
         """
         raise NotImplementedError
 
-    def replace(self, new: Union[NL, list[NL]]) -> None:
+    def replace(self, new: NL | list[NL]) -> None:
         """Replace this node with a new one in the parent."""
         assert self.parent is not None, str(self)
         assert new is not None
@@ -149,7 +149,7 @@ class Base:
             x.parent = self.parent
         self.parent = None
 
-    def get_lineno(self) -> Optional[int]:
+    def get_lineno(self) -> int | None:
         """Return the line number which generated the invocant node."""
         node = self
         while not isinstance(node, Leaf):
@@ -165,7 +165,7 @@ class Base:
             self.parent.changed()
         self.was_changed = True
 
-    def remove(self) -> Optional[int]:
+    def remove(self) -> int | None:
         """
         Remove the node from the tree. Returns the position of the node in its
         parent's children before it was removed.
@@ -181,7 +181,7 @@ class Base:
         return None
 
     @property
-    def next_sibling(self) -> Optional[NL]:
+    def next_sibling(self) -> NL | None:
         """
         The node immediately following the invocant in their parent's children
         list. If the invocant does not have a next sibling, it is None
@@ -195,7 +195,7 @@ class Base:
         return self.parent.next_sibling_map[id(self)]
 
     @property
-    def prev_sibling(self) -> Optional[NL]:
+    def prev_sibling(self) -> NL | None:
         """
         The node immediately preceding the invocant in their parent's children
         list. If the invocant does not have a previous sibling, it is None.
@@ -232,16 +232,16 @@ class Base:
 class Node(Base):
     """Concrete implementation for interior nodes."""
 
-    fixers_applied: Optional[list[Any]]
-    used_names: Optional[set[str]]
+    fixers_applied: list[Any] | None
+    used_names: set[str] | None
 
     def __init__(
         self,
         type: int,
         children: list[NL],
-        context: Optional[Any] = None,
-        prefix: Optional[str] = None,
-        fixers_applied: Optional[list[Any]] = None,
+        context: Any | None = None,
+        prefix: str | None = None,
+        fixers_applied: list[Any] | None = None,
     ) -> None:
         """
         Initializer.
@@ -349,15 +349,15 @@ class Node(Base):
         self.invalidate_sibling_maps()
 
     def invalidate_sibling_maps(self) -> None:
-        self.prev_sibling_map: Optional[dict[int, Optional[NL]]] = None
-        self.next_sibling_map: Optional[dict[int, Optional[NL]]] = None
+        self.prev_sibling_map: dict[int, NL | None] | None = None
+        self.next_sibling_map: dict[int, NL | None] | None = None
 
     def update_sibling_maps(self) -> None:
-        _prev: dict[int, Optional[NL]] = {}
-        _next: dict[int, Optional[NL]] = {}
+        _prev: dict[int, NL | None] = {}
+        _next: dict[int, NL | None] = {}
         self.prev_sibling_map = _prev
         self.next_sibling_map = _next
-        previous: Optional[NL] = None
+        previous: NL | None = None
         for current in self.children:
             _prev[id(current)] = previous
             _next[id(previous)] = current
@@ -374,7 +374,7 @@ class Leaf(Base):
     bracket_depth: int
     # Changed later in brackets.py
     opening_bracket: Optional["Leaf"] = None
-    used_names: Optional[set[str]]
+    used_names: set[str] | None
     _prefix = ""  # Whitespace and comments preceding this token in the input
     lineno: int = 0  # Line where this token starts in the input
     column: int = 0  # Column where this token starts in the input
@@ -387,8 +387,8 @@ class Leaf(Base):
         self,
         type: int,
         value: str,
-        context: Optional[Context] = None,
-        prefix: Optional[str] = None,
+        context: Context | None = None,
+        prefix: str | None = None,
         fixers_applied: list[Any] = [],
         opening_bracket: Optional["Leaf"] = None,
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
@@ -407,7 +407,7 @@ class Leaf(Base):
         self.value = value
         if prefix is not None:
             self._prefix = prefix
-        self.fixers_applied: Optional[list[Any]] = fixers_applied[:]
+        self.fixers_applied: list[Any] | None = fixers_applied[:]
         self.children = []
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
@@ -507,10 +507,10 @@ class BasePattern:
     """
 
     # Defaults for instance variables
-    type: Optional[int]
+    type: int | None
     type = None  # Node type (token if < 256, symbol if >= 256)
     content: Any = None  # Optional content matching pattern
-    name: Optional[str] = None  # Optional name used to store match in results dict
+    name: str | None = None  # Optional name used to store match in results dict
 
     def __new__(cls, *args, **kwds):
         """Constructor that prevents BasePattern from being instantiated."""
@@ -535,7 +535,7 @@ class BasePattern:
         """
         return self
 
-    def match(self, node: NL, results: Optional[_Results] = None) -> bool:
+    def match(self, node: NL, results: _Results | None = None) -> bool:
         """
         Does this pattern exactly match a node?
 
@@ -549,7 +549,7 @@ class BasePattern:
         if self.type is not None and node.type != self.type:
             return False
         if self.content is not None:
-            r: Optional[_Results] = None
+            r: _Results | None = None
             if results is not None:
                 r = {}
             if not self._submatch(node, r):
@@ -561,7 +561,7 @@ class BasePattern:
             results[self.name] = node
         return True
 
-    def match_seq(self, nodes: list[NL], results: Optional[_Results] = None) -> bool:
+    def match_seq(self, nodes: list[NL], results: _Results | None = None) -> bool:
         """
         Does this pattern exactly match a sequence of nodes?
 
@@ -585,9 +585,9 @@ class BasePattern:
 class LeafPattern(BasePattern):
     def __init__(
         self,
-        type: Optional[int] = None,
-        content: Optional[str] = None,
-        name: Optional[str] = None,
+        type: int | None = None,
+        content: str | None = None,
+        name: str | None = None,
     ) -> None:
         """
         Initializer.  Takes optional type, content, and name.
@@ -635,9 +635,9 @@ class NodePattern(BasePattern):
 
     def __init__(
         self,
-        type: Optional[int] = None,
-        content: Optional[Iterable[str]] = None,
-        name: Optional[str] = None,
+        type: int | None = None,
+        content: Iterable[str] | None = None,
+        name: str | None = None,
     ) -> None:
         """
         Initializer.  Takes optional type, content, and name.
@@ -716,10 +716,10 @@ class WildcardPattern(BasePattern):
 
     def __init__(
         self,
-        content: Optional[str] = None,
+        content: str | None = None,
         min: int = 0,
         max: int = HUGE,
-        name: Optional[str] = None,
+        name: str | None = None,
     ) -> None:
         """
         Initializer.
@@ -908,7 +908,7 @@ class WildcardPattern(BasePattern):
 
 
 class NegatedPattern(BasePattern):
-    def __init__(self, content: Optional[BasePattern] = None) -> None:
+    def __init__(self, content: BasePattern | None = None) -> None:
         """
         Initializer.
 
