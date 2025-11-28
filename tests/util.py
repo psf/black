@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import black
 from black.const import DEFAULT_LINE_LENGTH
@@ -45,7 +45,7 @@ fs = partial(black.format_str, mode=DEFAULT_MODE)
 class TestCaseArgs:
     mode: black.Mode = field(default_factory=black.Mode)
     fast: bool = False
-    minimum_version: Optional[tuple[int, int]] = None
+    minimum_version: tuple[int, int] | None = None
     lines: Collection[tuple[int, int]] = ()
     no_preview_line_length_1: bool = False
 
@@ -96,7 +96,7 @@ def assert_format(
     mode: black.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
-    minimum_version: Optional[tuple[int, int]] = None,
+    minimum_version: tuple[int, int] | None = None,
     lines: Collection[tuple[int, int]] = (),
     no_preview_line_length_1: bool = False,
 ) -> None:
@@ -161,11 +161,11 @@ def assert_format(
 
 def _assert_format_inner(
     source: str,
-    expected: Optional[str] = None,
+    expected: str | None = None,
     mode: black.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
-    minimum_version: Optional[tuple[int, int]] = None,
+    minimum_version: tuple[int, int] | None = None,
     lines: Collection[tuple[int, int]] = (),
 ) -> None:
     actual = black.format_str(source, mode=mode, lines=lines)

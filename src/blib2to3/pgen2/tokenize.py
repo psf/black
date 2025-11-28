@@ -29,7 +29,6 @@ each time a new token is found."""
 
 import sys
 from collections.abc import Iterator
-from typing import Optional
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
@@ -38,7 +37,6 @@ from blib2to3.pgen2.token import (
     COMMENT,
     DEDENT,
     ENDMARKER,
-    ERRORTOKEN,
     FSTRING_END,
     FSTRING_MIDDLE,
     FSTRING_START,
@@ -49,6 +47,9 @@ from blib2to3.pgen2.token import (
     NUMBER,
     OP,
     STRING,
+    TSTRING_END,
+    TSTRING_MIDDLE,
+    TSTRING_START,
     tok_name,
 )
 
@@ -91,6 +92,9 @@ TOKEN_TYPE_MAP = {
     TokenType.fstring_start: FSTRING_START,
     TokenType.fstring_middle: FSTRING_MIDDLE,
     TokenType.fstring_end: FSTRING_END,
+    TokenType.tstring_start: TSTRING_START,
+    TokenType.tstring_middle: TSTRING_MIDDLE,
+    TokenType.tstring_end: TSTRING_END,
     TokenType.endmarker: ENDMARKER,
 }
 
@@ -99,7 +103,7 @@ class TokenError(Exception): ...
 
 
 def transform_whitespace(
-    token: pytokens.Token, source: str, prev_token: Optional[pytokens.Token]
+    token: pytokens.Token, source: str, prev_token: pytokens.Token | None
 ) -> pytokens.Token:
     r"""
     Black treats `\\\n` at the end of a line as a 'NL' token, while it
@@ -137,12 +141,12 @@ def transform_whitespace(
     return token
 
 
-def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenInfo]:
+def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
     lines = source.split("\n")
     lines += [""]  # For newline tokens in files that don't end in a newline
     line, column = 1, 0
 
-    prev_token: Optional[pytokens.Token] = None
+    prev_token: pytokens.Token | None = None
     try:
         for token in pytokens.tokenize(source):
             token = transform_whitespace(token, source, prev_token)
@@ -186,6 +190,9 @@ def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenIn
                         source_line,
                     )
             else:
+                token_type = TOKEN_TYPE_MAP.get(token.type)
+                if token_type is None:
+                    raise ValueError(f"Unknown token type: {token.type!r}")
                 yield (
                     TOKEN_TYPE_MAP[token.type],
                     token_str,
@@ -204,8 +211,8 @@ def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenIn
 def printtoken(
     type: int, token: str, srow_col: Coord, erow_col: Coord, line: str
 ) -> None:  # for testing
-    (srow, scol) = srow_col
-    (erow, ecol) = erow_col
+    srow, scol = srow_col
+    erow, ecol = erow_col
     print(f"{srow},{scol}-{erow},{ecol}:\t{tok_name[type]}\t{token!r}")
 
 

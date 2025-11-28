@@ -1,6 +1,11 @@
 name: Documentation
 
-on: [push, pull_request]
+on:
+  push:
+    paths: ["docs/**", "pyproject.toml", ".github/workflows/*"]
+
+  pull_request:
+    paths: ["docs/**", "pyproject.toml", ".github/workflows/*"]
 
 permissions:
   contents: read
@@ -21,7 +26,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up latest Python
         uses: actions/setup-python@v6

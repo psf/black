@@ -12,7 +12,7 @@ how this parsing engine works.
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, Optional, Union, cast
+from typing import TYPE_CHECKING, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
@@ -98,8 +98,8 @@ class Recorder:
                     self.parser.addtoken(tok_type, tok_val, self.context)
 
     def determine_route(
-        self, value: Optional[str] = None, force: bool = False
-    ) -> Optional[int]:
+        self, value: str | None = None, force: bool = False
+    ) -> int | None:
         alive_ilabels = self.ilabels
         if len(alive_ilabels) == 0:
             *_, most_successful_ilabel = self._dead_ilabels
@@ -116,7 +116,7 @@ class ParseError(Exception):
     """Exception to signal the parser is stuck."""
 
     def __init__(
-        self, msg: str, type: Optional[int], value: Optional[str], context: Context
+        self, msg: str, type: int | None, value: str | None, context: Context
     ) -> None:
         Exception.__init__(
             self, f"{msg}: type={type!r}, value={value!r}, context={context!r}"
@@ -157,7 +157,7 @@ class Parser:
 
     """
 
-    def __init__(self, grammar: Grammar, convert: Optional[Convert] = None) -> None:
+    def __init__(self, grammar: Grammar, convert: Convert | None = None) -> None:
         """Constructor.
 
         The grammar argument is a grammar.Grammar instance; see the
@@ -195,9 +195,9 @@ class Parser:
         # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
         self.is_backtracking = False
-        self.last_token: Optional[int] = None
+        self.last_token: int | None = None
 
-    def setup(self, proxy: "TokenProxy", start: Optional[int] = None) -> None:
+    def setup(self, proxy: "TokenProxy", start: int | None = None) -> None:
         """Prepare for parsing.
 
         This *must* be called before starting to parse.
@@ -218,7 +218,7 @@ class Parser:
         newnode: RawNode = (start, None, None, [])
         stackentry = (self.grammar.dfas[start], 0, newnode)
         self.stack: list[tuple[DFAS, int, RawNode]] = [stackentry]
-        self.rootnode: Optional[NL] = None
+        self.rootnode: NL | None = None
         self.used_names: set[str] = set()
         self.proxy = proxy
         self.last_token = None
