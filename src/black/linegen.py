@@ -20,7 +20,7 @@ from black.brackets import (
 from black.comments import (
     FMT_OFF,
     FMT_ON,
-    _contains_fmt_directive,
+    contains_fmt_directive,
     generate_comments,
     list_comments,
 )
@@ -387,7 +387,8 @@ class LineGenerator(Visitor[Line]):
         yield from self.line()
 
     def visit_STANDALONE_COMMENT(self, leaf: Leaf) -> Iterator[Line]:
-        if not self.current_line.bracket_tracker.any_open_brackets():
+        any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
+        if not any_open_brackets:
             yield from self.line()
         # STANDALONE_COMMENT nodes created by our special handling in
         # normalize_fmt_off for comment-only blocks have fmt:off as the first
@@ -398,18 +399,11 @@ class LineGenerator(Visitor[Line]):
         # visit_default.
         value = leaf.value
         lines = value.splitlines()
-        if len(lines) >= 2:
-            # Check if first line (after stripping whitespace) is exactly a
-            # fmt:off directive
-            first_line = lines[0].lstrip()
-            first_is_fmt_off = first_line in FMT_OFF
-            # Check if last line (after stripping whitespace) is exactly a
-            # fmt:on directive
-            last_line = lines[-1].lstrip()
-            last_is_fmt_on = last_line in FMT_ON
-            is_fmt_off_block = first_is_fmt_off and last_is_fmt_on
-        else:
-            is_fmt_off_block = False
+        is_fmt_off_block = (
+            len(lines) >= 2
+            and contains_fmt_directive(lines[0], FMT_OFF)
+            and contains_fmt_directive(lines[-1], FMT_ON)
+        )
         if is_fmt_off_block:
             # This is a fmt:off/on block from normalize_fmt_off - we still need
             # to process any prefix comments (like markdown comments) but append
@@ -418,7 +412,7 @@ class LineGenerator(Visitor[Line]):
             # Only process prefix comments if there actually is a prefix with comments
             if leaf.prefix and any(
                 line.strip().startswith("#")
-                and not _contains_fmt_directive(line.strip())
+                and not contains_fmt_directive(line.strip())
                 for line in leaf.prefix.split("\n")
             ):
                 for comment in generate_comments(leaf, mode=self.mode):
@@ -429,7 +423,8 @@ class LineGenerator(Visitor[Line]):
                 leaf.prefix = ""
 
             self.current_line.append(leaf)
-            yield from self.line()
+            if not any_open_brackets:
+                yield from self.line()
         else:
             # Normal standalone comment - process through visit_default
             yield from self.visit_default(leaf)
@@ -1484,7 +1479,7 @@ def normalize_invisible_parens(
     existing visible parentheses for other tuples and generator expressions.
     """
     for pc in list_comments(node.prefix, is_endmarker=False, mode=mode):
-        if pc.value in FMT_OFF:
+        if contains_fmt_directive(pc.value, FMT_OFF):
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
 
