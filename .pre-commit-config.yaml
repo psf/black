@@ -39,7 +39,7 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.19.0
     hooks:
       - id: mypy
         exclude: ^(docs/conf.py|scripts/generate_schema.py)$
@@ -58,6 +58,7 @@ repos:
           - hypothesis
           - aiohttp >= 3.7.4
           - types-commonmark
+          - beautifulsoup4
           - urllib3
           - hypothesmith
       - id: mypy

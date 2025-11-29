@@ -125,7 +125,7 @@ macos-max-compat = true
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
-  "mypy==1.17.1",
+  "mypy==1.19.0",
   "click>=8.1.7",
 ]
 require-runtime-dependencies = true
