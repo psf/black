@@ -227,6 +227,14 @@ All done! ✨ 🍰 ✨
 1 file would be reformatted.
 ```
 
+#### `--no-cache`
+
+Do not consult or update Black's per-user cache during this run. When `--no-cache` is
+specified, Black will perform fresh analysis for all files and will neither read from
+nor write to the cache. This is helpful for reproducing formatting results from a clean
+run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
+every time.
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
@@ -270,8 +278,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 25.1.0 (compiled: yes)
-$ black --required-version 25.1.0 -c "format = 'this'"
+black, 25.11.0 (compiled: yes)
+$ black --required-version 25.11.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -372,7 +380,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 25.1.0
+black, 25.11.0
 ```
 
 #### `--config`

@@ -44,7 +44,7 @@ class DebugVisitor(Visitor[T]):
             self.out(f" {node.value!r}", fg="blue", bold=False)
 
     @classmethod
-    def show(cls, code: Union[str, Leaf, Node]) -> None:
+    def show(cls, code: str | Leaf | Node) -> None:
         """Pretty-print the lib2to3 AST of a given string of `code`.
 
         Convenience method for debugging.

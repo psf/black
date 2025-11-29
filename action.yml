@@ -35,6 +35,12 @@ inputs:
     description: "Whether to add the output to the workflow summary"
     required: false
     default: true
+  output-file:
+    description: >
+      Optional path to write Black output to a file in addition to stdout. Useful for
+      keeping GitHub Actions logs clean when using --diff or --check.
+    required: false
+    default: ""
 branding:
   color: "black"
   icon: "check-circle"
@@ -75,5 +81,6 @@ runs:
         INPUT_BLACK_ARGS: ${{ inputs.black_args }}
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_USE_PYPROJECT: ${{ inputs.use_pyproject }}
+        OUTPUT_FILE: ${{ inputs.output-file }}
         pythonioencoding: utf-8
       shell: bash

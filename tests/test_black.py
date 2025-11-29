@@ -3,6 +3,7 @@
 import asyncio
 import inspect
 import io
+import itertools
 import logging
 import multiprocessing
 import os
@@ -19,7 +20,7 @@ from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, TypeVar
 from unittest.mock import MagicMock, patch
 
 import click
@@ -427,9 +428,7 @@ class BlackTestCase(BlackBaseTestCase):
         _, source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 7):
-            black.assert_equivalent(source, actual)
+        black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
@@ -897,6 +896,9 @@ class BlackTestCase(BlackBaseTestCase):
         self.check_features_used(
             "with ((a, ((b as c)))): pass", {Feature.PARENTHESIZED_CONTEXT_MANAGERS}
         )
+        self.check_features_used(
+            "x = t'foo {f'bar'}'", {Feature.T_STRINGS, Feature.F_STRINGS}
+        )
 
     def check_features_used(self, source: str, expected: set[Feature]) -> None:
         node = black.lib2to3_parse(source)
@@ -918,7 +920,7 @@ class BlackTestCase(BlackBaseTestCase):
             ("a = 1 + 2\nfrom something import annotations", set()),
             ("from __future__ import x, y", set()),
         ]:
-            with self.subTest(src=src, features=features):
+            with self.subTest(src=src, features=sorted(f.value for f in features)):
                 node = black.lib2to3_parse(src)
                 future_imports = black.get_future_imports(node)
                 self.assertEqual(
@@ -1331,10 +1333,8 @@ class BlackTestCase(BlackBaseTestCase):
 
         def _new_wrapper(
             output: io.StringIO, io_TextIOWrapper: type[io.TextIOWrapper]
-        ) -> Callable[[Any, Any], Union[io.StringIO, io.TextIOWrapper]]:
-            def get_output(
-                *args: Any, **kwargs: Any
-            ) -> Union[io.StringIO, io.TextIOWrapper]:
+        ) -> Callable[[Any, Any], io.StringIO | io.TextIOWrapper]:
+            def get_output(*args: Any, **kwargs: Any) -> io.StringIO | io.TextIOWrapper:
                 if args == (sys.stdout.buffer,):
                     # It's `format_stdin_to_stdout()` calling `io.TextIOWrapper()`,
                     # return our mock object.
@@ -1756,16 +1756,13 @@ class BlackTestCase(BlackBaseTestCase):
         if system() == "Windows":
             return
 
-        # https://bugs.python.org/issue33660
-        # Can be removed when we drop support for Python 3.8.5
         root = Path("/")
-        with change_directory(root):
-            path = Path("workspace") / "project"
-            report = black.Report(verbose=True)
-            resolves_outside = black.resolves_outside_root_or_cannot_stat(
-                path, root, report
-            )
-            self.assertIs(resolves_outside, False)
+        path = Path("workspace") / "project"
+        report = black.Report(verbose=True)
+        resolves_outside = black.resolves_outside_root_or_cannot_stat(
+            path, root, report
+        )
+        self.assertIs(resolves_outside, False)
 
     def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
         if system() != "Windows":
@@ -2083,6 +2080,12 @@ class BlackTestCase(BlackBaseTestCase):
             == "class A: ...\n"
         )
 
+    def test_preview_newline_type_detection(self) -> None:
+        mode = Mode(enabled_features={Preview.normalize_cr_newlines})
+        newline_types = ["A\n", "A\r\n", "A\r"]
+        for test_case in itertools.permutations(newline_types):
+            assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
+
 
 class TestCaching:
     def test_get_cache_dir(
@@ -2225,6 +2228,53 @@ class TestCaching:
             assert not result.exit_code
             cache_file = get_cache_file(mode)
             assert not cache_file.exists()
+
+    def test_no_cache_flag_prevents_writes(self) -> None:
+        """--no-cache should neither read nor write the cache"""
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            src.write_text("print('hello')", encoding="utf-8")
+            cache = black.Cache.read(mode)
+            # Pre-populate cache so the file is considered cached
+            cache.write([src])
+            with (
+                patch.object(black.Cache, "read") as read_cache,
+                patch.object(black.Cache, "write") as write_cache,
+            ):
+                # Pass --no-cache; it should neither read nor write
+                invokeBlack([str(src), "--no-cache"])
+                read_cache.assert_not_called()
+                write_cache.assert_not_called()
+
+    def test_no_cache_with_multiple_files(self) -> None:
+        """Formatting multiple files with --no-cache should not read or write cache
+        and should format files normally."""
+        mode = DEFAULT_MODE
+        with (cache_dir() as workspace,):
+            one = (workspace / "one.py").resolve()
+            one.write_text("print('hello')", encoding="utf-8")
+            two = (workspace / "two.py").resolve()
+            two.write_text("print('hello')", encoding="utf-8")
+
+            # Pre-populate cache for `one` so it would normally be skipped
+            cache = black.Cache.read(mode)
+            cache.write([one])
+
+            with (
+                patch.object(black.Cache, "read") as read_cache,
+                patch.object(black.Cache, "write") as write_cache,
+            ):
+                # Run Black over the directory with --no-cache
+                invokeBlack([str(workspace), "--no-cache"])
+
+                # Cache should not be consulted or updated
+                read_cache.assert_not_called()
+                write_cache.assert_not_called()
+
+            # Both files should have been formatted (double quotes + newline)
+            assert one.read_text(encoding="utf-8") == 'print("hello")\n'
+            assert two.read_text(encoding="utf-8") == 'print("hello")\n'
 
     def test_read_cache_no_cachefile(self) -> None:
         mode = DEFAULT_MODE
@@ -2383,15 +2433,15 @@ class TestCaching:
 
 
 def assert_collected_sources(
-    src: Sequence[Union[str, Path]],
-    expected: Sequence[Union[str, Path]],
+    src: Sequence[str | Path],
+    expected: Sequence[str | Path],
     *,
-    root: Optional[Path] = None,
-    exclude: Optional[str] = None,
-    include: Optional[str] = None,
-    extend_exclude: Optional[str] = None,
-    force_exclude: Optional[str] = None,
-    stdin_filename: Optional[str] = None,
+    root: Path | None = None,
+    exclude: str | None = None,
+    include: str | None = None,
+    extend_exclude: str | None = None,
+    force_exclude: str | None = None,
+    stdin_filename: str | None = None,
 ) -> None:
     gs_src = tuple(str(Path(s)) for s in src)
     gs_expected = [Path(s) for s in expected]

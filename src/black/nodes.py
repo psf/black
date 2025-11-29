@@ -2,19 +2,13 @@
 blib2to3 Node/Leaf transformation-related utility functions.
 """
 
-import sys
 from collections.abc import Iterator
-from typing import Final, Generic, Literal, Optional, TypeVar, Union
-
-if sys.version_info >= (3, 10):
-    from typing import TypeGuard
-else:
-    from typing_extensions import TypeGuard
+from typing import Final, Generic, Literal, TypeGuard, TypeVar, Union
 
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
@@ -140,6 +134,8 @@ ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
     STANDALONE_COMMENT,
     token.FSTRING_MIDDLE,
     token.FSTRING_END,
+    token.TSTRING_MIDDLE,
+    token.TSTRING_END,
     token.BANG,
 }
 
@@ -181,7 +177,7 @@ class Visitor(Generic[T]):
                 yield from self.visit(child)
 
 
-def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # noqa: C901
+def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
     """Return whitespace prefix if needed for the given `leaf`.
 
     `complex_subscript` signals whether the given leaf is part of a subscription
@@ -207,7 +203,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
     }:
         return NO
 
-    if t == token.LBRACE and p.type == syms.fstring_replacement_field:
+    if t == token.LBRACE and p.type in (
+        syms.fstring_replacement_field,
+        syms.tstring_replacement_field,
+    ):
         return NO
 
     prev = leaf.prev_sibling
@@ -395,7 +394,6 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:  # no
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
                 return NO
 
-        # TODO: add fstring here?
         elif t in {token.NAME, token.NUMBER, token.STRING}:
             return NO
 
@@ -428,7 +426,7 @@ def make_simple_prefix(nl_count: int, form_feed: bool, empty_line: str = "\n") -
     return empty_line * nl_count
 
 
-def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
+def preceding_leaf(node: LN | None) -> Leaf | None:
     """Return the first leaf that precedes `node`, if any."""
     while node:
         res = node.prev_sibling
@@ -446,7 +444,7 @@ def preceding_leaf(node: Optional[LN]) -> Optional[Leaf]:
     return None
 
 
-def prev_siblings_are(node: Optional[LN], tokens: list[Optional[NodeType]]) -> bool:
+def prev_siblings_are(node: LN | None, tokens: list[NodeType | None]) -> bool:
     """Return if the `node` and its previous siblings match types against the provided
     list of tokens; the provided `node`has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
@@ -462,7 +460,7 @@ def prev_siblings_are(node: Optional[LN], tokens: list[Optional[NodeType]]) -> b
     return prev_siblings_are(node.prev_sibling, tokens[:-1])
 
 
-def parent_type(node: Optional[LN]) -> Optional[NodeType]:
+def parent_type(node: LN | None) -> NodeType | None:
     """
     Returns:
         @node.parent.type, if @node is not None and has a parent.
@@ -475,9 +473,9 @@ def parent_type(node: Optional[LN]) -> Optional[NodeType]:
     return node.parent.type
 
 
-def child_towards(ancestor: Node, descendant: LN) -> Optional[LN]:
+def child_towards(ancestor: Node, descendant: LN) -> LN | None:
     """Return the child of `ancestor` that contains `descendant`."""
-    node: Optional[LN] = descendant
+    node: LN | None = descendant
     while node and node.parent != ancestor:
         node = node.parent
     return node
@@ -525,7 +523,7 @@ def container_of(leaf: Leaf) -> LN:
     return container
 
 
-def first_leaf_of(node: LN) -> Optional[Leaf]:
+def first_leaf_of(node: LN) -> Leaf | None:
     """Returns the first leaf of the node tree."""
     if isinstance(node, Leaf):
         return node
@@ -789,8 +787,8 @@ def is_fstring(node: Node) -> bool:
     return node.type == syms.fstring
 
 
-def fstring_to_string(node: Node) -> Leaf:
-    """Converts an fstring node back to a string node."""
+def fstring_tstring_to_string(node: Node) -> Leaf:
+    """Converts an fstring or tstring node back to a string node."""
     string_without_prefix = str(node)[len(node.prefix) :]
     string_leaf = Leaf(token.STRING, string_without_prefix, prefix=node.prefix)
     string_leaf.lineno = node.get_lineno() or 0
@@ -800,7 +798,7 @@ def fstring_to_string(node: Node) -> Leaf:
 def is_multiline_string(node: LN) -> bool:
     """Return True if `leaf` is a multiline string that actually spans many lines."""
     if isinstance(node, Node) and is_fstring(node):
-        leaf = fstring_to_string(node)
+        leaf = fstring_tstring_to_string(node)
     elif isinstance(node, Leaf):
         leaf = node
     else:
@@ -931,27 +929,44 @@ def is_async_stmt_or_funcdef(leaf: Leaf) -> bool:
     )
 
 
-def is_type_comment(leaf: Leaf) -> bool:
+def is_type_comment(leaf: Leaf, mode: Mode) -> bool:
     """Return True if the given leaf is a type comment. This function should only
     be used for general type comments (excluding ignore annotations, which should
     use `is_type_ignore_comment`). Note that general type comments are no longer
     used in modern version of Python, this function may be deprecated in the future."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and v.startswith("# type:")
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_comment_string(v, mode)
 
 
-def is_type_ignore_comment(leaf: Leaf) -> bool:
+def is_type_comment_string(value: str, mode: Mode) -> bool:
+    if Preview.standardize_type_comments in mode:
+        is_valid = value.startswith("#") and value[1:].lstrip().startswith("type:")
+    else:
+        is_valid = value.startswith("# type:")
+    return is_valid
+
+
+def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
     """Return True if the given leaf is a type comment with ignore annotation."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(v)
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(
+        v, mode
+    )
 
 
-def is_type_ignore_comment_string(value: str) -> bool:
+def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
     ignore annotation."""
-    return value.startswith("# type: ignore")
+    if Preview.standardize_type_comments in mode:
+        is_valid = is_type_comment_string(value, mode) and value.split(":", 1)[
+            1
+        ].lstrip().startswith("ignore")
+    else:
+        is_valid = value.startswith("# type: ignore")
+
+    return is_valid
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
@@ -972,7 +987,7 @@ def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> Non
     parent.insert_child(index, new_child)
 
 
-def unwrap_singleton_parenthesis(node: LN) -> Optional[LN]:
+def unwrap_singleton_parenthesis(node: LN) -> LN | None:
     """Returns `wrapped` if `node` is of the shape ( wrapped ).
 
     Parenthesis can be optional. Returns None otherwise"""
@@ -1032,7 +1047,7 @@ def is_part_of_annotation(leaf: Leaf) -> bool:
     return get_annotation_type(leaf) is not None
 
 
-def first_leaf(node: LN) -> Optional[Leaf]:
+def first_leaf(node: LN) -> Leaf | None:
     """Returns the first leaf of the ancestor node."""
     if isinstance(node, Leaf):
         return node
@@ -1042,7 +1057,7 @@ def first_leaf(node: LN) -> Optional[Leaf]:
         return first_leaf(node.children[0])
 
 
-def last_leaf(node: LN) -> Optional[Leaf]:
+def last_leaf(node: LN) -> Leaf | None:
     """Returns the last leaf of the ancestor node."""
     if isinstance(node, Leaf):
         return node

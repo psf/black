@@ -37,8 +37,9 @@ def generate_schema_from_click(
 
         result[name]["description"] = param.help
 
-        if param.default is not None and not param.multiple:
-            result[name]["default"] = param.default
+        default = param.to_info_dict()["default"]
+        if default is not None and not param.multiple:
+            result[name]["default"] = default
 
     return result
 

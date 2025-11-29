@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from __future__ import annotations
-
 """
 Tool to help automate changes needed in commits during and after releases
 """
+
+from __future__ import annotations
 
 import argparse
 import logging
@@ -17,6 +17,9 @@ from subprocess import run
 LOG = logging.getLogger(__name__)
 NEW_VERSION_CHANGELOG_TEMPLATE = """\
 ## Unreleased
+
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
 
 ### Highlights
 
@@ -65,7 +68,7 @@ NEW_VERSION_CHANGELOG_TEMPLATE = """\
 """
 
 
-class NoGitTagsError(Exception): ...  # noqa: E701,E761
+class NoGitTagsError(Exception): ...
 
 
 # TODO: Do better with alpha + beta releases
@@ -118,7 +121,7 @@ class SourceFiles:
         """Add the template to CHANGES.md if it does not exist"""
         LOG.info(f"Adding template to {self.changes_path}")
 
-        with self.changes_path.open("r") as cfp:
+        with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
         if "## Unreleased" in changes_string:
@@ -130,7 +133,7 @@ class SourceFiles:
             f"# Change Log\n\n{NEW_VERSION_CHANGELOG_TEMPLATE}",
         )
 
-        with self.changes_path.open("w") as cfp:
+        with self.changes_path.open("w", encoding="utf-8") as cfp:
             cfp.write(templated_changes_string)
 
         LOG.info(f"Added template to {self.changes_path}")
@@ -139,7 +142,7 @@ class SourceFiles:
     def cleanup_changes_template_for_release(self) -> None:
         LOG.info(f"Cleaning up {self.changes_path}")
 
-        with self.changes_path.open("r") as cfp:
+        with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
         # Change Unreleased to next version
@@ -148,12 +151,12 @@ class SourceFiles:
         )
 
         # Remove all comments
-        changes_string = re.sub(r"^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
+        changes_string = re.sub(r"(?m)^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
 
         # Remove empty subheadings
-        changes_string = re.sub(r"^###.+\n\n(?=#)", "", changes_string)
+        changes_string = re.sub(r"(?m)^###.+\n\n(?=#)", "", changes_string)
 
-        with self.changes_path.open("w") as cfp:
+        with self.changes_path.open("w", encoding="utf-8") as cfp:
             cfp.write(changes_string)
 
         LOG.debug(f"Finished Cleaning up {self.changes_path}")
@@ -186,14 +189,14 @@ class SourceFiles:
         for doc_path in self.version_doc_paths:
             LOG.info(f"Updating black version to {self.next_version} in {doc_path}")
 
-            with doc_path.open("r") as dfp:
+            with doc_path.open("r", encoding="utf-8") as dfp:
                 doc_string = dfp.read()
 
             next_version_doc = doc_string.replace(
                 self.current_version, self.next_version
             )
 
-            with doc_path.open("w") as dfp:
+            with doc_path.open("w", encoding="utf-8") as dfp:
                 dfp.write(next_version_doc)
 
             LOG.debug(

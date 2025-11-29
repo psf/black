@@ -3,7 +3,6 @@
 import difflib
 from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
-from typing import Union
 
 from black.nodes import (
     LN,
@@ -396,7 +395,7 @@ def _leaf_line_end(leaf: Leaf) -> int:
         return leaf.lineno + str(leaf).count("\n")
 
 
-def _get_line_range(node_or_nodes: Union[LN, list[LN]]) -> set[int]:
+def _get_line_range(node_or_nodes: LN | list[LN]) -> set[int]:
     """Returns the line range of this node or list of nodes."""
     if isinstance(node_or_nodes, list):
         nodes = node_or_nodes

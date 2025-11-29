@@ -11,7 +11,7 @@ from typing import Final
 from black._width_table import WIDTH_TABLE
 from blib2to3.pytree import Leaf
 
-STRING_PREFIX_CHARS: Final = "furbFURB"  # All possible string prefix characters.
+STRING_PREFIX_CHARS: Final = "fturbFTURB"  # All possible string prefix characters.
 STRING_PREFIX_RE: Final = re.compile(
     r"^([" + STRING_PREFIX_CHARS + r"]*)(.*)$", re.DOTALL
 )
@@ -288,7 +288,7 @@ def normalize_fstring_quotes(
         # edge case:
         new_segments[-1] = new_segments[-1][:-1] + '\\"'
 
-    for middle, new_segment in zip(middles, new_segments):
+    for middle, new_segment in zip(middles, new_segments, strict=True):
         orig_escape_count = middle.value.count("\\")
         new_escape_count = new_segment.count("\\")
 
@@ -298,7 +298,7 @@ def normalize_fstring_quotes(
     if new_escape_count == orig_escape_count and quote == '"':
         return middles, quote  # Prefer double quotes
 
-    for middle, new_segment in zip(middles, new_segments):
+    for middle, new_segment in zip(middles, new_segments, strict=True):
         middle.value = new_segment
 
     return middles, new_quote

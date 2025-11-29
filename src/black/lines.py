@@ -48,7 +48,7 @@ class Line:
     bracket_tracker: BracketTracker = field(default_factory=BracketTracker)
     inside_brackets: bool = False
     should_split_rhs: bool = False
-    magic_trailing_comma: Optional[Leaf] = None
+    magic_trailing_comma: Leaf | None = None
 
     def append(
         self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
@@ -64,8 +64,8 @@ class Line:
         """
         has_value = (
             leaf.type in BRACKETS
-            # empty fstring-middles must not be truncated
-            or leaf.type == token.FSTRING_MIDDLE
+            # empty fstring and tstring middles must not be truncated
+            or leaf.type in (token.FSTRING_MIDDLE, token.TSTRING_MIDDLE)
             or bool(leaf.value.strip())
         )
         if not has_value:
@@ -156,7 +156,7 @@ class Line:
             return False
 
         try:
-            second_leaf: Optional[Leaf] = self.leaves[1]
+            second_leaf: Leaf | None = self.leaves[1]
         except IndexError:
             second_leaf = None
         return (first_leaf.type == token.NAME and first_leaf.value == "def") or (
@@ -219,7 +219,7 @@ class Line:
         return self.leaves[-1].type == token.COLON
 
     def is_fmt_pass_converted(
-        self, *, first_leaf_matches: Optional[Callable[[Leaf], bool]] = None
+        self, *, first_leaf_matches: Callable[[Leaf], bool] | None = None
     ) -> bool:
         """Is this line converted from fmt off/skip code?
 
@@ -286,9 +286,9 @@ class Line:
         comment_seen = False
         for leaf_id, comments in self.comments.items():
             for comment in comments:
-                if is_type_comment(comment):
+                if is_type_comment(comment, mode=self.mode):
                     if comment_seen or (
-                        not is_type_ignore_comment(comment)
+                        not is_type_ignore_comment(comment, mode=self.mode)
                         and leaf_id not in ignored_ids
                     ):
                         return True
@@ -325,7 +325,7 @@ class Line:
             # line.
             for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
-                    if is_type_ignore_comment(comment):
+                    if is_type_ignore_comment(comment, mode=self.mode):
                         return True
 
         return False
@@ -400,7 +400,7 @@ class Line:
             and not last_leaf.value
             and last_leaf.parent
             and len(list(last_leaf.parent.leaves())) <= 3
-            and not is_type_comment(comment)
+            and not is_type_comment(comment, mode=self.mode)
         ):
             # Comments on an optional parens wrapping a single leaf should belong to
             # the wrapped node except if it's a type comment. Pinning the comment like
@@ -540,10 +540,10 @@ class EmptyLineTracker:
     """
 
     mode: Mode
-    previous_line: Optional[Line] = None
-    previous_block: Optional[LinesBlock] = None
+    previous_line: Line | None = None
+    previous_block: LinesBlock | None = None
     previous_defs: list[Line] = field(default_factory=list)
-    semantic_leading_comment: Optional[LinesBlock] = None
+    semantic_leading_comment: LinesBlock | None = None
 
     def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
         """Return the number of extra empty lines before and after the `current_line`.
@@ -559,15 +559,20 @@ class EmptyLineTracker:
         before, after = self._maybe_empty_lines(current_line)
         previous_after = self.previous_block.after if self.previous_block else 0
         before = max(0, before - previous_after)
-        if (
+        if Preview.fix_module_docstring_detection in self.mode:
             # Always have one empty line after a module docstring
-            self.previous_block
-            and self.previous_block.previous_block is None
-            and len(self.previous_block.original_line.leaves) == 1
-            and self.previous_block.original_line.is_docstring
-            and not (current_line.is_class or current_line.is_def)
-        ):
-            before = 1
+            if self._line_is_module_docstring(current_line):
+                before = 1
+        else:
+            if (
+                # Always have one empty line after a module docstring
+                self.previous_block
+                and self.previous_block.previous_block is None
+                and len(self.previous_block.original_line.leaves) == 1
+                and self.previous_block.original_line.is_docstring
+                and not (current_line.is_class or current_line.is_def)
+            ):
+                before = 1
 
         block = LinesBlock(
             mode=self.mode,
@@ -595,7 +600,23 @@ class EmptyLineTracker:
         self.previous_block = block
         return block
 
-    def _maybe_empty_lines(self, current_line: Line) -> tuple[int, int]:  # noqa: C901
+    def _line_is_module_docstring(self, current_line: Line) -> bool:
+        previous_block = self.previous_block
+        if not previous_block:
+            return False
+        if (
+            len(previous_block.original_line.leaves) != 1
+            or not previous_block.original_line.is_docstring
+            or current_line.is_class
+            or current_line.is_def
+        ):
+            return False
+        while previous_block := previous_block.previous_block:
+            if not previous_block.original_line.is_comment:
+                return False
+        return True
+
+    def _maybe_empty_lines(self, current_line: Line) -> tuple[int, int]:
         max_allowed = 1
         if current_line.depth == 0:
             max_allowed = 1 if self.mode.is_pyi else 2
@@ -688,7 +709,7 @@ class EmptyLineTracker:
 
         return before, 0
 
-    def _maybe_empty_lines_for_class_or_def(  # noqa: C901
+    def _maybe_empty_lines_for_class_or_def(
         self, current_line: Line, before: int, user_had_newline: bool
     ) -> tuple[int, int]:
         assert self.previous_line is not None
@@ -706,7 +727,7 @@ class EmptyLineTracker:
                 return 0, 0
             return 1 if user_had_newline else 0, 0
 
-        comment_to_add_newlines: Optional[LinesBlock] = None
+        comment_to_add_newlines: LinesBlock | None = None
         if (
             self.previous_line.is_comment
             and self.previous_line.depth == current_line.depth
@@ -801,9 +822,7 @@ def append_leaves(
             new_line.append(comment_leaf, preformatted=True)
 
 
-def is_line_short_enough(  # noqa: C901
-    line: Line, *, mode: Mode, line_str: str = ""
-) -> bool:
+def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     """For non-multiline strings, return True if `line` is no longer than `line_length`.
     For multiline strings, looks at the context around `line` to determine
     if it should be inlined or split up.
@@ -836,14 +855,14 @@ def is_line_short_enough(  # noqa: C901
     # is needed to determine nesting level of the MLS.
     # Includes special case for trailing commas.
     commas: list[int] = []  # tracks number of commas per depth level
-    multiline_string: Optional[Leaf] = None
+    multiline_string: Leaf | None = None
     # store the leaves that contain parts of the MLS
     multiline_string_contexts: list[LN] = []
 
-    max_level_to_update: Union[int, float] = math.inf  # track the depth of the MLS
+    max_level_to_update: int | float = math.inf  # track the depth of the MLS
     for i, leaf in enumerate(line.leaves):
         if max_level_to_update == math.inf:
-            had_comma: Optional[int] = None
+            had_comma: int | None = None
             if leaf.bracket_depth + 1 > len(commas):
                 commas.append(0)
             elif leaf.bracket_depth + 1 < len(commas):
@@ -862,7 +881,7 @@ def is_line_short_enough(  # noqa: C901
         if leaf.bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
             # Inside brackets, ignore trailing comma
             # directly after MLS/MLS-containing expression
-            ignore_ctxs: list[Optional[LN]] = [None]
+            ignore_ctxs: list[LN | None] = [None]
             ignore_ctxs += multiline_string_contexts
             if (line.inside_brackets or leaf.bracket_depth > 0) and (
                 i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs
@@ -948,7 +967,7 @@ def can_omit_invisible_parens(
 
     # We need optional parens in order to split standalone comments to their own lines
     # if there are no nested parens around the standalone comments
-    closing_bracket: Optional[Leaf] = None
+    closing_bracket: Leaf | None = None
     for leaf in reversed(line.leaves):
         if closing_bracket and leaf is closing_bracket.opening_bracket:
             closing_bracket = None
