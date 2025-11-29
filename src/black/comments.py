@@ -605,6 +605,10 @@ def _generate_ignored_nodes_from_fmt_skip(
     comments = list_comments(leaf.prefix, is_endmarker=False, mode=mode)
     if not comments or comment.value != comments[0].value:
         return
+
+    if Preview.fix_fmt_skip_in_one_liners in mode and not prev_sibling and parent:
+        prev_sibling = parent.prev_sibling
+
     if prev_sibling is not None:
         leaf.prefix = leaf.prefix[comment.consumed :]
 
@@ -646,8 +650,18 @@ def _generate_ignored_nodes_from_fmt_skip(
             leaf_nodes = list(current_node.prev_sibling.leaves())
             current_node = leaf_nodes[-1] if leaf_nodes else current_node
 
+            if (
+                current_node.type in CLOSING_BRACKETS
+                and current_node.parent
+                and current_node.parent.type == syms.atom
+            ):
+                current_node = current_node.parent
+
             if current_node.type in (token.NEWLINE, token.INDENT):
                 current_node.prefix = ""
+                break
+
+            if current_node.type == token.DEDENT:
                 break
 
             # Special case for with expressions
