@@ -19,11 +19,13 @@
   removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4845)
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause
   (#4872)
+- Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix `fmt: skip` skipping the line after instead of the line it's on (#4855)
 - Remove unnecessary parentheses from the left-hand side of assignments while preserving
   magic trailing commas and intentional multiline formatting (#4865)
 - Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)

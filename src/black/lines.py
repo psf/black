@@ -616,7 +616,7 @@ class EmptyLineTracker:
                 return False
         return True
 
-    def _maybe_empty_lines(self, current_line: Line) -> tuple[int, int]:  # noqa: C901
+    def _maybe_empty_lines(self, current_line: Line) -> tuple[int, int]:
         max_allowed = 1
         if current_line.depth == 0:
             max_allowed = 1 if self.mode.is_pyi else 2
@@ -709,7 +709,7 @@ class EmptyLineTracker:
 
         return before, 0
 
-    def _maybe_empty_lines_for_class_or_def(  # noqa: C901
+    def _maybe_empty_lines_for_class_or_def(
         self, current_line: Line, before: int, user_had_newline: bool
     ) -> tuple[int, int]:
         assert self.previous_line is not None
@@ -822,9 +822,7 @@ def append_leaves(
             new_line.append(comment_leaf, preformatted=True)
 
 
-def is_line_short_enough(  # noqa: C901
-    line: Line, *, mode: Mode, line_str: str = ""
-) -> bool:
+def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     """For non-multiline strings, return True if `line` is no longer than `line_length`.
     For multiline strings, looks at the context around `line` to determine
     if it should be inlined or split up.

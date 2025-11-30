@@ -14,7 +14,7 @@ import sys
 
 import commonmark
 import yaml
-from bs4 import BeautifulSoup  # type: ignore[import-untyped]
+from bs4 import BeautifulSoup
 
 
 def main(changes: str, source_version_control: str) -> None:
@@ -30,7 +30,7 @@ def main(changes: str, source_version_control: str) -> None:
         source_version_control_html, "html.parser"
     )
     pre_commit_repos = yaml.safe_load(
-        source_version_control_soup.find(class_="language-yaml").string
+        source_version_control_soup.find(class_="language-yaml").string  # type: ignore[union-attr, arg-type]
     )["repos"]
 
     for repo in pre_commit_repos:

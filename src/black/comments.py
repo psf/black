@@ -164,7 +164,7 @@ def make_comment(content: str, mode: Mode) -> str:
         return "#"
 
     # Preserve comments with fmt directives exactly as-is
-    if content.startswith("#") and _contains_fmt_directive(content):
+    if content.startswith("#") and contains_fmt_directive(content):
         return content
 
     if content[0] == "#":
@@ -205,8 +205,8 @@ def _should_process_fmt_comment(
 
     Returns (should_process, is_fmt_off, is_fmt_skip).
     """
-    is_fmt_off = _contains_fmt_directive(comment.value, FMT_OFF)
-    is_fmt_skip = _contains_fmt_directive(comment.value, FMT_SKIP)
+    is_fmt_off = contains_fmt_directive(comment.value, FMT_OFF)
+    is_fmt_skip = contains_fmt_directive(comment.value, FMT_SKIP)
 
     if not is_fmt_off and not is_fmt_skip:
         return False, False, False
@@ -258,9 +258,13 @@ def _handle_comment_only_fmt_block(
     fmt_off_idx = None
     fmt_on_idx = None
     for idx, c in enumerate(all_comments):
-        if fmt_off_idx is None and c.value in FMT_OFF:
+        if fmt_off_idx is None and contains_fmt_directive(c.value, FMT_OFF):
             fmt_off_idx = idx
-        if fmt_off_idx is not None and idx > fmt_off_idx and c.value in FMT_ON:
+        if (
+            fmt_off_idx is not None
+            and idx > fmt_off_idx
+            and contains_fmt_directive(c.value, FMT_ON)
+        ):
             fmt_on_idx = idx
             break
 
@@ -401,7 +405,7 @@ def _handle_regular_fmt_block(
     parent = first.parent
     prefix = first.prefix
 
-    if comment.value in FMT_OFF:
+    if contains_fmt_directive(comment.value, FMT_OFF):
         first.prefix = prefix[comment.consumed :]
     if is_fmt_skip:
         first.prefix = ""
@@ -423,7 +427,7 @@ def _handle_regular_fmt_block(
     hidden_value = "".join(str(n) for n in ignored_nodes)
     comment_lineno = leaf.lineno - comment.newlines
 
-    if comment.value in FMT_OFF:
+    if contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
         if len(lines) > 0 and not any(
             line[0] <= comment_lineno <= line[1] for line in lines
@@ -471,7 +475,7 @@ def generate_ignored_nodes(
     If comment is skip, returns leaf only.
     Stops at the end of the block.
     """
-    if _contains_fmt_directive(comment.value, FMT_SKIP):
+    if contains_fmt_directive(comment.value, FMT_SKIP):
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment, mode)
         return
     container: LN | None = container_of(leaf)
@@ -616,6 +620,10 @@ def _generate_ignored_nodes_from_fmt_skip(
     comments = list_comments(leaf.prefix, is_endmarker=False, mode=mode)
     if not comments or comment.value != comments[0].value:
         return
+
+    if Preview.fix_fmt_skip_in_one_liners in mode and not prev_sibling and parent:
+        prev_sibling = parent.prev_sibling
+
     if prev_sibling is not None:
         leaf.prefix = leaf.prefix[comment.consumed :]
 
@@ -657,8 +665,18 @@ def _generate_ignored_nodes_from_fmt_skip(
             leaf_nodes = list(current_node.prev_sibling.leaves())
             current_node = leaf_nodes[-1] if leaf_nodes else current_node
 
+            if (
+                current_node.type in CLOSING_BRACKETS
+                and current_node.parent
+                and current_node.parent.type == syms.atom
+            ):
+                current_node = current_node.parent
+
             if current_node.type in (token.NEWLINE, token.INDENT):
                 current_node.prefix = ""
+                break
+
+            if current_node.type == token.DEDENT:
                 break
 
             # Special case for with expressions
@@ -714,9 +732,9 @@ def is_fmt_on(container: LN, mode: Mode) -> bool:
     """
     fmt_on = False
     for comment in list_comments(container.prefix, is_endmarker=False, mode=mode):
-        if comment.value in FMT_ON:
+        if contains_fmt_directive(comment.value, FMT_ON):
             fmt_on = True
-        elif comment.value in FMT_OFF:
+        elif contains_fmt_directive(comment.value, FMT_OFF):
             fmt_on = False
     return fmt_on
 
@@ -745,7 +763,7 @@ def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
     return False
 
 
-def _contains_fmt_directive(
+def contains_fmt_directive(
     comment_line: str, directives: set[str] = FMT_OFF | FMT_ON | FMT_SKIP
 ) -> bool:
     """
