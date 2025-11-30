@@ -24,7 +24,7 @@ repos:
         additional_dependencies: *version_check_dependencies
 
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.1
+    rev: 6.1.0
     hooks:
       - id: isort
 
@@ -39,7 +39,7 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.19.0
     hooks:
       - id: mypy
         exclude: ^(docs/conf.py|scripts/generate_schema.py)$
@@ -53,11 +53,12 @@ repos:
           # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
           - packaging >= 22.0
           - platformdirs >= 2.1.0
-          - pytokens >= 0.1.10
+          - pytokens >= 0.3.0
           - pytest
           - hypothesis
           - aiohttp >= 3.7.4
           - types-commonmark
+          - beautifulsoup4
           - urllib3
           - hypothesmith
       - id: mypy
@@ -74,7 +75,7 @@ repos:
         exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace

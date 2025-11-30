@@ -16,7 +16,7 @@ from collections.abc import Iterable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from mypy_extensions import mypyc_attr
 
@@ -41,7 +41,7 @@ def maybe_install_uvloop() -> None:
         pass
 
 
-def cancel(tasks: Iterable["asyncio.Future[Any]"]) -> None:
+def cancel(tasks: Iterable[asyncio.Future[Any]]) -> None:
     """asyncio signal handler that cancels all `tasks` and reports to stderr."""
     err("Aborted!")
     for task in tasks:
@@ -77,7 +77,8 @@ def reformat_many(
     write_back: WriteBack,
     mode: Mode,
     report: Report,
-    workers: Optional[int],
+    workers: int | None,
+    no_cache: bool = False,
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
     maybe_install_uvloop()
@@ -115,6 +116,7 @@ def reformat_many(
                 report=report,
                 loop=loop,
                 executor=executor,
+                no_cache=no_cache,
             )
         )
     finally:
@@ -131,9 +133,10 @@ async def schedule_formatting(
     fast: bool,
     write_back: WriteBack,
     mode: Mode,
-    report: "Report",
+    report: Report,
     loop: asyncio.AbstractEventLoop,
-    executor: "Executor",
+    executor: Executor,
+    no_cache: bool = False,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
@@ -142,8 +145,11 @@ async def schedule_formatting(
     `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
-    cache = Cache.read(mode)
-    if write_back not in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
+    cache = None if no_cache else Cache.read(mode)
+    if cache is not None and write_back not in (
+        WriteBack.DIFF,
+        WriteBack.COLOR_DIFF,
+    ):
         sources, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
@@ -194,5 +200,5 @@ async def schedule_formatting(
                 report.done(src, changed)
     if cancelled:
         await asyncio.gather(*cancelled, return_exceptions=True)
-    if sources_to_cache:
+    if sources_to_cache and not no_cache and cache is not None:
         cache.write(sources_to_cache)

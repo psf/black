@@ -7,14 +7,13 @@
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py310']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
   # The following are specific to Black, you probably don't want those.
   tests/data/
   | profiling/
-  | scripts/generate_schema.py  # Uses match syntax
 )
 '''
 # We use the unstable style for formatting Black itself. If you
@@ -35,7 +34,7 @@ name = "black"
 description = "The uncompromising code formatter."
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   { name = "Łukasz Langa", email = "lukasz@langa.pl" },
 ]
@@ -55,11 +54,11 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Quality Assurance",
 ]
@@ -69,7 +68,7 @@ dependencies = [
   "packaging>=22.0",
   "pathspec>=0.9.0",
   "platformdirs>=2",
-  "pytokens>=0.1.10",
+  "pytokens>=0.3.0",
   "tomli>=1.1.0; python_version < '3.11'",
   "typing_extensions>=4.0.1; python_version < '3.11'",
 ]
@@ -126,7 +125,7 @@ macos-max-compat = true
 enable-by-default = false
 dependencies = [
   "hatch-mypyc>=0.16.0",
-  "mypy==1.17.1",
+  "mypy==1.19.0",
   "click>=8.1.7",
 ]
 require-runtime-dependencies = true
@@ -152,16 +151,22 @@ options = { debug_level = "0" }
 build-verbosity = 1
 
 # So these are the environments we target:
-# - Python: CPython 3.9+ only
+# - Python: CPython 3.10+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
-build = "cp3*"
-skip = ["*-manylinux_i686", "*-musllinux_*", "*-win32", "pp*"]
+build = "cp31*"
+skip = [
+    "*-manylinux_i686",
+    "*-musllinux_*",
+    "*-win32",
+    "pp*",
+    "cp31?t-*",  # mypyc doesn't have great support for free threaded builds
+]
 
 # This is the bare minimum needed to run the test suite. Pulling in the full
 # test_requirements.txt would download a bunch of other packages not necessary
 # here and would slow down the testing step a fair bit.
-test-requires = ["pytest>=6.1.1"]
+test-requires = ["pytest>=7"]
 test-command = 'pytest {project} -k "not incompatible_with_mypyc"'
 test-extras = ["d"," jupyter"]
 # Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't
@@ -222,7 +227,7 @@ branch = true
 # Specify the target platform details in config, so your developers are
 # free to run mypy on Windows, Linux, or macOS and get consistent
 # results.
-python_version = "3.9"
+python_version = "3.10"
 mypy_path = "src"
 strict = true
 strict_bytes = true

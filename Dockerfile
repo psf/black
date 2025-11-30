@@ -7,7 +7,7 @@ ENV HATCH_BUILD_HOOKS_ENABLE=1
 # Install build tools to compile black + dependencies
 RUN apt update && apt install -y build-essential git python3-dev
 RUN python -m venv $VIRTUAL_ENV
-RUN python -m pip install --no-cache-dir hatch hatch-fancy-pypi-readme hatch-vcs
+RUN python -m pip install --no-cache-dir hatch hatch-fancy-pypi-readme hatch-vcs hatch-mypyc
 RUN . /opt/venv/bin/activate && pip install --no-cache-dir --upgrade pip setuptools \
     && cd /src && hatch build -t wheel \
     && pip install --no-cache-dir dist/*-cp* \

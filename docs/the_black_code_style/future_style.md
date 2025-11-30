@@ -31,6 +31,11 @@ Currently, the following features are included in the preview style:
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceeded by comments.
 - `fix_type_expansion_split`: Fix type expansions split in generic functions.
+- `remove_parens_from_assignment_lhs`: Remove unnecessary parentheses from the left-hand
+  side of assignments while preserving magic trailing commas and intentional multiline
+  formatting. For example, `(b) = a()[0]` becomes `b = a()[0]`, and `(c, *_) = a()`
+  becomes `c, *_ = a()`, but `(d,) = a()` is preserved as it defines a single-element
+  tuple.
 - `multiline_string_handling`: more compact formatting of expressions involving
   multiline strings ([see below](labels/multiline-string-handling))
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
