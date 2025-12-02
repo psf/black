@@ -438,13 +438,13 @@ def _handle_regular_fmt_block(
                     else:
                         # For nested nodes, recursively process children
                         return "".join(stringify_node(child) for child in n.children)
-                
+
                 parts.append(stringify_node(node))
             else:
                 parts.append(str(node))
         else:
             parts.append(str(node))
-    
+
     hidden_value = "".join(parts)
     comment_lineno = leaf.lineno - comment.newlines
 
@@ -682,19 +682,19 @@ def _generate_ignored_nodes_from_fmt_skip(
         ignored_nodes = [current_node]
         if current_node.prev_sibling is None and current_node.parent is not None:
             current_node = current_node.parent
-        
+
         # Track seen nodes to detect cycles that can occur after tree modifications
         seen_nodes = {id(current_node)}
-        
+
         while "\n" not in current_node.prefix and current_node.prev_sibling is not None:
             leaf_nodes = list(current_node.prev_sibling.leaves())
             next_node = leaf_nodes[-1] if leaf_nodes else current_node
-            
+
             # Detect infinite loop - if we've seen this node before, stop
             # This can happen when STANDALONE_COMMENT nodes are inserted during processing
             if id(next_node) in seen_nodes:
                 break
-            
+
             current_node = next_node
             seen_nodes.add(id(current_node))
 
