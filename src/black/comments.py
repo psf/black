@@ -341,9 +341,8 @@ def convert_one_fmt_off_pair(
     for leaf in node.leaves():
         # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on/skip processing
         # to avoid reprocessing them in subsequent iterations
-        if (
-            leaf.type == STANDALONE_COMMENT
-            and hasattr(leaf, "fmt_pass_converted_first_leaf")
+        if leaf.type == STANDALONE_COMMENT and hasattr(
+            leaf, "fmt_pass_converted_first_leaf"
         ):
             continue
 
@@ -423,8 +422,11 @@ def _handle_regular_fmt_block(
                 node_str += "\n"
             parts.append(node_str)
         elif isinstance(node, Node):
-            # For nodes that might contain STANDALONE_COMMENT leaves, we need custom stringify
-            has_standalone = any(leaf.type == STANDALONE_COMMENT for leaf in node.leaves())
+            # For nodes that might contain STANDALONE_COMMENT leaves,
+            # we need custom stringify
+            has_standalone = any(
+                leaf.type == STANDALONE_COMMENT for leaf in node.leaves()
+            )
             if has_standalone:
                 # Stringify node with STANDALONE_COMMENT leaves having trailing newlines
                 def stringify_node(n: LN) -> str:
@@ -691,7 +693,8 @@ def _generate_ignored_nodes_from_fmt_skip(
             next_node = leaf_nodes[-1] if leaf_nodes else current_node
 
             # Detect infinite loop - if we've seen this node before, stop
-            # This can happen when STANDALONE_COMMENT nodes are inserted during processing
+            # This can happen when STANDALONE_COMMENT nodes are inserted
+            # during processing
             if id(next_node) in seen_nodes:
                 break
 
