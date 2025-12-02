@@ -17,6 +17,8 @@
 
 - Fix bug where comments preceding `# fmt: off`/`# fmt: on` blocks were incorrectly
   removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4845)
+- Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
+  string literals, or on dictionary entries with long lines (#4872)
 - Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
 
 ### Preview style
