@@ -1,4 +1,4 @@
-# Issue 4731: Multiple fmt: skip in multi-part if-clause
+# Multiple fmt: skip in multi-part if-clause
 class ClassWithALongName:
     Constant1 = 1
     Constant2 = 2
@@ -22,7 +22,7 @@ def test():
 # output
 
 
-# Issue 4731: Multiple fmt: skip in multi-part if-clause
+# Multiple fmt: skip in multi-part if-clause
 class ClassWithALongName:
     Constant1 = 1
     Constant2 = 2
