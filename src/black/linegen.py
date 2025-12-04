@@ -15,8 +15,8 @@ from black.brackets import (
     DOT_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
-    max_delimiter_priority_in_atom,
     max_delimiter_priority,
+    max_delimiter_priority_in_atom,
 )
 from black.comments import (
     FMT_OFF,
