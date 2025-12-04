@@ -16,6 +16,7 @@ from black.brackets import (
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
+    max_delimiter_priority,
 )
 from black.comments import (
     FMT_OFF,
@@ -639,9 +640,43 @@ class LineGenerator(Visitor[Line]):
 
     def visit_comp_for(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_comprehension_in in self.mode:
-            normalize_invisible_parens(
-                node, parens_after={"in"}, mode=self.mode, features=self.features
-            )
+            check_lpar = False
+            for child in node.children:
+                if not check_lpar:
+                    check_lpar = isinstance(child, Leaf) and child.value == "in"
+                    continue
+
+                check_lpar = isinstance(child, Leaf) and child.value == "in"
+
+                is_wrapped = (
+                    len(child.children) == 3
+                    and is_lpar_token(child.children[0])
+                    and is_rpar_token(child.children[-1])
+                )
+                max_delimiter = max_delimiter_priority(
+                    (child.children[1] if is_wrapped else child).children
+                )
+
+                if child.type == syms.atom:
+                    if is_wrapped and child.children[1].type == syms.test:
+                        continue
+                    if max_delimiter > DOT_PRIORITY:
+                        if not is_wrapped and maybe_make_parens_invisible_in_atom(
+                            child,
+                            parent=node,
+                            mode=self.mode,
+                            features=self.features,
+                        ):
+                            wrap_in_parentheses(node, child, visible=True)
+                    elif maybe_make_parens_invisible_in_atom(
+                        child, parent=node, mode=self.mode, features=self.features
+                    ):
+                        wrap_in_parentheses(node, child, visible=False)
+                else:
+                    wrap_in_parentheses(
+                        node, child, visible=max_delimiter > DOT_PRIORITY
+                    )
+
         yield from self.visit_default(node)
 
     def visit_old_comp_for(self, node: Node) -> Iterator[Line]:
@@ -1012,7 +1047,7 @@ def _first_right_hand_split(
             else:
                 line_length = line.mode.line_length - sum(
                     len(str(leaf))
-                    for leaf in hugged_opening_leaves + hugged_closing_leaves
+                    for leaf in (hugged_opening_leaves + hugged_closing_leaves)
                 )
                 if is_line_short_enough(
                     inner_body, mode=replace(line.mode, line_length=line_length)

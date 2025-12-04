@@ -340,8 +340,14 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
     if not (first.type == token.LPAR and last.type == token.RPAR):
         return 0
 
+    return max_delimiter_priority(node.children[1:-1])
+
+
+def max_delimiter_priority(children: list[LN]) -> Priority:
+    """Return maximum delimiter priority in a list of leaves and nodes."""
+
     bt = BracketTracker()
-    for c in node.children[1:-1]:
+    for c in children:
         if isinstance(c, Leaf):
             bt.mark(c)
         else:
