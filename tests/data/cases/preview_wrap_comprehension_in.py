@@ -82,6 +82,31 @@ dict_with_really_long_names = {
     )
 }
 
+# Short `in`s with delimiters should retain up to one level of parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in ((traits_instructions or [])) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions or [] if trait
+]
+
+# Short `in`s without delimiters (or only dots) should remove parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits.instructions) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits.instructions if trait
+]
+
 # output
 [
     a
@@ -183,3 +208,28 @@ dict_with_really_long_names = {
     key_with_super_really_long_name: key_with_super_really_long_name
     for key in dictionary
 }
+
+# Short `in`s with delimiters should retain up to one level of parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions or [] if trait
+]
+
+# Short `in`s without delimiters (or only dots) should remove parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits.instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits.instructions if trait
+]

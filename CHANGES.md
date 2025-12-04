@@ -91,6 +91,8 @@
 - Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
+- Retain user-written parens around `in` clauses of comprehensions if they have
+  delimiters (#4881)
 
 ### Configuration
 
