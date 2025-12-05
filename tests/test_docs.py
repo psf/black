@@ -64,7 +64,7 @@ def test_feature_lists_are_up_to_date() -> None:
         future_style = f.readlines()
     preview_error = check_feature_list(
         future_style,
-        {feature.name for feature in set(Preview) - UNSTABLE_FEATURES},
+        {feature.name for feature in (set(Preview) - UNSTABLE_FEATURES)},
         "preview",
     )
     assert preview_error is None, preview_error
