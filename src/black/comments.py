@@ -7,6 +7,7 @@ from typing import Final, Union
 from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
+    OPENING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
     WHITESPACE,
@@ -645,7 +646,46 @@ def _generate_ignored_nodes_from_fmt_skip(
         return
 
     if Preview.fix_fmt_skip_in_one_liners in mode and not prev_sibling and parent:
-        prev_sibling = parent.prev_sibling
+        # If the current leaf doesn't have a previous sibling, it might be deeply nested
+        # (e.g. inside a list, function call, etc.). We need to climb up the tree
+        # to find the previous sibling on the same line.
+
+        # First, find the ancestor node that starts the current line
+        # (has a newline in its prefix, or is at the root)
+        line_start_node = parent
+        while line_start_node.parent is not None:
+            # The comment itself is in the leaf's prefix, so we need to check
+            # if the current node's prefix (before the comment) has a newline
+            node_prefix = (
+                line_start_node.prefix if hasattr(line_start_node, "prefix") else ""
+            )
+            # Skip the comment part if this is the first node (parent)
+            if line_start_node == parent:
+                # The parent node has the comment in its prefix, so we check
+                # what's before the comment
+                comment_start = node_prefix.find(comment.value)
+                if comment_start >= 0:
+                    prefix_before_comment = node_prefix[:comment_start]
+                    if "\n" in prefix_before_comment:
+                        # There's a newline before the comment, so this node
+                        # is at the start of the line
+                        break
+                elif "\n" in node_prefix:
+                    break
+            elif "\n" in node_prefix:
+                # This node starts on a new line, so it's the line start
+                break
+            line_start_node = line_start_node.parent
+
+        # Now find the prev_sibling by climbing from parent up to line_start_node
+        curr = parent
+        while curr is not None and curr != line_start_node.parent:
+            if curr.prev_sibling is not None:
+                prev_sibling = curr.prev_sibling
+                break
+            if curr.parent is None:
+                break
+            curr = curr.parent
 
     if prev_sibling is not None:
         leaf.prefix = leaf.prefix[comment.consumed :]
@@ -745,6 +785,22 @@ def _generate_ignored_nodes_from_fmt_skip(
                 header_nodes = _get_compound_statement_header(body_node, parent)
                 if header_nodes:
                     ignored_nodes = header_nodes + ignored_nodes
+
+        # If the leaf's parent is an atom (parenthesized expression) and we've
+        # captured the opening bracket in our ignored_nodes, we should include
+        # the entire atom (including the closing bracket and the leaf itself)
+        # to avoid partial formatting
+        if (
+            parent is not None
+            and parent.type == syms.atom
+            and len(parent.children) >= 2
+            and parent.children[0].type in OPENING_BRACKETS
+            and parent.children[0] in ignored_nodes
+        ):
+            # Replace the opening bracket and any other captured children of this atom
+            # with the entire atom node
+            ignored_nodes = [node for node in ignored_nodes if node.parent != parent]
+            ignored_nodes.append(parent)
 
         yield from ignored_nodes
     elif (
