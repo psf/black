@@ -863,32 +863,33 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     for i, leaf in enumerate(line.leaves):
         if max_level_to_update == math.inf:
             had_comma: int | None = None
-            if leaf.bracket_depth + 1 > len(commas):
+            bracket_depth = getattr(leaf, "bracket_depth", 0)
+            if bracket_depth + 1 > len(commas):
                 commas.append(0)
-            elif leaf.bracket_depth + 1 < len(commas):
+            elif bracket_depth + 1 < len(commas):
                 had_comma = commas.pop()
             if (
                 had_comma is not None
                 and multiline_string is not None
-                and multiline_string.bracket_depth == leaf.bracket_depth + 1
+                and multiline_string.bracket_depth == bracket_depth + 1
             ):
                 # Have left the level with the MLS, stop tracking commas
-                max_level_to_update = leaf.bracket_depth
+                max_level_to_update = bracket_depth
                 if had_comma > 0:
                     # MLS was in parens with at least one comma - force split
                     return False
 
-        if leaf.bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
+        if bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
             # Inside brackets, ignore trailing comma
             # directly after MLS/MLS-containing expression
             ignore_ctxs: list[LN | None] = [None]
             ignore_ctxs += multiline_string_contexts
-            if (line.inside_brackets or leaf.bracket_depth > 0) and (
+            if (line.inside_brackets or bracket_depth > 0) and (
                 i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs
             ):
-                commas[leaf.bracket_depth] += 1
+                commas[bracket_depth] += 1
         if max_level_to_update != math.inf:
-            max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
+            max_level_to_update = min(max_level_to_update, bracket_depth)
 
         if is_multiline_string(leaf):
             if leaf.parent and (
