@@ -802,22 +802,6 @@ def _generate_ignored_nodes_from_fmt_skip(
             ignored_nodes = [node for node in ignored_nodes if node.parent != parent]
             ignored_nodes.append(parent)
 
-            # If the atom's parent is a binary operation (comparison, arithmetic, etc.)
-            # and we've also captured siblings of the atom from the same parent, then
-            # include the entire parent to avoid leaving an incomplete binary operation
-            if (
-                parent.parent is not None
-                and isinstance(parent.parent, Node)
-                and any(
-                    node.parent == parent.parent and node != parent
-                    for node in ignored_nodes
-                )
-            ):
-                ignored_nodes = [
-                    node for node in ignored_nodes if node.parent != parent.parent
-                ]
-                ignored_nodes.append(parent.parent)
-
         yield from ignored_nodes
     elif (
         parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
