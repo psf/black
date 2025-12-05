@@ -1507,6 +1507,30 @@ def normalize_invisible_parens(
 
         # Add parentheses around if guards in case blocks
         if isinstance(child, Node) and child.type == syms.guard:
+            # Isolate the expression leaves (the tokens after the 'if')
+            guard_leaves = []
+            found_if = False
+            for leaf in child.leaves():
+                if leaf.type == token.NAME and leaf.value == "if":
+                    found_if = True
+                    continue
+                if found_if:
+                    guard_leaves.append(leaf)
+
+            # Create a mock Line for the expression
+            mock_line = Line(mode=mode)  # Fix: Use 'mode', not 'self.mode'
+            # The append_leaves helper is needed here
+            for leaf in guard_leaves:
+                mock_line.append(leaf)
+
+            # Check if the guard expression is short enough to fit easily.
+            if is_line_short_enough(
+                mock_line,
+                mode=mode,
+            ):
+                yield from self.visit(child)
+                continue
+
             normalize_invisible_parens(
                 child, parens_after={"if"}, mode=mode, features=features
             )
