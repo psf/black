@@ -31,6 +31,8 @@
 - Standardize type comments to form `# type: <value>` (#4645)
 - Fix `fix_fmt_skip_in_one_liners` preview feature to respect `# fmt: skip` for compound
   statements with semicolon-separated bodies (#4800)
+- Keep concatenated list comprehensions on their own lines when long additions need to
+  wrap (#0000)
 
 ### Configuration
 
