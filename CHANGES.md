@@ -22,6 +22,8 @@
 - Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
 - Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
 - Fix `# fmt: skip` behavior for deeply nested expressions (#4883)
+- Keep concatenated list comprehensions on their own lines when long additions need to
+  wrap (#4887)
 
 ### Packaging
 

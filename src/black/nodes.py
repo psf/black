@@ -645,6 +645,55 @@ def is_generator(node: LN) -> bool:
     return any(child.type == syms.old_comp_for for child in gexp.children)
 
 
+def _listmaker_is_comprehension(node: LN) -> bool:
+    return isinstance(node, Node) and node.type == syms.listmaker and any(
+        isinstance(child, Node) and child.type in {syms.comp_for, syms.old_comp_for}
+        for child in node.children
+    )
+
+
+def is_list_comprehension(node: LN) -> bool:
+    """Return True if `node` represents a list comprehension expression."""
+    if isinstance(node, Leaf):
+        return False
+
+    if node.type == syms.atom and len(node.children) >= 3:
+        first = node.children[0]
+        last = node.children[-1]
+        if first.type == token.LSQB and last.type == token.RSQB:
+            return _listmaker_is_comprehension(node.children[1])
+        if first.type == token.LPAR and last.type == token.RPAR:
+            inner = unwrap_singleton_parenthesis(node)
+            return inner is not None and is_list_comprehension(inner)
+
+    if node.type == syms.power:
+        return any(is_list_comprehension(child) for child in node.children)
+
+    return False
+
+
+def is_concatenated_list_comprehension(node: LN) -> bool:
+    """Return True if `node` is an addition of list comprehensions."""
+    if isinstance(node, Leaf):
+        return False
+
+    if node.type == syms.atom:
+        inner = unwrap_singleton_parenthesis(node)
+        return inner is not None and is_concatenated_list_comprehension(inner)
+
+    if node.type != syms.arith_expr:
+        return False
+
+    operands = node.children[::2]
+    operators = node.children[1::2]
+    if len(operands) <= 1:
+        return False
+
+    return all(
+        isinstance(op, Leaf) and op.type == token.PLUS for op in operators
+    ) and all(is_list_comprehension(operand) for operand in operands)
+
+
 def is_one_sequence_between(
     opening: Leaf,
     closing: Leaf,

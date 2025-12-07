@@ -88,6 +88,7 @@
           "fix_fmt_skip_in_one_liners",
           "standardize_type_comments",
           "wrap_comprehension_in",
+          "concatenated_list_comprehensions",
           "remove_parens_around_except_types",
           "normalize_cr_newlines",
           "fix_module_docstring_detection",

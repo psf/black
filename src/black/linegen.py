@@ -50,6 +50,7 @@ from black.nodes import (
     is_arith_like,
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
+    is_concatenated_list_comprehension,
     is_docstring,
     is_empty_tuple,
     is_generator,
@@ -1041,6 +1042,20 @@ def _first_right_hand_split(
     return RHSResult(head, body, tail, opening_bracket, closing_bracket)
 
 
+def _optional_parens_wrap_concatenated_list_comp(opening_bracket: Leaf) -> bool:
+    parent = opening_bracket.parent
+    if (
+        isinstance(parent, Node)
+        and parent.type == syms.atom
+        and len(parent.children) >= 3
+        and parent.children[0] is opening_bracket
+    ):
+        middle = parent.children[1]
+        return isinstance(middle, Node) and is_concatenated_list_comprehension(middle)
+
+    return False
+
+
 def _maybe_split_omitting_optional_parens(
     rhs: RHSResult,
     line: Line,
@@ -1048,6 +1063,15 @@ def _maybe_split_omitting_optional_parens(
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
+    force_optional_parens = (
+        Preview.concatenated_list_comprehensions in mode
+        and rhs.opening_bracket.type == token.LPAR
+        and not rhs.opening_bracket.value
+        and rhs.closing_bracket.type == token.RPAR
+        and not rhs.closing_bracket.value
+        and _optional_parens_wrap_concatenated_list_comp(rhs.opening_bracket)
+    )
+
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
@@ -1061,6 +1085,7 @@ def _maybe_split_omitting_optional_parens(
         and not line.is_import
         # and we can actually remove the parens
         and can_omit_invisible_parens(rhs, mode.line_length)
+        and not force_optional_parens
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:
@@ -1848,6 +1873,17 @@ def maybe_make_parens_invisible_in_atom(
 
     first = node.children[0]
     last = node.children[-1]
+    if (
+        Preview.concatenated_list_comprehensions in mode
+        and is_lpar_token(first)
+        and is_rpar_token(last)
+        and first.value
+        and last.value
+        and len(node.children) >= 3
+        and is_concatenated_list_comprehension(node.children[1])
+    ):
+        return False
+
     if is_lpar_token(first) and is_rpar_token(last):
         middle = node.children[1]
         # make parentheses invisible
