@@ -13,8 +13,6 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
-- `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
-  normalize file newlines both from and to.
 - `remove_parens_around_except_types`: Remove parentheses around multiple exception
   types in `except` and `except*` without `as`. See PEP 758 for details.
 - `remove_parens_from_assignment_lhs`: Remove unnecessary parentheses from the left-hand

@@ -2081,7 +2081,7 @@ class BlackTestCase(BlackBaseTestCase):
         )
 
     def test_preview_newline_type_detection(self) -> None:
-        mode = Mode(enabled_features={Preview.normalize_cr_newlines})
+        mode = Mode()
         newline_types = ["A\n", "A\r\n", "A\r"]
         for test_case in itertools.permutations(newline_types):
             assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
