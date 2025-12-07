@@ -1597,7 +1597,7 @@ def normalize_invisible_parens(
                 if node.type == syms.guard:
                     mock_line = Line(mode=mode)
                     for leaf in child.leaves():
-                        mock_line.append(leaf)                        
+                        mock_line.append(leaf)
                     # If it's a guard AND it's short, we DON'T wrap
                     if not is_line_short_enough(mock_line, mode=mode):
                         wrap_in_parentheses(node, child, visible=False)
