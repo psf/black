@@ -44,8 +44,8 @@ To cut a release:
      - So unless there already has been a release during this month, `N` should be `0`
    - Example: the first release in January, 2022 → `22.1.0`
    - `release.py` will calculate this and log to stderr for you copy paste pleasure
-1. Double-check that no changelog entries since the last release were put in the
-   wrong section (e.g., run `git diff origin/stable CHANGES.md`)
+1. Double-check that no changelog entries since the last release were put in the wrong
+   section (e.g., run `git diff origin/stable CHANGES.md`)
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
    - Run `python3 scripts/release.py [--debug]` to generate most changes
 1. If `release.py` fails manually edit; otherwise, yay, skip this step!
