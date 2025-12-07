@@ -1,0 +1,62 @@
+import telegram
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
+import logging
+
+# ----------------------------------------------------
+# 1. इस जगह पर अपना बॉट TOKEN बदलें 
+# (जो आपको @BotFather से मिला है)
+# ----------------------------------------------------
+BOT_TOKEN = "8510316610:AAGvnQloODP6OZoxTdM9G8PCGCb1br5vJig" 
+
+# ----------------------------------------------------
+# 2. इस जगह पर अपने स्टोर का लिंक बदलें 
+# ----------------------------------------------------
+STORE_URL = "https://www.your-free-fire-store-link.com" 
+
+# Logging सेटअप करें (यह आपको कंसोल में यह देखने में मदद करता है कि बॉट क्या कर रहा है)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+
+# -----------------
+# /start कमांड के लिए फंक्शन
+# -----------------
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    
+    # बटन पर दिखने वाला टेक्स्ट
+    button_text = "FREE FIRE SRC STORE 🏢"
+    
+    # InlineKeyboardButton (बटन) ऑब्जेक्ट बनाएं
+    store_button = InlineKeyboardButton(
+        text=button_text, 
+        url=STORE_URL
+    )
+    
+    # InlineKeyboardMarkup (बटन को मैसेज से जोड़ने वाला फ्रेम) ऑब्जेक्ट बनाएं
+    keyboard = InlineKeyboardMarkup([
+        [store_button] # एक पंक्ति में एक बटन
+    ])
+    
+    # यूजर को मैसेज भेजें
+    await update.message.reply_text(
+        "नमस्ते! अपने फ्री फायर स्टोर तक पहुंचने के लिए नीचे दिए गए बटन पर क्लिक करें।",
+        reply_markup=keyboard 
+    )
+
+# -----------------
+# मुख्य लॉजिक (Main Logic)
+# -----------------
+if __name__ == '__main__':
+    
+    # Bot Application बनाएं
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    # /start कमांड हैंडलर को जोड़ें
+    start_handler = CommandHandler('start', start)
+    application.add_handler(start_handler)
+
+    # बॉट को शुरू करें और Telegram से अपडेट्स लेना शुरू करें
+    print("बॉट शुरू हो गया है। अपडेट्स के लिए पॉलिंग शुरू हो रही है...")
+    application.run_polling()
