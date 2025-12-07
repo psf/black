@@ -226,7 +226,6 @@ class Preview(Enum):
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    remove_parens_from_assignment_lhs = auto()
     standardize_type_comments = auto()
     wrap_comprehension_in = auto()
     wrap_long_dict_values_in_parens = auto()

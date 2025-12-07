@@ -1518,10 +1518,8 @@ def normalize_invisible_parens(
         ):
             check_lpar = True
 
-        # Check for assignment LHS with preview feature enabled
         if (
-            Preview.remove_parens_from_assignment_lhs in mode
-            and index == 0
+            index == 0
             and isinstance(child, Node)
             and child.type == syms.atom
             and node.type == syms.expr_stmt

@@ -13,9 +13,6 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
-- `remove_parens_from_assignment_lhs`: Remove unnecessary parentheses from the left-hand
-  side of assignments while preserving magic trailing commas and intentional multiline
-  formatting.
 - `standardize_type_comments`: Format type comments which have zero or more spaces
   between `#` and `type:` or between `type:` and value to `# type: (value)`.
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
