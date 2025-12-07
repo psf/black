@@ -13,8 +13,6 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
-- `always_one_newline_after_import`: Always force one blank line after import
-  statements, except when the line after the import is a comment or an import statement.
 - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behavior on one-liner declarations,
   such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
   have been incorrectly collapsed.
