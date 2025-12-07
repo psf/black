@@ -82,7 +82,6 @@
         "enum": [
           "string_processing",
           "hug_parens_with_braces_and_square_brackets",
-          "remove_parens_around_except_types",
           "remove_parens_from_assignment_lhs",
           "standardize_type_comments",
           "wrap_comprehension_in",

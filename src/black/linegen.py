@@ -1801,12 +1801,10 @@ def maybe_make_parens_invisible_in_atom(
             # and option to skip this check for `for` and `with` statements.
             not remove_brackets_around_comma
             and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-            # Skip this check in Preview mode in order to
             # Remove parentheses around multiple exception types in except and
             # except* without as. See PEP 758 for details.
             and not (
-                Preview.remove_parens_around_except_types in mode
-                and Feature.UNPARENTHESIZED_EXCEPT_TYPES in features
+                Feature.UNPARENTHESIZED_EXCEPT_TYPES in features
                 # is a tuple
                 and is_tuple(node)
                 # has a parent node
