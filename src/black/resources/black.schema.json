@@ -82,7 +82,6 @@
         "enum": [
           "string_processing",
           "hug_parens_with_braces_and_square_brackets",
-          "standardize_type_comments",
           "wrap_comprehension_in",
           "wrap_long_dict_values_in_parens"
         ]

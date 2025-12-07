@@ -177,8 +177,7 @@ def make_comment(content: str, mode: Mode) -> str:
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
     if (
-        Preview.standardize_type_comments in mode
-        and content
+        content
         and "\N{NO-BREAK SPACE}" not in content
         and is_type_comment_string("#" + content, mode=mode)
     ):
