@@ -14,59 +14,28 @@ experimental, feedback and issue reports are highly encouraged!
 Currently, the following features are included in the preview style:
 
 - `always_one_newline_after_import`: Always force one blank line after import
-  statements, except when the line after the import is a comment or an import statement
-- `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries
-  ([see below](labels/wrap-long-dict-values))
-- `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behaviour on one-liner declarations,
+  statements, except when the line after the import is a comment or an import statement.
+- `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behavior on one-liner declarations,
   such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
   have been incorrectly collapsed.
-- `standardize_type_comments`: Format type comments which have zero or more spaces
-  between `#` and `type:` or between `type:` and value to `# type: (value)`
-- `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
-  across lines if it would otherwise exceed the maximum line length.
-- `remove_parens_around_except_types`: Remove parentheses around multiple exception
-  types in `except` and `except*` without `as`. See PEP 758 for details.
+- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
+  strings if preceded by comments.
+- `fix_type_expansion_split`: Fix type expansions split in generic functions.
+- `multiline_string_handling`: Make expressions involving multiline strings more
+  compact. ([see below](labels/multiline-string-handling))
 - `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
   normalize file newlines both from and to.
-- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
-  strings if preceeded by comments.
-- `fix_type_expansion_split`: Fix type expansions split in generic functions.
+- `remove_parens_around_except_types`: Remove parentheses around multiple exception
+  types in `except` and `except*` without `as`. See PEP 758 for details.
 - `remove_parens_from_assignment_lhs`: Remove unnecessary parentheses from the left-hand
   side of assignments while preserving magic trailing commas and intentional multiline
-  formatting. For example, `(b) = a()[0]` becomes `b = a()[0]`, and `(c, *_) = a()`
-  becomes `c, *_ = a()`, but `(d,) = a()` is preserved as it defines a single-element
-  tuple.
-- `multiline_string_handling`: more compact formatting of expressions involving
-  multiline strings ([see below](labels/multiline-string-handling))
-- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
-  strings if preceeded by comments.
-
-(labels/wrap-long-dict-values)=
-
-### Improved parentheses management in dicts
-
-For dict literals with long values, they are now wrapped in parentheses. Unnecessary
-parentheses are now removed. For example:
-
-```python
-my_dict = {
-    "a key in my dict": a_very_long_variable
-    * and_a_very_long_function_call()
-    / 100000.0,
-    "another key": (short_value),
-}
-```
-
-will be changed to:
-
-```python
-my_dict = {
-    "a key in my dict": (
-        a_very_long_variable * and_a_very_long_function_call() / 100000.0
-    ),
-    "another key": short_value,
-}
-```
+  formatting.
+- `standardize_type_comments`: Format type comments which have zero or more spaces
+  between `#` and `type:` or between `type:` and value to `# type: (value)`.
+- `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
+  across lines if it would otherwise exceed the maximum line length.
+- `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
+  ([see below](labels/wrap-long-dict-values))
 
 (labels/multiline-string-handling)=
 
@@ -118,6 +87,33 @@ foobar
 """.replace("\n", "")
 ```
 
+(labels/wrap-long-dict-values)=
+
+### Improved parentheses management in dicts
+
+For dict literals with long values, they are now wrapped in parentheses. Unnecessary
+parentheses are now removed. For example:
+
+```python
+my_dict = {
+    "a key in my dict": a_very_long_variable
+    * and_a_very_long_function_call()
+    / 100000.0,
+    "another key": (short_value),
+}
+```
+
+will be changed to:
+
+```python
+my_dict = {
+    "a key in my dict": (
+        a_very_long_variable * and_a_very_long_function_call() / 100000.0
+    ),
+    "another key": short_value,
+}
+```
+
 ## Unstable style
 
 (labels/unstable-style)=
@@ -135,9 +131,9 @@ demoted from the `--preview` to the `--unstable` style, users can use the
 
 The unstable style additionally includes the following features:
 
-- `hug_parens_with_braces_and_square_brackets`: more compact formatting of nested
-  brackets ([see below](labels/hug-parens))
-- `string_processing`: split long string literals and related changes
+- `hug_parens_with_braces_and_square_brackets`: More compact formatting of nested
+  brackets. ([see below](labels/hug-parens))
+- `string_processing`: Split long string literals and related changes.
   ([see below](labels/string-processing))
 
 (labels/hug-parens)=
