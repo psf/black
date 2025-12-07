@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
