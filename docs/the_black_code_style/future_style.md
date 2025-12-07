@@ -13,7 +13,6 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
-- `fix_type_expansion_split`: Fix type expansions split in generic functions.
 - `multiline_string_handling`: Make expressions involving multiline strings more
   compact. ([see below](labels/multiline-string-handling))
 - `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
