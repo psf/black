@@ -974,6 +974,24 @@ def can_omit_invisible_parens(
     """
     line = rhs.body
 
+    # We can't omit parens if doing so would result in a type: ignore comment
+    # sharing a line with other comments, as that breaks type: ignore parsing.
+    # Check if there's a type: ignore comment in any part
+    has_type_ignore_comment = False
+    has_other_comment = False
+
+    for part in (rhs.head, rhs.body, rhs.tail):
+        for leaf in part.leaves:
+            for comment in part.comments.get(id(leaf), []):
+                if is_type_ignore_comment(comment, mode=part.mode):
+                    has_type_ignore_comment = True
+                else:
+                    has_other_comment = True
+
+    # If there's both a type: ignore comment and other comments, keep the parens
+    if has_type_ignore_comment and has_other_comment:
+        return False
+
     # We need optional parens in order to split standalone comments to their own lines
     # if there are no nested parens around the standalone comments
     closing_bracket: Leaf | None = None

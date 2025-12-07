@@ -20,6 +20,8 @@
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
   string literals, or on dictionary entries with long lines (#4872)
 - Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
+- Preserve parentheses when `# type: ignore` comments would be merged with other
+  comments on the same line, preventing AST equivalence failures (#4888)
 
 ### Preview style
 
