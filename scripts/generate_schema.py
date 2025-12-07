@@ -37,8 +37,9 @@ def generate_schema_from_click(
 
         result[name]["description"] = param.help
 
-        if param.default is not None and not param.multiple:
-            result[name]["default"] = param.default
+        default = param.to_info_dict()["default"]
+        if default is not None and not param.multiple:
+            result[name]["default"] = default
 
     return result
 
@@ -53,7 +54,7 @@ def main(schemastore: bool, outfile: IO[str]) -> None:
     schema: dict[str, Any] = {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$id": (
-            "https://github.com/psf/black/blob/main/black/resources/black.schema.json"
+            "https://github.com/psf/black/blob/main/src/black/resources/black.schema.json"
         ),
         "$comment": "tool.black table in pyproject.toml",
         "type": "object",

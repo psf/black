@@ -21,13 +21,14 @@ import logging
 import os
 import pkgutil
 import sys
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from logging import Logger
-from typing import IO, Any, Iterable, Iterator, List, Optional, Tuple, Union, cast
+from typing import Any, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pgen2.tokenize import GoodTokenInfo
+from blib2to3.pgen2.tokenize import TokenInfo
 from blib2to3.pytree import NL
 
 # Pgen imports
@@ -39,8 +40,8 @@ Path = Union[str, "os.PathLike[str]"]
 @dataclass
 class ReleaseRange:
     start: int
-    end: Optional[int] = None
-    tokens: List[Any] = field(default_factory=list)
+    end: int | None = None
+    tokens: list[Any] = field(default_factory=list)
 
     def lock(self) -> None:
         total_eaten = len(self.tokens)
@@ -51,7 +52,7 @@ class TokenProxy:
     def __init__(self, generator: Any) -> None:
         self._tokens = generator
         self._counter = 0
-        self._release_ranges: List[ReleaseRange] = []
+        self._release_ranges: list[ReleaseRange] = []
 
     @contextmanager
     def release(self) -> Iterator["TokenProxy"]:
@@ -105,13 +106,13 @@ class TokenProxy:
 
 
 class Driver:
-    def __init__(self, grammar: Grammar, logger: Optional[Logger] = None) -> None:
+    def __init__(self, grammar: Grammar, logger: Logger | None = None) -> None:
         self.grammar = grammar
         if logger is None:
             logger = logging.getLogger(__name__)
         self.logger = logger
 
-    def parse_tokens(self, tokens: Iterable[GoodTokenInfo], debug: bool = False) -> NL:
+    def parse_tokens(self, tokens: Iterable[TokenInfo], debug: bool = False) -> NL:
         """Parse a series of tokens and return the syntax tree."""
         # XXX Move the prefix computation into a wrapper around tokenize.
         proxy = TokenProxy(tokens)
@@ -121,7 +122,7 @@ class Driver:
 
         lineno = 1
         column = 0
-        indent_columns: List[int] = []
+        indent_columns: list[int] = []
         type = value = start = end = line_text = None
         prefix = ""
 
@@ -167,7 +168,13 @@ class Driver:
             if type in {token.INDENT, token.DEDENT}:
                 prefix = _prefix
             lineno, column = end
-            if value.endswith("\n"):
+            # FSTRING_MIDDLE and TSTRING_MIDDLE are the only token that can end with a
+            # newline, and `end` will point to the next line. For that case, don't
+            # increment lineno.
+            if value.endswith("\n") and type not in (
+                token.FSTRING_MIDDLE,
+                token.TSTRING_MIDDLE,
+            ):
                 lineno += 1
                 column = 0
         else:
@@ -177,31 +184,21 @@ class Driver:
         assert p.rootnode is not None
         return p.rootnode
 
-    def parse_stream_raw(self, stream: IO[str], debug: bool = False) -> NL:
-        """Parse a stream and return the syntax tree."""
-        tokens = tokenize.generate_tokens(stream.readline, grammar=self.grammar)
-        return self.parse_tokens(tokens, debug)
-
-    def parse_stream(self, stream: IO[str], debug: bool = False) -> NL:
-        """Parse a stream and return the syntax tree."""
-        return self.parse_stream_raw(stream, debug)
-
     def parse_file(
-        self, filename: Path, encoding: Optional[str] = None, debug: bool = False
+        self, filename: Path, encoding: str | None = None, debug: bool = False
     ) -> NL:
         """Parse a file and return the syntax tree."""
         with open(filename, encoding=encoding) as stream:
-            return self.parse_stream(stream, debug)
+            text = stream.read()
+        return self.parse_string(text, debug)
 
     def parse_string(self, text: str, debug: bool = False) -> NL:
         """Parse a string and return the syntax tree."""
-        tokens = tokenize.generate_tokens(
-            io.StringIO(text).readline, grammar=self.grammar
-        )
+        tokens = tokenize.tokenize(text, grammar=self.grammar)
         return self.parse_tokens(tokens, debug)
 
-    def _partially_consume_prefix(self, prefix: str, column: int) -> Tuple[str, str]:
-        lines: List[str] = []
+    def _partially_consume_prefix(self, prefix: str, column: int) -> tuple[str, str]:
+        lines: list[str] = []
         current_line = ""
         current_column = 0
         wait_for_nl = False
@@ -230,7 +227,7 @@ class Driver:
         return "".join(lines), current_line
 
 
-def _generate_pickle_name(gt: Path, cache_dir: Optional[Path] = None) -> str:
+def _generate_pickle_name(gt: Path, cache_dir: Path | None = None) -> str:
     head, tail = os.path.splitext(gt)
     if tail == ".txt":
         tail = ""
@@ -243,10 +240,10 @@ def _generate_pickle_name(gt: Path, cache_dir: Optional[Path] = None) -> str:
 
 def load_grammar(
     gt: str = "Grammar.txt",
-    gp: Optional[str] = None,
+    gp: str | None = None,
     save: bool = True,
     force: bool = False,
-    logger: Optional[Logger] = None,
+    logger: Logger | None = None,
 ) -> Grammar:
     """Load the grammar (maybe from a pickle)."""
     if logger is None:
@@ -276,7 +273,7 @@ def _newer(a: str, b: str) -> bool:
 
 
 def load_packaged_grammar(
-    package: str, grammar_source: str, cache_dir: Optional[Path] = None
+    package: str, grammar_source: str, cache_dir: Path | None = None
 ) -> grammar.Grammar:
     """Normally, loads a pickled grammar by doing
         pkgutil.get_data(package, pickled_grammar)

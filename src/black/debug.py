@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Any, Iterator, List, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 from black.nodes import Visitor
 from black.output import out
@@ -14,7 +15,7 @@ T = TypeVar("T")
 @dataclass
 class DebugVisitor(Visitor[T]):
     tree_depth: int = 0
-    list_output: List[str] = field(default_factory=list)
+    list_output: list[str] = field(default_factory=list)
     print_output: bool = True
 
     def out(self, message: str, *args: Any, **kwargs: Any) -> None:
@@ -43,7 +44,7 @@ class DebugVisitor(Visitor[T]):
             self.out(f" {node.value!r}", fg="blue", bold=False)
 
     @classmethod
-    def show(cls, code: Union[str, Leaf, Node]) -> None:
+    def show(cls, code: str | Leaf | Node) -> None:
         """Pretty-print the lib2to3 AST of a given string of `code`.
 
         Convenience method for debugging.

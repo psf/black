@@ -2,9 +2,8 @@ import asyncio
 import logging
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime, timezone
-from functools import partial
+from functools import cache, partial
 from multiprocessing import freeze_support
-from typing import Set, Tuple
 
 try:
     from aiohttp import web
@@ -23,6 +22,7 @@ import click
 import black
 from _black_version import version as __version__
 from black.concurrency import maybe_install_uvloop
+from black.mode import Preview
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
@@ -86,12 +86,16 @@ def main(bind_host: str, bind_port: int) -> None:
     web.run_app(app, host=bind_host, port=bind_port, handle_signals=True, print=None)
 
 
+@cache
+def executor() -> Executor:
+    return ProcessPoolExecutor()
+
+
 def make_app() -> web.Application:
     app = web.Application(
         middlewares=[cors(allow_headers=(*BLACK_HEADERS, "Content-Type"))]
     )
-    executor = ProcessPoolExecutor()
-    app.add_routes([web.post("/", partial(handle, executor=executor))])
+    app.add_routes([web.post("/", partial(handle, executor=executor()))])
     return app
 
 
@@ -125,14 +129,6 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         formatted_str = await loop.run_in_executor(
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
-
-        # Preserve CRLF line endings
-        nl = req_str.find("\n")
-        if nl > 0 and req_str[nl - 1] == "\r":
-            formatted_str = formatted_str.replace("\n", "\r\n")
-            # If, after swapping line endings, nothing changed, then say so
-            if formatted_str == req_str:
-                raise black.NothingChanged
 
         # Put the source first line back
         req_str = header + req_str
@@ -191,7 +187,7 @@ def parse_mode(headers: MultiMapping[str]) -> black.Mode:
 
     preview = bool(headers.get(PREVIEW, False))
     unstable = bool(headers.get(UNSTABLE, False))
-    enable_features: Set[black.Preview] = set()
+    enable_features: set[black.Preview] = set()
     enable_unstable_features = headers.get(ENABLE_UNSTABLE_FEATURE, "").split(",")
     for piece in enable_unstable_features:
         piece = piece.strip()
@@ -216,7 +212,7 @@ def parse_mode(headers: MultiMapping[str]) -> black.Mode:
     )
 
 
-def parse_python_variant_header(value: str) -> Tuple[bool, Set[black.TargetVersion]]:
+def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersion]]:
     if value == "pyi":
         return True, set()
     else:

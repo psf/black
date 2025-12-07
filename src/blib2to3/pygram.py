@@ -70,6 +70,10 @@ class _python_symbols(Symbols):
     file_input: int
     flow_stmt: int
     for_stmt: int
+    fstring: int
+    fstring_format_spec: int
+    fstring_middle: int
+    fstring_replacement_field: int
     funcdef: int
     global_stmt: int
     guard: int
@@ -122,6 +126,10 @@ class _python_symbols(Symbols):
     tname_star: int
     trailer: int
     try_stmt: int
+    tstring: int
+    tstring_format_spec: int
+    tstring_middle: int
+    tstring_replacement_field: int
     type_stmt: int
     typedargslist: int
     typeparam: int

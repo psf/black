@@ -5,7 +5,7 @@ Parse Python code and perform AST validation.
 import ast
 import sys
 import warnings
-from typing import Iterable, Iterator, List, Set, Tuple
+from collections.abc import Collection, Iterator
 
 from black.mode import VERSION_TO_FEATURES, Feature, TargetVersion, supports_feature
 from black.nodes import syms
@@ -21,7 +21,7 @@ class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
 
-def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
+def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
     if not target_versions:
         # No target_version specified, so try all grammars.
         return [
@@ -52,17 +52,25 @@ def get_grammars(target_versions: Set[TargetVersion]) -> List[Grammar]:
     return grammars
 
 
-def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -> Node:
+def lib2to3_parse(
+    src_txt: str, target_versions: Collection[TargetVersion] = ()
+) -> Node:
     """Given a string with source, return the lib2to3 Node."""
     if not src_txt.endswith("\n"):
         src_txt += "\n"
 
     grammars = get_grammars(set(target_versions))
+    if target_versions:
+        max_tv = max(target_versions, key=lambda tv: tv.value)
+        tv_str = f" for target version {max_tv.pretty()}"
+    else:
+        tv_str = ""
+
     errors = {}
     for grammar in grammars:
         drv = driver.Driver(grammar)
         try:
-            result = drv.parse_string(src_txt, True)
+            result = drv.parse_string(src_txt, False)
             break
 
         except ParseError as pe:
@@ -73,14 +81,14 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
             except IndexError:
                 faulty_line = "<line number missing in source>"
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse: {lineno}:{column}: {faulty_line}"
+                f"Cannot parse{tv_str}: {lineno}:{column}: {faulty_line}"
             )
 
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse: {lineno}:{column}: {te.args[0]}"
+                f"Cannot parse{tv_str}: {lineno}:{column}: {te.args[0]}"
             )
 
     else:
@@ -97,7 +105,7 @@ def lib2to3_parse(src_txt: str, target_versions: Iterable[TargetVersion] = ()) -
 def matches_grammar(src_txt: str, grammar: Grammar) -> bool:
     drv = driver.Driver(grammar)
     try:
-        drv.parse_string(src_txt, True)
+        drv.parse_string(src_txt, False)
     except (ParseError, TokenError, IndentationError):
         return False
     else:
@@ -110,8 +118,12 @@ def lib2to3_unparse(node: Node) -> str:
     return code
 
 
+class ASTSafetyError(Exception):
+    """Raised when Black's generated code is not equivalent to the old AST."""
+
+
 def _parse_single_version(
-    src: str, version: Tuple[int, int], *, type_comments: bool
+    src: str, version: tuple[int, int], *, type_comments: bool
 ) -> ast.AST:
     filename = "<unknown>"
     with warnings.catch_warnings():
@@ -147,16 +159,27 @@ def parse_ast(src: str) -> ast.AST:
 def _normalize(lineend: str, value: str) -> str:
     # To normalize, we strip any leading and trailing space from
     # each line...
-    stripped: List[str] = [i.strip() for i in value.splitlines()]
+    stripped: list[str] = [i.strip() for i in value.splitlines()]
     normalized = lineend.join(stripped)
     # ...and remove any blank lines at the beginning and end of
     # the whole string
     return normalized.strip()
 
 
-def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
+def stringify_ast(node: ast.AST) -> Iterator[str]:
     """Simple visitor generating strings to compare ASTs by content."""
+    return _stringify_ast(node, [])
 
+
+def _stringify_ast_with_new_parent(
+    node: ast.AST, parent_stack: list[ast.AST], new_parent: ast.AST
+) -> Iterator[str]:
+    parent_stack.append(new_parent)
+    yield from _stringify_ast(node, parent_stack)
+    parent_stack.pop()
+
+
+def _stringify_ast(node: ast.AST, parent_stack: list[ast.AST]) -> Iterator[str]:
     if (
         isinstance(node, ast.Constant)
         and isinstance(node.value, str)
@@ -167,9 +190,9 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
         # over the kind
         node.kind = None
 
-    yield f"{'  ' * depth}{node.__class__.__name__}("
+    yield f"{'    ' * len(parent_stack)}{node.__class__.__name__}("
 
-    for field in sorted(node._fields):  # noqa: F402
+    for field in sorted(node._fields):
         # TypeIgnore has only one field 'lineno' which breaks this comparison
         if isinstance(node, ast.TypeIgnore):
             break
@@ -179,7 +202,7 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
         except AttributeError:
             continue
 
-        yield f"{'  ' * (depth + 1)}{field}="
+        yield f"{'    ' * (len(parent_stack) + 1)}{field}="
 
         if isinstance(value, list):
             for item in value:
@@ -190,14 +213,16 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                     and isinstance(node, ast.Delete)
                     and isinstance(item, ast.Tuple)
                 ):
-                    for elt in item.elts:
-                        yield from stringify_ast(elt, depth + 2)
+                    for elt in _unwrap_tuples(item):
+                        yield from _stringify_ast_with_new_parent(
+                            elt, parent_stack, node
+                        )
 
                 elif isinstance(item, ast.AST):
-                    yield from stringify_ast(item, depth + 2)
+                    yield from _stringify_ast_with_new_parent(item, parent_stack, node)
 
         elif isinstance(value, ast.AST):
-            yield from stringify_ast(value, depth + 2)
+            yield from _stringify_ast_with_new_parent(value, parent_stack, node)
 
         else:
             normalized: object
@@ -205,6 +230,10 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                 isinstance(node, ast.Constant)
                 and field == "value"
                 and isinstance(value, str)
+                and len(parent_stack) >= 2
+                # Any standalone string, ideally this would
+                # exactly match black.nodes.is_docstring
+                and isinstance(parent_stack[-1], ast.Expr)
             ):
                 # Constant strings may be indented across newlines, if they are
                 # docstrings; fold spaces after newlines when comparing. Similarly,
@@ -215,6 +244,17 @@ def stringify_ast(node: ast.AST, depth: int = 0) -> Iterator[str]:
                 normalized = value.rstrip()
             else:
                 normalized = value
-            yield f"{'  ' * (depth + 2)}{normalized!r},  # {value.__class__.__name__}"
+            yield (
+                f"{'    ' * (len(parent_stack) + 1)}{normalized!r},  #"
+                f" {value.__class__.__name__}"
+            )
 
-    yield f"{'  ' * depth})  # /{node.__class__.__name__}"
+    yield f"{'    ' * len(parent_stack)})  # /{node.__class__.__name__}"
+
+
+def _unwrap_tuples(node: ast.Tuple) -> Iterator[ast.AST]:
+    for elt in node.elts:
+        if isinstance(elt, ast.Tuple):
+            yield from _unwrap_tuples(elt)
+        else:
+            yield elt

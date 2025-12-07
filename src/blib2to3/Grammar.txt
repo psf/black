@@ -12,9 +12,9 @@ file_input: (NEWLINE | stmt)* ENDMARKER
 single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
 eval_input: testlist NEWLINE* ENDMARKER
 
-typevar: NAME [':' expr]
-paramspec: '**' NAME
-typevartuple: '*' NAME
+typevar: NAME [':' test] ['=' test]
+paramspec: '**' NAME ['=' test]
+typevartuple: '*' NAME ['=' (test|star_expr)]
 typeparam: typevar | paramspec | typevartuple
 typeparams: '[' typeparam (',' typeparam)* [','] ']'
 
@@ -123,7 +123,7 @@ try_stmt: ('try' ':' suite
 with_stmt: 'with' asexpr_test (',' asexpr_test)*  ':' suite
 
 # NB compile.c makes sure that the default except clause is last
-except_clause: 'except' ['*'] [test [(',' | 'as') test]]
+except_clause: 'except' ['*'] [testlist ['as' test]]
 suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
 
 # Backward compatibility cruft to support:
@@ -163,7 +163,7 @@ atom: ('(' [yield_expr|testlist_gexp] ')' |
        '[' [listmaker] ']' |
        '{' [dictsetmaker] '}' |
        '`' testlist1 '`' |
-       NAME | NUMBER | STRING+ | '.' '.' '.')
+       NAME | NUMBER | (STRING | fstring | tstring)+ | '.' '.' '.')
 listmaker: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star_expr))* [','] )
 testlist_gexp: (namedexpr_test|star_expr) ( old_comp_for | (',' (namedexpr_test|star_expr))* [','] )
 lambdef: 'lambda' [varargslist] ':' test
@@ -254,3 +254,13 @@ case_block: "case" patterns [guard] ':' suite
 guard: 'if' namedexpr_test
 patterns: pattern (',' pattern)* [',']
 pattern: (expr|star_expr) ['as' expr]
+
+fstring: FSTRING_START fstring_middle* FSTRING_END
+fstring_middle: fstring_replacement_field | FSTRING_MIDDLE
+fstring_replacement_field: '{' (yield_expr | testlist_star_expr) ['='] [ "!" NAME ] [ ':' fstring_format_spec* ] '}'
+fstring_format_spec: FSTRING_MIDDLE | fstring_replacement_field
+
+tstring: TSTRING_START tstring_middle* TSTRING_END
+tstring_middle: tstring_replacement_field | TSTRING_MIDDLE
+tstring_replacement_field: '{' (yield_expr | testlist_star_expr) ['='] [ "!" NAME ] [ ':' tstring_format_spec* ] '}'
+tstring_format_spec: TSTRING_MIDDLE | tstring_replacement_field

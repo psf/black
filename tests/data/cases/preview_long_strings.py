@@ -279,7 +279,7 @@ string_with_escaped_nameescape = (
     "........................................................................... \\N{LAO KO LA}"
 )
 
-msg = lambda x: f"this is a very very very long lambda value {x} that doesn't fit on a single line"
+msg = lambda x: f"this is a very very very very long lambda value {x} that doesn't fit on a single line"
 
 dict_with_lambda_values = {
     "join": lambda j: (
@@ -328,6 +328,20 @@ log.info(f'''Skipping: {"a" == 'b'} {desc["ms_name"]} {money=} {dte=} {pos_share
 log.info(f'''Skipping: {'a' == "b"=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}''')
 
 log.info(f"""Skipping: {'a' == 'b'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}""")
+
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
+    )
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx",
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
+    )
+}
 
 # output
 
@@ -842,11 +856,9 @@ string_with_escaped_nameescape = (
     " \\N{LAO KO LA}"
 )
 
-msg = (
-    lambda x: (
-        f"this is a very very very long lambda value {x} that doesn't fit on a single"
-        " line"
-    )
+msg = lambda x: (
+    f"this is a very very very very long lambda value {x} that doesn't fit on a"
+    " single line"
 )
 
 dict_with_lambda_values = {
@@ -871,43 +883,43 @@ code = (
 call(body="%s %s" % (",".join(items), suffix))
 
 log.info(
-    "Skipping:"
-    f' {desc["db_id"]=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]=} {desc["exposure_max"]=}'
+    f'Skipping: {desc["db_id"]=} {desc["ms_name"]} {money=} {dte=} {pos_share=}'
+    f' {desc["status"]=} {desc["exposure_max"]=}'
 )
 
 log.info(
-    "Skipping:"
-    f" {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']=} {desc['exposure_max']=}"
+    f"Skipping: {desc['db_id']=} {desc['ms_name']} {money=} {dte=} {pos_share=}"
+    f" {desc['status']=} {desc['exposure_max']=}"
 )
 
 log.info(
-    "Skipping:"
-    f" {desc['db_id']} {foo('bar',x=123)} {'foo' != 'bar'} {(x := 'abc=')} {pos_share=} {desc['status']} {desc['exposure_max']}"
+    f'Skipping: {desc["db_id"]} {foo("bar",x=123)} {"foo" != "bar"} {(x := "abc=")}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {desc["db_id"]} {desc["ms_name"]} {money=} {(x := "abc=")=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {desc["db_id"]} {desc["ms_name"]} {money=} {(x := "abc=")=}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {desc["db_id"]} {foo("bar",x=123)=} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {desc["db_id"]} {foo("bar",x=123)=} {money=} {dte=} {pos_share=}'
+    f' {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {foo("asdf")=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {foo("asdf")=} {desc["ms_name"]} {money=} {dte=} {pos_share=}'
+    f' {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f" {'a' == 'b' == 'c' == 'd'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"
+    f'Skipping: {"a" == "b" == "c" == "d"} {desc["ms_name"]} {money=} {dte=}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
-    "Skipping:"
-    f' {"a" == "b" == "c" == "d"=} {desc["ms_name"]} {money=} {dte=} {pos_share=} {desc["status"]} {desc["exposure_max"]}'
+    f'Skipping: {"a" == "b" == "c" == "d"=} {desc["ms_name"]} {money=} {dte=}'
+    f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
 log.info(
@@ -926,3 +938,17 @@ log.info(
 log.info(
     f"""Skipping: {'a' == 'b'} {desc['ms_name']} {money=} {dte=} {pos_share=} {desc['status']} {desc['exposure_max']}"""
 )
+
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
+    )
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
+        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
+    ),
+}
+x = {
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
+}

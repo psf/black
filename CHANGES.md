@@ -4,50 +4,382 @@
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
+- Introduces the 2026 stable style (#4892), stabilizing the following changes:
+  - `multiline_string_handling`: Make expressions involving multiline strings more
+    compact. (#1879)
+  - `wrap_long_dict_values_in_parens`: Add parentheses around long values in
+    dictionaries. (#3440)
+  - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
+    across lines if it would otherwise exceed the maximum line length. (#4699)
+  - `remove_parens_from_assignment_lhs`: Remove unnecessary parentheses from the
+    left-hand side of assignments while preserving magic trailing commas and intentional
+    multiline formatting. (#4865)
+  - `fix_type_expansion_split`: Fix type expansions split in generic functions. (#4777)
+  - `standardize_type_comments`: Format type comments which have zero or more spaces
+    between `#` and `type:` or between `type:` and value to `# type: (value)`. (#4645)
+  - `always_one_newline_after_import`: Always force one blank line after import
+    statements, except when the line after the import is a comment or an import
+    statement. (#4489)
+  - `remove_parens_around_except_types`: Remove parentheses around multiple exception
+    types in `except` and `except*` without `as`. See PEP 758 for details. (#4720)
+  - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
+    strings if preceded by comments. (#4764)
+  - `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
+    normalize file newlines both from and to. (#4710)
+  - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behavior on one-liner declarations,
+    such as `def foo(): return "mock" # fmt: skip`, where previously the declaration
+    would have been incorrectly collapsed. (#4800)
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
+- Regenerated the `_width_table.py` and added tests for the Khmer language (#4253)
+
+## 25.12.0
+
+Please test out the draft 2026 style in version 26.1a1 and
+[share your feedback](https://github.com/psf/black/issues/4875)! This style will be
+finalized in the January release (26.1.0). This release (25.12.0) will still produce the
+2025 style. Most but not all of the changes in `--preview` will be in the 2026 stable
+style.
+
+### Highlights
+
+- Black no longer supports running with Python 3.9 (#4842)
+
+### Stable style
+
+- Fix bug where comments preceding `# fmt: off`/`# fmt: on` blocks were incorrectly
+  removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4845)
+- Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
+  string literals, or on dictionary entries with long lines (#4872)
+- Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
+- Fix `fmt: skip` skipping the line after instead of the line it's on (#4855)
+- Remove unnecessary parentheses from the left-hand side of assignments while preserving
+  magic trailing commas and intentional multiline formatting (#4865)
+- Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
+- Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
+- Fix `# fmt: skip` behavior for deeply nested expressions (#4883)
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-- Regenerated the `_width_table.py` and added tests for the Khmer language (#4253)
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
+- Releases now include arm64 Windows binaries and wheels (#4814)
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+- Add `output-file` input to GitHub Action `psf/black` to write formatter output to a
+  file for artifact capture and log cleanliness (#4824)
+
+## 25.11.0
+
+### Highlights
+
+- Enable base 3.14 support (#4804)
+- Add support for the new Python 3.14 t-string syntax introduced by PEP 750 (#4805)
+
+### Stable style
+
+- Fix bug where comments between `# fmt: off` and `# fmt: on` were reformatted (#4811)
+- Comments containing fmt directives now preserve their exact formatting instead of
+  being normalized (#4811)
+
+### Preview style
+
+- Move `multiline_string_handling` from `--unstable` to `--preview` (#4760)
+- Fix bug where module docstrings would be treated as normal strings if preceded by
+  comments (#4764)
+- Fix bug where python 3.12 generics syntax split line happens weirdly (#4777)
+- Standardize type comments to form `# type: <value>` (#4645)
+- Fix `fix_fmt_skip_in_one_liners` preview feature to respect `# fmt: skip` for compound
+  statements with semicolon-separated bodies (#4800)
+
+### Configuration
+
+- Add `no_cache` option to control caching behavior. (#4803)
+
+### Packaging
+
+- Releases now include arm64 Linux binaries (#4773)
+
+### Output
+
+- Write unchanged content to stdout when excluding formatting from stdin using pipes
+  (#4610)
+
+### _Blackd_
+
+- Implemented BlackDClient. This simple python client allows to easily send formatting
+  requests to blackd (#4774)
+
+### Integrations
+
+- Enable 3.14 base CI (#4804)
+- Enhance GitHub Action `psf/black` to support the `required-version` major-version-only
+  "stability" format when using pyproject.toml (#4770)
+- Improve error message for vim plugin users. It now handles independently vim version
+- Vim: Warn on unsupported Vim and Python versions independently (#4772)
+- Vim: Print the import paths when importing black fails (#4675)
+- Vim: Fix handling of virtualenvs that have a different Python version (#4675)
+
+## 25.9.0
+
+### Highlights
+
+- Remove support for pre-python 3.7 `await/async` as soft keywords/variable names
+  (#4676)
+
+### Stable style
+
+- Fix crash while formatting a long `del` statement containing tuples (#4628)
+- Fix crash while formatting expressions using the walrus operator in complex `with`
+  statements (#4630)
+- Handle `# fmt: skip` followed by a comment at the end of file (#4635)
+- Fix crash when a tuple appears in the `as` clause of a `with` statement (#4634)
+- Fix crash when tuple is used as a context manager inside a `with` statement (#4646)
+- Fix crash when formatting a `\` followed by a `\r` followed by a comment (#4663)
+- Fix crash on a `\\r\n` (#4673)
+- Fix crash on `await ...` (where `...` is a literal `Ellipsis`) (#4676)
+- Fix crash on parenthesized expression inside a type parameter bound (#4684)
+- Fix crash when using line ranges excluding indented single line decorated items
+  (#4670)
+
+### Preview style
+
+- Fix a bug where one-liner functions/conditionals marked with `# fmt: skip` would still
+  be formatted (#4552)
+- Improve `multiline_string_handling` with ternaries and dictionaries (#4657)
+- Fix a bug where `string_processing` would not split f-strings directly after
+  expressions (#4680)
+- Wrap the `in` clause of comprehensions across lines if necessary (#4699)
+- Remove parentheses around multiple exception types in `except` and `except*` without
+  `as`. (#4720)
+- Add `\r` style newlines to the potential newlines to normalize file newlines both from
+  and to (#4710)
+
+### Parser
+
+- Rewrite tokenizer to improve performance and compliance (#4536)
+- Fix bug where certain unusual expressions (e.g., lambdas) were not accepted in type
+  parameter bounds and defaults. (#4602)
+
+### Performance
+
+- Avoid using an extra process when running with only one worker (#4734)
+
+### Integrations
+
+- Fix the version check in the vim file to reject Python 3.8 (#4567)
+- Enhance GitHub Action `psf/black` to read Black version from an additional section in
+  pyproject.toml: `[project.dependency-groups]` (#4606)
+- Build gallery docker image with python3-slim and reduce image size (#4686)
 
 ### Documentation
 
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
+- Add FAQ entry for windows emoji not displaying (#4714)
+
+## 25.1.0
+
+### Highlights
+
+This release introduces the new 2025 stable style (#4558), stabilizing the following
+changes:
+
+- Normalize casing of Unicode escape characters in strings to lowercase (#2916)
+- Fix inconsistencies in whether certain strings are detected as docstrings (#4095)
+- Consistently add trailing commas to typed function parameters (#4164)
+- Remove redundant parentheses in if guards for case blocks (#4214)
+- Add parentheses to if clauses in case blocks when the line is too long (#4269)
+- Whitespace before `# fmt: skip` comments is no longer normalized (#4146)
+- Fix line length computation for certain expressions that involve the power operator
+  (#4154)
+- Check if there is a newline before the terminating quotes of a docstring (#4185)
+- Fix type annotation spacing between `*` and more complex type variable tuple (#4440)
+
+The following changes were not in any previous release:
+
+- Remove parentheses around sole list items (#4312)
+- Generic function definitions are now formatted more elegantly: parameters are split
+  over multiple lines first instead of type parameter definitions (#4553)
+
+### Stable style
+
+- Fix formatting cells in IPython notebooks with magic methods and starting or trailing
+  empty lines (#4484)
+- Fix crash when formatting `with` statements containing tuple generators/unpacking
+  (#4538)
+
+### Preview style
+
+- Fix/remove string merging changing f-string quotes on f-strings with internal quotes
+  (#4498)
+- Collapse multiple empty lines after an import into one (#4489)
+- Prevent `string_processing` and `wrap_long_dict_values_in_parens` from removing
+  parentheses around long dictionary values (#4377)
+- Move `wrap_long_dict_values_in_parens` from the unstable to preview style (#4561)
+
+### Packaging
+
+- Store license identifier inside the `License-Expression` metadata field, see
+  [PEP 639](https://peps.python.org/pep-0639/). (#4479)
+
+### Performance
+
+- Speed up the `is_fstring_start` function in Black's tokenizer (#4541)
+
+### Integrations
+
+- If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
+  formatted. (#4539)
+
+## 24.10.0
+
+### Highlights
+
+- Black is now officially tested with Python 3.13 and provides Python 3.13
+  mypyc-compiled wheels. (#4436) (#4449)
+- Black will issue an error when used with Python 3.12.5, due to an upstream memory
+  safety issue in Python 3.12.5 that can cause Black's AST safety checks to fail. Please
+  use Python 3.12.6 or Python 3.12.4 instead. (#4447)
+- Black no longer supports running with Python 3.8 (#4452)
+
+### Stable style
+
+- Fix crashes involving comments in parenthesised return types or `X | Y` style unions.
+  (#4453)
+- Fix skipping Jupyter cells with unknown `%%` magic (#4462)
+
+### Preview style
+
+- Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
+  fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
+
+### Caching
+
+- Fix bug where the cache was shared between runs with and without `--unstable` (#4466)
+
+### Packaging
+
+- Upgrade version of mypyc used to 1.12 beta (#4450) (#4449)
+- `blackd` now requires a newer version of aiohttp. (#4451)
+
+### Output
+
+- Added Python target version information on parse error (#4378)
+- Add information about Black version to internal error messages (#4457)
+
+## 24.8.0
+
+### Stable style
+
+- Fix crash when `# fmt: off` is used before a closing parenthesis or bracket. (#4363)
+
+### Packaging
+
+- Packaging metadata updated: docs are explictly linked, the issue tracker is now also
+  linked. This improves the PyPI listing for Black. (#4345)
+
+### Parser
+
+- Fix regression where Black failed to parse a multiline f-string containing another
+  multiline string (#4339)
+- Fix regression where Black failed to parse an escaped single quote inside an f-string
+  (#4401)
+- Fix bug with Black incorrectly parsing empty lines with a backslash (#4343)
+- Fix bugs with Black's tokenizer not handling `\{` inside f-strings very well (#4422)
+- Fix incorrect line numbers in the tokenizer for certain tokens within f-strings
+  (#4423)
+
+### Performance
+
+- Improve performance when a large directory is listed in `.gitignore` (#4415)
+
+### _Blackd_
+
+- Fix blackd (and all extras installs) for docker container (#4357)
+
+## 24.4.2
+
+This is a bugfix release to fix two regressions in the new f-string parser introduced in
+24.4.1.
+
+### Parser
+
+- Fix regression where certain complex f-strings failed to parse (#4332)
+
+### Performance
+
+- Fix bad performance on certain complex string literals (#4331)
+
+## 24.4.1
+
+### Highlights
+
+- Add support for the new Python 3.12 f-string syntax introduced by PEP 701 (#3822)
+
+### Stable style
+
+- Fix crash involving indented dummy functions containing newlines (#4318)
+
+### Parser
+
+- Add support for type parameter defaults, a new syntactic feature added to Python 3.13
+  by PEP 696 (#4327)
+
+### Integrations
+
+- Github Action now works even when `git archive` is skipped (#4313)
+
+## 24.4.0
+
+### Stable style
+
+- Fix unwanted crashes caused by AST equivalency check (#4290)
+
+### Preview style
+
+- `if` guards in `case` blocks are now wrapped in parentheses when the line is too long.
+  (#4269)
+- Stop moving multiline strings to a new line unless inside brackets (#4289)
+
+### Integrations
+
+- Add a new option `use_pyproject` to the GitHub Action `psf/black`. This will read the
+  Black version from `pyproject.toml`. (#4294)
+
+## 24.3.0
+
+### Highlights
+
+This release is a milestone: it fixes Black's first CVE security vulnerability. If you
+run Black on untrusted input, or if you habitually put thousands of leading tab
+characters in your docstrings, you are strongly encouraged to upgrade immediately to fix
+[CVE-2024-21503](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-21503).
+
+This release also fixes a bug in Black's AST safety check that allowed Black to make
+incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
+
+### Stable style
+
+- Don't move comments along with delimiters, which could cause crashes (#4248)
+- Strengthen AST safety check to catch more unsafe changes to strings. Previous versions
+  of Black would incorrectly format the contents of certain unusual f-strings containing
+  nested strings with the same quote type. Now, Black will crash on such strings until
+  support for the new f-string syntax is implemented. (#4270)
+- Fix a bug where line-ranges exceeding the last code line would not work as expected
+  (#4273)
+
+### Performance
+
+- Fix catastrophic performance on docstrings that contain large numbers of leading tab
+  characters. This fixes
+  [CVE-2024-21503](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-21503).
+  (#4278)
+
+### Documentation
+
+- Note what happens when `--check` is used with `--quiet` (#4236)
 
 ## 24.2.0
 
@@ -1416,7 +1748,6 @@ and the first release covered by our new
 ## 18.9b0
 
 - numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
-
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
 
   - added `--skip-numeric-underscore-normalization` to disable the above behavior and
@@ -1466,7 +1797,6 @@ and the first release covered by our new
 - typing stub files (`.pyi`) now have blank lines added after constants (#340)
 
 - `# fmt: off` and `# fmt: on` are now much more dependable:
-
   - they now work also within bracket pairs (#329)
 
   - they now correctly work across function/class boundaries (#335)

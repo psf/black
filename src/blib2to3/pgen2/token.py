@@ -1,6 +1,6 @@
 """Token constants (from "token.h")."""
 
-from typing import Dict, Final
+from typing import Final
 
 #  Taken from Python (r53757) and modified to include some tokens
 #   originally monkeypatched in by pgen2.tokenize
@@ -66,11 +66,18 @@ AWAIT: Final = 56
 ASYNC: Final = 57
 ERRORTOKEN: Final = 58
 COLONEQUAL: Final = 59
-N_TOKENS: Final = 60
+FSTRING_START: Final = 60
+FSTRING_MIDDLE: Final = 61
+FSTRING_END: Final = 62
+BANG: Final = 63
+TSTRING_START: Final = 64
+TSTRING_MIDDLE: Final = 65
+TSTRING_END: Final = 66
+N_TOKENS: Final = 67
 NT_OFFSET: Final = 256
 # --end constants--
 
-tok_name: Final[Dict[int, str]] = {}
+tok_name: Final[dict[int, str]] = {}
 for _name, _value in list(globals().items()):
     if type(_value) is int:
         tok_name[_value] = _name

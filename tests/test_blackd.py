@@ -1,5 +1,5 @@
+import gc
 import re
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
 from unittest.mock import patch
 
 import pytest
@@ -12,26 +12,20 @@ try:
     from aiohttp.test_utils import AioHTTPTestCase
 
     import blackd
+    import blackd.client
 except ImportError as e:
     raise RuntimeError("Please install Black with the 'd' extra") from e
 
-if TYPE_CHECKING:
-    F = TypeVar("F", bound=Callable[..., Any])
-
-    unittest_run_loop: Callable[[F], F] = lambda x: x
-else:
-    try:
-        from aiohttp.test_utils import unittest_run_loop
-    except ImportError:
-        # unittest_run_loop is unnecessary and a no-op since aiohttp 3.8, and
-        # aiohttp 4 removed it. To maintain compatibility we can make our own
-        # no-op decorator.
-        def unittest_run_loop(func, *args, **kwargs):
-            return func
+import black
 
 
 @pytest.mark.blackd
 class BlackDTestCase(AioHTTPTestCase):
+    def tearDown(self) -> None:
+        # Work around https://github.com/python/cpython/issues/124706
+        gc.collect()
+        super().tearDown()
+
     def test_blackd_main(self) -> None:
         with patch("blackd.web.run_app"):
             result = CliRunner().invoke(blackd.main, [])
@@ -42,20 +36,17 @@ class BlackDTestCase(AioHTTPTestCase):
     async def get_application(self) -> web.Application:
         return blackd.make_app()
 
-    @unittest_run_loop
     async def test_blackd_request_needs_formatting(self) -> None:
         response = await self.client.post("/", data=b"print('hello world')")
         self.assertEqual(response.status, 200)
         self.assertEqual(response.charset, "utf8")
         self.assertEqual(await response.read(), b'print("hello world")\n')
 
-    @unittest_run_loop
     async def test_blackd_request_no_change(self) -> None:
         response = await self.client.post("/", data=b'print("hello world")\n')
         self.assertEqual(response.status, 204)
         self.assertEqual(await response.read(), b"")
 
-    @unittest_run_loop
     async def test_blackd_request_syntax_error(self) -> None:
         response = await self.client.post("/", data=b"what even ( is")
         self.assertEqual(response.status, 400)
@@ -65,21 +56,18 @@ class BlackDTestCase(AioHTTPTestCase):
             msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
         )
 
-    @unittest_run_loop
     async def test_blackd_unsupported_version(self) -> None:
         response = await self.client.post(
             "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
         )
         self.assertEqual(response.status, 501)
 
-    @unittest_run_loop
     async def test_blackd_supported_version(self) -> None:
         response = await self.client.post(
             "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "1"}
         )
         self.assertEqual(response.status, 200)
 
-    @unittest_run_loop
     async def test_blackd_invalid_python_variant(self) -> None:
         async def check(header_value: str, expected_status: int = 400) -> None:
             response = await self.client.post(
@@ -102,7 +90,6 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("pypy3.0")
         await check("jython3.4")
 
-    @unittest_run_loop
     async def test_blackd_pyi(self) -> None:
         source, expected = read_data("cases", "stub.py")
         response = await self.client.post(
@@ -111,7 +98,6 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.text(), expected)
 
-    @unittest_run_loop
     async def test_blackd_diff(self) -> None:
         diff_header = re.compile(
             r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
@@ -129,7 +115,6 @@ class BlackDTestCase(AioHTTPTestCase):
         actual = diff_header.sub(DETERMINISTIC_HEADER, actual)
         self.assertEqual(actual, expected)
 
-    @unittest_run_loop
     async def test_blackd_python_variant(self) -> None:
         code = (
             "def f(\n"
@@ -161,14 +146,12 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("py34,py36", 204)
         await check("34", 204)
 
-    @unittest_run_loop
     async def test_blackd_line_length(self) -> None:
         response = await self.client.post(
             "/", data=b'print("hello")\n', headers={blackd.LINE_LENGTH_HEADER: "7"}
         )
         self.assertEqual(response.status, 200)
 
-    @unittest_run_loop
     async def test_blackd_invalid_line_length(self) -> None:
         response = await self.client.post(
             "/",
@@ -177,7 +160,6 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 400)
 
-    @unittest_run_loop
     async def test_blackd_skip_first_source_line(self) -> None:
         invalid_first_line = b"Header will be skipped\r\ni = [1,2,3]\nj = [1,2,3]\n"
         expected_result = b"Header will be skipped\r\ni = [1, 2, 3]\nj = [1, 2, 3]\n"
@@ -191,19 +173,16 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.read(), expected_result)
 
-    @unittest_run_loop
     async def test_blackd_preview(self) -> None:
         response = await self.client.post(
             "/", data=b'print("hello")\n', headers={blackd.PREVIEW: "true"}
         )
         self.assertEqual(response.status, 204)
 
-    @unittest_run_loop
     async def test_blackd_response_black_version_header(self) -> None:
         response = await self.client.post("/")
         self.assertIsNotNone(response.headers.get(blackd.BLACK_VERSION_HEADER))
 
-    @unittest_run_loop
     async def test_cors_preflight(self) -> None:
         response = await self.client.options(
             "/",
@@ -218,13 +197,11 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertIsNotNone(response.headers.get("Access-Control-Allow-Headers"))
         self.assertIsNotNone(response.headers.get("Access-Control-Allow-Methods"))
 
-    @unittest_run_loop
     async def test_cors_headers_present(self) -> None:
         response = await self.client.post("/", headers={"Origin": "*"})
         self.assertIsNotNone(response.headers.get("Access-Control-Allow-Origin"))
         self.assertIsNotNone(response.headers.get("Access-Control-Expose-Headers"))
 
-    @unittest_run_loop
     async def test_preserves_line_endings(self) -> None:
         for data in (b"c\r\nc\r\n", b"l\nl\n"):
             # test preserved newlines when reformatted
@@ -234,15 +211,124 @@ class BlackDTestCase(AioHTTPTestCase):
             response = await self.client.post("/", data=data)
             self.assertEqual(response.status, 204)
 
-    @unittest_run_loop
     async def test_normalizes_line_endings(self) -> None:
         for data, expected in ((b"c\r\nc\n", "c\r\nc\r\n"), (b"l\nl\r\n", "l\nl\n")):
             response = await self.client.post("/", data=data)
             self.assertEqual(await response.text(), expected)
             self.assertEqual(response.status, 200)
 
-    @unittest_run_loop
     async def test_single_character(self) -> None:
         response = await self.client.post("/", data="1")
         self.assertEqual(await response.text(), "1\n")
         self.assertEqual(response.status, 200)
+
+
+@pytest.mark.blackd
+class BlackDClientTestCase(AioHTTPTestCase):
+    def tearDown(self) -> None:
+        # Work around https://github.com/python/cpython/issues/124706
+        gc.collect()
+        super().tearDown()
+
+    async def get_application(self) -> web.Application:
+        return blackd.make_app()
+
+    async def test_unformatted_code(self) -> None:
+        client = blackd.client.BlackDClient(self.client.make_url("/"))
+        unformatted_code = "def hello(): print('Hello, World!')"
+        expected = 'def hello():\n    print("Hello, World!")\n'
+        formatted_code = await client.format_code(unformatted_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_formatted_code(self) -> None:
+        client = blackd.client.BlackDClient(self.client.make_url("/"))
+        initial_code = 'def hello():\n    print("Hello, World!")\n'
+        expected = 'def hello():\n    print("Hello, World!")\n'
+        formatted_code = await client.format_code(initial_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_line_length(self) -> None:
+        client = blackd.client.BlackDClient(self.client.make_url("/"), line_length=10)
+        unformatted_code = "def hello(): print('Hello, World!')"
+        expected = 'def hello():\n    print(\n        "Hello, World!"\n    )\n'
+        formatted_code = await client.format_code(unformatted_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_skip_source_first_line(self) -> None:
+        client = blackd.client.BlackDClient(
+            self.client.make_url("/"), skip_source_first_line=True
+        )
+        invalid_first_line = "Header will be skipped\r\ni = [1,2,3]\nj = [1,2,3]\n"
+        expected_result = "Header will be skipped\r\ni = [1, 2, 3]\nj = [1, 2, 3]\n"
+        formatted_code = await client.format_code(invalid_first_line)
+
+        self.assertEqual(formatted_code, expected_result)
+
+    async def test_skip_string_normalization(self) -> None:
+        client = blackd.client.BlackDClient(
+            self.client.make_url("/"), skip_string_normalization=True
+        )
+        unformatted_code = "def hello(): print('Hello, World!')"
+        expected = "def hello():\n    print('Hello, World!')\n"
+        formatted_code = await client.format_code(unformatted_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_skip_magic_trailing_comma(self) -> None:
+        client = blackd.client.BlackDClient(
+            self.client.make_url("/"), skip_magic_trailing_comma=True
+        )
+        unformatted_code = "def hello(): print('Hello, World!')"
+        expected = 'def hello():\n    print("Hello, World!")\n'
+        formatted_code = await client.format_code(unformatted_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_preview(self) -> None:
+        client = blackd.client.BlackDClient(self.client.make_url("/"), preview=True)
+        unformatted_code = "def hello(): print('Hello, World!')"
+        expected = 'def hello():\n    print("Hello, World!")\n'
+        formatted_code = await client.format_code(unformatted_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_fast(self) -> None:
+        client = blackd.client.BlackDClient(self.client.make_url("/"), fast=True)
+        unformatted_code = "def hello(): print('Hello, World!')"
+        expected = 'def hello():\n    print("Hello, World!")\n'
+        formatted_code = await client.format_code(unformatted_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_python_variant(self) -> None:
+        client = blackd.client.BlackDClient(
+            self.client.make_url("/"), python_variant="3.6"
+        )
+        unformatted_code = "def hello(): print('Hello, World!')"
+        expected = 'def hello():\n    print("Hello, World!")\n'
+        formatted_code = await client.format_code(unformatted_code)
+
+        self.assertEqual(formatted_code, expected)
+
+    async def test_diff(self) -> None:
+        diff_header = re.compile(
+            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
+        )
+
+        client = blackd.client.BlackDClient(self.client.make_url("/"), diff=True)
+        source, _ = read_data("miscellaneous", "blackd_diff")
+        expected, _ = read_data("miscellaneous", "blackd_diff.diff")
+
+        diff = await client.format_code(source)
+        diff = diff_header.sub(DETERMINISTIC_HEADER, diff)
+
+        self.assertEqual(diff, expected)
+
+    async def test_syntax_error(self) -> None:
+        client = blackd.client.BlackDClient(self.client.make_url("/"))
+        with_syntax_error = "def hello(): a 'Hello, World!'"
+        with self.assertRaises(black.InvalidInput):
+            _ = await client.format_code(with_syntax_error)

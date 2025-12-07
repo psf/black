@@ -2,21 +2,11 @@
 # Licensed to PSF under a Contributor Agreement.
 
 import os
-from typing import (
-    IO,
-    Any,
-    Dict,
-    Iterator,
-    List,
-    NoReturn,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-)
+from collections.abc import Iterator, Sequence
+from typing import IO, Any, NoReturn, Union
 
 from blib2to3.pgen2 import grammar, token, tokenize
-from blib2to3.pgen2.tokenize import GoodTokenInfo
+from blib2to3.pgen2.tokenize import TokenInfo
 
 Path = Union[str, "os.PathLike[str]"]
 
@@ -28,17 +18,16 @@ class PgenGrammar(grammar.Grammar):
 class ParserGenerator:
     filename: Path
     stream: IO[str]
-    generator: Iterator[GoodTokenInfo]
-    first: Dict[str, Optional[Dict[str, int]]]
+    generator: Iterator[TokenInfo]
+    first: dict[str, dict[str, int] | None]
 
-    def __init__(self, filename: Path, stream: Optional[IO[str]] = None) -> None:
+    def __init__(self, filename: Path, stream: IO[str] | None = None) -> None:
         close_stream = None
         if stream is None:
             stream = open(filename, encoding="utf-8")
             close_stream = stream.close
         self.filename = filename
-        self.stream = stream
-        self.generator = tokenize.generate_tokens(stream.readline)
+        self.generator = tokenize.tokenize(stream.read())
         self.gettoken()  # Initialize lookahead
         self.dfas, self.startsymbol = self.parse()
         if close_stream is not None:
@@ -71,7 +60,7 @@ class ParserGenerator:
         c.start = c.symbol2number[self.startsymbol]
         return c
 
-    def make_first(self, c: PgenGrammar, name: str) -> Dict[int, int]:
+    def make_first(self, c: PgenGrammar, name: str) -> dict[int, int]:
         rawfirst = self.first[name]
         assert rawfirst is not None
         first = {}
@@ -144,14 +133,14 @@ class ParserGenerator:
         dfa = self.dfas[name]
         self.first[name] = None  # dummy to detect left recursion
         state = dfa[0]
-        totalset: Dict[str, int] = {}
+        totalset: dict[str, int] = {}
         overlapcheck = {}
         for label in state.arcs:
             if label in self.dfas:
                 if label in self.first:
                     fset = self.first[label]
                     if fset is None:
-                        raise ValueError("recursion for rule %r" % name)
+                        raise ValueError(f"recursion for rule {name!r}")
                 else:
                     self.calcfirst(label)
                     fset = self.first[label]
@@ -161,20 +150,20 @@ class ParserGenerator:
             else:
                 totalset[label] = 1
                 overlapcheck[label] = {label: 1}
-        inverse: Dict[str, str] = {}
+        inverse: dict[str, str] = {}
         for label, itsfirst in overlapcheck.items():
             for symbol in itsfirst:
                 if symbol in inverse:
                     raise ValueError(
-                        "rule %s is ambiguous; %s is in the first sets of %s as well"
-                        " as %s" % (name, symbol, label, inverse[symbol])
+                        f"rule {name} is ambiguous; {symbol} is in the first sets of"
+                        f" {label} as well as {inverse[symbol]}"
                     )
                 inverse[symbol] = label
         self.first[name] = totalset
 
-    def parse(self) -> Tuple[Dict[str, List["DFAState"]], str]:
+    def parse(self) -> tuple[dict[str, list["DFAState"]], str]:
         dfas = {}
-        startsymbol: Optional[str] = None
+        startsymbol: str | None = None
         # MSTART: (NEWLINE | RULE)* ENDMARKER
         while self.type != token.ENDMARKER:
             while self.type == token.NEWLINE:
@@ -197,7 +186,7 @@ class ParserGenerator:
         assert startsymbol is not None
         return dfas, startsymbol
 
-    def make_dfa(self, start: "NFAState", finish: "NFAState") -> List["DFAState"]:
+    def make_dfa(self, start: "NFAState", finish: "NFAState") -> list["DFAState"]:
         # To turn an NFA into a DFA, we define the states of the DFA
         # to correspond to *sets* of states of the NFA.  Then do some
         # state reduction.  Let's represent sets as dicts with 1 for
@@ -205,12 +194,12 @@ class ParserGenerator:
         assert isinstance(start, NFAState)
         assert isinstance(finish, NFAState)
 
-        def closure(state: NFAState) -> Dict[NFAState, int]:
-            base: Dict[NFAState, int] = {}
+        def closure(state: NFAState) -> dict[NFAState, int]:
+            base: dict[NFAState, int] = {}
             addclosure(state, base)
             return base
 
-        def addclosure(state: NFAState, base: Dict[NFAState, int]) -> None:
+        def addclosure(state: NFAState, base: dict[NFAState, int]) -> None:
             assert isinstance(state, NFAState)
             if state in base:
                 return
@@ -221,7 +210,7 @@ class ParserGenerator:
 
         states = [DFAState(closure(start), finish)]
         for state in states:  # NB states grows while we're iterating
-            arcs: Dict[str, Dict[NFAState, int]] = {}
+            arcs: dict[str, dict[NFAState, int]] = {}
             for nfastate in state.nfaset:
                 for label, next in nfastate.arcs:
                     if label is not None:
@@ -248,18 +237,18 @@ class ParserGenerator:
                     j = len(todo)
                     todo.append(next)
                 if label is None:
-                    print("    -> %d" % j)
+                    print(f"    -> {j}")
                 else:
-                    print("    %s -> %d" % (label, j))
+                    print(f"    {label} -> {j}")
 
     def dump_dfa(self, name: str, dfa: Sequence["DFAState"]) -> None:
         print("Dump of DFA for", name)
         for i, state in enumerate(dfa):
             print("  State", i, state.isfinal and "(final)" or "")
             for label, next in sorted(state.arcs.items()):
-                print("    %s -> %d" % (label, dfa.index(next)))
+                print(f"    {label} -> {dfa.index(next)}")
 
-    def simplify_dfa(self, dfa: List["DFAState"]) -> None:
+    def simplify_dfa(self, dfa: list["DFAState"]) -> None:
         # This is not theoretically optimal, but works well enough.
         # Algorithm: repeatedly look for two states that have the same
         # set of arcs (same labels pointing to the same nodes) and
@@ -280,7 +269,7 @@ class ParserGenerator:
                         changes = True
                         break
 
-    def parse_rhs(self) -> Tuple["NFAState", "NFAState"]:
+    def parse_rhs(self) -> tuple["NFAState", "NFAState"]:
         # RHS: ALT ('|' ALT)*
         a, z = self.parse_alt()
         if self.value != "|":
@@ -297,7 +286,7 @@ class ParserGenerator:
                 z.addarc(zz)
             return aa, zz
 
-    def parse_alt(self) -> Tuple["NFAState", "NFAState"]:
+    def parse_alt(self) -> tuple["NFAState", "NFAState"]:
         # ALT: ITEM+
         a, b = self.parse_item()
         while self.value in ("(", "[") or self.type in (token.NAME, token.STRING):
@@ -306,7 +295,7 @@ class ParserGenerator:
             b = d
         return a, b
 
-    def parse_item(self) -> Tuple["NFAState", "NFAState"]:
+    def parse_item(self) -> tuple["NFAState", "NFAState"]:
         # ITEM: '[' RHS ']' | ATOM ['+' | '*']
         if self.value == "[":
             self.gettoken()
@@ -326,7 +315,7 @@ class ParserGenerator:
             else:
                 return a, a
 
-    def parse_atom(self) -> Tuple["NFAState", "NFAState"]:
+    def parse_atom(self) -> tuple["NFAState", "NFAState"]:
         # ATOM: '(' RHS ')' | NAME | STRING
         if self.value == "(":
             self.gettoken()
@@ -341,15 +330,12 @@ class ParserGenerator:
             return a, z
         else:
             self.raise_error(
-                "expected (...) or NAME or STRING, got %s/%s", self.type, self.value
+                f"expected (...) or NAME or STRING, got {self.type}/{self.value}"
             )
-            raise AssertionError
 
-    def expect(self, type: int, value: Optional[Any] = None) -> str:
+    def expect(self, type: int, value: Any | None = None) -> str:
         if self.type != type or (value is not None and self.value != value):
-            self.raise_error(
-                "expected %s/%s, got %s/%s", type, value, self.type, self.value
-            )
+            self.raise_error(f"expected {type}/{value}, got {self.type}/{self.value}")
         value = self.value
         self.gettoken()
         return value
@@ -361,33 +347,30 @@ class ParserGenerator:
         self.type, self.value, self.begin, self.end, self.line = tup
         # print token.tok_name[self.type], repr(self.value)
 
-    def raise_error(self, msg: str, *args: Any) -> NoReturn:
-        if args:
-            try:
-                msg = msg % args
-            except Exception:
-                msg = " ".join([msg] + list(map(str, args)))
-        raise SyntaxError(msg, (self.filename, self.end[0], self.end[1], self.line))
+    def raise_error(self, msg: str) -> NoReturn:
+        raise SyntaxError(
+            msg, (str(self.filename), self.end[0], self.end[1], self.line)
+        )
 
 
 class NFAState:
-    arcs: List[Tuple[Optional[str], "NFAState"]]
+    arcs: list[tuple[str | None, "NFAState"]]
 
     def __init__(self) -> None:
         self.arcs = []  # list of (label, NFAState) pairs
 
-    def addarc(self, next: "NFAState", label: Optional[str] = None) -> None:
+    def addarc(self, next: "NFAState", label: str | None = None) -> None:
         assert label is None or isinstance(label, str)
         assert isinstance(next, NFAState)
         self.arcs.append((label, next))
 
 
 class DFAState:
-    nfaset: Dict[NFAState, Any]
+    nfaset: dict[NFAState, Any]
     isfinal: bool
-    arcs: Dict[str, "DFAState"]
+    arcs: dict[str, "DFAState"]
 
-    def __init__(self, nfaset: Dict[NFAState, Any], final: NFAState) -> None:
+    def __init__(self, nfaset: dict[NFAState, Any], final: NFAState) -> None:
         assert isinstance(nfaset, dict)
         assert isinstance(next(iter(nfaset)), NFAState)
         assert isinstance(final, NFAState)

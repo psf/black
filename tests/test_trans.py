@@ -1,18 +1,16 @@
-from typing import List, Tuple
-
 from black.trans import iter_fexpr_spans
 
 
 def test_fexpr_spans() -> None:
     def check(
-        string: str, expected_spans: List[Tuple[int, int]], expected_slices: List[str]
+        string: str, expected_spans: list[tuple[int, int]], expected_slices: list[str]
     ) -> None:
         spans = list(iter_fexpr_spans(string))
 
         # Checking slices isn't strictly necessary, but it's easier to verify at
         # a glance than only spans
         assert len(spans) == len(expected_slices)
-        for (i, j), slice in zip(spans, expected_slices):
+        for (i, j), slice in zip(spans, expected_slices, strict=True):
             assert 0 <= i <= j <= len(string)
             assert string[i:j] == slice
 

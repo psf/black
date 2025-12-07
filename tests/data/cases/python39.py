@@ -1,5 +1,3 @@
-# flags: --minimum-version=3.9
-
 @relaxed_decorator[0]
 def f():
     ...

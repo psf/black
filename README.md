@@ -8,6 +8,7 @@
 <a href="https://coveralls.io/github/psf/black?branch=main"><img alt="Coverage Status" src="https://coveralls.io/repos/github/psf/black/badge.svg?branch=main"></a>
 <a href="https://github.com/psf/black/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 <a href="https://pypi.org/project/black/"><img alt="PyPI" src="https://img.shields.io/pypi/v/black"></a>
+<a href="https://pypi.org/project/black"><img alt="Supported Python Versions" src="https://img.shields.io/pypi/pyversions/black?color=brightgreen"></a>
 <a href="https://pepy.tech/project/black"><img alt="Downloads" src="https://static.pepy.tech/badge/black"></a>
 <a href="https://anaconda.org/conda-forge/black/"><img alt="conda-forge" src="https://img.shields.io/conda/dn/conda-forge/black.svg?label=conda-forge"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
@@ -38,12 +39,9 @@ Try it out now using the [Black Playground](https://black.vercel.app). Watch the
 
 ### Installation
 
-_Black_ can be installed by running `pip install black`. It requires Python 3.8+ to run.
-If you want to format Jupyter Notebooks, install with `pip install "black[jupyter]"`.
-
-If you can't wait for the latest _hotness_ and want to install from GitHub, use:
-
-`pip install git+https://github.com/psf/black`
+_Black_ can be installed by running `pip install black`. It requires Python 3.10+ to
+run. If you want to format Jupyter Notebooks, install with
+`pip install "black[jupyter]"`.
 
 ### Usage
 
@@ -137,8 +135,8 @@ SQLAlchemy, Poetry, PyPA applications (Warehouse, Bandersnatch, Pipenv, virtuale
 pandas, Pillow, Twisted, LocalStack, every Datadog Agent Integration, Home Assistant,
 Zulip, Kedro, OpenOA, FLORIS, ORBIT, WOMBAT, and many more.
 
-The following organizations use _Black_: Facebook, Dropbox, KeepTruckin, Lyft, Mozilla,
-Quora, Duolingo, QuantumBlack, Tesla, Archer Aviation.
+The following organizations use _Black_: Dropbox, KeepTruckin, Lyft, Mozilla, Quora,
+Duolingo, QuantumBlack, Tesla, Archer Aviation.
 
 Are we missing anyone? Let us know.
 
@@ -180,7 +178,7 @@ Use the badge in your project's README.md:
 
 Using the badge in README.rst:
 
-```
+```rst
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/psf/black
 ```

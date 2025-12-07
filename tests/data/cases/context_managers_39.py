@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.9
 with \
      make_context_manager1() as cm1, \
      make_context_manager2() as cm2, \
@@ -83,6 +82,12 @@ async def func():
         argument1, argument2, argument3="some_value"
     ):
         pass
+
+
+
+# don't remove the brackets here, it changes the meaning of the code.
+with (x, y) as z:
+    pass
 
 
 # output
@@ -173,3 +178,8 @@ async def func():
         some_other_function(argument1, argument2, argument3="some_value"),
     ):
         pass
+
+
+# don't remove the brackets here, it changes the meaning of the code.
+with (x, y) as z:
+    pass

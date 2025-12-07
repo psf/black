@@ -7,10 +7,11 @@ ENV HATCH_BUILD_HOOKS_ENABLE=1
 # Install build tools to compile black + dependencies
 RUN apt update && apt install -y build-essential git python3-dev
 RUN python -m venv $VIRTUAL_ENV
-RUN python -m pip install --no-cache-dir hatch hatch-fancy-pypi-readme hatch-vcs
+RUN python -m pip install --no-cache-dir hatch==1.15.1 hatch-fancy-pypi-readme hatch-vcs
 RUN . /opt/venv/bin/activate && pip install --no-cache-dir --upgrade pip setuptools \
     && cd /src && hatch build -t wheel \
-    && pip install --no-cache-dir dist/*-cp*[colorama,d,uvloop]
+    && pip install --no-cache-dir dist/*-cp* \
+    && pip install black[colorama,d,uvloop]
 
 FROM python:3.12-slim
 

@@ -1,9 +1,9 @@
 # Used by ReadTheDocs; pinned requirements for stability.
 
-myst-parser==2.0.0
-Sphinx==7.2.6
+myst-parser==4.0.1
+Sphinx==8.2.3
 # Older versions break Sphinx even though they're declared to be supported.
-docutils==0.20.1
-sphinxcontrib-programoutput==0.17
+docutils==0.21.2
+sphinxcontrib-programoutput==0.18
 sphinx_copybutton==0.5.2
-furo==2024.1.29
+furo==2025.9.25

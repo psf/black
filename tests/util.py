@@ -4,11 +4,12 @@ import os
 import shlex
 import sys
 import unittest
+from collections.abc import Collection, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Collection, Iterator, List, Optional, Tuple
+from typing import Any
 
 import black
 from black.const import DEFAULT_LINE_LENGTH
@@ -44,8 +45,8 @@ fs = partial(black.format_str, mode=DEFAULT_MODE)
 class TestCaseArgs:
     mode: black.Mode = field(default_factory=black.Mode)
     fast: bool = False
-    minimum_version: Optional[Tuple[int, int]] = None
-    lines: Collection[Tuple[int, int]] = ()
+    minimum_version: tuple[int, int] | None = None
+    lines: Collection[tuple[int, int]] = ()
     no_preview_line_length_1: bool = False
 
 
@@ -95,8 +96,8 @@ def assert_format(
     mode: black.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
-    minimum_version: Optional[Tuple[int, int]] = None,
-    lines: Collection[Tuple[int, int]] = (),
+    minimum_version: tuple[int, int] | None = None,
+    lines: Collection[tuple[int, int]] = (),
     no_preview_line_length_1: bool = False,
 ) -> None:
     """Convenience function to check that Black formats as expected.
@@ -160,12 +161,12 @@ def assert_format(
 
 def _assert_format_inner(
     source: str,
-    expected: Optional[str] = None,
+    expected: str | None = None,
     mode: black.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
-    minimum_version: Optional[Tuple[int, int]] = None,
-    lines: Collection[Tuple[int, int]] = (),
+    minimum_version: tuple[int, int] | None = None,
+    lines: Collection[tuple[int, int]] = (),
 ) -> None:
     actual = black.format_str(source, mode=mode, lines=lines)
     if expected is not None:
@@ -195,7 +196,7 @@ def get_base_dir(data: bool) -> Path:
     return DATA_DIR if data else PROJECT_ROOT
 
 
-def all_data_cases(subdir_name: str, data: bool = True) -> List[str]:
+def all_data_cases(subdir_name: str, data: bool = True) -> list[str]:
     cases_dir = get_base_dir(data) / subdir_name
     assert cases_dir.is_dir()
     return [case_path.stem for case_path in cases_dir.iterdir()]
@@ -214,29 +215,29 @@ def get_case_path(
 
 def read_data_with_mode(
     subdir_name: str, name: str, data: bool = True
-) -> Tuple[TestCaseArgs, str, str]:
+) -> tuple[TestCaseArgs, str, str]:
     """read_data_with_mode('test_name') -> Mode(), 'input', 'output'"""
     return read_data_from_file(get_case_path(subdir_name, name, data))
 
 
-def read_data(subdir_name: str, name: str, data: bool = True) -> Tuple[str, str]:
+def read_data(subdir_name: str, name: str, data: bool = True) -> tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
     _, input, output = read_data_with_mode(subdir_name, name, data)
     return input, output
 
 
-def _parse_minimum_version(version: str) -> Tuple[int, int]:
+def _parse_minimum_version(version: str) -> tuple[int, int]:
     major, minor = version.split(".")
     return int(major), int(minor)
 
 
-@functools.lru_cache()
+@functools.lru_cache
 def get_flags_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--target-version",
-        action="append",
-        type=lambda val: TargetVersion[val.upper()],
+        action="store",
+        type=lambda val: (TargetVersion[val.upper()],),
         default=(),
     )
     parser.add_argument("--line-length", default=DEFAULT_LINE_LENGTH, type=int)
@@ -257,7 +258,7 @@ def get_flags_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Minimum version of Python where this test case is parseable. If this is"
-            " set, the test case will be run twice: once with the specified"
+            " set, the test case will be run twice: once without the specified"
             " --target-version, and once with --target-version set to exactly the"
             " specified version. This ensures that Black's autodetection of the target"
             " version works correctly."
@@ -302,11 +303,11 @@ def parse_mode(flags_line: str) -> TestCaseArgs:
     )
 
 
-def read_data_from_file(file_name: Path) -> Tuple[TestCaseArgs, str, str]:
-    with open(file_name, "r", encoding="utf8") as test:
+def read_data_from_file(file_name: Path) -> tuple[TestCaseArgs, str, str]:
+    with open(file_name, encoding="utf8") as test:
         lines = test.readlines()
-    _input: List[str] = []
-    _output: List[str] = []
+    _input: list[str] = []
+    _output: list[str] = []
     result = _input
     mode = TestCaseArgs()
     for line in lines:

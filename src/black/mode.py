@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from hashlib import sha256
 from operator import attrgetter
-from typing import Dict, Final, Set
+from typing import Final
 
 from black.const import DEFAULT_LINE_LENGTH
 
@@ -24,6 +24,12 @@ class TargetVersion(Enum):
     PY310 = 10
     PY311 = 11
     PY312 = 12
+    PY313 = 13
+    PY314 = 14
+
+    def pretty(self) -> str:
+        assert self.name[:2] == "PY"
+        return f"Python {self.name[2]}.{self.name[3:]}"
 
 
 class Feature(Enum):
@@ -46,6 +52,10 @@ class Feature(Enum):
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
     TYPE_PARAMS = 18
+    # FSTRING_PARSING = 19  # unused
+    TYPE_PARAM_DEFAULTS = 20
+    UNPARENTHESIZED_EXCEPT_TYPES = 21
+    T_STRINGS = 22
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -57,7 +67,7 @@ FUTURE_FLAG_TO_FEATURE: Final = {
 }
 
 
-VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
+VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
     TargetVersion.PY33: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY34: {Feature.ASYNC_IDENTIFIERS},
     TargetVersion.PY35: {Feature.TRAILING_COMMA_IN_CALL, Feature.ASYNC_IDENTIFIERS},
@@ -157,38 +167,72 @@ VERSION_TO_FEATURES: Dict[TargetVersion, Set[Feature]] = {
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
     },
+    TargetVersion.PY313: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.TYPE_PARAM_DEFAULTS,
+    },
+    TargetVersion.PY314: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.TYPE_PARAM_DEFAULTS,
+        Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+        Feature.T_STRINGS,
+    },
 }
 
 
-def supports_feature(target_versions: Set[TargetVersion], feature: Feature) -> bool:
+def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
+    if not target_versions:
+        raise ValueError("target_versions must not be empty")
+
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
 class Preview(Enum):
     """Individual preview style features."""
 
-    hex_codes_in_unicode_sequences = auto()
     # NOTE: string_processing requires wrap_long_dict_values_in_parens
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    unify_docstring_detection = auto()
-    no_normalize_fmt_skip_whitespace = auto()
+    wrap_comprehension_in = auto()
     wrap_long_dict_values_in_parens = auto()
-    multiline_string_handling = auto()
-    typed_params_trailing_comma = auto()
-    is_simple_lookup_for_doublestar_expression = auto()
-    docstring_check_for_newline = auto()
-    remove_redundant_guard_parens = auto()
 
 
-UNSTABLE_FEATURES: Set[Preview] = {
-    # Many issues, see summary in https://github.com/psf/black/issues/4042
+UNSTABLE_FEATURES: set[Preview] = {
+    # Many issues, see summary in https://github.com/psf/black/issues/4208
     Preview.string_processing,
-    # See issues #3452 and #4158
-    Preview.wrap_long_dict_values_in_parens,
-    # See issue #4159
-    Preview.multiline_string_handling,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,
 }
@@ -203,17 +247,17 @@ _MAX_CACHE_KEY_PART_LENGTH: Final = 32
 
 @dataclass
 class Mode:
-    target_versions: Set[TargetVersion] = field(default_factory=set)
+    target_versions: set[TargetVersion] = field(default_factory=set)
     line_length: int = DEFAULT_LINE_LENGTH
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
-    python_cell_magics: Set[str] = field(default_factory=set)
+    python_cell_magics: set[str] = field(default_factory=set)
     preview: bool = False
     unstable: bool = False
-    enabled_features: Set[Preview] = field(default_factory=set)
+    enabled_features: set[Preview] = field(default_factory=set)
 
     def __contains__(self, feature: Preview) -> bool:
         """
@@ -259,6 +303,22 @@ class Mode:
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
             str(int(self.preview)),
+            str(int(self.unstable)),
             features_and_magics,
         ]
         return ".".join(parts)
+
+    def __hash__(self) -> int:
+        return hash((
+            frozenset(self.target_versions),
+            self.line_length,
+            self.string_normalization,
+            self.is_pyi,
+            self.is_ipynb,
+            self.skip_source_first_line,
+            self.magic_trailing_comma,
+            frozenset(self.python_cell_magics),
+            self.preview,
+            self.unstable,
+            frozenset(self.enabled_features),
+        ))

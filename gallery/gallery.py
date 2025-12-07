@@ -7,15 +7,16 @@ import traceback
 import venv
 import zipfile
 from argparse import ArgumentParser, Namespace
+from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import Generator, List, NamedTuple, Optional, Tuple, Union, cast
+from typing import NamedTuple, Union, cast
 from urllib.request import urlopen, urlretrieve
 
 PYPI_INSTANCE = "https://pypi.org/pypi"
 PYPI_TOP_PACKAGES = (
-    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-30-days.min.json"
+    "https://hugovk.github.io/top-pypi-packages/top-pypi-packages.min.json"
 )
 INTERNAL_BLACK_REPO = f"{tempfile.gettempdir()}/__black"
 
@@ -27,10 +28,10 @@ subprocess.run = partial(subprocess.run, check=True)  # type: ignore
 
 class BlackVersion(NamedTuple):
     version: str
-    config: Optional[str] = None
+    config: str | None = None
 
 
-def get_pypi_download_url(package: str, version: Optional[str]) -> str:
+def get_pypi_download_url(package: str, version: str | None) -> str:
     with urlopen(PYPI_INSTANCE + f"/{package}/json") as page:
         metadata = json.load(page)
 
@@ -54,14 +55,14 @@ def get_pypi_download_url(package: str, version: Optional[str]) -> str:
     return cast(str, source["url"])
 
 
-def get_top_packages() -> List[str]:
+def get_top_packages() -> list[str]:
     with urlopen(PYPI_TOP_PACKAGES) as page:
         result = json.load(page)
 
     return [package["project"] for package in result["rows"]]
 
 
-def get_package_source(package: str, version: Optional[str]) -> str:
+def get_package_source(package: str, version: str | None) -> str:
     if package == "cpython":
         if version is None:
             version = "main"
@@ -92,7 +93,7 @@ def get_first_archive_member(archive: ArchiveKind) -> str:
         return archive.namelist()[0]
 
 
-def download_and_extract(package: str, version: Optional[str], directory: Path) -> Path:
+def download_and_extract(package: str, version: str | None, directory: Path) -> Path:
     source = get_package_source(package, version)
 
     local_file, _ = urlretrieve(source, directory / f"{package}-src")
@@ -102,9 +103,7 @@ def download_and_extract(package: str, version: Optional[str], directory: Path) 
     return directory / result_dir
 
 
-def get_package(
-    package: str, version: Optional[str], directory: Path
-) -> Optional[Path]:
+def get_package(package: str, version: str | None, directory: Path) -> Path | None:
     try:
         return download_and_extract(package, version, directory)
     except Exception:
@@ -139,7 +138,7 @@ def git_add_and_commit(msg: str, repo: Path) -> None:
 
 
 def git_switch_branch(
-    branch: str, repo: Path, new: bool = False, from_branch: Optional[str] = None
+    branch: str, repo: Path, new: bool = False, from_branch: str | None = None
 ) -> None:
     args = ["git", "checkout"]
     if new:
@@ -150,7 +149,7 @@ def git_switch_branch(
     subprocess.run(args, cwd=repo)
 
 
-def init_repos(options: Namespace) -> Tuple[Path, ...]:
+def init_repos(options: Namespace) -> tuple[Path, ...]:
     options.output.mkdir(exist_ok=True)
 
     if options.top_packages:
@@ -197,7 +196,7 @@ def black_runner(version: str, black_repo: Path) -> Path:
 
 def format_repo_with_version(
     repo: Path,
-    from_branch: Optional[str],
+    from_branch: str | None,
     black_repo: Path,
     black_version: BlackVersion,
     input_directory: Path,
@@ -206,7 +205,7 @@ def format_repo_with_version(
     git_switch_branch(black_version.version, repo=black_repo)
     git_switch_branch(current_branch, repo=repo, new=True, from_branch=from_branch)
 
-    format_cmd: List[Union[Path, str]] = [
+    format_cmd: list[Path | str] = [
         black_runner(black_version.version, black_repo),
         (black_repo / "black.py").resolve(),
         ".",
@@ -222,7 +221,7 @@ def format_repo_with_version(
     return current_branch
 
 
-def format_repos(repos: Tuple[Path, ...], options: Namespace) -> None:
+def format_repos(repos: tuple[Path, ...], options: Namespace) -> None:
     black_versions = tuple(
         BlackVersion(*version.split(":")) for version in options.versions
     )

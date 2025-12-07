@@ -31,16 +31,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.9"]
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12.10", "3.13", "3.14", "pypy-3.11"]
+        os: [ubuntu-latest, macOS-latest, windows-latest, windows-11-arm]
+        exclude:
+          # setup-python only supports CPython 3.11+ on arm64 windows
+          - os: windows-11-arm
+            python-version: "3.10"
+          - os: windows-11-arm
+            python-version: "pypy-3.11"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
 
       - name: Install tox
         run: |
@@ -62,7 +69,7 @@ jobs:
         if:
           github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
           !startsWith(matrix.python-version, 'pypy')
-        uses: AndreMiras/coveralls-python-action@8799c9f4443ac4201d2e2f2c725d577174683b99
+        uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           parallel: true
@@ -75,9 +82,9 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Send finished signal to Coveralls
-        uses: AndreMiras/coveralls-python-action@8799c9f4443ac4201d2e2f2c725d577174683b99
+        uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
           parallel-finished: true
           debug: true
@@ -93,12 +100,12 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up latest Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "*"
+          python-version: "3.13"
 
       - name: Install black with uvloop
         run: |

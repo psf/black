@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
 
-from __future__ import annotations
-
 """
 Tool to help automate changes needed in commits during and after releases
 """
 
+from __future__ import annotations
+
 import argparse
 import logging
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from subprocess import PIPE, run
-from typing import List
+from subprocess import run
 
 LOG = logging.getLogger(__name__)
 NEW_VERSION_CHANGELOG_TEMPLATE = """\
 ## Unreleased
+
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
 
 ### Highlights
 
@@ -65,14 +68,14 @@ NEW_VERSION_CHANGELOG_TEMPLATE = """\
 """
 
 
-class NoGitTagsError(Exception): ...  # noqa: E701,E761
+class NoGitTagsError(Exception): ...
 
 
 # TODO: Do better with alpha + beta releases
 # Maybe we vendor packaging library
-def get_git_tags(versions_only: bool = True) -> List[str]:
+def get_git_tags(versions_only: bool = True) -> list[str]:
     """Pull out all tags or calvers only"""
-    cp = run(["git", "tag"], stdout=PIPE, stderr=PIPE, check=True, encoding="utf8")
+    cp = run(["git", "tag"], capture_output=True, check=True, encoding="utf8")
     if not cp.stdout:
         LOG.error(f"Returned no git tags stdout: {cp.stderr}")
         raise NoGitTagsError
@@ -118,7 +121,7 @@ class SourceFiles:
         """Add the template to CHANGES.md if it does not exist"""
         LOG.info(f"Adding template to {self.changes_path}")
 
-        with self.changes_path.open("r") as cfp:
+        with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
         if "## Unreleased" in changes_string:
@@ -130,7 +133,7 @@ class SourceFiles:
             f"# Change Log\n\n{NEW_VERSION_CHANGELOG_TEMPLATE}",
         )
 
-        with self.changes_path.open("w") as cfp:
+        with self.changes_path.open("w", encoding="utf-8") as cfp:
             cfp.write(templated_changes_string)
 
         LOG.info(f"Added template to {self.changes_path}")
@@ -139,23 +142,22 @@ class SourceFiles:
     def cleanup_changes_template_for_release(self) -> None:
         LOG.info(f"Cleaning up {self.changes_path}")
 
-        with self.changes_path.open("r") as cfp:
+        with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
         # Change Unreleased to next version
-        versioned_changes = changes_string.replace(
+        changes_string = changes_string.replace(
             "## Unreleased", f"## {self.next_version}"
         )
 
-        # Remove all comments (subheadings are harder - Human required still)
-        no_comments_changes = []
-        for line in versioned_changes.splitlines():
-            if line.startswith("<!--") or line.endswith("-->"):
-                continue
-            no_comments_changes.append(line)
+        # Remove all comments
+        changes_string = re.sub(r"(?m)^<!--(?>(?:.|\n)*?-->)\n\n", "", changes_string)
 
-        with self.changes_path.open("w") as cfp:
-            cfp.write("\n".join(no_comments_changes) + "\n")
+        # Remove empty subheadings
+        changes_string = re.sub(r"(?m)^###.+\n\n(?=#)", "", changes_string)
+
+        with self.changes_path.open("w", encoding="utf-8") as cfp:
+            cfp.write(changes_string)
 
         LOG.debug(f"Finished Cleaning up {self.changes_path}")
 
@@ -187,14 +189,14 @@ class SourceFiles:
         for doc_path in self.version_doc_paths:
             LOG.info(f"Updating black version to {self.next_version} in {doc_path}")
 
-            with doc_path.open("r") as dfp:
+            with doc_path.open("r", encoding="utf-8") as dfp:
                 doc_string = dfp.read()
 
             next_version_doc = doc_string.replace(
                 self.current_version, self.next_version
             )
 
-            with doc_path.open("w") as dfp:
+            with doc_path.open("w", encoding="utf-8") as dfp:
                 dfp.write(next_version_doc)
 
             LOG.debug(

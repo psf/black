@@ -6,14 +6,14 @@ The double calls are for patching purposes in tests.
 import json
 import re
 import tempfile
-from typing import Any, List, Optional
+from typing import Any
 
 from click import echo, style
 from mypy_extensions import mypyc_attr
 
 
 @mypyc_attr(patchable=True)
-def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
+def _out(message: str | None = None, nl: bool = True, **styles: Any) -> None:
     if message is not None:
         if "bold" not in styles:
             styles["bold"] = True
@@ -22,7 +22,7 @@ def _out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
 
 
 @mypyc_attr(patchable=True)
-def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
+def _err(message: str | None = None, nl: bool = True, **styles: Any) -> None:
     if message is not None:
         if "fg" not in styles:
             styles["fg"] = "red"
@@ -31,11 +31,11 @@ def _err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
 
 
 @mypyc_attr(patchable=True)
-def out(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
+def out(message: str | None = None, nl: bool = True, **styles: Any) -> None:
     _out(message, nl=nl, **styles)
 
 
-def err(message: Optional[str] = None, nl: bool = True, **styles: Any) -> None:
+def err(message: str | None = None, nl: bool = True, **styles: Any) -> None:
     _err(message, nl=nl, **styles)
 
 
@@ -59,7 +59,7 @@ def ipynb_diff(a: str, b: str, a_name: str, b_name: str) -> str:
 _line_pattern = re.compile(r"(.*?(?:\r\n|\n|\r|$))")
 
 
-def _splitlines_no_ff(source: str) -> List[str]:
+def _splitlines_no_ff(source: str) -> list[str]:
     """Split a string into lines ignoring form feed and other chars.
 
     This mimics how the Python parser splits source code.

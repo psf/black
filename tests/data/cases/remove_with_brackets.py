@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.9
 with (open("bla.txt")):
     pass
 
@@ -53,6 +52,19 @@ with ((((open("bla.txt")))) as f):
 
 with ((((CtxManager1()))) as example1, (((CtxManager2()))) as example2):
     ...
+
+# regression tests for #3678
+with (a, *b):
+    pass
+
+with (a, (b, *c)):
+    pass
+
+with (a for b in c):
+    pass
+
+with (a, (b for c in d)):
+    pass
 
 # output
 with open("bla.txt"):
@@ -118,3 +130,16 @@ with open("bla.txt") as f:
 
 with CtxManager1() as example1, CtxManager2() as example2:
     ...
+
+# regression tests for #3678
+with (a, *b):
+    pass
+
+with a, (b, *c):
+    pass
+
+with (a for b in c):
+    pass
+
+with a, (b for c in d):
+    pass

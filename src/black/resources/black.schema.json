@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/psf/black/blob/main/black/resources/black.schema.json",
+  "$id": "https://github.com/psf/black/blob/main/src/black/resources/black.schema.json",
   "$comment": "tool.black table in pyproject.toml",
   "type": "object",
   "additionalProperties": false,
@@ -27,7 +27,9 @@
           "py39",
           "py310",
           "py311",
-          "py312"
+          "py312",
+          "py313",
+          "py314"
         ]
       },
       "description": "Python versions that should be supported by Black's output. You should include all versions that your code supports. By default, Black will infer target versions from the project metadata in pyproject.toml. If this does not yield conclusive results, Black will use per-file auto-detection."
@@ -78,17 +80,10 @@
       "type": "array",
       "items": {
         "enum": [
-          "hex_codes_in_unicode_sequences",
           "string_processing",
           "hug_parens_with_braces_and_square_brackets",
-          "unify_docstring_detection",
-          "no_normalize_fmt_skip_whitespace",
-          "wrap_long_dict_values_in_parens",
-          "multiline_string_handling",
-          "typed_params_trailing_comma",
-          "is_simple_lookup_for_doublestar_expression",
-          "docstring_check_for_newline",
-          "remove_redundant_guard_parens"
+          "wrap_comprehension_in",
+          "wrap_long_dict_values_in_parens"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
@@ -146,6 +141,11 @@
     "verbose": {
       "type": "boolean",
       "description": "Emit messages about files that were not changed or were ignored due to exclusion patterns. If Black is using a configuration file, a message detailing which one it is using will be emitted.",
+      "default": false
+    },
+    "no-cache": {
+      "type": "boolean",
+      "description": "Skip reading and writing the cache, forcing Black to reformat all included files.",
       "default": false
     }
   }

@@ -1,8 +1,8 @@
 """Functions related to Black's formatting by line ranges feature."""
 
 import difflib
+from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
-from typing import Collection, Iterator, List, Sequence, Set, Tuple, Union
 
 from black.nodes import (
     LN,
@@ -18,8 +18,8 @@ from black.nodes import (
 from blib2to3.pgen2.token import ASYNC, NEWLINE
 
 
-def parse_line_ranges(line_ranges: Sequence[str]) -> List[Tuple[int, int]]:
-    lines: List[Tuple[int, int]] = []
+def parse_line_ranges(line_ranges: Sequence[str]) -> list[tuple[int, int]]:
+    lines: list[tuple[int, int]] = []
     for lines_str in line_ranges:
         parts = lines_str.split("-")
         if len(parts) != 2:
@@ -40,16 +40,44 @@ def parse_line_ranges(line_ranges: Sequence[str]) -> List[Tuple[int, int]]:
     return lines
 
 
-def is_valid_line_range(lines: Tuple[int, int]) -> bool:
+def is_valid_line_range(lines: tuple[int, int]) -> bool:
     """Returns whether the line range is valid."""
     return not lines or lines[0] <= lines[1]
 
 
+def sanitized_lines(
+    lines: Collection[tuple[int, int]], src_contents: str
+) -> Collection[tuple[int, int]]:
+    """Returns the valid line ranges for the given source.
+
+    This removes ranges that are entirely outside the valid lines.
+
+    Other ranges are normalized so that the start values are at least 1 and the
+    end values are at most the (1-based) index of the last source line.
+    """
+    if not src_contents:
+        return []
+    good_lines = []
+    src_line_count = src_contents.count("\n")
+    if not src_contents.endswith("\n"):
+        src_line_count += 1
+    for start, end in lines:
+        if start > src_line_count:
+            continue
+        # line-ranges are 1-based
+        start = max(start, 1)
+        if end < start:
+            continue
+        end = min(end, src_line_count)
+        good_lines.append((start, end))
+    return good_lines
+
+
 def adjusted_lines(
-    lines: Collection[Tuple[int, int]],
+    lines: Collection[tuple[int, int]],
     original_source: str,
     modified_source: str,
-) -> List[Tuple[int, int]]:
+) -> list[tuple[int, int]]:
     """Returns the adjusted line ranges based on edits from the original code.
 
     This computes the new line ranges by diffing original_source and
@@ -125,8 +153,8 @@ def adjusted_lines(
     return new_lines
 
 
-def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]) -> None:
-    """Converts unchanged lines to STANDALONE_COMMENT.
+def convert_unchanged_lines(src_node: Node, lines: Collection[tuple[int, int]]) -> None:
+    r"""Converts unchanged lines to STANDALONE_COMMENT.
 
     The idea is similar to how `# fmt: on/off` is implemented. It also converts the
     nodes between those markers as a single `STANDALONE_COMMENT` leaf node with
@@ -149,7 +177,7 @@ def convert_unchanged_lines(src_node: Node, lines: Collection[Tuple[int, int]]) 
     more formatting to pass (1). However, it's hard to get it correct when
     incorrect indentations are used. So we defer this to future optimizations.
     """
-    lines_set: Set[int] = set()
+    lines_set: set[int] = set()
     for start, end in lines:
         lines_set.update(range(start, end + 1))
     visitor = _TopLevelStatementsVisitor(lines_set)
@@ -177,7 +205,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
     classes/functions/statements.
     """
 
-    def __init__(self, lines_set: Set[int]):
+    def __init__(self, lines_set: set[int]):
         self._lines_set = lines_set
 
     def visit_simple_stmt(self, node: Node) -> Iterator[None]:
@@ -221,7 +249,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
             _convert_node_to_standalone_comment(semantic_parent)
 
 
-def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]) -> None:
+def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
     """Converts unchanged to STANDALONE_COMMENT line by line."""
     for leaf in node.leaves():
         if leaf.type != NEWLINE:
@@ -233,7 +261,7 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]) -> None:
             #   match_stmt: "match" subject_expr ':' NEWLINE INDENT case_block+ DEDENT
             # Here we need to check `subject_expr`. The `case_block+` will be
             # checked by their own NEWLINEs.
-            nodes_to_ignore: List[LN] = []
+            nodes_to_ignore: list[LN] = []
             prev_sibling = leaf.prev_sibling
             while prev_sibling:
                 nodes_to_ignore.insert(0, prev_sibling)
@@ -246,7 +274,7 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: Set[int]) -> None:
             # We will check `simple_stmt` and `stmt+` separately against the lines set
             parent_sibling = leaf.parent.prev_sibling
             nodes_to_ignore = []
-            while parent_sibling and not parent_sibling.type == syms.suite:
+            while parent_sibling and parent_sibling.type != syms.suite:
                 # NOTE: Multiple suite nodes can exist as siblings in e.g. `if_stmt`.
                 nodes_to_ignore.insert(0, parent_sibling)
                 parent_sibling = parent_sibling.prev_sibling
@@ -301,6 +329,19 @@ def _convert_node_to_standalone_comment(node: LN) -> None:
     first.prefix = ""
     index = node.remove()
     if index is not None:
+        # Because of the special handling of multiple decorators, if the decorated
+        # item is a single line then there will be a missing newline between the
+        # decorator and item, so add it back. This doesn't affect any other case
+        # since a decorated item with a newline would hit the earlier suite case
+        # in _convert_unchanged_line_by_line that correctly handles the newlines.
+        if node.type == syms.decorated:
+            # A leaf of type decorated wouldn't make sense, since it should always
+            # have at least the decorator + the decorated item, so if this assert
+            # hits that means there's a problem in the parser.
+            assert isinstance(node, Node)
+            # 1 will always be the correct index since before this function is
+            # called all the decorators are collapsed into a single leaf
+            node.insert_child(1, Leaf(NEWLINE, "\n"))
         # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
         # generating the formatted code.
         value = str(node)[:-1]
@@ -354,7 +395,7 @@ def _leaf_line_end(leaf: Leaf) -> int:
         return leaf.lineno + str(leaf).count("\n")
 
 
-def _get_line_range(node_or_nodes: Union[LN, List[LN]]) -> Set[int]:
+def _get_line_range(node_or_nodes: LN | list[LN]) -> set[int]:
     """Returns the line range of this node or list of nodes."""
     if isinstance(node_or_nodes, list):
         nodes = node_or_nodes
@@ -435,7 +476,7 @@ def _calculate_lines_mappings(
         modified_source.splitlines(keepends=True),
     )
     matching_blocks = matcher.get_matching_blocks()
-    lines_mappings: List[_LinesMapping] = []
+    lines_mappings: list[_LinesMapping] = []
     # matching_blocks is a sequence of "same block of code ranges", see
     # https://docs.python.org/3/library/difflib.html#difflib.SequenceMatcher.get_matching_blocks
     # Each block corresponds to a _LinesMapping with is_changed_block=False,

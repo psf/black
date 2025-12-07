@@ -70,17 +70,17 @@ See also [the style documentation](labels/line-length).
 
 Python versions that should be supported by Black's output. You can run `black --help`
 and look for the `--target-version` option to see the full list of supported versions.
-You should include all versions that your code supports. If you support Python 3.8
-through 3.11, you should write:
+You should include all versions that your code supports. If you support Python 3.11
+through 3.13, you should write:
 
 ```console
-$ black -t py38 -t py39 -t py310 -t py311
+$ black -t py311 -t py312 -t py313
 ```
 
 In a [configuration file](#configuration-via-a-file), you can write:
 
 ```toml
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py311", "py312", "py313"]
 ```
 
 By default, Black will infer target versions from the project metadata in
@@ -183,6 +183,9 @@ Don't write the files back, just return the status. _Black_ will exit with:
 - code 1 if some files would be reformatted; or
 - code 123 if there was an internal error
 
+If used in combination with `--quiet` then only the exit code will be returned, unless
+there was an internal error.
+
 ```console
 $ black test.py --check
 All done! ✨ 🍰 ✨
@@ -224,6 +227,14 @@ All done! ✨ 🍰 ✨
 1 file would be reformatted.
 ```
 
+#### `--no-cache`
+
+Do not consult or update Black's per-user cache during this run. When `--no-cache` is
+specified, Black will perform fresh analysis for all files and will neither read from
+nor write to the cache. This is helpful for reproducing formatting results from a clean
+run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
+every time.
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
@@ -247,8 +258,9 @@ This option is mainly for editor integrations, such as "Format Selection".
 
 ```{note}
 Due to [#4052](https://github.com/psf/black/issues/4052), `--line-ranges` might format
-extra lines outside of the ranges when ther are unformatted lines with the exact
-content. It also disables _Black_'s formatting stability check in `--safe` mode.
+extra lines outside of the ranges when there are unformatted lines with the exact
+formatted content next to the requested lines. It also disables _Black_'s formatting
+stability check in `--safe` mode.
 ```
 
 #### `--fast` / `--safe`
@@ -266,8 +278,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 24.2.0 (compiled: yes)
-$ black --required-version 24.2.0 -c "format = 'this'"
+black, 25.12.0 (compiled: yes)
+$ black --required-version 25.12.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -292,6 +304,9 @@ A regular expression that matches files and directories that should be excluded 
 recursive searches. An empty value means no paths are excluded. Use forward slashes for
 directories on all platforms (Windows, too). By default, Black also ignores all paths
 listed in `.gitignore`. Changing this value will override all default exclusions.
+
+Default Exclusions:
+`['.direnv', '.eggs', '.git', '.hg', '.ipynb_checkpoints',  '.mypy_cache', '.nox', '.pytest_cache', '.ruff_cache', '.tox', '.svn', '.venv', '.vscode',  '__pypackages__', '_build', 'buck-out', 'build', 'dist', 'venv'] `
 
 If the regular expression contains newlines, it is treated as a
 [verbose regular expression](https://docs.python.org/3/library/re.html#re.VERBOSE). This
@@ -320,6 +335,8 @@ A regular expression that matches files and directories that should be included 
 recursive searches. An empty value means all files are included regardless of the name.
 Use forward slashes for directories on all platforms (Windows, too). Overrides all
 exclusions, including from `.gitignore` and command line options.
+
+Default Inclusions: `['.pyi', '.ipynb']`
 
 #### `-W`, `--workers`
 
@@ -363,7 +380,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 24.2.0
+black, 25.12.0
 ```
 
 #### `--config`
@@ -475,9 +492,10 @@ operating system, this configuration file should be stored as:
   `XDG_CONFIG_HOME` environment variable is not set)
 
 Note that these are paths to the TOML file itself (meaning that they shouldn't be named
-as `pyproject.toml`), not directories where you store the configuration. Here, `~`
-refers to the path to your home directory. On Windows, this will be something like
-`C:\\Users\UserName`.
+as `pyproject.toml`), not directories where you store the configuration (i.e.,
+`black`/`.black` is the file to create and add your configuration options to, in the
+`~/.config/` directory). Here, `~` refers to the path to your home directory. On
+Windows, this will be something like `C:\\Users\UserName`.
 
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.
