@@ -13,8 +13,6 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
-- `multiline_string_handling`: Make expressions involving multiline strings more
-  compact. ([see below](labels/multiline-string-handling))
 - `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
   normalize file newlines both from and to.
 - `remove_parens_around_except_types`: Remove parentheses around multiple exception
@@ -28,56 +26,6 @@ Currently, the following features are included in the preview style:
   across lines if it would otherwise exceed the maximum line length.
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
-
-(labels/multiline-string-handling)=
-
-### Improved multiline string handling
-
-_Black_ is smarter when formatting multiline strings, especially in function arguments,
-to avoid introducing extra line breaks. Previously, it would always consider multiline
-strings as not fitting on a single line. With this new feature, _Black_ looks at the
-context around the multiline string to decide if it should be inlined or split to a
-separate line. For example, when a multiline string is passed to a function, _Black_
-will only split the multiline string if a line is too long or if multiple arguments are
-being passed.
-
-For example, _Black_ will reformat
-
-```python
-textwrap.dedent(
-    """\
-    This is a
-    multiline string
-"""
-)
-```
-
-to:
-
-```python
-textwrap.dedent("""\
-    This is a
-    multiline string
-""")
-```
-
-And:
-
-```python
-MULTILINE = """
-foobar
-""".replace(
-    "\n", ""
-)
-```
-
-to:
-
-```python
-MULTILINE = """
-foobar
-""".replace("\n", "")
-```
 
 (labels/wrap-long-dict-values)=
 

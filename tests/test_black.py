@@ -2416,7 +2416,7 @@ class TestCaching:
                 # If you are looking to remove one of these features, just
                 # replace it with any other feature.
                 values = [
-                    {Preview.multiline_string_handling},
+                    {Preview.wrap_comprehension_in},
                     {Preview.string_processing},
                 ]
             elif field.type is bool:

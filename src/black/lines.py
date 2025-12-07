@@ -820,13 +820,6 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     if not line_str:
         line_str = line_to_string(line)
 
-    if Preview.multiline_string_handling not in mode:
-        return (
-            str_width(line_str) <= mode.line_length
-            and "\n" not in line_str  # multiline strings
-            and not line.contains_standalone_comments()
-        )
-
     if line.contains_standalone_comments():
         return False
     if "\n" not in line_str:
@@ -852,7 +845,7 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     for i, leaf in enumerate(line.leaves):
         if max_level_to_update == math.inf:
             had_comma: int | None = None
-            # Skip multiline_string_handling logic for leaves without bracket_depth
+            # Skip multiline string handling logic for leaves without bracket_depth
             # (e.g., newly created leaves not yet processed by bracket tracker)
             if not hasattr(leaf, "bracket_depth"):
                 continue
