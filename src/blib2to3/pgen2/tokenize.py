@@ -29,7 +29,6 @@ each time a new token is found."""
 
 import sys
 from collections.abc import Iterator
-from typing import Optional
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
@@ -104,7 +103,7 @@ class TokenError(Exception): ...
 
 
 def transform_whitespace(
-    token: pytokens.Token, source: str, prev_token: Optional[pytokens.Token]
+    token: pytokens.Token, source: str, prev_token: pytokens.Token | None
 ) -> pytokens.Token:
     r"""
     Black treats `\\\n` at the end of a line as a 'NL' token, while it
@@ -142,12 +141,12 @@ def transform_whitespace(
     return token
 
 
-def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenInfo]:
+def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
     lines = source.split("\n")
     lines += [""]  # For newline tokens in files that don't end in a newline
     line, column = 1, 0
 
-    prev_token: Optional[pytokens.Token] = None
+    prev_token: pytokens.Token | None = None
     try:
         for token in pytokens.tokenize(source):
             token = transform_whitespace(token, source, prev_token)
@@ -212,8 +211,8 @@ def tokenize(source: str, grammar: Optional[Grammar] = None) -> Iterator[TokenIn
 def printtoken(
     type: int, token: str, srow_col: Coord, erow_col: Coord, line: str
 ) -> None:  # for testing
-    (srow, scol) = srow_col
-    (erow, ecol) = erow_col
+    srow, scol = srow_col
+    erow, ecol = erow_col
     print(f"{srow},{scol}-{erow},{ecol}:\t{tok_name[type]}\t{token!r}")
 
 

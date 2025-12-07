@@ -84,8 +84,8 @@ def _initialize_black_env(upgrade=False):
       return True
 
   pyver = sys.version_info[:3]
-  if pyver < (3, 9):
-    print("Sorry, Black requires Python 3.9+ to run.")
+  if pyver < (3, 10):
+    print("Sorry, Black requires Python 3.10+ to run.")
     return False
 
   from pathlib import Path

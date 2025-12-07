@@ -20,7 +20,7 @@ from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, TypeVar
 from unittest.mock import MagicMock, patch
 
 import click
@@ -428,9 +428,7 @@ class BlackTestCase(BlackBaseTestCase):
         _, source, expected = read_data_from_file(source_path)
         actual = fs(source)
         self.assertFormatEqual(expected, actual)
-        major, minor = sys.version_info[:2]
-        if major > 3 or (major == 3 and minor >= 7):
-            black.assert_equivalent(source, actual)
+        black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
@@ -922,7 +920,7 @@ class BlackTestCase(BlackBaseTestCase):
             ("a = 1 + 2\nfrom something import annotations", set()),
             ("from __future__ import x, y", set()),
         ]:
-            with self.subTest(src=src, features=features):
+            with self.subTest(src=src, features=sorted(f.value for f in features)):
                 node = black.lib2to3_parse(src)
                 future_imports = black.get_future_imports(node)
                 self.assertEqual(
@@ -1335,10 +1333,8 @@ class BlackTestCase(BlackBaseTestCase):
 
         def _new_wrapper(
             output: io.StringIO, io_TextIOWrapper: type[io.TextIOWrapper]
-        ) -> Callable[[Any, Any], Union[io.StringIO, io.TextIOWrapper]]:
-            def get_output(
-                *args: Any, **kwargs: Any
-            ) -> Union[io.StringIO, io.TextIOWrapper]:
+        ) -> Callable[[Any, Any], io.StringIO | io.TextIOWrapper]:
+            def get_output(*args: Any, **kwargs: Any) -> io.StringIO | io.TextIOWrapper:
                 if args == (sys.stdout.buffer,):
                     # It's `format_stdin_to_stdout()` calling `io.TextIOWrapper()`,
                     # return our mock object.
@@ -1760,16 +1756,13 @@ class BlackTestCase(BlackBaseTestCase):
         if system() == "Windows":
             return
 
-        # https://bugs.python.org/issue33660
-        # Can be removed when we drop support for Python 3.8.5
         root = Path("/")
-        with change_directory(root):
-            path = Path("workspace") / "project"
-            report = black.Report(verbose=True)
-            resolves_outside = black.resolves_outside_root_or_cannot_stat(
-                path, root, report
-            )
-            self.assertIs(resolves_outside, False)
+        path = Path("workspace") / "project"
+        report = black.Report(verbose=True)
+        resolves_outside = black.resolves_outside_root_or_cannot_stat(
+            path, root, report
+        )
+        self.assertIs(resolves_outside, False)
 
     def test_normalize_path_ignore_windows_junctions_outside_of_root(self) -> None:
         if system() != "Windows":
@@ -2440,15 +2433,15 @@ class TestCaching:
 
 
 def assert_collected_sources(
-    src: Sequence[Union[str, Path]],
-    expected: Sequence[Union[str, Path]],
+    src: Sequence[str | Path],
+    expected: Sequence[str | Path],
     *,
-    root: Optional[Path] = None,
-    exclude: Optional[str] = None,
-    include: Optional[str] = None,
-    extend_exclude: Optional[str] = None,
-    force_exclude: Optional[str] = None,
-    stdin_filename: Optional[str] = None,
+    root: Path | None = None,
+    exclude: str | None = None,
+    include: str | None = None,
+    extend_exclude: str | None = None,
+    force_exclude: str | None = None,
+    stdin_filename: str | None = None,
 ) -> None:
     gs_src = tuple(str(Path(s)) for s in src)
     gs_expected = [Path(s) for s in expected]

@@ -8,18 +8,17 @@ import traceback
 from collections.abc import (
     Collection,
     Generator,
-    Iterator,
     MutableMapping,
     Sequence,
 )
-from contextlib import contextmanager
+from contextlib import nullcontext
 from dataclasses import replace
 from datetime import datetime, timezone
 from enum import Enum
 from json.decoder import JSONDecodeError
 from pathlib import Path
 from re import Pattern
-from typing import Any, Optional, Union
+from typing import Any
 
 import click
 from click.core import ParameterSource
@@ -114,8 +113,8 @@ FileMode = Mode
 
 
 def read_pyproject_toml(
-    ctx: click.Context, param: click.Parameter, value: Optional[str]
-) -> Optional[str]:
+    ctx: click.Context, param: click.Parameter, value: str | None
+) -> str | None:
     """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
 
     Returns the path to a successfully found and read configuration file, None
@@ -193,7 +192,7 @@ def spellcheck_pyproject_toml_keys(
 
 
 def target_version_option_callback(
-    c: click.Context, p: Union[click.Option, click.Parameter], v: tuple[str, ...]
+    c: click.Context, p: click.Option | click.Parameter, v: tuple[str, ...]
 ) -> list[TargetVersion]:
     """Compute the target versions from a --target-version flag.
 
@@ -204,7 +203,7 @@ def target_version_option_callback(
 
 
 def enable_unstable_feature_callback(
-    c: click.Context, p: Union[click.Option, click.Parameter], v: tuple[str, ...]
+    c: click.Context, p: click.Option | click.Parameter, v: tuple[str, ...]
 ) -> list[Preview]:
     """Compute the features from an --enable-unstable-feature flag."""
     return [Preview[val] for val in v]
@@ -224,8 +223,8 @@ def re_compile_maybe_verbose(regex: str) -> Pattern[str]:
 def validate_regex(
     ctx: click.Context,
     param: click.Parameter,
-    value: Optional[str],
-) -> Optional[Pattern[str]]:
+    value: str | None,
+) -> Pattern[str] | None:
     try:
         return re_compile_maybe_verbose(value) if value is not None else None
     except re.error as e:
@@ -514,9 +513,9 @@ def validate_regex(
     ),
 )
 @click.pass_context
-def main(  # noqa: C901
+def main(
     ctx: click.Context,
-    code: Optional[str],
+    code: str | None,
     line_length: int,
     target_version: list[TargetVersion],
     check: bool,
@@ -535,21 +534,21 @@ def main(  # noqa: C901
     enable_unstable_feature: list[Preview],
     quiet: bool,
     verbose: bool,
-    required_version: Optional[str],
+    required_version: str | None,
     include: Pattern[str],
-    exclude: Optional[Pattern[str]],
-    extend_exclude: Optional[Pattern[str]],
-    force_exclude: Optional[Pattern[str]],
-    stdin_filename: Optional[str],
-    workers: Optional[int],
+    exclude: Pattern[str] | None,
+    extend_exclude: Pattern[str] | None,
+    force_exclude: Pattern[str] | None,
+    stdin_filename: str | None,
+    workers: int | None,
     src: tuple[str, ...],
-    config: Optional[str],
+    config: str | None,
     no_cache: bool,
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
 
-    assert sys.version_info >= (3, 9), "Black requires Python 3.9+"
+    assert sys.version_info >= (3, 10), "Black requires Python 3.10+"
     if sys.version_info[:3] == (3, 12, 5):
         out(
             "Python 3.12.5 has a memory safety issue that can cause Black's "
@@ -738,11 +737,11 @@ def get_sources(
     quiet: bool,
     verbose: bool,
     include: Pattern[str],
-    exclude: Optional[Pattern[str]],
-    extend_exclude: Optional[Pattern[str]],
-    force_exclude: Optional[Pattern[str]],
+    exclude: Pattern[str] | None,
+    extend_exclude: Pattern[str] | None,
+    force_exclude: Pattern[str] | None,
     report: "Report",
-    stdin_filename: Optional[str],
+    stdin_filename: str | None,
 ) -> set[Path]:
     """Compute the set of files to be formatted."""
     sources: set[Path] = set()
@@ -750,7 +749,7 @@ def get_sources(
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
-    gitignore: Optional[dict[Path, PathSpec]] = None
+    gitignore: dict[Path, PathSpec] | None = None
     root_gitignore = get_gitignore(root)
 
     for s in src:
@@ -994,7 +993,7 @@ def format_file_in_place(
 def format_stdin_to_stdout(
     fast: bool,
     *,
-    content: Optional[str] = None,
+    content: str | None = None,
     write_back: WriteBack = WriteBack.NO,
     mode: Mode,
     lines: Collection[tuple[int, int]] = (),
@@ -1267,7 +1266,7 @@ def _format_str_once(
         }
         if supports_feature(versions, feature)
     }
-    block: Optional[LinesBlock] = None
+    block: LinesBlock | None = None
     for current_line in line_generator.visit(src_node):
         block = elt.maybe_empty_lines(current_line)
         dst_blocks.append(block)
@@ -1334,8 +1333,8 @@ def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine
         return tiow.read(), encoding, newline
 
 
-def get_features_used(  # noqa: C901
-    node: Node, *, future_imports: Optional[set[str]] = None
+def get_features_used(
+    node: Node, *, future_imports: set[str] | None = None
 ) -> set[Feature]:
     """Return a set of (relatively) new Python features used in this file.
 
@@ -1496,7 +1495,7 @@ def get_features_used(  # noqa: C901
     return features
 
 
-def _contains_asexpr(node: Union[Node, Leaf]) -> bool:
+def _contains_asexpr(node: Node | Leaf) -> bool:
     """Return True if `node` contains an as-pattern."""
     if node.type == syms.asexpr_test:
         return True
@@ -1513,7 +1512,7 @@ def _contains_asexpr(node: Union[Node, Leaf]) -> bool:
 
 
 def detect_target_versions(
-    node: Node, *, future_imports: Optional[set[str]] = None
+    node: Node, *, future_imports: set[str] | None = None
 ) -> set[TargetVersion]:
     """Detect the version to target based on the nodes used."""
     features = get_features_used(node, future_imports=future_imports)
@@ -1638,15 +1637,6 @@ def assert_stable(
             " pass of the formatter.  Please report a bug on"
             f" https://github.com/psf/black/issues.  This diff might be helpful: {log}"
         ) from None
-
-
-@contextmanager
-def nullcontext() -> Iterator[None]:
-    """Return an empty context manager.
-
-    To be used like `nullcontext` in Python 3.7.
-    """
-    yield
 
 
 def patched_main() -> None:

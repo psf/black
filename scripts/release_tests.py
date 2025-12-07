@@ -13,11 +13,11 @@ from release import SourceFiles, tuple_calver  # type: ignore
 class FakeDateTime:
     """Used to mock the date to test generating next calver function"""
 
-    def today(*args: Any, **kwargs: Any) -> "FakeDateTime":  # noqa
+    def today(*args: Any, **kwargs: Any) -> "FakeDateTime":  # noqa: B902
         return FakeDateTime()
 
     # Add leading 0 on purpose to ensure we remove it
-    def strftime(*args: Any, **kwargs: Any) -> str:  # noqa
+    def strftime(*args: Any, **kwargs: Any) -> str:  # noqa: B902
         return "69.01"
 
 

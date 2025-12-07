@@ -1,5 +1,3 @@
-from typing import Optional
-
 import aiohttp
 from aiohttp.typedefs import StrOrURL
 
@@ -12,15 +10,15 @@ class BlackDClient:
     def __init__(
         self,
         url: StrOrURL = "http://localhost:9090",
-        line_length: Optional[int] = None,
+        line_length: int | None = None,
         skip_source_first_line: bool = False,
         skip_string_normalization: bool = False,
         skip_magic_trailing_comma: bool = False,
         preview: bool = False,
         fast: bool = False,
-        python_variant: Optional[str] = None,
+        python_variant: str | None = None,
         diff: bool = False,
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
     ):
         """
         Initialize a BlackDClient object.

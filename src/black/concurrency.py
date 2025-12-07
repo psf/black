@@ -16,7 +16,7 @@ from collections.abc import Iterable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
 from multiprocessing import Manager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from mypy_extensions import mypyc_attr
 
@@ -41,7 +41,7 @@ def maybe_install_uvloop() -> None:
         pass
 
 
-def cancel(tasks: Iterable["asyncio.Future[Any]"]) -> None:
+def cancel(tasks: Iterable[asyncio.Future[Any]]) -> None:
     """asyncio signal handler that cancels all `tasks` and reports to stderr."""
     err("Aborted!")
     for task in tasks:
@@ -77,7 +77,7 @@ def reformat_many(
     write_back: WriteBack,
     mode: Mode,
     report: Report,
-    workers: Optional[int],
+    workers: int | None,
     no_cache: bool = False,
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
@@ -133,9 +133,9 @@ async def schedule_formatting(
     fast: bool,
     write_back: WriteBack,
     mode: Mode,
-    report: "Report",
+    report: Report,
     loop: asyncio.AbstractEventLoop,
-    executor: "Executor",
+    executor: Executor,
     no_cache: bool = False,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
