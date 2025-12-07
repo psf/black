@@ -13,8 +13,6 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
-- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
-  strings if preceded by comments.
 - `fix_type_expansion_split`: Fix type expansions split in generic functions.
 - `multiline_string_handling`: Make expressions involving multiline strings more
   compact. ([see below](labels/multiline-string-handling))
