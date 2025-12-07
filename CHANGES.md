@@ -30,6 +30,10 @@
     such as `def foo(): return "mock" # fmt: skip`, where previously the declaration
     would have been incorrectly collapsed. (#4800)
 
+### Stable style
+
+- Regenerated the `_width_table.py` and added tests for the Khmer language (#4253)
+
 ## 25.12.0
 
 Please test out the draft 2026 style in version 26.1a1 and
