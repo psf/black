@@ -13,9 +13,6 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
-- `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behavior on one-liner declarations,
-  such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
-  have been incorrectly collapsed.
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceded by comments.
 - `fix_type_expansion_split`: Fix type expansions split in generic functions.

@@ -645,7 +645,7 @@ def _generate_ignored_nodes_from_fmt_skip(
     if not comments or comment.value != comments[0].value:
         return
 
-    if Preview.fix_fmt_skip_in_one_liners in mode and not prev_sibling and parent:
+    if not prev_sibling and parent:
         # If the current leaf doesn't have a previous sibling, it might be deeply nested
         # (e.g. inside a list, function call, etc.). We need to climb up the tree
         # to find the previous sibling on the same line.
@@ -689,17 +689,6 @@ def _generate_ignored_nodes_from_fmt_skip(
 
     if prev_sibling is not None:
         leaf.prefix = leaf.prefix[comment.consumed :]
-
-        if Preview.fix_fmt_skip_in_one_liners not in mode:
-            siblings = [prev_sibling]
-            while (
-                "\n" not in prev_sibling.prefix
-                and prev_sibling.prev_sibling is not None
-            ):
-                prev_sibling = prev_sibling.prev_sibling
-                siblings.insert(0, prev_sibling)
-            yield from siblings
-            return
 
         # Generates the nodes to be ignored by `fmt: skip`.
 
@@ -779,7 +768,7 @@ def _generate_ignored_nodes_from_fmt_skip(
                 current_node = current_node.parent
 
         # Special handling for compound statements with semicolon-separated bodies
-        if Preview.fix_fmt_skip_in_one_liners in mode and isinstance(parent, Node):
+        if isinstance(parent, Node):
             body_node = _find_compound_statement_context(parent)
             if body_node is not None:
                 header_nodes = _get_compound_statement_header(body_node, parent)

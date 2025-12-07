@@ -82,7 +82,6 @@
         "enum": [
           "string_processing",
           "hug_parens_with_braces_and_square_brackets",
-          "fix_fmt_skip_in_one_liners",
           "fix_module_docstring_detection",
           "fix_type_expansion_split",
           "multiline_string_handling",
