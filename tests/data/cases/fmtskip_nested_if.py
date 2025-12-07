@@ -1,4 +1,3 @@
-# flags: --preview --no-preview-line-length-1
 class ClassWithALongName:
     Constant1 = 1
     Constant2 = 2
