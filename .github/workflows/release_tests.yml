@@ -29,7 +29,7 @@ jobs:
         os: [macOS-latest, ubuntu-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6.0.1
         with:
           # Give us all history, branches and tags
           fetch-depth: 0
