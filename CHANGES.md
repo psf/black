@@ -57,6 +57,7 @@ style.
   magic trailing commas and intentional multiline formatting (#4865)
 - Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
 - Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
+- Fix new lines being added after imports with `# fmt: skip` on them (#4894)
 
 ### Packaging
 

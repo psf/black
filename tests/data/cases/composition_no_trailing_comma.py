@@ -181,8 +181,8 @@ class C:
         )
 
 
-# output
 
+# output
 
 class C:
     def test(self) -> None:
