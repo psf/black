@@ -695,6 +695,7 @@ class EmptyLineTracker:
             and self.previous_line.depth == 0
             and current_line.depth == 0
             and not current_line.is_import
+            and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and Preview.always_one_newline_after_import in self.mode
         ):
             return 1, 0

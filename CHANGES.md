@@ -21,16 +21,13 @@
   magic trailing commas and intentional multiline formatting (#4865)
 - Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
 - Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
+- Fix new lines being added after imports with `# fmt: skip` on them (#4894)
 
 ### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Releases now include arm64 Windows binaries and wheels (#4814)
 
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Add `output-file` input to GitHub Action `psf/black` to write formatter output to a
   file for artifact capture and log cleanliness (#4824)
