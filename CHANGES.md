@@ -21,6 +21,7 @@
   magic trailing commas and intentional multiline formatting (#4865)
 - Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
 - Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
+- Always wrap `in` clauses of comprehensions if they have delimiters (#4881)
 
 ### Packaging
 
