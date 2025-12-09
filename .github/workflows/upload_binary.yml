@@ -37,10 +37,10 @@ jobs:
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Set up latest Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
 
@@ -61,6 +61,6 @@ jobs:
           ./dist/${{ matrix.asset_name }} src --verbose
 
       - name: Upload binary as release asset
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           files: dist/${{ matrix.asset_name }}
