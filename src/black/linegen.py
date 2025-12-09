@@ -572,9 +572,10 @@ class LineGenerator(Visitor[Line]):
                     features=self.features,
                 )
         string_children = [
-            ch for ch in node.children
+            ch for ch in node.children 
             if isinstance(ch, Leaf) and ch.type == token.STRING
-              ]
+        ]
+
         if len(string_children) > 1:
             wrap_in_parentheses(node, node, visible=True)
 
