@@ -18,10 +18,10 @@ jobs:
     if: github.event_name == 'release'
 
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Set up latest Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
           allow-prereleases: true
@@ -46,7 +46,7 @@ jobs:
     outputs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       # Keep cibuildwheel version in sync with below
       - name: Install cibuildwheel and pypyp
         run: |
@@ -93,14 +93,14 @@ jobs:
         include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
 
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       # Keep cibuildwheel version in sync with above
-      - uses: pypa/cibuildwheel@v3.3.0
+      - uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc # v3.3.0
         with:
           only: ${{ matrix.only }}
 
       - name: Upload wheels as workflow artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ matrix.only }}-mypyc-wheels
           path: ./wheelhouse/*.whl
@@ -121,7 +121,7 @@ jobs:
 
     steps:
       - name: Checkout stable branch
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: stable
           fetch-depth: 0
