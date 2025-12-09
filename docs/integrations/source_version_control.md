@@ -51,3 +51,53 @@ The `black-jupyter` hook became available in version 21.8b0.
 
 [pre-commit-mutable-rev]:
   https://pre-commit.com/#using-the-latest-version-for-a-repository
+ 
+ ## Using Black with pre-commit: how excludes work
+
+When Black is used through pre-commit, pre-commit passes an explicit list of file paths
+directly to Black. Because these paths are supplied on the command line, Black will format
+them even if they match exclude or extend-exclude patterns from pyproject.toml. Black applies
+those patterns only during its own file discovery step, which pre-commit bypasses.
+
+### Recommended: use pre-commit’s own exclude
+
+The most reliable way to prevent files from being formatted is to use pre-commit’s built-in
+exclude, which ensures those files are never passed to Black:
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: stable
+    hooks:
+      - id: black
+        exclude: ^migrations/
+```
+
+### Excluding files in pyproject.toml
+
+You can also configure exclusions inside pyproject.toml so that Black applies them when used
+from the command line or other tools. However, these patterns will not stop pre-commit from
+formatting files unless combined with --force-exclude, since pre-commit bypasses Black’s file
+discovery:
+
+```toml
+[tool.black]
+force_exclude = '''
+/(
+    migrations
+  | build
+  | dist
+)/
+'''
+```
+
+### Using --force-exclude when needed
+
+--force-exclude tells Black to apply its exclude rules even when the file paths are given
+explicitly (as pre-commit does). This can be useful when you want Black’s exclude patterns to
+still apply, but it should be used as a fallback instead of the main approach:
+
+```yaml
+args: [ "--force-exclude=tests/" ]
+```
+
