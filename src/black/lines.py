@@ -695,6 +695,7 @@ class EmptyLineTracker:
             and self.previous_line.depth == 0
             and current_line.depth == 0
             and not current_line.is_import
+            and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and Preview.always_one_newline_after_import in self.mode
         ):
             return 1, 0
@@ -863,10 +864,6 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     for i, leaf in enumerate(line.leaves):
         if max_level_to_update == math.inf:
             had_comma: int | None = None
-            # Skip multiline_string_handling logic for leaves without bracket_depth
-            # (e.g., newly created leaves not yet processed by bracket tracker)
-            if not hasattr(leaf, "bracket_depth"):
-                continue
             if leaf.bracket_depth + 1 > len(commas):
                 commas.append(0)
             elif leaf.bracket_depth + 1 < len(commas):
@@ -882,22 +879,17 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
                     # MLS was in parens with at least one comma - force split
                     return False
 
-        # Skip bracket-depth-dependent processing for leaves without the attribute
-        if not hasattr(leaf, "bracket_depth"):
-            # Still process multiline string detection below
-            pass
-        else:
-            if leaf.bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
-                # Inside brackets, ignore trailing comma
-                # directly after MLS/MLS-containing expression
-                ignore_ctxs: list[LN | None] = [None]
-                ignore_ctxs += multiline_string_contexts
-                if (line.inside_brackets or leaf.bracket_depth > 0) and (
-                    i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs
-                ):
-                    commas[leaf.bracket_depth] += 1
-            if max_level_to_update != math.inf:
-                max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
+        if leaf.bracket_depth <= max_level_to_update and leaf.type == token.COMMA:
+            # Inside brackets, ignore trailing comma
+            # directly after MLS/MLS-containing expression
+            ignore_ctxs: list[LN | None] = [None]
+            ignore_ctxs += multiline_string_contexts
+            if (line.inside_brackets or leaf.bracket_depth > 0) and (
+                i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs
+            ):
+                commas[leaf.bracket_depth] += 1
+        if max_level_to_update != math.inf:
+            max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
 
         if is_multiline_string(leaf):
             if leaf.parent and (

@@ -25,9 +25,9 @@ jobs:
       matrix: ${{ steps.set-config.outputs.matrix }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
 
@@ -53,12 +53,12 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
 
@@ -70,7 +70,7 @@ jobs:
 
       - name: Attempt to use cached baseline analysis
         id: baseline-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}
@@ -90,7 +90,7 @@ jobs:
           -v --work-dir projects-cache/ ${{ matrix.force-flag }}
 
       - name: Upload baseline analysis
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ matrix.baseline-analysis }}
           path: ${{ matrix.baseline-analysis }}
@@ -106,12 +106,12 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
 
@@ -132,7 +132,7 @@ jobs:
       # (but it wouldn't cause problems if we theoretically did)
       - name: Attempt to find baseline analysis
         id: baseline-cache
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}
@@ -151,7 +151,7 @@ jobs:
           -v --work-dir projects-cache/ ${{ matrix.force-flag }}
 
       - name: Upload target analysis
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ matrix.target-analysis }}
           path: ${{ matrix.target-analysis }}
@@ -171,13 +171,13 @@ jobs:
         include: ${{ fromJson(needs.configure.outputs.matrix) }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           merge-multiple: true
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
 
@@ -192,7 +192,7 @@ jobs:
           ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
 
       - name: Upload diff report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ matrix.mode }}-diff.html
           path: diff.html
@@ -207,7 +207,7 @@ jobs:
 
       - name: Upload summary file (PR only)
         if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: .pr-comment.json
           path: .pr-comment.json
