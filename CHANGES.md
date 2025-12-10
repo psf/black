@@ -22,6 +22,8 @@
 - Fix `fix_fmt_skip_in_one_liners` crashing on `with` statements (#4853)
 - Fix `fix_fmt_skip_in_one_liners` crashing on annotated parameters (#4854)
 - Fix new lines being added after imports with `# fmt: skip` on them (#4894)
+- Add defensive checks to prevent `AttributeError` crashes when processing `# fmt: skip`
+  in nested expressions (#4903)
 
 ### Packaging
 
