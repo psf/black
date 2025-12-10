@@ -1,0 +1,12 @@
+redoubt-release-demo (0.1.0-1) unstable; urgency=medium
+
+  * Initial release
+  * Self-verifying CLI with complete supply chain security
+  * Reproducible builds with SOURCE_DATE_EPOCH
+  * Sigstore keyless signing support
+  * GitHub attestations and SLSA provenance
+  * SBOM generation with CycloneDX
+  * OSV vulnerability scanning
+  * Comprehensive security test suite (100+ tests)
+
+ -- Your Name <your.email@example.com>  Mon, 14 Oct 2024 00:00:00 +0000

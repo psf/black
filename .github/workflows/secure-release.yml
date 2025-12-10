@@ -1,0 +1,231 @@
+name: Secure Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write  # Required for Sigstore signing
+  attestations: write  # Required for SLSA provenance
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f  # v2.10.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Build .pyz file
+        run: ./scripts/build_pyz.sh
+
+      - name: Generate SBOM
+        run: |
+          # Install syft for SBOM generation
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+          # Generate SBOM in multiple formats
+          syft dir:. -o spdx-json=dist/sbom.spdx.json
+          syft dir:. -o cyclonedx-json=dist/sbom.cyclonedx.json
+
+          echo "Generated SBOM files:"
+          ls -lh dist/sbom.*
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum *.pyz *.json > checksums.txt
+          echo "Generated checksums:"
+          cat checksums.txt
+
+      - name: Run OSV vulnerability scan
+        run: |
+          # Install osv-scanner
+          curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 -o /usr/local/bin/osv-scanner
+          chmod +x /usr/local/bin/osv-scanner
+
+          # Run scan on SBOM (allow failure - we still want to publish results)
+          osv-scanner --sbom dist/sbom.spdx.json --format json --output dist/osv-scan-results.json || true
+
+          # Also create a human-readable report
+          osv-scanner --sbom dist/sbom.spdx.json --format table > dist/osv-scan-report.txt || echo "No vulnerabilities found" > dist/osv-scan-report.txt
+
+          echo "OSV scan completed. Results saved to dist/osv-scan-results.json"
+          cat dist/osv-scan-report.txt
+
+      - name: Upload .pyz artifact for Windows jobs
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: pyz-artifact
+          path: dist/*.pyz
+          retention-days: 1
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c  # v1.4.3
+        with:
+          subject-path: 'dist/*.pyz'
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@5026d3663739160db546203eeaffa6aa1c51a4d6  # v1.4.2
+        with:
+          subject-path: 'dist/*.pyz'
+          sbom-path: 'dist/sbom.spdx.json'
+
+      - name: Download attestations as files
+        run: |
+          # Wait a moment for attestations to be processed
+          sleep 5
+
+          # Get the artifact name
+          ARTIFACT_NAME=$(ls dist/*.pyz | head -1)
+
+          # Download attestations - gh writes to sha256-<hash>.jsonl or sha256:<hash>.jsonl
+          cd dist
+          gh attestation download "../$ARTIFACT_NAME" --repo ${{ github.repository }} || echo "Failed to download attestations"
+
+          # Find the generated file and rename it
+          # On Linux/Mac it's sha256:<hash>.jsonl, on Windows it's sha256-<hash>.jsonl
+          ATTESTATION_FILE=$(ls sha256*.jsonl 2>/dev/null | head -1)
+          if [ -n "$ATTESTATION_FILE" ] && [ -f "$ATTESTATION_FILE" ]; then
+            mv "$ATTESTATION_FILE" attestation.jsonl
+            echo "Downloaded attestations to attestation.jsonl"
+            wc -l attestation.jsonl
+          else
+            echo "Warning: No attestations downloaded"
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da  # v3.7.0
+
+      - name: Sign artifacts with Sigstore
+        run: |
+          # Sign each .pyz file
+          for artifact in dist/*.pyz; do
+            echo "Signing $artifact..."
+
+            # Sign with cosign (keyless signing)
+            cosign sign-blob "$artifact" \
+              --bundle "${artifact}.sigstore" \
+              --yes
+
+            echo "Created signature bundle: ${artifact}.sigstore"
+          done
+
+          # List all signature bundles
+          ls -lh dist/*.sigstore
+        env:
+          COSIGN_EXPERIMENTAL: 1
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191  # v2.0.8
+        with:
+          files: |
+            dist/*.pyz
+            dist/*.sigstore
+            dist/sbom.spdx.json
+            dist/sbom.cyclonedx.json
+            dist/checksums.txt
+            dist/build-metadata.json
+            dist/osv-scan-results.json
+            dist/osv-scan-report.txt
+            dist/attestation.jsonl
+          body: |
+            Release ${{ github.ref_name }}
+
+            ## Installation
+
+            ### Windows
+            - **Chocolatey**: See assets below for `.nupkg` file
+            - **WinGet**: Manifests will be submitted to microsoft/winget-pkgs
+
+            ### Direct Download
+            Download the `.pyz` file and run with Python 3.10+:
+            ```bash
+            python black.pyz --version
+            ```
+
+            ## Security & Provenance
+
+            This release includes:
+            - **SBOM** (Software Bill of Materials): `sbom.spdx.json`, `sbom.cyclonedx.json`
+            - **SLSA Provenance**: See attestations below for supply chain verification
+            - **Sigstore Signatures**: Keyless signing for artifact authenticity
+
+            Verify provenance with:
+            ```bash
+            # Install slsa-verifier
+            gh attestation verify black.pyz --owner hollowsunhc
+            ```
+
+  chocolatey:
+    needs: release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download .pyz artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: pyz-artifact
+          path: dist
+
+      - name: Build Chocolatey package
+        shell: powershell
+        run: |
+          $version = "${{ github.ref_name }}"
+          $pyzPath = Get-ChildItem -Path dist -Filter *.pyz | Select-Object -First 1
+          Write-Host "Building Chocolatey package for version $version"
+          pwsh -File scripts/build_chocolatey.ps1 -Version $version -PyzPath $pyzPath.FullName
+
+      - name: Generate attestation for Chocolatey package
+        uses: actions/attest-build-provenance@1c608d11d69870c2092266b3f9a6f3abbf17002c  # v1.4.3
+        with:
+          subject-path: 'dist/*.nupkg'
+
+      - name: Upload Chocolatey package to release
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191  # v2.0.8
+        with:
+          files: dist/*.nupkg
+
+  winget:
+    needs: release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download .pyz artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: pyz-artifact
+          path: dist
+
+      - name: Build WinGet manifests
+        shell: powershell
+        run: |
+          $version = "${{ github.ref_name }}"
+          $pyzPath = Get-ChildItem -Path dist -Filter *.pyz | Select-Object -First 1
+          Write-Host "Building WinGet manifests for version $version"
+          pwsh -File scripts/build_winget.ps1 -Version $version -PyzPath $pyzPath.FullName
+
+      - name: Upload WinGet manifests as artifact
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: winget-manifests
+          path: packaging/winget/manifests/**/*
+          retention-days: 90

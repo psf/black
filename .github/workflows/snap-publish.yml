@@ -1,0 +1,194 @@
+name: Publish to Snap Store
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., v0.1.0)'
+        required: true
+      channel:
+        description: 'Snap channel (stable, candidate, beta, edge)'
+        required: true
+        default: 'edge'
+        type: choice
+        options:
+          - stable
+          - candidate
+          - beta
+          - edge
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    name: Build and Publish Snap
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://github.com/astral-sh/uv/releases/download/0.5.11/uv-installer.sh -o /tmp/uv-install.sh
+          echo "505407eb4b5bec00e0b231c8c86e968ee3f5aa0136d49dd8a541179e7f76ce7d  /tmp/uv-install.sh" | sha256sum -c -
+          sh /tmp/uv-install.sh && rm /tmp/uv-install.sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Set version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          VERSION_NUMBER="${VERSION#v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_number=${VERSION_NUMBER}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION_NUMBER}"
+
+      - name: Update snapcraft.yaml version
+        run: |
+          sed -i "s/^version:.*/version: '${{ steps.version.outputs.version_number }}'/" packaging/snap/snapcraft.yaml
+          cat packaging/snap/snapcraft.yaml
+
+      - name: Build .pyz artifact
+        run: |
+          export TZ=UTC
+          export LC_ALL=C
+          export LANG=C
+          export PYTHONHASHSEED=0
+          export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+          umask 0022
+          ./scripts/build_pyz.sh
+
+      - name: Verify .pyz artifact
+        run: |
+          ls -lh dist/black.pyz
+          ./dist/black.pyz --version
+
+      - name: Install Snapcraft
+        run: |
+          sudo snap install snapcraft --classic
+          snapcraft --version
+
+      - name: Build Snap
+        run: |
+          cd packaging/snap
+          snapcraft pack
+
+      - name: List snap file
+        id: snap
+        run: |
+          cd packaging/snap
+          SNAP_FILE=$(ls black_*.snap)
+          echo "file=${SNAP_FILE}" >> $GITHUB_OUTPUT
+          echo "path=packaging/snap/${SNAP_FILE}" >> $GITHUB_OUTPUT
+          ls -lh "${SNAP_FILE}"
+
+      - name: Install and test snap locally
+        run: |
+          cd packaging/snap
+          sudo snap install "${{ steps.snap.outputs.file }}" --dangerous
+          black --version
+          black hello "Snap CI test"
+          sudo snap remove black
+
+      - name: Publish to Snap Store
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            CHANNEL="stable"
+          else
+            CHANNEL="${{ github.event.inputs.channel }}"
+          fi
+
+          cd packaging/snap
+
+          echo "Publishing to ${CHANNEL} channel..."
+          snapcraft upload "${{ steps.snap.outputs.file }}" --release="${CHANNEL}"
+
+      - name: Get snap info
+        run: |
+          snapcraft status black || echo "Status check skipped"
+
+      - name: Upload snap artifact
+        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097 # v4.4.3
+        with:
+          name: snap-package
+          path: ${{ steps.snap.outputs.path }}
+          retention-days: 7
+
+      - name: Create summary
+        if: always()
+        run: |
+          CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
+          VERSION="${{ steps.version.outputs.version_number }}"
+
+          echo "## Snap Store Publication" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Package**: black" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "**Channel**: $CHANNEL" >> $GITHUB_STEP_SUMMARY
+          echo "**File**: ${{ steps.snap.outputs.file }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Install from Snap Store:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          if [ "$CHANNEL" = "stable" ]; then
+            echo "sudo snap install black" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "sudo snap install black --${CHANNEL}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Snap Store URL:" >> $GITHUB_STEP_SUMMARY
+          echo "https://snapcraft.io/black" >> $GITHUB_STEP_SUMMARY
+
+  test-installation:
+    name: Test Snap Installation
+    needs: build-and-publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Wait for snap to propagate
+        run: sleep 30
+
+      - name: Install from Snap Store
+        run: |
+          CHANNEL="${{ github.event.inputs.channel || 'stable' }}"
+
+          if [ "$CHANNEL" = "stable" ]; then
+            sudo snap install black
+          else
+            sudo snap install black --${CHANNEL}
+          fi
+
+      - name: Test snap
+        run: |
+          black --version
+          black hello "Snap Store test"
+
+      - name: Create test summary
+        if: always()
+        run: |
+          echo "## Snap Installation Test" >> $GITHUB_STEP_SUMMARY
+          if command -v black &> /dev/null; then
+            echo "✅ Installation successful" >> $GITHUB_STEP_SUMMARY
+            echo "✅ CLI working" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Installation failed" >> $GITHUB_STEP_SUMMARY
+          fi

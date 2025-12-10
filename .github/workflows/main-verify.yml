@@ -1,0 +1,87 @@
+name: Main — Pre-release Security Gates
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+  actions: none
+  checks: none
+  deployments: none
+  discussions: none
+  issues: none
+  packages: none
+  pages: none
+  pull-requests: none
+  repository-projects: none
+  statuses: none
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f  # v2.10.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://github.com/astral-sh/uv/releases/download/0.5.11/uv-installer.sh -o /tmp/uv-install.sh
+          echo "505407eb4b5bec00e0b231c8c86e968ee3f5aa0136d49dd8a541179e7f76ce7d  /tmp/uv-install.sh" | sha256sum -c -
+          sh /tmp/uv-install.sh && rm /tmp/uv-install.sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Deterministic env
+        run: |
+          echo "TZ=UTC" >> $GITHUB_ENV
+          echo "LC_ALL=C" >> $GITHUB_ENV
+          echo "LANG=C" >> $GITHUB_ENV
+          echo "PYTHONHASHSEED=0" >> $GITHUB_ENV
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+          umask 0022
+
+      - name: Build sdist+wheel+pyz
+        run: |
+          ./scripts/build_pyz.sh
+
+      - name: Generate SBOM (CycloneDX)
+        run: |
+          uv pip install --system cyclonedx-bom
+          uv run --no-project cyclonedx-py environment --pyproject pyproject.toml --output-reproducible -o sbom.cdx.json
+
+      - name: Determinism audit (double-build diff)
+        run: |
+          sha256sum dist/* > /tmp/first.sum
+          # Save SOURCE_DATE_EPOCH before clean
+          echo "$SOURCE_DATE_EPOCH" > /tmp/sde
+          git clean -xdf
+          # Restore SOURCE_DATE_EPOCH
+          export SOURCE_DATE_EPOCH=$(cat /tmp/sde)
+          ./scripts/build_pyz.sh
+          sha256sum dist/* > /tmp/second.sum
+          diff -u /tmp/first.sum /tmp/second.sum
+
+      - name: OSV scan SBOM
+        run: |
+          curl -sSfL https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_Linux_x86_64.tar.gz \
+          | tar xz && sudo mv ./osv-scanner /usr/local/bin/
+          osv-scanner --sbom=sbom.cdx.json --format=json > osv-report.json || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097  # v4.4.3
+        with:
+          name: main-pre-release-artifacts
+          path: |
+            dist/*
+            sbom.cdx.json
+            osv-report.json

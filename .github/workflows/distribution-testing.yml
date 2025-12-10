@@ -1,0 +1,60 @@
+name: Distribution Channel Tests
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/distribution-testing/**'
+      - '.github/workflows/distribution-testing.yml'
+
+permissions:
+  contents: read  # Only needs to checkout code for testing
+
+jobs:
+  linux:
+    name: Linux Matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-venv ruby-full flatpak flatpak-builder cargo golang-go rpm \
+            createrepo-c dpkg-dev || true
+          sudo apt-get install -y terraform || true
+          sudo snap install snapcraft --classic || true
+          curl -fsSL https://get.helm.sh/helm-v3.17.0-linux-amd64.tar.gz -o /tmp/helm.tar.gz
+          echo "fb5d12662fde6eeff36ac4ccacbf3abed96b0ee2de07afdde4edb14e613aee24  /tmp/helm.tar.gz" | sha256sum -c -
+          tar -zxvf /tmp/helm.tar.gz -C /tmp && sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+          rm -rf /tmp/helm.tar.gz /tmp/linux-amd64
+      - name: Run distribution tests
+        run: |
+          bash scripts/distribution-testing/run-all.sh
+
+  macos:
+    name: macOS Checks
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Install macOS dependencies
+        run: |
+          brew update
+          brew install helm terraform rustup-init || true
+          rustup-init -y || true
+      - name: Run distribution tests
+        run: |
+          bash scripts/distribution-testing/run-all.sh
+
+  windows:
+    name: Windows Packaging
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Chocolatey local feed
+        shell: pwsh
+        run: |
+          pwsh scripts/distribution-testing/chocolatey-local-feed.ps1
+      - name: Winget manifest validation
+        shell: pwsh
+        run: |
+          pwsh scripts/distribution-testing/winget-local-manifest.ps1

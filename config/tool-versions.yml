@@ -1,0 +1,111 @@
+# Tool Versions Configuration
+#
+# Centralized version management for security-critical tools and dependencies.
+# This file serves as the single source of truth for tool versions used across:
+# - GitHub Actions workflows
+# - Dockerfiles
+# - Build scripts
+# - Test scripts
+#
+# When updating versions:
+# 1. Update the version number here
+# 2. Update SHA256 hashes for tools that use hash verification
+# 3. Run: ./scripts/setup_local_config.sh to propagate changes
+# 4. Test locally before committing
+#
+# Security Note: SHA256 hashes provide cryptographic verification that the
+# downloaded tool matches the expected version, protecting against supply chain attacks.
+
+# Python Package Manager
+pip:
+  version: "24.3.1"
+  description: "Python package installer"
+  update_check: "https://pypi.org/project/pip/"
+
+# Fast Python Package Manager (used for builds and CI)
+uv:
+  version: "0.5.11"
+  sha256: "505407eb4b5bec00e0b231c8c86e968ee3f5aa0136d49dd8a541179e7f76ce7d"
+  description: "Extremely fast Python package installer and resolver"
+  update_check: "https://github.com/astral-sh/uv/releases"
+  installer_url: "https://github.com/astral-sh/uv/releases/download/{version}/uv-installer.sh"
+
+# Container Signing Tool
+cosign:
+  version: "v2.2.4"
+  description: "Container signing, verification, and storage in an OCI registry"
+  update_check: "https://github.com/sigstore/cosign/releases"
+
+# Python Language Versions
+python:
+  # Default Python version for builds and primary development
+  default: "3.11"
+
+  # Minimum supported Python version (defined in pyproject.toml)
+  minimum: "3.10"
+
+  # Python versions tested in CI/CD
+  # Update this list when adding/removing Python version support
+  test_matrix:
+    - "3.10"
+    - "3.11"
+    - "3.12"
+    - "3.13"
+
+  # Docker base image for production builds
+  # Uses Python 3.10 for maximum compatibility
+  docker_base: "3.10-slim"
+
+  # Docker base image SHA256 digest (for pinned security)
+  # python:3.10-slim@sha256:...
+  docker_base_digest: "sha256:e0c4fae70d550834a40f6c3e0326e02cfe239c2351d922e1fb1577a3c6ebde02"
+
+  description: "Python language version configuration"
+  update_check: "https://www.python.org/downloads/"
+
+# Build Tools
+build:
+  version: "1.2.2.post1"
+  description: "Python build frontend (PEP 517)"
+  update_check: "https://pypi.org/project/build/"
+
+twine:
+  version: "6.0.1"
+  description: "Collection of utilities for publishing packages to PyPI"
+  update_check: "https://pypi.org/project/twine/"
+
+# License Compliance Tools
+pip-licenses:
+  version: "5.0.0"
+  description: "Dump the license list of packages installed with pip"
+  update_check: "https://pypi.org/project/pip-licenses/"
+
+# GitHub Actions (Key Actions Only)
+# Full action pinning is managed in workflow files using commit SHAs
+# This section documents the version tags for reference
+github_actions:
+  actions_checkout:
+    version: "v4.2.2"
+    sha: "11bd71901bbe5b1630ceea73d27597364c9af683"
+
+  actions_setup_python:
+    version: "v5.3.0"
+    sha: "0b93645e9fea7318ecaed2b359559ac225c90a2b"
+
+  step_security_harden_runner:
+    version: "v2.10.1"
+    sha: "91182cccc01eb5e619899d80e4e971d6181294a7"
+
+  actions_upload_artifact:
+    version: "v4.4.3"
+    sha: "84480863f228bb9747b473957fcc9e309aa96097"
+
+  actions_download_artifact:
+    version: "v4.1.8"
+    sha: "fa0a91b85d4f404e444e00e005971372dc801d16"
+
+# Metadata
+metadata:
+  last_updated: "2025-10-29"
+  updated_by: "automated-review"
+  schema_version: "1.0"

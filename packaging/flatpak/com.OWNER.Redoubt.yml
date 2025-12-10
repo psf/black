@@ -1,0 +1,20 @@
+app-id: com.hollowsunhc.Redoubt
+runtime: org.freedesktop.Platform
+runtime-version: "23.08"
+sdk: org.freedesktop.Sdk
+command: redoubt
+finish-args:
+  - --share=network
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+
+modules:
+  - name: redoubt
+    buildsystem: simple
+    build-commands:
+      - install -D redoubt.pyz /app/bin/redoubt
+      - chmod +x /app/bin/redoubt
+    sources:
+      - type: file
+        path: ../../dist/redoubt.pyz

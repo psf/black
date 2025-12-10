@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Redoubt Release Demo
+GenericName=Secure CLI Tool
+Comment=Self-verifying CLI with complete supply chain security
+Exec=redoubt
+Terminal=true
+Categories=Development;Utility;
+Keywords=cli;security;supply-chain;verification;

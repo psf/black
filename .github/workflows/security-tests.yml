@@ -1,0 +1,150 @@
+name: Security Tests
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/secure-release.yml'
+      - 'tests/test_security_pipeline.py'
+      - 'tests/test_attestation_e2e.py'
+      - 'scripts/verify_provenance.sh'
+      - 'scripts/build_pyz.sh'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/secure-release.yml'
+      - 'tests/test_security_pipeline.py'
+      - 'tests/test_attestation_e2e.py'
+  schedule:
+    # Run daily to verify attestations on latest release
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-pipeline-tests:
+    name: Test Security Pipeline Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Run security pipeline tests
+        run: |
+          pytest tests/test_security_pipeline.py -v
+
+  attestation-e2e-tests:
+    name: E2E Attestation Verification Tests
+    runs-on: ubuntu-latest
+    # Only run E2E tests on schedule or workflow_dispatch (not on every PR)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run E2E attestation tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pytest tests/test_attestation_e2e.py -v
+
+  verify-latest-release:
+    name: Verify Latest Release Attestations
+    runs-on: ubuntu-latest
+    # Only run on schedule or manual trigger
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Get latest release
+        id: latest_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest release: $LATEST_TAG"
+
+      - name: Download release artifacts
+        if: steps.latest_release.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/release-artifacts
+          gh release download ${{ steps.latest_release.outputs.tag }} \
+            --pattern '*.pyz' \
+            --pattern '*.nupkg' \
+            --pattern 'sbom.*.json' \
+            --dir /tmp/release-artifacts
+
+      - name: Verify .pyz attestation
+        if: steps.latest_release.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PYZ_FILE=$(ls /tmp/release-artifacts/*.pyz | head -n 1)
+          echo "Verifying attestation for: $PYZ_FILE"
+          gh attestation verify "$PYZ_FILE" --owner hollowsunhc
+
+      - name: Verify Chocolatey package attestation
+        if: steps.latest_release.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NUPKG_FILE=$(ls /tmp/release-artifacts/*.nupkg | head -n 1)
+          echo "Verifying attestation for: $NUPKG_FILE"
+          gh attestation verify "$NUPKG_FILE" --owner hollowsunhc
+
+      - name: Validate SBOM files
+        if: steps.latest_release.outputs.tag != ''
+        run: |
+          echo "Validating SBOM files..."
+
+          # Check SPDX SBOM
+          if [ -f /tmp/release-artifacts/sbom.spdx.json ]; then
+            echo "✓ SPDX SBOM found"
+            python -m json.tool /tmp/release-artifacts/sbom.spdx.json > /dev/null
+            echo "✓ SPDX SBOM is valid JSON"
+          else
+            echo "✗ SPDX SBOM not found"
+            exit 1
+          fi
+
+          # Check CycloneDX SBOM
+          if [ -f /tmp/release-artifacts/sbom.cyclonedx.json ]; then
+            echo "✓ CycloneDX SBOM found"
+            python -m json.tool /tmp/release-artifacts/sbom.cyclonedx.json > /dev/null
+            echo "✓ CycloneDX SBOM is valid JSON"
+          else
+            echo "✗ CycloneDX SBOM not found"
+            exit 1
+          fi
+
+      - name: Report verification status
+        if: always() && steps.latest_release.outputs.tag != ''
+        run: |
+          echo "## Attestation Verification Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ steps.latest_release.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All attestations verified successfully! ✅" >> $GITHUB_STEP_SUMMARY

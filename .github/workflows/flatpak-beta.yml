@@ -1,0 +1,166 @@
+name: Flatpak Beta Publish
+
+on:
+  release:
+    types: [published, prereleased]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., v0.1.0)'
+        required: true
+      beta_repo:
+        description: 'Flatpak beta repository URL'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-flatpak:
+    name: Build and Publish Flatpak
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Flatpak dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Install Flatpak SDK
+        run: |
+          sudo flatpak install -y flathub org.freedesktop.Platform//23.08 org.freedesktop.Sdk//23.08
+
+      - name: Set version
+        id: version
+        run: |
+          VERSION="${{ github.event.release.tag_name || inputs.version }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Update manifest version
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+
+          # Update version in manifest
+          sed -i "s/VERSION_PLACEHOLDER/${VERSION}/g" packaging/flatpak/com.hollowsunhc.Redoubt.yml
+
+      - name: Build Flatpak
+        run: |
+          flatpak-builder --repo=repo --force-clean build-dir packaging/flatpak/com.hollowsunhc.Redoubt.yml
+
+      - name: Export Flatpak bundle
+        run: |
+          flatpak build-bundle repo redoubt-${{ steps.version.outputs.version }}.flatpak com.hollowsunhc.Redoubt
+
+      - name: Test Flatpak installation
+        run: |
+          # Install from bundle
+          sudo flatpak install -y redoubt-${{ steps.version.outputs.version }}.flatpak
+
+          # Test execution
+          flatpak run com.hollowsunhc.Redoubt --version
+          flatpak run com.hollowsunhc.Redoubt hello "Flatpak CI"
+
+      - name: Upload Flatpak bundle
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.version.outputs.version }}"
+          gh release upload "$TAG" redoubt-${{ steps.version.outputs.version }}.flatpak --clobber
+
+      - name: Publish to beta repository
+        if: github.event_name == 'release' && inputs.beta_repo != ''
+        env:
+          BETA_REPO_URL: ${{ inputs.beta_repo }}
+          FLATPAK_GPG_KEY: ${{ secrets.FLATPAK_GPG_KEY }}
+        run: |
+          # This would publish to a self-hosted beta repo
+          # For Flathub beta, follow: https://docs.flathub.org/docs/for-app-authors/submission
+
+          echo "Beta repo publishing would happen here"
+          echo "Repo: ${BETA_REPO_URL}"
+
+          # Example for self-hosted repo:
+          # flatpak build-update-repo --generate-static-deltas repo
+          # rsync -av repo/ ${BETA_REPO_URL}/
+
+      - name: Create Flathub beta PR instructions
+        if: github.event_name == 'release'
+        run: |
+          cat > flathub-beta-instructions.md <<'EOF'
+          # Flathub Beta Submission
+
+          ## Steps to publish to Flathub Beta:
+
+          1. Fork https://github.com/flathub/flathub-beta-apps
+
+          2. Create a new branch:
+             ```bash
+             git checkout -b add-redoubt
+             ```
+
+          3. Copy the manifest:
+             ```bash
+             cp packaging/flatpak/com.hollowsunhc.Redoubt.yml \
+                flathub-beta-apps/com.hollowsunhc.Redoubt.yml
+             ```
+
+          4. Commit and create PR:
+             ```bash
+             git add com.hollowsunhc.Redoubt.yml
+             git commit -m "Add Redoubt ${{ steps.version.outputs.version }}"
+             git push origin add-redoubt
+             ```
+
+          5. Create PR to flathub-beta-apps
+
+          ## Testing from beta:
+
+          ```bash
+          flatpak remote-add --if-not-exists flathub-beta \
+            https://flathub.org/beta-repo/flathub-beta.flatpakrepo
+
+          flatpak install flathub-beta com.hollowsunhc.Redoubt
+          flatpak run com.hollowsunhc.Redoubt --version
+          ```
+
+          ## Resources:
+          - Flathub docs: https://docs.flathub.org/
+          - Beta submission: https://docs.flathub.org/docs/for-app-authors/submission
+          EOF
+
+          cat flathub-beta-instructions.md
+
+      - name: Upload instructions
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: flathub-beta-instructions
+          path: flathub-beta-instructions.md
+          retention-days: 90
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## Flatpak Build" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Bundle:** \`redoubt-${{ steps.version.outputs.version }}.flatpak\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Install from bundle:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "flatpak install redoubt-${{ steps.version.outputs.version }}.flatpak" >> $GITHUB_STEP_SUMMARY
+          echo "flatpak run com.hollowsunhc.Redoubt" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next steps:" >> $GITHUB_STEP_SUMMARY
+          echo "- Download flathub-beta-instructions.md from artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- Follow instructions to submit to Flathub Beta" >> $GITHUB_STEP_SUMMARY

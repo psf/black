@@ -1,0 +1,74 @@
+name: Rebuilder — Deterministic From-Source Check
+on:
+  workflow_dispatch:
+    inputs:
+      tag: { description: 'Tag to verify (e.g., v0.1.0)', required: true, type: string }
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.11-slim@sha256:<PINNED_DIGEST>
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@0080882f6c36860b6ba35c610c98ce87d4e2f26f  # v2.10.2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Deterministic env
+        run: |
+          echo "TZ=UTC" >> $GITHUB_ENV
+          echo "LC_ALL=C" >> $GITHUB_ENV
+          echo "LANG=C" >> $GITHUB_ENV
+          echo "PYTHONHASHSEED=0" >> $GITHUB_ENV
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct ${{ inputs.tag }})" >> $GITHUB_ENV
+          umask 0022
+
+      - name: Checkout tag
+        run: |
+          git fetch --tags
+          git checkout "${{ inputs.tag }}"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://github.com/astral-sh/uv/releases/download/0.5.11/uv-installer.sh -o /tmp/uv-install.sh
+          echo "505407eb4b5bec00e0b231c8c86e968ee3f5aa0136d49dd8a541179e7f76ce7d  /tmp/uv-install.sh" | sha256sum -c -
+          sh /tmp/uv-install.sh && rm /tmp/uv-install.sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Build
+        run: |
+          ./scripts/build_pyz.sh
+          sha256sum dist/* > local.SHA256SUMS
+
+      - name: Fetch release checksums
+        run: |
+          base="https://github.com/${{ github.repository }}/releases/download/${{ inputs.tag }}"
+          curl -sSLo release.SHA256SUMS "$base/SHA256SUMS" || true
+
+      - name: Compare
+        run: |
+          if [[ -f release.SHA256SUMS ]]; then
+            comm -12 <(awk '{print $1}' local.SHA256SUMS | sort) <(awk '{print $1}' release.SHA256SUMS | sort) | tee matches.txt
+            if [[ ! -s matches.txt ]]; then
+              echo "No matching hashes found." >&2
+              exit 3
+            fi
+          else
+            echo "Release checksums not found; see artifacts."
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097  # v4.4.3
+        with:
+          name: rebuilder-${{ inputs.tag }}
+          path: |
+            local.SHA256SUMS
+            dist/*

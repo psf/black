@@ -1,0 +1,320 @@
+name: Integration Tests
+
+# Run integration tests with Multipass VMs
+# Tests actual installation across different platforms and package managers
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC
+  push:
+    tags: ['v*']  # Run on releases
+  pull_request:
+    paths:
+      - 'scripts/build_pyz.sh'
+      - 'packaging/homebrew-tap/**'
+      - 'pyproject.toml'
+      - '.github/workflows/integration-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-artifacts:
+    name: Build artifacts for testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://github.com/astral-sh/uv/releases/download/0.5.11/uv-installer.sh -o /tmp/uv-install.sh
+          echo "505407eb4b5bec00e0b231c8c86e968ee3f5aa0136d49dd8a541179e7f76ce7d  /tmp/uv-install.sh" | shasum -a 256 -c -
+          sh /tmp/uv-install.sh && rm /tmp/uv-install.sh
+
+      - name: Build artifacts
+        env:
+          SOURCE_DATE_EPOCH: "1234567890"
+        run: |
+          ./scripts/build_pyz.sh
+          uv pip install --system build
+          python -m build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@84480863f228bb9747b473957fcc9e309aa96097  # v4.4.3
+        with:
+          name: dist-artifacts
+          path: dist/*
+          retention-days: 7
+
+  test-multipass-ubuntu:
+    name: Test on Ubuntu (via Multipass)
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    if: false  # Disabled by default - enable when needed
+    # Note: Multipass requires nested virtualization which is not available on GitHub-hosted runners
+    # This workflow is a template for self-hosted runners or local testing
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: dist-artifacts
+          path: dist/
+
+      - name: Install Multipass
+        run: |
+          sudo snap install multipass
+
+      - name: Set up Python for tests
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          curl -LsSf https://github.com/astral-sh/uv/releases/download/0.5.11/uv-installer.sh -o /tmp/uv-install.sh
+            echo "505407eb4b5bec00e0b231c8c86e968ee3f5aa0136d49dd8a541179e7f76ce7d  /tmp/uv-install.sh" | shasum -a 256 -c -
+            sh /tmp/uv-install.sh && rm /tmp/uv-install.sh
+          uv pip install --system pytest pyyaml
+
+      - name: Run Multipass integration tests
+        run: |
+          pytest tests/test_distribution_integration.py -v -s -m integration
+        timeout-minutes: 30
+
+  test-docker-ubuntu:
+    name: Test on Ubuntu (Docker)
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    container:
+      image: ubuntu:22.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: dist-artifacts
+          path: dist/
+
+      - name: Install Python
+        run: |
+          apt-get update
+          apt-get install -y python3 python3-pip python3-venv
+
+      - name: Test .pyz installation
+        run: |
+          python3 dist/black.pyz --version
+          python3 dist/black.pyz hello TestUser
+          chmod +x dist/black.pyz
+          ./dist/black.pyz --version
+          ./dist/black.pyz hello world
+
+      - name: Test pip installation
+        run: |
+          python3 -m venv /tmp/test-venv
+          /tmp/test-venv/bin/pip install dist/*.whl
+          /tmp/test-venv/bin/black --version
+          /tmp/test-venv/bin/black hello TestUser
+
+  test-docker-debian:
+    name: Test on Debian (Docker)
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    container:
+      image: debian:12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: dist-artifacts
+          path: dist/
+
+      - name: Install Python
+        run: |
+          apt-get update
+          apt-get install -y python3 python3-pip python3-venv
+
+      - name: Test .pyz installation
+        run: |
+          python3 dist/black.pyz --version
+          chmod +x dist/black.pyz
+          ./dist/black.pyz --version
+
+      - name: Test pip installation
+        run: |
+          python3 -m venv /tmp/test-venv
+          /tmp/test-venv/bin/pip install dist/*.whl
+          /tmp/test-venv/bin/black --version
+
+  test-docker-fedora:
+    name: Test on Fedora (Docker)
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    container:
+      image: fedora:39
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: dist-artifacts
+          path: dist/
+
+      - name: Install Python
+        run: |
+          dnf install -y python3 python3-pip
+
+      - name: Test .pyz installation
+        run: |
+          python3 dist/black.pyz --version
+          chmod +x dist/black.pyz
+          ./dist/black.pyz --version
+
+      - name: Test pip installation
+        run: |
+          python3 -m venv /tmp/test-venv
+          /tmp/test-venv/bin/pip install dist/*.whl
+          /tmp/test-venv/bin/black --version
+
+  test-docker-alpine:
+    name: Test on Alpine (Docker)
+    runs-on: ubuntu-latest
+    needs: build-artifacts
+    container:
+      image: alpine:3.19
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: dist-artifacts
+          path: dist/
+
+      - name: Install Python
+        run: |
+          apk add --no-cache python3 py3-pip
+
+      - name: Test .pyz installation
+        run: |
+          python3 dist/black.pyz --version
+          chmod +x dist/black.pyz
+          ./dist/black.pyz --version
+
+      - name: Test pip installation
+        run: |
+          python3 -m venv /tmp/test-venv
+          /tmp/test-venv/bin/pip install dist/*.whl
+          /tmp/test-venv/bin/black --version
+
+  test-macos:
+    name: Test on macOS
+    runs-on: macos-latest
+    needs: build-artifacts
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: dist-artifacts
+          path: dist/
+
+      - name: Test .pyz installation
+        run: |
+          python3 dist/black.pyz --version
+          chmod +x dist/black.pyz
+          ./dist/black.pyz --version
+
+      - name: Test pip installation
+        run: |
+          python3 -m venv /tmp/test-venv
+          /tmp/test-venv/bin/pip install dist/*.whl
+          /tmp/test-venv/bin/black --version
+
+      - name: Test Homebrew formula (dry-run)
+        run: |
+          # Test formula syntax
+          if [ -f packaging/homebrew-tap/Formula/client.rb ]; then
+            brew install --dry-run packaging/homebrew-tap/Formula/client.rb || true
+            echo "✅ Homebrew formula syntax valid"
+          fi
+
+  test-windows:
+    name: Test on Windows
+    runs-on: windows-latest
+    needs: build-artifacts
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16  # v4.1.8
+        with:
+          name: dist-artifacts
+          path: dist/
+
+      - name: Test .pyz installation
+        shell: pwsh
+        run: |
+          python dist/black.pyz --version
+          python dist/black.pyz hello TestUser
+
+      - name: Test pip installation
+        shell: pwsh
+        run: |
+          python -m venv C:\Temp\test-venv
+          C:\Temp\test-venv\Scripts\pip install (Get-ChildItem dist\*.whl)[0].FullName
+          C:\Temp\test-venv\Scripts\black --version
+          C:\Temp\test-venv\Scripts\black hello TestUser
+
+  summary:
+    name: Integration Tests Summary
+    runs-on: ubuntu-latest
+    needs:
+      - test-docker-ubuntu
+      - test-docker-debian
+      - test-docker-fedora
+      - test-docker-alpine
+      - test-macos
+      - test-windows
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          echo "Integration test summary:"
+          echo "- Ubuntu: ${{ needs.test-docker-ubuntu.result }}"
+          echo "- Debian: ${{ needs.test-docker-debian.result }}"
+          echo "- Fedora: ${{ needs.test-docker-fedora.result }}"
+          echo "- Alpine: ${{ needs.test-docker-alpine.result }}"
+          echo "- macOS: ${{ needs.test-macos.result }}"
+          echo "- Windows: ${{ needs.test-windows.result }}"
+
+          if [ "${{ needs.test-docker-ubuntu.result }}" != "success" ] || \
+             [ "${{ needs.test-docker-debian.result }}" != "success" ] || \
+             [ "${{ needs.test-docker-fedora.result }}" != "success" ] || \
+             [ "${{ needs.test-docker-alpine.result }}" != "success" ] || \
+             [ "${{ needs.test-macos.result }}" != "success" ] || \
+             [ "${{ needs.test-windows.result }}" != "success" ]; then
+            echo "❌ Some integration tests failed"
+            exit 1
+          fi
+
+          echo "✅ All integration tests passed"

@@ -1,0 +1,30 @@
+name: cachix-nix
+on:
+  workflow_dispatch:
+    inputs:
+      cache:
+        description: Cachix cache name (e.g. provenancedemo)
+        required: true
+
+permissions:
+  contents: read  # Only needs to checkout code
+
+jobs:
+  nix-cachix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Install Nix
+        uses: cachix/install-nix-action@ba0dd844c9180cbf77aa72a116d6fbc515d0e87b  # v27
+      - name: Use Cachix
+        uses: cachix/cachix-action@18cf96c7c98e048e10a83abd92116114cd8504be  # v14
+        with:
+          name: ${{ github.event.inputs.cache }}
+          authToken: ${{ secrets.CACHIX_TOKEN }}
+      - name: Build & push to Cachix
+        run: |
+          nix build .# || nix build .
+          cachix push "${{ github.event.inputs.cache }}" result || true
+      - name: Smoke run via Nix
+        run: |
+          nix run .# -- --version || true

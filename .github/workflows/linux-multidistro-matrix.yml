@@ -1,0 +1,95 @@
+name: linux-multidistro-matrix
+on:
+  workflow_dispatch:
+    inputs:
+      pkg_name:
+        description: Package/binary name (e.g. redoubt)
+        required: true
+      from_version:
+        description: From version (e.g. 1.0.0[-1])
+        required: true
+      to_version:
+        description: To version (e.g. 1.1.0[-1])
+        required: true
+      apt_repo_url:
+        description: APT repo URL (e.g. https://hollowsunhc.github.io/deb-repo)
+        required: true
+      apt_dist:
+        description: APT distribution (e.g. stable)
+        default: stable
+      apt_component:
+        description: APT component (e.g. main)
+        default: main
+      apt_gpg_url:
+        description: URL to APT public key (release.pub.asc)
+        required: true
+      rpm_repo_url:
+        description: RPM repo URL (e.g. https://hollowsunhc.github.io/rpm-repo)
+        required: true
+      rpm_gpg_url:
+        description: URL to RPM public key (RELEASE-GPG-KEY)
+        required: true
+
+permissions:
+  contents: read  # Only needs to checkout code for testing
+
+jobs:
+  apt-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - ubuntu:20.04
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - debian:11
+          - debian:12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Install Multipass
+        run: |
+          sudo snap install multipass --classic
+          multipass version
+
+      - name: Run APT upgrade/rollback on ${{ matrix.image }}
+        env:
+          APT_REPO_URL: ${{ github.event.inputs.apt_repo_url }}
+          APT_DIST: ${{ github.event.inputs.apt_dist }}
+          APT_COMPONENT: ${{ github.event.inputs.apt_component }}
+          APT_GPG_URL: ${{ github.event.inputs.apt_gpg_url }}
+          PKG_NAME: ${{ github.event.inputs.pkg_name }}
+          FROM_VER: ${{ github.event.inputs.from_version }}
+          TO_VER: ${{ github.event.inputs.to_version }}
+          APT_VM_IMAGE: ${{ matrix.image }}
+        run: |
+          bash scripts/phase2-testing/upgrade/test-upgrade-apt-matrix.sh
+
+  rpm-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - rockylinux:8
+          - rockylinux:9
+          - fedora:40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Install Multipass
+        run: |
+          sudo snap install multipass --classic
+          multipass version
+
+      - name: Run RPM upgrade/rollback on ${{ matrix.image }}
+        env:
+          RPM_REPO_URL: ${{ github.event.inputs.rpm_repo_url }}
+          RPM_GPG_URL: ${{ github.event.inputs.rpm_gpg_url }}
+          PKG_NAME: ${{ github.event.inputs.pkg_name }}
+          FROM_VER: ${{ github.event.inputs.from_version }}
+          TO_VER: ${{ github.event.inputs.to_version }}
+          RPM_VM_IMAGE: ${{ matrix.image }}
+        run: |
+          bash scripts/phase2-testing/upgrade/test-upgrade-rpm-matrix.sh

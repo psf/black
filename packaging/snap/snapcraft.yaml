@@ -1,0 +1,27 @@
+name: black
+base: core22
+version: '0.1.0'
+summary: Demo CLI showcasing supply chain security and provenance
+description: |
+  black is a Python CLI application with a production-grade
+  secure release pipeline including reproducible builds, SBOM generation,
+  and cryptographic signatures.
+
+grade: stable
+confinement: strict
+
+apps:
+  black:
+    command: bin/black.pyz
+    plugs:
+      - home
+      - network
+
+parts:
+  cli:
+    plugin: dump
+    source: dist/
+    organize:
+      'black.pyz': bin/black.pyz
+    stage:
+      - bin/black.pyz

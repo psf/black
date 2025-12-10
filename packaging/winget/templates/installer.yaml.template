@@ -1,0 +1,15 @@
+# Created using winget-create
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+
+PackageIdentifier: hollowsunhc.ProvenanceDemo
+PackageVersion: {{VERSION_NO_V}}
+InstallerType: portable
+Commands:
+  - black
+ReleaseDate: {{RELEASE_DATE}}
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/hollowsunhc/black/releases/download/{{VERSION}}/black.pyz
+    InstallerSha256: {{SHA256}}
+ManifestType: installer
+ManifestVersion: 1.6.0

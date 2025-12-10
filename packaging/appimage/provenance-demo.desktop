@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Provenance Demo
+GenericName=Supply Chain Security Tool
+Comment=Verify software supply chain security with checksums, signatures, and SBOM validation
+Exec=black
+Icon=black
+Terminal=true
+Categories=Development;Security;Utility;
+Keywords=security;supply-chain;verification;sbom;signatures;checksums;

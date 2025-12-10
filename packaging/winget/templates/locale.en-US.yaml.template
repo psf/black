@@ -1,0 +1,44 @@
+# Created using winget-create
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: hollowsunhc.ProvenanceDemo
+PackageVersion: {{VERSION_NO_V}}
+PackageLocale: en-US
+Publisher: Redoubt CySec
+PublisherUrl: https://github.com/hollowsunhc
+PublisherSupportUrl: https://github.com/hollowsunhc/black/issues
+Author: Redoubt CySec
+PackageName: Provenance Demo
+PackageUrl: https://github.com/hollowsunhc/black
+License: MIT
+LicenseUrl: https://github.com/hollowsunhc/black/blob/main/LICENSE
+ShortDescription: Demo CLI showcasing supply chain security and provenance
+Description: |-
+  Provenance Demo demonstrates production-grade supply chain security for CLI applications.
+
+  Features:
+  - Reproducible, deterministic builds
+  - Sigstore signatures and GitHub attestations
+  - SLSA provenance and SBOM generation
+  - OSV vulnerability scanning
+  - Complete supply chain security validation
+
+  Run 'black verify' to validate all security attestations!
+
+  Requirements:
+  - Python 3.10 or higher
+Moniker: black
+Tags:
+  - cli
+  - security
+  - slsa
+  - sigstore
+  - supply-chain
+  - attestation
+  - sbom
+  - verification
+  - provenance
+ReleaseNotes: See release notes at GitHub
+ReleaseNotesUrl: https://github.com/hollowsunhc/black/releases/tag/{{VERSION}}
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

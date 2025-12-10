@@ -1,0 +1,41 @@
+name: flatpak-beta-selfhost
+on:
+  workflow_dispatch:
+    inputs:
+      app_id:
+        required: true
+      version:
+        required: true
+      manifest_path:
+        default: "packaging/flatpak/com.hollowsunhc.Redoubt.yml"
+
+permissions:
+  contents: read  # Only needs to checkout code
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      APP_ID: ${{ github.event.inputs.app_id }}
+      VERSION: ${{ github.event.inputs.version }}
+      MANIFEST_PATH: ${{ github.event.inputs.manifest_path }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Install Flatpak tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder ostree
+
+      - name: Build & export OSTree repo
+        run: |
+          rm -rf flatpak-beta-repo build-dir
+          ostree --repo=flatpak-beta-repo init --mode=archive-z2
+          flatpak-builder --force-clean build-dir "${MANIFEST_PATH}"
+          flatpak build-export flatpak-beta-repo build-dir "${APP_ID}" "${VERSION}"
+
+      - name: Upload repo as artifact (can be published to Pages)
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882  # v4.4.3
+        with:
+          name: flatpak-beta-repo
+          path: flatpak-beta-repo

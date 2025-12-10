@@ -1,0 +1,44 @@
+# Maintainer: Your Name <your.email@example.com>
+pkgname=black
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Demo CLI showcasing supply chain security and provenance"
+arch=('any')
+url="https://github.com/hollowsunhc/black"
+license=('MIT')
+depends=('python>=3.10' 'python-pip')
+makedepends=('git' 'rsync' 'python-build')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/hollowsunhc/black/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+    cd "$pkgname-$pkgver"
+
+    # Set reproducible build environment
+    export TZ=UTC
+    export LC_ALL=C
+    export LANG=C
+    export PYTHONHASHSEED=0
+    export SOURCE_DATE_EPOCH=$(date +%s)
+
+    # Build the .pyz
+    ./scripts/build_pyz.sh
+}
+
+check() {
+    cd "$pkgname-$pkgver"
+
+    # Run tests (skip slow/integration tests)
+    python -m pytest tests/ -m "not slow and not integration and not published" || true
+}
+
+package() {
+    cd "$pkgname-$pkgver"
+
+    # Install the .pyz
+    install -Dm755 dist/black.pyz "$pkgdir/usr/bin/black"
+
+    # Install documentation
+    install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+    install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

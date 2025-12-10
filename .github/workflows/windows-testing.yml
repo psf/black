@@ -1,0 +1,150 @@
+name: windows-testing
+on: [workflow_dispatch, pull_request]
+
+permissions:
+  contents: read  # Only needs to checkout code for testing
+
+jobs:
+  test-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        package_manager: [scoop, chocolatey, winget]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install build dependencies (for Chocolatey)
+        if: matrix.package_manager == 'chocolatey'
+        shell: powershell
+        run: |
+          # Install rsync (required by build_pyz.sh)
+          choco install rsync -y
+
+          # Install uv
+          Invoke-WebRequest -Uri "https://github.com/astral-sh/uv/releases/download/0.5.11/uv-x86_64-pc-windows-msvc.zip" -OutFile "$env:TEMP\uv.zip"
+          Expand-Archive -Path "$env:TEMP\uv.zip" -DestinationPath "$env:TEMP\uv"
+          New-Item -ItemType Directory -Path "$env:USERPROFILE\.cargo\bin" -Force | Out-Null
+          Move-Item -Path "$env:TEMP\uv\uv.exe" -Destination "$env:USERPROFILE\.cargo\bin\uv.exe" -Force
+          echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build .pyz (for Chocolatey)
+        if: matrix.package_manager == 'chocolatey'
+        shell: bash
+        run: ./scripts/build_pyz.sh
+
+      - name: Install build dependencies (for WinGet)
+        if: matrix.package_manager == 'winget'
+        shell: powershell
+        run: |
+          # Install rsync (required by build_pyz.sh)
+          choco install rsync -y
+
+          # Install uv
+          Invoke-WebRequest -Uri "https://github.com/astral-sh/uv/releases/download/0.5.11/uv-x86_64-pc-windows-msvc.zip" -OutFile "$env:TEMP\uv.zip"
+          Expand-Archive -Path "$env:TEMP\uv.zip" -DestinationPath "$env:TEMP\uv"
+          New-Item -ItemType Directory -Path "$env:USERPROFILE\.cargo\bin" -Force | Out-Null
+          Move-Item -Path "$env:TEMP\uv\uv.exe" -Destination "$env:USERPROFILE\.cargo\bin\uv.exe" -Force
+          echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build .pyz and WinGet manifests (for WinGet)
+        if: matrix.package_manager == 'winget'
+        shell: bash
+        run: |
+          ./scripts/build_pyz.sh
+          pwsh -File scripts/build_winget.ps1 -Version "v0.0.1-test" -PyzPath "dist/black.pyz"
+
+      - name: Test ${{ matrix.package_manager }}
+        shell: powershell
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
+        run: |
+          switch ("${{ matrix.package_manager }}") {
+            "scoop" {
+              # Install Scoop
+              iwr -useb get.scoop.sh | iex
+              # Refresh PATH to include both Scoop and Python
+              $userPath = [System.Environment]::GetEnvironmentVariable("Path","User")
+              $pythonPath = "${{ env.pythonLocation }};${{ env.pythonLocation }}\Scripts"
+              $env:Path = "$pythonPath;$userPath;$env:Path"
+
+              # Install directly from manifest file
+              scoop install "${{ github.workspace }}\packaging\scoop\black.json"
+
+              # Test the installation
+              $pyzPath = Join-Path $env:USERPROFILE "scoop\apps\black\current\black.pyz"
+              Write-Host "Testing: $pyzPath"
+              python $pyzPath --version
+            }
+            "chocolatey" {
+              # Build Chocolatey package
+              Write-Host "Building Chocolatey package..."
+              pwsh -File scripts/build_chocolatey.ps1 -Version "v0.0.1-test" -PyzPath "dist/black.pyz"
+
+              # For testing, manually extract and install since the URL doesn't exist
+              Write-Host "Extracting and testing Chocolatey package..."
+              $nupkg = Get-ChildItem -Path dist -Filter "*.nupkg" | Select-Object -First 1
+
+              # Extract the package (rename to .zip first as Expand-Archive doesn't recognize .nupkg)
+              $extractDir = "$env:TEMP\choco-test-extract"
+              $zipPath = "$env:TEMP\package.zip"
+              Copy-Item $nupkg.FullName -Destination $zipPath
+              Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
+
+              # Copy the actual .pyz file into the tools directory
+              $toolsDir = Join-Path $extractDir "tools"
+              Copy-Item "dist/black.pyz" -Destination "$toolsDir/black.pyz"
+
+              # Create the wrapper batch file
+              $batFile = Join-Path $toolsDir "black.bat"
+              '@echo off' | Out-File -FilePath $batFile -Encoding ASCII
+              'python "%~dp0black.pyz" %*' | Out-File -FilePath $batFile -Encoding ASCII -Append
+
+              # Add tools directory to PATH
+              $env:Path = "$toolsDir;$env:Path"
+
+              # Test installation
+              Write-Host "Testing installation..."
+              black --version
+            }
+            "winget" {
+              # Enable local manifest support
+              Write-Host "Enabling local manifest support..."
+              winget settings --enable LocalManifestFiles
+
+              # Validate manifests
+              Write-Host "Validating WinGet manifests..."
+              $manifestDir = "packaging\winget\manifests\0.0.1-test"
+              winget validate --manifest $manifestDir
+
+              # For testing, manually create the portable command setup since the URL doesn't exist
+              Write-Host "Testing WinGet portable installation..."
+
+              # Create WinGet Links directory (where portable apps are linked)
+              $linksDir = Join-Path $Env:LOCALAPPDATA 'Microsoft\WinGet\Links'
+              New-Item -ItemType Directory -Path $linksDir -Force | Out-Null
+
+              # Copy .pyz to Links directory
+              Copy-Item "dist/black.pyz" -Destination "$linksDir/black.pyz"
+
+              # Create wrapper script
+              $wrapperScript = Join-Path $linksDir "black.cmd"
+              '@echo off' | Out-File -FilePath $wrapperScript -Encoding ASCII
+              'python "%~dp0black.pyz" %*' | Out-File -FilePath $wrapperScript -Encoding ASCII -Append
+
+              # Add to PATH
+              $env:PATH = "$linksDir;$env:PATH"
+
+              # Also add Python to PATH for portable .pyz execution
+              $pythonPath = "${{ env.pythonLocation }};${{ env.pythonLocation }}\Scripts"
+              $env:PATH = "$pythonPath;$env:PATH"
+
+              # Test installation
+              Write-Host "Testing installation..."
+              black --version
+            }
+          }

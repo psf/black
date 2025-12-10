@@ -1,0 +1,16 @@
+name: homebrew-macos
+on: [workflow_dispatch, pull_request]
+
+permissions:
+  contents: read  # Only needs to checkout code for testing
+
+jobs:
+  test-homebrew-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Install from tap
+        run: |
+          brew tap hollowsunhc/homebrew-tap
+          brew install black
+          black --version

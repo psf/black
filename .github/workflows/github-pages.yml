@@ -1,0 +1,284 @@
+name: GitHub Pages (APT/RPM Repos)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., v0.1.0)'
+        required: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-repos:
+    name: Build APT and RPM Repositories
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set version
+        id: version
+        run: |
+          VERSION="${{ github.event.release.tag_name || inputs.version }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev apt-utils createrepo-c rpm gnupg2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install uv and build .pyz
+        run: |
+          curl -LsSf https://github.com/astral-sh/uv/releases/download/0.5.11/uv-installer.sh -o /tmp/uv-install.sh
+          echo "505407eb4b5bec00e0b231c8c86e968ee3f5aa0136d49dd8a541179e7f76ce7d  /tmp/uv-install.sh" | sha256sum -c -
+          sh /tmp/uv-install.sh && rm /tmp/uv-install.sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          ./scripts/build_pyz.sh
+
+      - name: Create directory structure
+        run: |
+          mkdir -p public/{apt,rpm,download}
+          mkdir -p apt-repo/{pool/main,dists/stable/main/binary-amd64}
+          mkdir -p rpm-repo/x86_64
+
+      - name: Build DEB package
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+
+          # Create DEB package structure
+          mkdir -p deb-build/black_${VERSION}/DEBIAN
+          mkdir -p deb-build/black_${VERSION}/usr/bin
+          mkdir -p deb-build/black_${VERSION}/usr/share/doc/black
+
+          # Copy binary
+          cp dist/black.pyz deb-build/black_${VERSION}/usr/bin/black
+          chmod +x deb-build/black_${VERSION}/usr/bin/black
+
+          # Create control file
+          cat > deb-build/black_${VERSION}/DEBIAN/control <<EOF
+          Package: black
+          Version: ${VERSION}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Redoubt Cysec <noreply@hollowsunhc.com>
+          Description: Supply chain security verification tool
+           Redoubt provides comprehensive supply chain security verification
+           with checksum validation, signature verification, and SBOM analysis.
+          Homepage: https://github.com/${{ github.repository }}
+          EOF
+
+          # Build DEB
+          dpkg-deb --build deb-build/black_${VERSION}
+          cp deb-build/black_${VERSION}.deb apt-repo/pool/main/
+
+      - name: Create APT repository
+        run: |
+          cd apt-repo
+
+          # Create Packages file
+          dpkg-scanpackages pool/main /dev/null | gzip -9c > dists/stable/main/binary-amd64/Packages.gz
+          dpkg-scanpackages pool/main /dev/null > dists/stable/main/binary-amd64/Packages
+
+          # Create Release file
+          cd dists/stable
+          cat > Release <<EOF
+          Origin: Redoubt Cysec
+          Label: Redoubt
+          Suite: stable
+          Codename: stable
+          Architectures: amd64
+          Components: main
+          Description: Redoubt APT Repository
+          Date: $(date -Ru)
+          EOF
+
+          # Add checksums
+          echo "MD5Sum:" >> Release
+          find main -type f -exec md5sum {} \; | sed 's|main/| |' >> Release
+          echo "SHA256:" >> Release
+          find main -type f -exec sha256sum {} \; | sed 's|main/| |' >> Release
+
+          cd ../..
+          cp -r apt-repo/* public/apt/
+
+      - name: Build RPM package
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+
+          # Create RPM build structure
+          mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+
+          # Create spec file
+          cat > rpmbuild/SPECS/redoubt.spec <<EOF
+          Name:           redoubt
+          Version:        ${VERSION}
+          Release:        1%{?dist}
+          Summary:        Supply chain security verification tool
+          License:        MIT
+          URL:            https://github.com/${{ github.repository }}
+          Source0:        black.pyz
+
+          %description
+          Redoubt provides comprehensive supply chain security verification
+          with checksum validation, signature verification, and SBOM analysis.
+
+          %install
+          mkdir -p %{buildroot}%{_bindir}
+          install -m 0755 %{SOURCE0} %{buildroot}%{_bindir}/redoubt
+
+          %files
+          %{_bindir}/redoubt
+
+          %changelog
+          * $(date "+%a %b %d %Y") GitHub Actions <noreply@github.com> - ${VERSION}-1
+          - Automated build for version ${VERSION}
+          EOF
+
+          # Copy source
+          cp dist/black.pyz rpmbuild/SOURCES/
+
+          # Build RPM
+          rpmbuild --define "_topdir $(pwd)/rpmbuild" -bb rpmbuild/SPECS/redoubt.spec
+
+          # Copy to repo
+          cp rpmbuild/RPMS/x86_64/*.rpm rpm-repo/x86_64/
+
+      - name: Create RPM repository
+        run: |
+          cd rpm-repo
+          createrepo_c .
+          cd ..
+          cp -r rpm-repo/* public/rpm/
+
+      - name: Sign repositories (if GPG key available)
+        if: env.GPG_PRIVATE_KEY != ''
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          # Import GPG key
+          echo "$GPG_PRIVATE_KEY" | gpg --import --batch --yes
+
+          # Sign APT Release file
+          cd public/apt/dists/stable
+          gpg --batch --yes --passphrase "$GPG_PASSPHRASE" \
+            --armor --detach-sign -o Release.gpg Release
+          gpg --batch --yes --passphrase "$GPG_PASSPHRASE" \
+            --armor --clearsign -o InRelease Release
+
+          # Sign RPM repository
+          cd ../../../../public/rpm
+          gpg --batch --yes --passphrase "$GPG_PASSPHRASE" \
+            --armor --detach-sign -o repodata/repomd.xml.asc repodata/repomd.xml
+
+      - name: Create index.html
+        run: |
+          cat > public/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Redoubt Package Repository</title>
+            <style>
+              body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+              h1 { color: #333; }
+              code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
+              pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+            </style>
+          </head>
+          <body>
+            <h1>Redoubt Package Repository</h1>
+
+            <h2>APT Repository (Debian/Ubuntu)</h2>
+            <pre>
+          # Add repository
+          echo "deb [trusted=yes] https://${{ github.repository_owner }}.github.io/black/apt stable main" | sudo tee /etc/apt/sources.list.d/redoubt.list
+
+          # Update and install
+          sudo apt update
+          sudo apt install redoubt
+            </pre>
+
+            <h2>RPM Repository (Fedora/RHEL/CentOS)</h2>
+            <pre>
+          # Add repository
+          sudo tee /etc/yum.repos.d/redoubt.repo <<REPO
+          [redoubt]
+          name=Redoubt Repository
+          baseurl=https://${{ github.repository_owner }}.github.io/black/rpm
+          enabled=1
+          gpgcheck=0
+          REPO
+
+          # Install
+          sudo dnf install redoubt
+            </pre>
+
+            <h2>Direct Downloads</h2>
+            <ul>
+              <li><a href="apt/pool/main/">DEB Packages</a></li>
+              <li><a href="rpm/x86_64/">RPM Packages</a></li>
+            </ul>
+
+            <p>Version: ${{ steps.version.outputs.version }}</p>
+            <p><a href="https://github.com/${{ github.repository }}">View on GitHub</a></p>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        with:
+          path: public
+
+  deploy:
+    name: Deploy to GitHub Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-repos
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+      - name: Create summary
+        run: |
+          echo "## GitHub Pages Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### APT Repository:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "echo 'deb [trusted=yes] ${{ steps.deployment.outputs.page_url }}apt stable main' | sudo tee /etc/apt/sources.list.d/redoubt.list" >> $GITHUB_STEP_SUMMARY
+          echo "sudo apt update && sudo apt install redoubt" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### RPM Repository:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "sudo dnf config-manager --add-repo ${{ steps.deployment.outputs.page_url }}rpm" >> $GITHUB_STEP_SUMMARY
+          echo "sudo dnf install redoubt" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

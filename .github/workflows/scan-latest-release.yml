@@ -1,0 +1,66 @@
+name: Scan Latest Release
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 8 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: none
+  checks: none
+  deployments: none
+  discussions: none
+  issues: none
+  packages: none
+  pages: none
+  pull-requests: none
+  repository-projects: none
+  statuses: none
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a  # v2.13.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8  # v5.0.0
+
+      - name: Get latest release
+        id: latest
+        run: |
+          if ! TAG=$(gh release view --json tagName -q .tagName 2>/dev/null); then
+            echo "No release found. Skipping scan."
+            echo "exists=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "exists=true" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Download release artifact
+        if: steps.latest.outputs.exists == 'true'
+        run: |
+          gh release download ${{ steps.latest.outputs.tag }} -p 'black.pyz' -p 'sbom.cdx.json'
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: OSV scan SBOM
+        if: steps.latest.outputs.exists == 'true'
+        run: |
+          curl -sSfL https://github.com/google/osv-scanner/releases/download/v2.2.4/osv-scanner_linux_amd64 \
+            -o /tmp/osv-scanner
+          chmod +x /tmp/osv-scanner
+          sudo mv /tmp/osv-scanner /usr/local/bin/osv-scanner
+          osv-scanner --sbom=sbom.cdx.json --format=sarif 2>/dev/null > osv-results.sarif || true
+
+      - name: Upload SARIF
+        if: steps.latest.outputs.exists == 'true'
+        uses: github/codeql-action/upload-sarif@0f47cf5ea395a08f5ca3b81a506c66a63ecb648a  # v3.31.0
+        with:
+          sarif_file: osv-results.sarif
+          category: release-vulnerabilities

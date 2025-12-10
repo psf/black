@@ -1,0 +1,55 @@
+# WinGet manifest for Provenance Demo
+# Submit to: https://github.com/microsoft/winget-pkgs
+
+PackageIdentifier: hollowsunhc.ProvenanceDemo
+PackageVersion: 0.0.1-alpha.7
+PackageLocale: en-US
+Publisher: hollowsunhc
+PublisherUrl: https://github.com/hollowsunhc
+PublisherSupportUrl: https://github.com/hollowsunhc/black/issues
+Author: hollowsunhc
+PackageName: Provenance Demo
+PackageUrl: https://github.com/hollowsunhc/black
+License: MIT
+LicenseUrl: https://github.com/hollowsunhc/black/blob/main/LICENSE
+ShortDescription: Demo CLI showcasing supply chain security and provenance
+Description: |-
+  Provenance Demo demonstrates production-grade supply chain security.
+
+  Features:
+  - Reproducible, deterministic builds
+  - Sigstore signatures and GitHub attestations
+  - SLSA provenance and SBOM generation
+  - OSV vulnerability scanning
+  - Complete supply chain security validation
+
+  Run 'black verify' to validate all security attestations!
+Moniker: black
+Tags:
+  - cli
+  - security
+  - slsa
+  - sigstore
+  - supply-chain
+  - attestation
+  - sbom
+  - verification
+ReleaseNotes: |-
+  Initial release of Provenance Demo
+  - Self-verification command
+  - Complete security attestation chain
+  - VM-tested installation across platforms
+ReleaseNotesUrl: https://github.com/hollowsunhc/black/releases/tag/v0.0.1-alpha.7
+Installers:
+  - Architecture: x64
+    InstallerType: portable
+    InstallerUrl: https://github.com/hollowsunhc/black/releases/download/v0.0.1-alpha.7/black.pyz
+    InstallerSha256: 941f327df954fae8bbe2b46395c809a25673e9977c15f986ffbdfd5c5b0c44e7
+    Commands:
+      - black
+    Dependencies:
+      PackageDependencies:
+        - PackageIdentifier: Python.Python.3.10
+          MinimumVersion: 3.10.0
+ManifestType: singleton
+ManifestVersion: 1.5.0

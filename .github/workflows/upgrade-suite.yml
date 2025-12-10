@@ -1,0 +1,43 @@
+name: upgrade-suite
+on:
+  workflow_dispatch:
+    inputs:
+      pkg_name: { description: Package name, required: true, default: "black" }
+      from_ver: { description: From version, required: true }
+      to_ver:   { description: To version, required: true }
+      apt_repo_url: { description: APT repo URL, required: true }
+      apt_gpg_url: { description: URL to APT pubkey, required: true }
+      rpm_repo_url: { description: RPM repo URL, required: true }
+      rpm_gpg_url: { description: URL to RPM pubkey, required: true }
+      image: { description: GHCR image, default: "ghcr.io/hollowsunhc/black" }
+      snap_name: { description: Snap name, default: "black" }
+      snap_channel: { description: Snap upgrade path (e.g. edge->beta), default: "edge->beta" }
+
+permissions:
+  contents: read  # Only needs to checkout code for testing
+
+jobs:
+  run-upgrades:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Install multipass
+        run: sudo snap install multipass --classic
+      - name: Run upgrade suite
+        env:
+          PKG_NAME:      ${{ github.event.inputs.pkg_name }}
+          FROM_VER:      ${{ github.event.inputs.from_ver }}
+          TO_VER:        ${{ github.event.inputs.to_ver }}
+          APT_REPO_URL:  ${{ github.event.inputs.apt_repo_url }}
+          APT_DIST:      stable
+          APT_COMPONENT: main
+          APT_GPG_URL:   ${{ github.event.inputs.apt_gpg_url }}
+          RPM_REPO_URL:  ${{ github.event.inputs.rpm_repo_url }}
+          RPM_GPG_URL:   ${{ github.event.inputs.rpm_gpg_url }}
+          IMAGE:         ${{ github.event.inputs.image }}
+          FROM_TAG:      ${{ github.event.inputs.from_ver }}
+          TO_TAG:        ${{ github.event.inputs.to_ver }}
+          SNAP_NAME:     ${{ github.event.inputs.snap_name }}
+          SNAP_CHANNEL:  ${{ github.event.inputs.snap_channel }}
+        run: |
+          bash scripts/phase2-testing/upgrade/run-upgrade-suite-local.sh

@@ -1,0 +1,105 @@
+name: Docker Multi-arch
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'GHCR image (e.g. ghcr.io/hollowsunhc/black)'
+        required: true
+        default: 'ghcr.io/hollowsunhc/black'
+      tag:
+        description: 'Image tag (e.g. v1.1.0)'
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+  actions: none
+  attestations: none
+  checks: none
+  deployments: none
+  discussions: none
+  id-token: none
+  issues: none
+  pages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: none
+  statuses: none
+
+jobs:
+  build-push:
+    name: Build and Push Multi-arch Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.2.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@988b5a0280414f521da01fcc63a27aeeb4b104db # v3.6.1
+
+      - name: Login to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
+        with:
+          images: |
+            ${{ github.event.inputs.image || 'ghcr.io/hollowsunhc/black' }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.ref_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.ref_name }}
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test multi-arch images
+        run: |
+          IMAGE="${{ github.event.inputs.image || 'ghcr.io/hollowsunhc/black' }}"
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+
+          # Test amd64
+          docker pull --platform linux/amd64 "${IMAGE}:${TAG}"
+          docker run --rm --platform linux/amd64 "${IMAGE}:${TAG}" --version
+
+          # Test arm64 (may not work on x86_64 runner, but pull should succeed)
+          docker pull --platform linux/arm64 "${IMAGE}:${TAG}" || echo "ARM64 pull failed (expected on x86_64 runner)"
+
+      - name: Create summary
+        run: |
+          IMAGE="${{ github.event.inputs.image || 'ghcr.io/hollowsunhc/black' }}"
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+
+          echo "## Docker Multi-arch Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${IMAGE}:${TAG}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull command:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${IMAGE}:${TAG}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

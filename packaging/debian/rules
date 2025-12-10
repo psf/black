@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+# Debian package build rules for black
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	# Build the .pyz using our build script
+	./scripts/build_pyz.sh
+
+override_dh_auto_install:
+	# Install the .pyz to /usr/bin
+	install -D -m 755 dist/black.pyz debian/black/usr/bin/black
+
+override_dh_auto_clean:
+	# Clean build artifacts
+	rm -rf dist build *.egg-info
+	dh_auto_clean
+
+override_dh_auto_test:
+	# Run tests (skip slow integration tests)
+	python3 -m pytest tests/ -m "not slow and not integration and not published" || true

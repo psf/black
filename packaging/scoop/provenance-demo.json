@@ -1,0 +1,29 @@
+{
+    "version": "0.0.1-alpha.8",
+    "description": "Demo CLI showcasing supply chain security and provenance",
+    "homepage": "https://github.com/hollowsunhc/black",
+    "license": "MIT",
+    "url": "https://github.com/hollowsunhc/black/releases/download/v0.0.1-alpha.8/black.pyz",
+    "hash": "53e797cc67743b00123b50ced71dd27baaf8089613e5b0126490f88fdf61a489",
+    "bin": "black.pyz",
+    "pre_install": [
+        "if (!(Get-Command python -ErrorAction SilentlyContinue)) {",
+        "    Write-Host 'Python 3.10+ is required. Install with: scoop install python'",
+        "    exit 1",
+        "}"
+    ],
+    "checkver": {
+        "github": "https://github.com/hollowsunhc/black"
+    },
+    "autoupdate": {
+        "url": "https://github.com/hollowsunhc/black/releases/download/v$version/black.pyz"
+    },
+    "notes": [
+        "Run 'black verify' to validate all security attestations!",
+        "",
+        "Available commands:",
+        "  black hello <name>  - Say hello",
+        "  black verify        - Verify binary attestations",
+        "  black --version     - Show version"
+    ]
+}

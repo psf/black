@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Security Shield Icon for Redoubt -->
+  <defs>
+    <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E5C8A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shield outline -->
+  <path d="M 128 20 L 220 60 L 220 120 Q 220 180 128 236 Q 36 180 36 120 L 36 60 Z"
+        fill="url(#shieldGradient)"
+        stroke="#1a3a5a"
+        stroke-width="4"/>
+
+  <!-- Checkmark -->
+  <path d="M 80 128 L 110 158 L 176 92"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="12"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Lock symbol -->
+  <rect x="108" y="140" width="40" height="30" rx="3"
+        fill="#ffffff"
+        opacity="0.9"/>
+  <path d="M 118 140 L 118 125 Q 118 115 128 115 Q 138 115 138 125 L 138 140"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="4"
+        stroke-linecap="round"/>
+</svg>

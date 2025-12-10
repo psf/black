@@ -1,0 +1,66 @@
+name: flatpak-beta-publish
+on:
+  workflow_dispatch:
+    inputs:
+      app_id:
+        description: "Flatpak App ID (e.g. com.hollowsunhc.Redoubt)"
+        required: true
+      version:
+        description: "Version string (e.g. 0.1.0)"
+        required: true
+      flathub_repo:
+        description: "Fork target (e.g. hollowsunhc/flathub-beta)"
+        required: true
+      manifest_path:
+        description: "Path to manifest in this repo"
+        default: "packaging/flatpak/com.hollowsunhc.Redoubt.yml"
+
+permissions:
+  contents: read  # Only needs to checkout code (PR creation uses GH_TOKEN secret)
+
+jobs:
+  publish-beta:
+    runs-on: ubuntu-latest
+    env:
+      APP_ID: ${{ github.event.inputs.app_id }}
+      VERSION: ${{ github.event.inputs.version }}
+      FLATHUB_FORK: ${{ github.event.inputs.flathub_repo }}
+      MANIFEST_PATH: ${{ github.event.inputs.manifest_path }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Install Flatpak tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder ostree jq git gh
+
+      - name: Validate manifest & build
+        run: |
+          flatpak --version
+          mkdir -p build-dir
+          flatpak-builder --force-clean build-dir "${MANIFEST_PATH}"
+
+      - name: Prepare PR branch
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@users.noreply.github.com"
+
+          gh repo clone "$FLATHUB_FORK" flathub-beta
+          cd flathub-beta
+
+          BR="auto/${APP_ID}/${VERSION}"
+          git checkout -b "$BR"
+          mkdir -p "${APP_ID}"
+          cp "../${MANIFEST_PATH}" "${APP_ID}/${APP_ID}.yml"
+
+          git add .
+          git commit -m "feat(${APP_ID}): beta ${VERSION}"
+          git push -u origin "$BR"
+
+          gh pr create --fill --title "Beta: ${APP_ID} ${VERSION}" --body "Automated beta publish for ${APP_ID} ${VERSION}"
+
+      - name: Post-publish smoke (remote beta repo optional)
+        run: echo "PR opened. Merge triggers availability in beta index (external)."

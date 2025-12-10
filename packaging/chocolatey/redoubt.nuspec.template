@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>black</id>
+    <version>{{VERSION_NO_V}}</version>
+    <packageSourceUrl>https://github.com/hollowsunhc/black</packageSourceUrl>
+    <owners>hollowsunhc</owners>
+    <title>Provenance Demo - Secure CLI</title>
+    <authors>Redoubt CySec</authors>
+    <projectUrl>https://github.com/hollowsunhc/black</projectUrl>
+    <copyright>2024 Redoubt CySec</copyright>
+    <licenseUrl>https://github.com/hollowsunhc/black/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/hollowsunhc/black</projectSourceUrl>
+    <docsUrl>https://github.com/hollowsunhc/black/blob/main/README.md</docsUrl>
+    <bugTrackerUrl>https://github.com/hollowsunhc/black/issues</bugTrackerUrl>
+    <tags>cli security supply-chain slsa sigstore attestation verification sbom</tags>
+    <summary>Self-verifying CLI with complete supply chain security</summary>
+    <description>
+Provenance Demo demonstrates production-grade supply chain security for CLI applications.
+
+## Features
+
+- Reproducible, deterministic builds
+- Sigstore signatures and GitHub attestations
+- SLSA provenance and SBOM generation
+- OSV vulnerability scanning
+- Complete supply chain security validation
+
+Run 'black verify' to validate all security attestations!
+
+## Usage
+
+```
+black hello world
+black verify
+black --version
+```
+
+## Requirements
+
+- Python 3.10 or higher
+
+Install Python: `choco install python`
+    </description>
+    <releaseNotes>https://github.com/hollowsunhc/black/releases/tag/{{VERSION}}</releaseNotes>
+    <dependencies>
+      <dependency id="python" version="3.10.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

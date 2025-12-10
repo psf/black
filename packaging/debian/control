@@ -1,0 +1,23 @@
+Source: redoubt-release-demo
+Section: utils
+Priority: optional
+Maintainer: Your Name <your.email@example.com>
+Build-Depends: debhelper-compat (= 13), python3 (>= 3.10), python3-pip, python3-venv
+Standards-Version: 4.6.0
+Homepage: https://github.com/hollowsunhc/REPO
+Vcs-Browser: https://github.com/hollowsunhc/REPO
+Vcs-Git: https://github.com/hollowsunhc/REPO.git
+Rules-Requires-Root: no
+
+Package: redoubt-release-demo
+Architecture: all
+Depends: ${misc:Depends}, python3 (>= 3.10)
+Description: Self-verifying CLI with complete supply chain security
+ Redoubt Release Demo demonstrates production-grade supply chain security
+ features including:
+  * Reproducible, deterministic builds
+  * Sigstore signatures and GitHub attestations
+  * SLSA provenance and SBOM generation
+  * OSV vulnerability scanning
+ .
+ Run 'redoubt verify' to validate all security attestations.

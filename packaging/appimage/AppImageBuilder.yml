@@ -1,0 +1,67 @@
+# AppImage build configuration for Redoubt Release Demo
+# Build with: appimage-builder --recipe AppImageBuilder.yml
+# Requires: https://appimage-builder.readthedocs.io/
+
+version: 1
+
+AppDir:
+  path: ./AppDir
+
+  app_info:
+    id: com.hollowsunhc.Redoubt
+    name: redoubt
+    icon: utilities-terminal
+    version: 0.1.0
+    exec: usr/bin/redoubt
+    exec_args: $@
+
+  apt:
+    arch: amd64
+    sources:
+      - sourceline: 'deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ jammy main restricted universe multiverse'
+        key_url: 'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x871920D1991BC93C'
+
+    include:
+      - python3
+      - python3-minimal
+
+    exclude:
+      - adwaita-icon-theme
+      - humanity-icon-theme
+      - dpkg-dev
+
+
+
+  files:
+    include:
+      - /usr/bin/python3*
+      - /usr/lib/python3*
+
+    exclude:
+      - usr/share/man
+      - usr/share/doc/*/README.*
+      - usr/share/doc/*/changelog.*
+      - usr/share/doc/*/NEWS.*
+      - usr/share/doc/*/TODO.*
+
+  runtime:
+    env:
+      PATH: '${APPDIR}/usr/bin:${PATH}'
+      PYTHONHOME: '${APPDIR}/usr'
+      PYTHONPATH: '${APPDIR}/usr/lib/python3.10'
+
+  test:
+    fedora-30:
+      image: appimagecrafters/tests-env:fedora-30
+      command: ./AppRun --version
+    debian-stable:
+      image: appimagecrafters/tests-env:debian-stable
+      command: ./AppRun --version
+    ubuntu-xenial:
+      image: appimagecrafters/tests-env:ubuntu-xenial
+      command: ./AppRun --version
+
+AppImage:
+  arch: x86_64
+  update-information: gh-releases-zsync|hollowsunhc|REPO|latest|redoubt-*x86_64.AppImage.zsync
+  sign-key: None  # Use gpg signing for production

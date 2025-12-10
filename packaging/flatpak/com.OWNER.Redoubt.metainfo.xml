@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="console-application">
+  <id>com.hollowsunhc.Redoubt</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Redoubt Release Demo</name>
+  <summary>Self-verifying CLI with complete supply chain security</summary>
+  <description>
+    <p>
+      Redoubt Release Demo demonstrates production-grade supply chain security
+      for Python CLI applications.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Reproducible, deterministic builds</li>
+      <li>Sigstore signatures and GitHub attestations</li>
+      <li>SLSA provenance and SBOM generation</li>
+      <li>OSV vulnerability scanning</li>
+      <li>Complete supply chain security validation</li>
+    </ul>
+    <p>
+      Run 'redoubt verify' to validate all security attestations!
+    </p>
+  </description>
+  <launchable type="desktop-id">com.hollowsunhc.Redoubt.desktop</launchable>
+  <url type="homepage">https://github.com/hollowsunhc/REPO</url>
+  <url type="bugtracker">https://github.com/hollowsunhc/REPO/issues</url>
+  <developer_name>hollowsunhc</developer_name>
+  <releases>
+    <release version="0.1.0" date="2024-10-14">
+      <description>
+        <p>Initial release</p>
+        <ul>
+          <li>Self-verification command</li>
+          <li>Complete security attestation chain</li>
+          <li>Multi-platform support</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

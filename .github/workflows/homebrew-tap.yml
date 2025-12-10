@@ -1,0 +1,133 @@
+name: Homebrew Tap Update
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to update (e.g., v0.1.0)'
+        required: true
+      tap_repo:
+        description: 'Tap repository (e.g., hollowsunhc/homebrew-tap)'
+        required: true
+        default: 'hollowsunhc/homebrew-tap'
+
+permissions:
+  contents: read
+
+jobs:
+  update-formula:
+    name: Update Homebrew Formula
+    runs-on: macos-latest
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set version
+        id: version
+        run: |
+          VERSION="${{ github.event.release.tag_name || inputs.version }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version_number=${VERSION#v}" >> $GITHUB_OUTPUT
+
+      - name: Checkout tap repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ inputs.tap_repo || secrets.HOMEBREW_TAP_REPO || 'hollowsunhc/homebrew-tap' }}
+          path: tap
+          token: ${{ secrets.TAP_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Download release artifact
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          REPO="${{ github.repository }}"
+
+          # Download the .pyz file
+          curl -fsSL -o black.pyz \
+            "https://github.com/${REPO}/releases/download/${VERSION}/black.pyz"
+
+          # Calculate SHA256
+          SHA256=$(shasum -a 256 black.pyz | awk '{print $1}')
+          echo "sha256=${SHA256}" >> $GITHUB_ENV
+
+      - name: Update formula
+        run: |
+          VERSION="${{ steps.version.outputs.version_number }}"
+          SHA256="${{ env.sha256 }}"
+          REPO="${{ github.repository }}"
+
+          FORMULA_FILE="tap/Formula/black.rb"
+
+          # Create or update formula
+          cat > "$FORMULA_FILE" <<'EOF'
+          class ProvenanceDemo < Formula
+            desc "Demo CLI showcasing supply chain security and provenance attestation"
+            homepage "https://github.com/${{ github.repository }}"
+            url "https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version_number }}/black.pyz"
+            sha256 "${{ env.sha256 }}"
+            version "${{ steps.version.outputs.version_number }}"
+            license "MIT"
+
+            depends_on "python@3.11"
+
+            def install
+              bin.install "black.pyz" => "black"
+            end
+
+            test do
+              assert_match version.to_s, shell_output("#{bin}/black --version")
+            end
+          end
+          EOF
+
+          # Show the updated formula
+          cat "$FORMULA_FILE"
+
+      - name: Commit and push formula
+        working-directory: tap
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add Formula/black.rb
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "Update black to v${{ steps.version.outputs.version_number }}
+
+          - SHA256: ${{ env.sha256 }}
+          - Release: ${{ steps.version.outputs.version }}
+
+          Auto-updated by GitHub Actions"
+
+          git push
+
+      - name: Test formula
+        run: |
+          cd tap
+          brew install --build-from-source Formula/black.rb
+          black --version
+          black hello "Homebrew CI"
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## Homebrew Formula Update" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**SHA256:** \`${{ env.sha256 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Install command:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "brew tap ${{ inputs.tap_repo || secrets.HOMEBREW_TAP_REPO || 'hollowsunhc/homebrew-tap' }}" >> $GITHUB_STEP_SUMMARY
+          echo "brew install black" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

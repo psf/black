@@ -1,0 +1,21 @@
+# Python dependencies for release workflow
+# Pinned to specific versions for supply chain security
+
+# Build tools
+build==1.2.2.post1
+packaging==24.2
+
+# Testing
+pytest==8.3.3
+iniconfig==2.0.0
+pluggy==1.5.0
+
+# Configuration and utilities  
+pyyaml==6.0.2
+rich==13.9.4
+markdown-it-py==3.0.0
+mdurl==0.1.2
+pygments==2.18.0
+
+# For Python <3.11 compatibility
+tomli==2.1.0

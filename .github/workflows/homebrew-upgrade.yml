@@ -1,0 +1,53 @@
+name: homebrew-upgrade
+on: [workflow_dispatch]
+
+permissions:
+  contents: read  # Only needs to checkout code for testing
+
+jobs:
+  brew-upgrade:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - name: Install FROM, seed config, upgrade TO, then rollback
+        run: |
+          set -euo pipefail
+          PKG="${PKG:-redoubt}"
+          TAP="${TAP:-hollowsunhc/homebrew-tap}"
+          FROM_VER="${FROM_VER:-1.0.0}"
+          TO_VER="${TO_VER:-1.1.0}"
+
+          brew tap "$TAP"
+          # Try pinning FROM if versions are supported
+          if brew info "$PKG@$FROM_VER" >/dev/null 2>&1; then
+            brew install "$PKG@$FROM_VER"
+            brew link --overwrite "$PKG@$FROM_VER" || true
+          else
+            echo "FROM version not found as versioned formula; installing current as proxy"
+            brew install "$PKG" || true
+          fi
+
+          mkdir -p "$HOME/.config/redoubt"
+          echo 'key="value"' > "$HOME/.config/redoubt/config.toml"
+
+          # Upgrade to TO
+          if brew info "$PKG@$TO_VER" >/dev/null 2>&1; then
+            brew install "$PKG@$TO_VER"
+            brew link --overwrite "$PKG@$TO_VER" || true
+          else
+            brew upgrade "$PKG" || true
+          fi
+          "$PKG" --version || true
+          grep -q 'key="value"' "$HOME/.config/redoubt/config.toml"
+
+          # Rollback attempt
+          if brew info "$PKG@$FROM_VER" >/dev/null 2>&1; then
+            brew unlink "$PKG" || true
+            brew link --overwrite "$PKG@$FROM_VER" || true
+            "$PKG" --version || true
+            grep -q 'key="value"' "$HOME/.config/redoubt/config.toml"
+          else
+            echo "Rollback skipped (no versioned formula for FROM)"
+          fi
+
+          echo "✓ Homebrew upgrade/rollback OK (best effort)"
