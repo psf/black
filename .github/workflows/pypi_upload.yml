@@ -8,9 +8,7 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-  id-token: write # Required for PyPI trusted publishing
+permissions: {}
 
 jobs:
   main:
@@ -20,6 +18,9 @@ jobs:
     environment:
       name: release
       url: https://pypi.org/p/black
+
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -42,7 +43,7 @@ jobs:
 
       - if: github.event_name == 'release'
         name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           verbose: true
 
@@ -99,6 +100,8 @@ jobs:
     environment:
       name: release
       url: https://pypi.org/p/black
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
     strategy:
       fail-fast: false
       matrix:
@@ -121,7 +124,7 @@ jobs:
 
       - if: github.event_name == 'release'
         name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           packages-dir: wheelhouse/
           verbose: true
@@ -145,5 +148,7 @@ jobs:
       - if: github.event_name == 'release'
         name: Update stable branch to release tag & push
         run: |
-          git reset --hard ${{ github.event.release.tag_name }}
+          git reset --hard "${TAG_NAME}"
           git push
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}

@@ -68,4 +68,6 @@ jobs:
           tags: pyfound/black:latest_prerelease
 
       - name: Image digest
-        run: echo ${{ steps.docker_build.outputs.digest }}
+        run: echo ${STEPS_DOCKER_BUILD_OUTPUTS_DIGEST}
+        env:
+          STEPS_DOCKER_BUILD_OUTPUTS_DIGEST: ${{ steps.docker_build.outputs.digest }}
