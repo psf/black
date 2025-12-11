@@ -82,17 +82,8 @@
         "enum": [
           "string_processing",
           "hug_parens_with_braces_and_square_brackets",
-          "wrap_long_dict_values_in_parens",
-          "multiline_string_handling",
-          "always_one_newline_after_import",
-          "fix_fmt_skip_in_one_liners",
-          "standardize_type_comments",
           "wrap_comprehension_in",
-          "remove_parens_around_except_types",
-          "normalize_cr_newlines",
-          "fix_module_docstring_detection",
-          "fix_type_expansion_split",
-          "remove_parens_from_assignment_lhs"
+          "wrap_long_dict_values_in_parens"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."

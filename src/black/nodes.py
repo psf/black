@@ -8,7 +8,7 @@ from typing import Final, Generic, Literal, TypeGuard, TypeVar, Union
 from mypy_extensions import mypyc_attr
 
 from black.cache import CACHE_DIR
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
@@ -940,11 +940,7 @@ def is_type_comment(leaf: Leaf, mode: Mode) -> bool:
 
 
 def is_type_comment_string(value: str, mode: Mode) -> bool:
-    if Preview.standardize_type_comments in mode:
-        is_valid = value.startswith("#") and value[1:].lstrip().startswith("type:")
-    else:
-        is_valid = value.startswith("# type:")
-    return is_valid
+    return value.startswith("#") and value[1:].lstrip().startswith("type:")
 
 
 def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
@@ -959,14 +955,9 @@ def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
 def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
     ignore annotation."""
-    if Preview.standardize_type_comments in mode:
-        is_valid = is_type_comment_string(value, mode) and value.split(":", 1)[
-            1
-        ].lstrip().startswith("ignore")
-    else:
-        is_valid = value.startswith("# type: ignore")
-
-    return is_valid
+    return is_type_comment_string(value, mode) and value.split(":", 1)[
+        1
+    ].lstrip().startswith("ignore")
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:

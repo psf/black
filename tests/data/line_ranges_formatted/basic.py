@@ -5,7 +5,6 @@ from typing import (
     Literal,
 )
 
-
 # fmt: off
 class  Unformatted:
   def   should_also_work(self):

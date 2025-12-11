@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -559,20 +559,10 @@ class EmptyLineTracker:
         before, after = self._maybe_empty_lines(current_line)
         previous_after = self.previous_block.after if self.previous_block else 0
         before = max(0, before - previous_after)
-        if Preview.fix_module_docstring_detection in self.mode:
-            # Always have one empty line after a module docstring
-            if self._line_is_module_docstring(current_line):
-                before = 1
-        else:
-            if (
-                # Always have one empty line after a module docstring
-                self.previous_block
-                and self.previous_block.previous_block is None
-                and len(self.previous_block.original_line.leaves) == 1
-                and self.previous_block.original_line.is_docstring
-                and not (current_line.is_class or current_line.is_def)
-            ):
-                before = 1
+
+        # Always have one empty line after a module docstring
+        if self._line_is_module_docstring(current_line):
+            before = 1
 
         block = LinesBlock(
             mode=self.mode,
@@ -696,7 +686,6 @@ class EmptyLineTracker:
             and current_line.depth == 0
             and not current_line.is_import
             and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
-            and Preview.always_one_newline_after_import in self.mode
         ):
             return 1, 0
 
@@ -831,13 +820,6 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     """
     if not line_str:
         line_str = line_to_string(line)
-
-    if Preview.multiline_string_handling not in mode:
-        return (
-            str_width(line_str) <= mode.line_length
-            and "\n" not in line_str  # multiline strings
-            and not line.contains_standalone_comments()
-        )
 
     if line.contains_standalone_comments():
         return False
