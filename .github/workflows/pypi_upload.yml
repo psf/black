@@ -19,6 +19,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up latest Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
@@ -47,6 +49,8 @@ jobs:
       include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       # Keep cibuildwheel version in sync with below
       - name: Install cibuildwheel and pypyp
         run: |
@@ -94,6 +98,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
       # Keep cibuildwheel version in sync with above
       - uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc # v3.3.0
         with:
@@ -125,6 +131,7 @@ jobs:
         with:
           ref: stable
           fetch-depth: 0
+          persist-credentials: true # needed for `git push` below
 
       - if: github.event_name == 'release'
         name: Update stable branch to release tag & push
