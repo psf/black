@@ -58,7 +58,8 @@ jobs:
 
       - name: Unit tests
         if: "!startsWith(matrix.python-version, 'pypy')"
-        run: tox -e ci-py$(echo ${{ matrix.python-version }} | tr -d '.') -- -v --color=yes
+        run:
+          tox -e ci-py$(echo ${{ matrix.python-version }} | tr -d '.') -- -v --color=yes
 
       - name: Unit tests (pypy)
         if: "startsWith(matrix.python-version, 'pypy')"
@@ -67,7 +68,8 @@ jobs:
       - name: Upload coverage to Coveralls
         # Upload coverage if we are on the main repository and
         # we're running on Linux (this action only supports Linux)
-        if: github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
+        if:
+          github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
           !startsWith(matrix.python-version, 'pypy')
         uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
