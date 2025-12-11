@@ -5,7 +5,6 @@ import shutil
 import sys
 from pathlib import Path
 from subprocess import PIPE, STDOUT, run
-from typing import Union
 
 ACTION_PATH = Path(os.environ["GITHUB_ACTION_PATH"])
 ENV_PATH = ACTION_PATH / ".black-env"
@@ -16,6 +15,7 @@ JUPYTER = os.getenv("INPUT_JUPYTER") == "true"
 BLACK_ARGS = os.getenv("INPUT_BLACK_ARGS", default="")
 VERSION = os.getenv("INPUT_VERSION", default="")
 USE_PYPROJECT = os.getenv("INPUT_USE_PYPROJECT") == "true"
+OUTPUT_FILE = os.getenv("OUTPUT_FILE", default="")
 
 BLACK_VERSION_RE = re.compile(r"^black([^A-Z0-9._-]+.*)$", re.IGNORECASE)
 EXTRAS_RE = re.compile(r"\[.*\]")
@@ -68,9 +68,14 @@ def read_version_specifier_from_pyproject() -> str:
 
     version = pyproject.get("tool", {}).get("black", {}).get("required-version")
     if version is not None:
-        return f"=={version}"
+        # Match the two supported usages of `required-version`:
+        if "." in version:
+            return f"=={version}"
+        else:
+            return f"~={version}.0"
 
     arrays = [
+        *pyproject.get("dependency-groups", {}).values(),
         pyproject.get("project", {}).get("dependencies"),
         *pyproject.get("project", {}).get("optional-dependencies", {}).values(),
     ]
@@ -90,7 +95,7 @@ def read_version_specifier_from_pyproject() -> str:
     return version
 
 
-def find_black_version_in_array(array: object) -> Union[str, None]:
+def find_black_version_in_array(array: object) -> str | None:
     if not isinstance(array, list):
         return None
     try:
@@ -177,5 +182,16 @@ else:
         encoding="utf-8",
     )
 shutil.rmtree(ENV_PATH, ignore_errors=True)
+
+# Write output to file if specified
+if OUTPUT_FILE:
+    try:
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            f.write(proc.stdout)
+        print(f"Black output written to {OUTPUT_FILE}")
+    except Exception as e:
+        print(f"::error::Failed to write output to {OUTPUT_FILE}: {e}", file=sys.stderr)
+        sys.exit(1)
+
 print(proc.stdout)
 sys.exit(proc.returncode)

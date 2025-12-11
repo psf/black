@@ -25,6 +25,7 @@ class TargetVersion(Enum):
     PY311 = 11
     PY312 = 12
     PY313 = 13
+    PY314 = 14
 
     def pretty(self) -> str:
         assert self.name[:2] == "PY"
@@ -51,8 +52,10 @@ class Feature(Enum):
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
     TYPE_PARAMS = 18
-    FSTRING_PARSING = 19
+    # FSTRING_PARSING = 19  # unused
     TYPE_PARAM_DEFAULTS = 20
+    UNPARENTHESIZED_EXCEPT_TYPES = 21
+    T_STRINGS = 22
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -163,7 +166,6 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
-        Feature.FSTRING_PARSING,
     },
     TargetVersion.PY313: {
         Feature.F_STRINGS,
@@ -183,13 +185,37 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
-        Feature.FSTRING_PARSING,
         Feature.TYPE_PARAM_DEFAULTS,
+    },
+    TargetVersion.PY314: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.TYPE_PARAM_DEFAULTS,
+        Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+        Feature.T_STRINGS,
     },
 }
 
 
 def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
+    if not target_versions:
+        raise ValueError("target_versions must not be empty")
+
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
 
@@ -204,13 +230,20 @@ class Preview(Enum):
     multiline_string_handling = auto()
     always_one_newline_after_import = auto()
     fix_fmt_skip_in_one_liners = auto()
+    standardize_type_comments = auto()
+    wrap_comprehension_in = auto()
+    # Remove parentheses around multiple exception types in except and
+    # except* without as. See PEP 758 for details.
+    remove_parens_around_except_types = auto()
+    normalize_cr_newlines = auto()
+    fix_module_docstring_detection = auto()
+    fix_type_expansion_split = auto()
+    remove_parens_from_assignment_lhs = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
     # Many issues, see summary in https://github.com/psf/black/issues/4042
     Preview.string_processing,
-    # See issue #4159
-    Preview.multiline_string_handling,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,
 }
@@ -285,3 +318,18 @@ class Mode:
             features_and_magics,
         ]
         return ".".join(parts)
+
+    def __hash__(self) -> int:
+        return hash((
+            frozenset(self.target_versions),
+            self.line_length,
+            self.string_normalization,
+            self.is_pyi,
+            self.is_ipynb,
+            self.skip_source_first_line,
+            self.magic_trailing_comma,
+            frozenset(self.python_cell_magics),
+            self.preview,
+            self.unstable,
+            frozenset(self.enabled_features),
+        ))

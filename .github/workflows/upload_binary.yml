@@ -13,15 +13,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-22.04, macos-latest]
+        os: [windows-2025, windows-11-arm, ubuntu-22.04, ubuntu-22.04-arm, macos-latest]
         include:
-          - os: windows-2019
+          - os: windows-2025
             pathsep: ";"
             asset_name: black_windows.exe
+            executable_mime: "application/vnd.microsoft.portable-executable"
+          - os: windows-11-arm
+            pathsep: ";"
+            asset_name: black_windows-arm.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
           - os: ubuntu-22.04
             pathsep: ":"
             asset_name: black_linux
+            executable_mime: "application/x-executable"
+          - os: ubuntu-22.04-arm
+            pathsep: ":"
+            asset_name: black_linux-arm
             executable_mime: "application/x-executable"
           - os: macos-latest
             pathsep: ":"
@@ -29,12 +37,14 @@ jobs:
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up latest Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
-          python-version: "3.12.4"
+          python-version: "3.13"
 
       - name: Install Black and PyInstaller
         run: |
@@ -53,11 +63,6 @@ jobs:
           ./dist/${{ matrix.asset_name }} src --verbose
 
       - name: Upload binary as release asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: dist/${{ matrix.asset_name }}
-          asset_name: ${{ matrix.asset_name }}
-          asset_content_type: ${{ matrix.executable_mime }}
+          files: dist/${{ matrix.asset_name }}

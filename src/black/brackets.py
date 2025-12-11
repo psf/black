@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
-from typing import Final, Optional, Union
+from typing import Final, Union
 
 from black.nodes import (
     BRACKET,
@@ -63,7 +63,7 @@ class BracketTracker:
     depth: int = 0
     bracket_match: dict[tuple[Depth, NodeType], Leaf] = field(default_factory=dict)
     delimiters: dict[LeafID, Priority] = field(default_factory=dict)
-    previous: Optional[Leaf] = None
+    previous: Leaf | None = None
     _for_loop_depths: list[int] = field(default_factory=list)
     _lambda_argument_depths: list[int] = field(default_factory=list)
     invisible: list[Leaf] = field(default_factory=list)
@@ -211,7 +211,7 @@ class BracketTracker:
 
         return False
 
-    def get_open_lsqb(self) -> Optional[Leaf]:
+    def get_open_lsqb(self) -> Leaf | None:
         """Return the most recent opening square bracket (if any)."""
         return self.bracket_match.get((self.depth - 1, token.RSQB))
 
@@ -230,7 +230,7 @@ def is_split_after_delimiter(leaf: Leaf) -> Priority:
     return 0
 
 
-def is_split_before_delimiter(leaf: Leaf, previous: Optional[Leaf] = None) -> Priority:
+def is_split_before_delimiter(leaf: Leaf, previous: Leaf | None = None) -> Priority:
     """Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would

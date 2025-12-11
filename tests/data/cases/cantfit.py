@@ -31,7 +31,8 @@ for key in """
         raise ValueError(err.format(key))
 concatenated_strings = "some strings that are " "concatenated implicitly, so if you put them on separate " "lines it will fit"
 del concatenated_strings, string_variable_name, normal_function_name, normal_name, need_more_to_make_the_line_long_enough
-
+del ([], name_1, name_2), [(), [], name_4, name_3], name_1[[name_2 for name_1 in name_0]]
+del (),
 
 # output
 
@@ -91,3 +92,9 @@ del (
     normal_name,
     need_more_to_make_the_line_long_enough,
 )
+del (
+    ([], name_1, name_2),
+    [(), [], name_4, name_3],
+    name_1[[name_2 for name_1 in name_0]],
+)
+del ((),)

@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from functools import partial
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import black
 from black.const import DEFAULT_LINE_LENGTH
@@ -45,7 +45,7 @@ fs = partial(black.format_str, mode=DEFAULT_MODE)
 class TestCaseArgs:
     mode: black.Mode = field(default_factory=black.Mode)
     fast: bool = False
-    minimum_version: Optional[tuple[int, int]] = None
+    minimum_version: tuple[int, int] | None = None
     lines: Collection[tuple[int, int]] = ()
     no_preview_line_length_1: bool = False
 
@@ -96,7 +96,7 @@ def assert_format(
     mode: black.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
-    minimum_version: Optional[tuple[int, int]] = None,
+    minimum_version: tuple[int, int] | None = None,
     lines: Collection[tuple[int, int]] = (),
     no_preview_line_length_1: bool = False,
 ) -> None:
@@ -161,11 +161,11 @@ def assert_format(
 
 def _assert_format_inner(
     source: str,
-    expected: Optional[str] = None,
+    expected: str | None = None,
     mode: black.Mode = DEFAULT_MODE,
     *,
     fast: bool = False,
-    minimum_version: Optional[tuple[int, int]] = None,
+    minimum_version: tuple[int, int] | None = None,
     lines: Collection[tuple[int, int]] = (),
 ) -> None:
     actual = black.format_str(source, mode=mode, lines=lines)
@@ -236,8 +236,8 @@ def get_flags_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--target-version",
-        action="append",
-        type=lambda val: TargetVersion[val.upper()],
+        action="store",
+        type=lambda val: (TargetVersion[val.upper()],),
         default=(),
     )
     parser.add_argument("--line-length", default=DEFAULT_LINE_LENGTH, type=int)
@@ -258,7 +258,7 @@ def get_flags_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Minimum version of Python where this test case is parseable. If this is"
-            " set, the test case will be run twice: once with the specified"
+            " set, the test case will be run twice: once without the specified"
             " --target-version, and once with --target-version set to exactly the"
             " specified version. This ensures that Black's autodetection of the target"
             " version works correctly."

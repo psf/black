@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
 from dataclasses import dataclass
-from typing import Any, ClassVar, Final, Literal, Optional, TypeVar, Union
+from typing import Any, ClassVar, Final, Literal, TypeVar, Union
 
 from mypy_extensions import trait
 
@@ -334,6 +334,9 @@ class CustomSplit:
     break_idx: int
 
 
+CustomSplitMapKey = tuple[StringID, str]
+
+
 @trait
 class CustomSplitMapMixin:
     """
@@ -342,13 +345,12 @@ class CustomSplitMapMixin:
     the resultant substrings go over the configured max line length.
     """
 
-    _Key: ClassVar = tuple[StringID, str]
-    _CUSTOM_SPLIT_MAP: ClassVar[dict[_Key, tuple[CustomSplit, ...]]] = defaultdict(
-        tuple
+    _CUSTOM_SPLIT_MAP: ClassVar[dict[CustomSplitMapKey, tuple[CustomSplit, ...]]] = (
+        defaultdict(tuple)
     )
 
     @staticmethod
-    def _get_key(string: str) -> "CustomSplitMapMixin._Key":
+    def _get_key(string: str) -> CustomSplitMapKey:
         """
         Returns:
             A unique identifier that is used internally to map @string to a
@@ -584,7 +586,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 <= i
                 < previous_merged_string_idx + previous_merged_num_of_strings
             ):
-                for comment_leaf in line.comments_after(LL[i]):
+                for comment_leaf in line.comments_after(leaf):
                     new_line.append(comment_leaf, preformatted=True)
                 continue
 
@@ -1259,7 +1261,7 @@ class BaseStringSplitter(StringTransformer):
         return max_string_length
 
     @staticmethod
-    def _prefer_paren_wrap_match(LL: list[Leaf]) -> Optional[int]:
+    def _prefer_paren_wrap_match(LL: list[Leaf]) -> int | None:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -1706,10 +1708,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             yield Ok(last_line)
 
     def _iter_nameescape_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
-        """
+        r"""
         Yields:
             All ranges of @string which, if @string were to be split there,
-            would result in the splitting of an \\N{...} expression (which is NOT
+            would result in the splitting of an \N{...} expression (which is NOT
             allowed).
         """
         # True - the previous backslash was unescaped
@@ -1755,10 +1757,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         ]
         for it in iterators:
             for begin, end in it:
-                illegal_indices.update(range(begin, end + 1))
+                illegal_indices.update(range(begin, end))
         return illegal_indices
 
-    def _get_break_idx(self, string: str, max_break_idx: int) -> Optional[int]:
+    def _get_break_idx(self, string: str, max_break_idx: int) -> int | None:
         """
         This method contains the algorithm that StringSplitter uses to
         determine which character to split each string at.
@@ -1983,7 +1985,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return TErr("This line does not contain any non-atomic strings.")
 
     @staticmethod
-    def _return_match(LL: list[Leaf]) -> Optional[int]:
+    def _return_match(LL: list[Leaf]) -> int | None:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2008,7 +2010,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _else_match(LL: list[Leaf]) -> Optional[int]:
+    def _else_match(LL: list[Leaf]) -> int | None:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2035,7 +2037,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _assert_match(LL: list[Leaf]) -> Optional[int]:
+    def _assert_match(LL: list[Leaf]) -> int | None:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2070,7 +2072,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _assign_match(LL: list[Leaf]) -> Optional[int]:
+    def _assign_match(LL: list[Leaf]) -> int | None:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -2117,7 +2119,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         return None
 
     @staticmethod
-    def _dict_or_lambda_match(LL: list[Leaf]) -> Optional[int]:
+    def _dict_or_lambda_match(LL: list[Leaf]) -> int | None:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.

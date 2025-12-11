@@ -53,7 +53,7 @@ Further examples of invoking the tests
 (.venv)$ tox --parallel=auto
 
 # Run tests on a specific python version
-(.venv)$ tox -e py39
+(.venv)$ tox -e py314
 
 # Run an individual test
 (.venv)$ pytest -k <test name>

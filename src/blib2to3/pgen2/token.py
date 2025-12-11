@@ -70,7 +70,10 @@ FSTRING_START: Final = 60
 FSTRING_MIDDLE: Final = 61
 FSTRING_END: Final = 62
 BANG: Final = 63
-N_TOKENS: Final = 64
+TSTRING_START: Final = 64
+TSTRING_MIDDLE: Final = 65
+TSTRING_END: Final = 66
+N_TOKENS: Final = 67
 NT_OFFSET: Final = 256
 # --end constants--
 
