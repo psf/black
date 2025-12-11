@@ -1114,9 +1114,9 @@ class BlackTestCase(BlackBaseTestCase):
             actual = path.read_text(encoding="utf-8")
             # verify cache with --pyi is separate
             pyi_cache = black.Cache.read(pyi_mode)
-            assert not pyi_cache.is_changed(path)
+            assert not pyi_cache.is_changed(path)[0]
             normal_cache = black.Cache.read(DEFAULT_MODE)
-            assert normal_cache.is_changed(path)
+            assert normal_cache.is_changed(path)[0]
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(contents, actual)
         black.assert_stable(contents, actual, pyi_mode)
@@ -1141,8 +1141,8 @@ class BlackTestCase(BlackBaseTestCase):
             pyi_cache = black.Cache.read(pyi_mode)
             normal_cache = black.Cache.read(reg_mode)
             for path in paths:
-                assert not pyi_cache.is_changed(path)
-                assert normal_cache.is_changed(path)
+                assert not pyi_cache.is_changed(path)[0]
+                assert normal_cache.is_changed(path)[0]
 
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("miscellaneous", "force_pyi")
@@ -1164,9 +1164,9 @@ class BlackTestCase(BlackBaseTestCase):
             actual = path.read_text(encoding="utf-8")
             # verify cache with --target-version is separate
             py36_cache = black.Cache.read(py36_mode)
-            assert not py36_cache.is_changed(path)
+            assert not py36_cache.is_changed(path)[0]
             normal_cache = black.Cache.read(reg_mode)
-            assert normal_cache.is_changed(path)
+            assert normal_cache.is_changed(path)[0]
         self.assertEqual(actual, expected)
 
     @event_loop()
@@ -1189,8 +1189,8 @@ class BlackTestCase(BlackBaseTestCase):
             pyi_cache = black.Cache.read(py36_mode)
             normal_cache = black.Cache.read(reg_mode)
             for path in paths:
-                assert not pyi_cache.is_changed(path)
-                assert normal_cache.is_changed(path)
+                assert not pyi_cache.is_changed(path)[0]
+                assert normal_cache.is_changed(path)[0]
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("miscellaneous", "force_py36")
@@ -2149,7 +2149,7 @@ class TestCaching:
             src.write_text("print('hello')", encoding="utf-8")
             invokeBlack([str(src)])
             cache = black.Cache.read(mode)
-            assert not cache.is_changed(src)
+            assert not cache.is_changed(src)[0]
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
@@ -2178,8 +2178,8 @@ class TestCaching:
             assert one.read_text(encoding="utf-8") == "print('hello')"
             assert two.read_text(encoding="utf-8") == 'print("hello")\n'
             cache = black.Cache.read(mode)
-            assert not cache.is_changed(one)
-            assert not cache.is_changed(two)
+            assert not cache.is_changed(one)[0]
+            assert not cache.is_changed(two)[0]
 
     @pytest.mark.incompatible_with_mypyc
     @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
@@ -2289,7 +2289,7 @@ class TestCaching:
             write_cache = black.Cache.read(mode)
             write_cache.write([src])
             read_cache = black.Cache.read(mode)
-            assert not read_cache.is_changed(src)
+            assert not read_cache.is_changed(src)[0]
 
     @pytest.mark.incompatible_with_mypyc
     def test_filter_cached(self) -> None:
@@ -2377,8 +2377,8 @@ class TestCaching:
             clean.write_text('print("hello")\n', encoding="utf-8")
             invokeBlack([str(workspace)], exit_code=123)
             cache = black.Cache.read(mode)
-            assert cache.is_changed(failing)
-            assert not cache.is_changed(clean)
+            assert cache.is_changed(failing)[0]
+            assert not cache.is_changed(clean)[0]
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
@@ -2397,9 +2397,9 @@ class TestCaching:
             cache = black.Cache.read(mode)
             cache.write([path])
             one = black.Cache.read(mode)
-            assert not one.is_changed(path)
+            assert not one.is_changed(path)[0]
             two = black.Cache.read(short_mode)
-            assert two.is_changed(path)
+            assert two.is_changed(path)[0]
 
     def test_cache_key(self) -> None:
         # Test that all members of the mode enum affect the cache key.
