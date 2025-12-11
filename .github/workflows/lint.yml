@@ -2,6 +2,8 @@ name: Lint + format ourselves
 
 on: [push, pull_request]
 
+permissions: {}
+
 jobs:
   build:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
@@ -15,6 +17,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
 
       - name: Assert PR target is main
         if: github.event_name == 'pull_request' && github.repository == 'psf/black'
