@@ -12,6 +12,8 @@ on:
       - release.py
       - release_tests.py
 
+permissions: {}
+
 jobs:
   build:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
@@ -33,6 +35,7 @@ jobs:
         with:
           # Give us all history, branches and tags
           fetch-depth: 0
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
