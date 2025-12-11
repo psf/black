@@ -45,6 +45,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
