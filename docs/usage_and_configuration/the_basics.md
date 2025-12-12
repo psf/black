@@ -36,6 +36,18 @@ the initial indentation level between them. Black also recognizes
 [YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
 courtesy for straddling code.
 
+###Formatting Doctests By default, **Black** focuses on formatting executable Python
+files and does **not** automatically format code examples found within docstrings
+(doctests).
+
+To ensure that the code samples in your documentation are also consistently formatted to
+the Black style, you must use external, third-party tools.
+
+We recommend checking out:
+
+[`blacken-docs`](https://github.com/ichard26/blacken-docs)\*\*: This tool specifically
+applies Black to code blocks within Markdown or reStructuredText documentation files.
+
 ### Command line options
 
 The CLI options of _Black_ can be displayed by running `black --help`. All options are
