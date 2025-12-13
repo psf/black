@@ -1989,6 +1989,9 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
+from black.comments import _contains_fmt_directive
+
+
 def run_transformer(
     line: Line,
     transform: Transformer,
@@ -1999,6 +2002,27 @@ def run_transformer(
 ) -> list[Line]:
     if not line_str:
         line_str = line_to_string(line)
+
+    # 1) Fast guard: rendered line text
+    if _contains_fmt_directive(line_str):
+        return [line]
+
+    # 2) Inline comments collected on the Line object
+    for comments in getattr(line, "comments", {}).values():
+        for comment in comments:
+            if _contains_fmt_directive(getattr(comment, "value", "")):
+                return [line]
+
+    # 3) Leaf prefixes and comments_after fallback
+    for leaf in line.leaves:
+        if _contains_fmt_directive(getattr(leaf, "prefix", "")):
+            return [line]
+
+        for comment_after in line.comments_after(leaf):
+            if _contains_fmt_directive(getattr(comment_after, "value", "")):
+                return [line]
+
+    # Proceed with transforms
     result: list[Line] = []
     for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
@@ -2016,10 +2040,6 @@ def run_transformer(
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()
         or is_line_short_enough(result[0], mode=mode)
-        # If any leaves have no parents (which _can_ occur since
-        # `transform(line)` potentially destroys the line's underlying node
-        # structure), then we can't proceed. Doing so would cause the below
-        # call to `append_leaves()` to fail.
         or any(leaf.parent is None for leaf in line.leaves)
     ):
         return result
@@ -2030,6 +2050,8 @@ def run_transformer(
     second_opinion = run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )
+
     if all(is_line_short_enough(ln, mode=mode) for ln in second_opinion):
-        result = second_opinion
+        return second_opinion
+
     return result
