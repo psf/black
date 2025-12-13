@@ -1948,6 +1948,7 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
 
 from black.comments import _contains_fmt_directive
 
+
 def run_transformer(
     line: Line,
     transform: Transformer,
