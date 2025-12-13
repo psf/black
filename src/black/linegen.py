@@ -571,13 +571,17 @@ class LineGenerator(Visitor[Line]):
                     mode=self.mode,
                     features=self.features,
                 )
-        string_children = [
+        if self.mode.preview:
+        # Find adjacent string literal children
+            string_children = [
             ch
             for ch in node.children
             if isinstance(ch, Leaf) and ch.type == token.STRING
-              ]
+        ]
+        # Only wrap if there are 2 or more adjacent strings
         if len(string_children) > 1:
             wrap_in_parentheses(node, node, visible=True)
+
         yield from self.visit_default(node)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
