@@ -1946,6 +1946,8 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
+from black.comments import _contains_fmt_directive
+
 def run_transformer(
     line: Line,
     transform: Transformer,
@@ -1954,81 +1956,30 @@ def run_transformer(
     *,
     line_str: str = "",
 ) -> list[Line]:
-    import re
-
-    # tolerant pattern for fmt: skip (spaces allowed, case-insensitive)
-    _FMT_SKIP_RE = re.compile(r"fmt\s*:\s*skip", re.IGNORECASE)
-
     if not line_str:
         line_str = line_to_string(line)
-    result: list[Line] = []
 
-    # 1) Fast guard: check rendered line string
-    try:
-        if _FMT_SKIP_RE.search(line_str):
-            return [line]
-    except Exception:
-        # non-fatal: fall through to deeper inspection
-        pass
+    # 1) Fast guard: rendered line text
+    if _contains_fmt_directive(line_str):
+        return [line]
 
-    # 2) Check comments stored on the Line (dict leaf_id -> [Leaf, ...])
-    try:
-        comments_dict = getattr(line, "comments", None)
-        if comments_dict:
-            for comments in comments_dict.values():
-                for comment in comments:
-                    comment_val = getattr(comment, "value", "") or ""
-                    if _FMT_SKIP_RE.search(comment_val):
-                        return [line]
-    except Exception:
-        pass
-
-    # 3) Check prefixes/values/comments_after on each leaf
-    try:
-        for leaf in line.leaves:
-            # prefix (may contain comments or directives)
-            prefix = getattr(leaf, "prefix", "") or ""
-            if _FMT_SKIP_RE.search(prefix):
+    # 2) Inline comments collected on the Line object
+    for comments in getattr(line, "comments", {}).values():
+        for comment in comments:
+            if _contains_fmt_directive(getattr(comment, "value", "")):
                 return [line]
 
-            # sometimes comments may be attached in the leaf.value itself (rare)
-            val = getattr(leaf, "value", "") or ""
-            if _FMT_SKIP_RE.search(val):
-                return [line]
-
-            # check comments returned by comments_after(leaf) (older codepaths)
-            try:
-                for comment_after in line.comments_after(leaf):
-                    ca_val = getattr(comment_after, "value", "") or ""
-                    if _FMT_SKIP_RE.search(ca_val):
-                        return [line]
-            except Exception:
-                # if comments_after isn't available or fails, ignore
-                pass
-    except Exception:
-        pass
-
-    # 4) Extra precaution: search all comment text concatenated
-    try:
-        all_comments_text = []
-        if getattr(line, "comments", None):
-            for comments in line.comments.values():
-                for c in comments:
-                    all_comments_text.append(getattr(c, "value", "") or "")
-        # also include any inline comment texts via comments_after for all leaves
-        try:
-            for leaf in line.leaves:
-                for comment_after in line.comments_after(leaf):
-                    all_comments_text.append(getattr(comment_after, "value", "") or "")
-        except Exception:
-            pass
-
-        if any(_FMT_SKIP_RE.search(txt) for txt in all_comments_text):
+    # 3) Leaf prefixes and comments_after fallback
+    for leaf in line.leaves:
+        if _contains_fmt_directive(getattr(leaf, "prefix", "")):
             return [line]
-    except Exception:
-        pass
+
+        for comment_after in line.comments_after(leaf):
+            if _contains_fmt_directive(getattr(comment_after, "value", "")):
+                return [line]
 
     # Proceed with transforms
+    result: list[Line] = []
     for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
             raise CannotTransform("Line transformer returned an unchanged result")
@@ -2045,10 +1996,6 @@ def run_transformer(
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()
         or is_line_short_enough(result[0], mode=mode)
-        # If any leaves have no parents (which _can_ occur since
-        # `transform(line)` potentially destroys the line's underlying node
-        # structure), then we can't proceed. Doing so would cause the below
-        # call to `append_leaves()` to fail.
         or any(leaf.parent is None for leaf in line.leaves)
     ):
         return result
@@ -2059,6 +2006,8 @@ def run_transformer(
     second_opinion = run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )
+
     if all(is_line_short_enough(ln, mode=mode) for ln in second_opinion):
-        result = second_opinion
+        return second_opinion
+
     return result
