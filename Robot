@@ -25,12 +25,12 @@ keywords = {
 
 def find_response(user_input):
     user_input = user_input.lower()
-    
+
     # جستجوی کلمات کلیدی
     for word, category in keywords.items():
         if word in user_input:
             return random.choice(responses[category])
-    
+
     # پاسخ پیش‌فرض
     return random.choice(responses["پیش‌فرض"])
 
@@ -40,17 +40,17 @@ def main():
     print("می‌تونی هر چیزی که دلت می‌خواد با من در میون بذاری.")
     print("برای خروج بنویس 'خداحافظ'")
     print("=" * 50)
-    
+
     while True:
         user_input = input("\nتو: ")
-        
+
         if user_input.lower() in ["خداحافظ", "بای", "exit", "quit"]:
             print(f"\nربات: {random.choice(responses['خداحافظ'])}")
             break
-        
+
         # تاخیر برای طبیعی‌تر شدن
         time.sleep(0.5)
-        
+
         response = find_response(user_input)
         print(f"\nربات: {response}")
 
