@@ -8,9 +8,13 @@ updates:
     schedule:
       interval: "weekly"
     labels: ["skip news", "C: dependencies"]
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "pip"
     directory: "docs/"
     schedule:
       interval: "weekly"
     labels: ["skip news", "C: dependencies", "T: documentation"]
+    cooldown:
+      default-days: 7
