@@ -7,24 +7,24 @@
 - Introduces the 2026 stable style (#4892), stabilizing the following changes:
   - `always_one_newline_after_import`: Always force one blank line after import
     statements, except when the line after the import is a comment or an import
-    statement. (#4489)
+    statement (#4489)
   - `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behavior on one-liner declarations,
     such as `def foo(): return "mock" # fmt: skip`, where previously the declaration
-    would have been incorrectly collapsed. (#4800)
+    would have been incorrectly collapsed (#4800)
   - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
-    strings if preceded by comments. (#4764)
-  - `fix_type_expansion_split`: Fix type expansions split in generic functions. (#4777)
+    strings if preceded by comments (#4764)
+  - `fix_type_expansion_split`: Fix type expansions split in generic functions (#4777)
   - `multiline_string_handling`: Make expressions involving multiline strings more
-    compact. (#1879)
+    compact (#1879)
   - `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
-    normalize file newlines both from and to. (#4710)
+    normalize file newlines both from and to (#4710)
   - `remove_parens_around_except_types`: Remove parentheses around multiple exception
-    types in `except` and `except*` without `as`. See PEP 758 for details. (#4720)
+    types in `except` and `except*` without `as` (#4720)
   - `remove_parens_from_assignment_lhs`: Remove unnecessary parentheses from the
     left-hand side of assignments while preserving magic trailing commas and intentional
-    multiline formatting. (#4865)
+    multiline formatting (#4865)
   - `standardize_type_comments`: Format type comments which have zero or more spaces
-    between `#` and `type:` or between `type:` and value to `# type: (value)`. (#4645)
+    between `#` and `type:` or between `type:` and value to `# type: (value)` (#4645)
 
 ### Stable style
 
@@ -32,11 +32,12 @@
 
 ## 25.12.0
 
-Please test out the draft 2026 style in version 26.1a1 and
-[share your feedback](https://github.com/psf/black/issues/4875)! This style will be
-finalized in the January release (26.1.0). This release (25.12.0) will still produce the
-2025 style. Most but not all of the changes in `--preview` will be in the 2026 stable
-style.
+Please test out the draft 2026 style in version 26.1a1! This style will be finalized in
+the January release (26.1.0). Most of the changes in `--preview` will be in the 2026
+stable style, but not all.
+[Please share your feedback!](https://github.com/psf/black/issues/4042)
+
+This release (25.12.0) will still produce the 2025 style.
 
 ### Highlights
 
