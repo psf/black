@@ -61,6 +61,8 @@ repos:
           - beautifulsoup4
           - urllib3
           - hypothesmith
+          - pysource-codegen
+          - pysource-minimize
       - id: mypy
         name: mypy (Python 3.10)
         files: scripts/generate_schema.py
