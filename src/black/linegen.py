@@ -571,7 +571,6 @@ class LineGenerator(Visitor[Line]):
                     mode=self.mode,
                     features=self.features,
                 )
-        if self.mode.preview:
             # Find adjacent string literal children
             string_children = [
                 ch
