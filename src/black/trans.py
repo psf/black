@@ -1280,7 +1280,6 @@ class BaseStringSplitter(StringTransformer):
             syms.dictsetmaker,
             syms.testlist_gexp,
             syms.testlist,
-
         ]
         # If the string is an immediate child of a list/set/tuple literal...
         if (
