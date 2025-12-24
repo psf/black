@@ -46,7 +46,7 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
-- Added documentation for doctest formatting tools and updated the integrations index to match (#4914)
+- Added documentation for doctest formatting tools and updated the integrations index to match (#4916)
 
 ### Documentation
 
