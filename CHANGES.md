@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Simplify implementation of the power operator "hugging" logic (#4918)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

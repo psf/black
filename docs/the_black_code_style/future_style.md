@@ -40,6 +40,9 @@ Currently, the following features are included in the preview style:
   multiline strings ([see below](labels/multiline-string-handling))
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceeded by comments.
+- `simplify_power_operator_hugging`: Use a simpler implementation of the power operator
+  "hugging" logic (removing whitespace around `**` in simple expressions), which applies
+  also in the rare case the exponentiation is split into separate lines.
 
 (labels/wrap-long-dict-values)=
 
