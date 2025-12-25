@@ -41,6 +41,8 @@ from black.nodes import (
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
+    TEST_DESCENDANTS,
+    TYPED_NAMES,
     WHITESPACE,
     Visitor,
     ensure_visible,
@@ -52,6 +54,7 @@ from black.nodes import (
     is_atom_with_invisible_parens,
     is_docstring,
     is_empty_tuple,
+    is_exponentiation,
     is_generator,
     is_lpar_token,
     is_multiline_string,
@@ -61,6 +64,7 @@ from black.nodes import (
     is_parent_function_or_class,
     is_part_of_annotation,
     is_rpar_token,
+    is_simple_exponentiation,
     is_stub_body,
     is_stub_suite,
     is_tuple,
@@ -444,6 +448,18 @@ class LineGenerator(Visitor[Line]):
             rpar = Leaf(token.RPAR, ")")
             index = operand.remove() or 0
             node.insert_child(index, Node(syms.atom, [lpar, operand, rpar]))
+        yield from self.visit_default(node)
+
+    def visit_argument(self, node: Node) -> Iterator[Line]:
+        _maybe_wrap_complex_arg_expression_in_parens(node, self.mode)
+        yield from self.visit_default(node)
+
+    def visit_typedargslist(self, node: Node) -> Iterator[Line]:
+        _maybe_wrap_complex_arg_expression_in_parens(node, self.mode)
+        yield from self.visit_default(node)
+
+    def visit_varargslist(self, node: Node) -> Iterator[Line]:
+        _maybe_wrap_complex_arg_expression_in_parens(node, self.mode)
         yield from self.visit_default(node)
 
     def visit_tname(self, node: Node) -> Iterator[Line]:
@@ -1652,6 +1668,29 @@ def remove_await_parens(node: Node, mode: Mode, features: Collection[Feature]) -
             ):
                 ensure_visible(opening_bracket)
                 ensure_visible(closing_bracket)
+
+
+def _maybe_wrap_complex_arg_expression_in_parens(node: Node, mode: Mode) -> None:
+    """Add parentheses around complex expression after equals sign
+    (unless it's a typed parameter):
+
+    bar=x + y -> bar=(x + y)
+    """
+    if Preview.arg_parens in mode:
+        for i, child in enumerate(node.children):
+            if child.type == token.EQUAL:
+                if node.children[i - 1].type not in TYPED_NAMES:
+                    expr = node.children[i + 1]
+                    if expr.type in TEST_DESCENDANTS and expr.type != syms.lambdef:
+                        if (
+                            expr.type != syms.power
+                            or expr.children[0].type == token.AWAIT
+                            or (
+                                is_exponentiation(expr)
+                                and not is_simple_exponentiation(expr)
+                            )
+                        ):
+                            wrap_in_parentheses(node, expr)
 
 
 def _maybe_wrap_cms_in_parens(

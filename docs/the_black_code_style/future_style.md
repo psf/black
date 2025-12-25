@@ -40,6 +40,8 @@ Currently, the following features are included in the preview style:
   multiline strings ([see below](labels/multiline-string-handling))
 - `fix_module_docstring_detection`: Fix module docstrings being treated as normal
   strings if preceeded by comments.
+- `arg_parens`: Parenthesize complex expressions passed as keyword arguments or
+  parameter defaults. For example, `foo(bar=x + y)` becomes `foo(bar=(x + y))`.
 
 (labels/wrap-long-dict-values)=
 

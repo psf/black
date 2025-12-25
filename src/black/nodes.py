@@ -543,6 +543,28 @@ def is_arith_like(node: LN) -> bool:
     }
 
 
+def is_simple_exponentiation(node: LN) -> bool:
+    """Whether whitespace around `**` should be removed."""
+
+    def is_simple(node: LN) -> bool:
+        if isinstance(node, Leaf):
+            return node.type in (token.NAME, token.NUMBER, token.DOT, token.DOUBLESTAR)
+        elif node.type == syms.factor:  # unary operators
+            return is_simple(node.children[1])
+        else:
+            return all(is_simple(child) for child in node.children)
+
+    return is_exponentiation(node) and is_simple(node)
+
+
+def is_exponentiation(node: LN) -> bool:
+    return (
+        node.type == syms.power
+        and len(node.children) >= 3
+        and node.children[-2].type == token.DOUBLESTAR
+    )
+
+
 def is_docstring(node: NL) -> bool:
     if isinstance(node, Leaf):
         if node.type != token.STRING:
