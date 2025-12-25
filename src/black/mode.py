@@ -239,6 +239,7 @@ class Preview(Enum):
     fix_module_docstring_detection = auto()
     fix_type_expansion_split = auto()
     remove_parens_from_assignment_lhs = auto()
+    simplify_power_operator_hugging = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

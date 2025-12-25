@@ -416,6 +416,15 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
         if t == token.STAR:
             return NO
 
+    if Preview.simplify_power_operator_hugging in mode:
+        # Power operator hugging
+        if t == token.DOUBLESTAR and is_simple_exponentiation(p):
+            return NO
+        prevp = preceding_leaf(leaf)
+        if prevp and prevp.type == token.DOUBLESTAR:
+            if prevp.parent and is_simple_exponentiation(prevp.parent):
+                return NO
+
     return SPACE
 
 
@@ -541,6 +550,25 @@ def is_arith_like(node: LN) -> bool:
         syms.xor_expr,
         syms.and_expr,
     }
+
+
+def is_simple_exponentiation(node: LN) -> bool:
+    """Whether whitespace around `**` should be removed."""
+
+    def is_simple(node: LN) -> bool:
+        if isinstance(node, Leaf):
+            return node.type in (token.NAME, token.NUMBER, token.DOT, token.DOUBLESTAR)
+        elif node.type == syms.factor:  # unary operators
+            return is_simple(node.children[1])
+        else:
+            return all(is_simple(child) for child in node.children)
+
+    return (
+        node.type == syms.power
+        and len(node.children) >= 3
+        and node.children[-2].type == token.DOUBLESTAR
+        and is_simple(node)
+    )
 
 
 def is_docstring(node: NL) -> bool:

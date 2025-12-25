@@ -679,6 +679,7 @@ class LineGenerator(Visitor[Line]):
         self.visit_guard = partial(v, keywords=Ø, parens={"if"})
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def _hugging_power_ops_line_to_string(
     line: Line,
     features: Collection[Feature],
@@ -705,11 +706,15 @@ def transform_line(
 
     line_str = line_to_string(line)
 
-    # We need the line string when power operators are hugging to determine if we should
-    # split the line. Default to line_str, if no power operator are present on the line.
-    line_str_hugging_power_ops = (
-        _hugging_power_ops_line_to_string(line, features, mode) or line_str
-    )
+    if Preview.simplify_power_operator_hugging in mode:
+        line_str_hugging_power_ops = line_str
+    else:
+        # We need the line string when power operators are hugging to determine if we
+        # should split the line. Default to line_str, if no power operator are present
+        # on the line.
+        line_str_hugging_power_ops = (
+            _hugging_power_ops_line_to_string(line, features, mode) or line_str
+        )
 
     ll = mode.line_length
     sn = mode.string_normalization
@@ -794,9 +799,11 @@ def transform_line(
                 transformers = [delimiter_split, standalone_comment_split, rhs]
             else:
                 transformers = [rhs]
-    # It's always safe to attempt hugging of power operations and pretty much every line
-    # could match.
-    transformers.append(hug_power_op)
+
+    if Preview.simplify_power_operator_hugging not in mode:
+        # It's always safe to attempt hugging of power operations and pretty much every
+        # line could match.
+        transformers.append(hug_power_op)
 
     for transform in transformers:
         # We are accumulating lines in `result` because we might want to abort
