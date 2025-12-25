@@ -16,7 +16,7 @@
 
 ### Preview style
 
-- Parenthesize adjacent implicit string literals to avoid crashes (#3955)
+- Parenthesize adjacent implicit string literals to avoid crashes (#4899)
 - Fix `fmt: skip` skipping the line after instead of the line it's on (#4855)
 - Remove unnecessary parentheses from the left-hand side of assignments while preserving
   magic trailing commas and intentional multiline formatting (#4865)

@@ -580,7 +580,8 @@ class LineGenerator(Visitor[Line]):
             # Only wrap if there are 2 or more adjacent strings
             if len(string_children) > 1:
                 wrap_in_parentheses(node, node, visible=True)
-
+                return
+            
         yield from self.visit_default(node)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
