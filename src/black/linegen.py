@@ -581,7 +581,7 @@ class LineGenerator(Visitor[Line]):
             if len(string_children) > 1:
                 wrap_in_parentheses(node, node, visible=True)
                 return
-            
+
         yield from self.visit_default(node)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
