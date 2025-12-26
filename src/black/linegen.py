@@ -143,7 +143,7 @@ class LineGenerator(Visitor[Line]):
             return
 
         complete_line = self.current_line
-        self.current_line = Line(mode=self.mode, depth=complete_line.depth + indent)
+        self.current_line = Line(mode=self.mode, depth=(complete_line.depth + indent))
         yield complete_line
 
     def visit_default(self, node: LN) -> Iterator[Line]:
@@ -853,7 +853,7 @@ def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
         result.append(
             leaf,
             preformatted=True,
-            track_bracket=id(leaf) in leaves_to_track,
+            track_bracket=(id(leaf) in leaves_to_track),
         )
 
     # we could also return true if the line is too long, and the return type is longer
@@ -1162,7 +1162,7 @@ def _prefer_split_rhs_oop_over_rhs(
     # the left side of assignment is short enough (the -1 is for the ending optional
     # paren)
     if not is_line_short_enough(
-        rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+        rhs.head, mode=replace(mode, line_length=(mode.line_length - 1))
     ):
         return True
 
@@ -1300,7 +1300,7 @@ def bracket_split_build_line(
         result.append(
             leaf,
             preformatted=True,
-            track_bracket=id(leaf) in leaves_to_track,
+            track_bracket=(id(leaf) in leaves_to_track),
         )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)

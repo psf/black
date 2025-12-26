@@ -238,7 +238,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf | None = None) -> Prior
 
     Higher numbers are higher priority.
     """
-    if is_vararg(leaf, within=VARARGS_PARENTS | UNPACKING_PARENTS):
+    if is_vararg(leaf, within=(VARARGS_PARENTS | UNPACKING_PARENTS)):
         # * and ** might also be MATH_OPERATORS but in this case they are not.
         # Don't treat them as a delimiter.
         return 0

@@ -249,7 +249,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
             return NO
 
         elif prevp.type in VARARGS_SPECIALS:
-            if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
+            if is_vararg(prevp, within=(VARARGS_PARENTS | UNPACKING_PARENTS)):
                 return NO
 
         elif prevp.type == token.COLON:

@@ -116,7 +116,7 @@ def assert_format(
         if mode.unstable:
             new_mode = replace(mode, unstable=False, preview=False)
         else:
-            new_mode = replace(mode, preview=not mode.preview)
+            new_mode = replace(mode, preview=(not mode.preview))
         _assert_format_inner(
             source,
             None,
@@ -283,10 +283,10 @@ def parse_mode(flags_line: str) -> TestCaseArgs:
     mode = black.Mode(
         target_versions=set(args.target_version),
         line_length=args.line_length,
-        string_normalization=not args.skip_string_normalization,
+        string_normalization=(not args.skip_string_normalization),
         is_pyi=args.pyi,
         is_ipynb=args.ipynb,
-        magic_trailing_comma=not args.skip_magic_trailing_comma,
+        magic_trailing_comma=(not args.skip_magic_trailing_comma),
         preview=args.preview,
         unstable=args.unstable,
     )
