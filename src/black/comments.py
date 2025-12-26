@@ -77,7 +77,7 @@ def generate_comments(leaf: LN, mode: Mode) -> Iterator[Leaf]:
     """
     total_consumed = 0
     for pc in list_comments(
-        leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER, mode=mode
+        leaf.prefix, is_endmarker=(leaf.type == token.ENDMARKER), mode=mode
     ):
         total_consumed = pc.consumed
         prefix = make_simple_prefix(pc.newlines, pc.form_feed)
