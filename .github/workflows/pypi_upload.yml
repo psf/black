@@ -1,4 +1,4 @@
-name: Build and publish
+name: build and publish
 
 on:
   release:
@@ -11,7 +11,7 @@ on:
 permissions: {}
 
 jobs:
-  main:
+  hatch:
     name: sdist + pure wheel
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
@@ -47,7 +47,7 @@ jobs:
         with:
           verbose: true
 
-  generate_wheels_matrix:
+  configure:
     name: generate wheels matrix
     runs-on: ubuntu-latest
     outputs:
@@ -94,7 +94,7 @@ jobs:
 
   mypyc:
     name: mypyc wheels ${{ matrix.only }}
-    needs: generate_wheels_matrix
+    needs: configure
     runs-on: ${{ matrix.os }}
     if: github.event_name == 'release'
     environment:
@@ -105,7 +105,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
+        include: ${{ fromJson(needs.configure.outputs.include) }}
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -129,9 +129,9 @@ jobs:
           packages-dir: wheelhouse/
           verbose: true
 
-  update-stable-branch:
-    name: Update stable branch
-    needs: [main, mypyc]
+  update-stable:
+    name: update stable branch
+    needs: [hatch, mypyc]
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     permissions:

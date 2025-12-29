@@ -1,4 +1,4 @@
-name: Publish executables
+name: publish binaries
 
 on:
   release:
@@ -8,7 +8,8 @@ permissions:
   contents: write # actions/upload-release-asset needs this.
 
 jobs:
-  build:
+  publish:
+    name: publish (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

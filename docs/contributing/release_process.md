@@ -102,7 +102,7 @@ They are triggered by the publication of a [GitHub Release].
 
 Below are descriptions of our release workflows.
 
-### Publish to PyPI
+### build and publish
 
 This is our main workflow. It builds an [sdist] and [wheels] to upload to PyPI where the
 vast majority of users will download Black from. It's divided into three job groups:
@@ -113,7 +113,7 @@ This single job builds the sdist and pure Python wheel (i.e., a wheel that only 
 Python code) using [build] and then uploads them to PyPI using [twine]. These artifacts
 are general-purpose and can be used on basically any platform supported by Python.
 
-#### mypyc wheels (…)
+#### generate wheels matrix / mypyc wheels (…)
 
 We use [mypyc] to compile _Black_ into a CPython C extension for significantly improved
 performance. Wheels built with mypyc are platform and Python version specific.
@@ -126,7 +126,7 @@ multiple mypyc wheels jobs (hence the term "matrix") that build for a specific p
 
 Like the previous job group, the built wheels are uploaded to PyPI using [twine].
 
-#### Update stable branch
+#### update stable branch
 
 So this job doesn't _really_ belong here, but updating the `stable` branch after the
 other PyPI jobs pass (they must pass for this job to start) makes the most sense. This
@@ -134,7 +134,7 @@ saves us from remembering to update the branch sometime after cutting the releas
 
 - _Currently this workflow uses an API token associated with @ambv's PyPI account_
 
-### Publish executables
+### publish binaries
 
 This workflow builds native executables for multiple platforms using [PyInstaller]. This
 allows people to download the executable for their platform and run _Black_ without a

@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  docker:
+  build:
     if: github.repository == 'psf/black'
     runs-on: ubuntu-latest
     steps:

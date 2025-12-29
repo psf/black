@@ -1,4 +1,4 @@
-name: Test
+name: test
 
 on:
   push:
@@ -19,7 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  main:
+  test:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
     # by the push to the branch. Without this if check, checks are duplicated since
     # internal PRs match both the push and pull_request events.
@@ -79,7 +79,7 @@ jobs:
           debug: true
 
   coveralls-finish:
-    needs: main
+    needs: test
     if: github.repository == 'psf/black'
 
     runs-on: ubuntu-latest
@@ -87,6 +87,7 @@ jobs:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
+
       - name: Send finished signal to Coveralls
         uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
