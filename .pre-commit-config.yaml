@@ -77,7 +77,6 @@ repos:
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]
-        exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
