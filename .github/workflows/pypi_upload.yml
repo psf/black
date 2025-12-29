@@ -10,39 +10,10 @@ on:
 
 permissions: {}
 
+env:
+  PROJECT: https://pypi.org/p/black
+
 jobs:
-  hatch:
-    name: sdist + pure wheel
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release'
-    environment:
-      name: release
-      url: https://pypi.org/p/black
-
-    permissions:
-      id-token: write # Required for PyPI trusted publishing
-
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-
-      - name: Set up latest Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
-        with:
-          python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group build
-
-      - name: Build wheel and source distributions
-        run: python -m hatch build
-
-      - if: github.event_name == 'release'
-        name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        with:
-          verbose: true
-
   configure:
     name: generate wheels matrix
     runs-on: ubuntu-latest
@@ -52,12 +23,14 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+
       - name: Set up latest Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
           pip-version: "25.3"
           pip-install: --group wheels
+
       - name: generate matrix
         if: |
           github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
@@ -76,6 +49,7 @@ jobs:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_WINDOWS: AMD64
+
       - name: generate matrix (PR)
         if: |
           github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
@@ -86,6 +60,7 @@ jobs:
           } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
           CIBW_ARCHS_LINUX: x86_64
+
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
 
@@ -93,14 +68,7 @@ jobs:
     name: mypyc wheels ${{ matrix.only }}
     needs: configure
     runs-on: ${{ matrix.os }}
-    if: github.event_name == 'release'
-    environment:
-      name: release
-      url: https://pypi.org/p/black
-    permissions:
-      id-token: write # Required for PyPI trusted publishing
     strategy:
-      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.configure.outputs.include) }}
 
@@ -108,6 +76,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+
       # Keep cibuildwheel version in sync with pyproject.toml
       - uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc # v3.3.0
         with:
@@ -117,20 +86,80 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: ${{ matrix.only }}-mypyc-wheels
-          path: ./wheelhouse/*.whl
+          path: wheelhouse/
 
-      - if: github.event_name == 'release'
-        name: Publish package distributions to PyPI
+  hatch:
+    name: sdist + pure wheel
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up latest Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: "3.13"
+          pip-version: "25.3"
+          pip-install: --group build
+
+      - name: Build wheel and source distributions
+        run: python -m hatch build
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+  publish-mypyc:
+    if: github.event_name == 'release'
+    needs: mypyc
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          pattern: "*-mypyc-wheels"
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           packages-dir: wheelhouse/
           verbose: true
 
+  publish-hatch:
+    if: github.event_name == 'release'
+    needs: hatch
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          verbose: true
+
   update-stable:
     name: update stable branch
-    needs: [hatch, mypyc]
+    needs: [publish-mypyc, publish-hatch]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && github.event.release.prerelease != 'true'
     permissions:
       contents: write
 
@@ -142,8 +171,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true # needed for `git push` below
 
-      - if: github.event_name == 'release'
-        name: Update stable branch to release tag & push
+      - name: Update stable branch to release tag & push
         run: |
           git reset --hard "${TAG_NAME}"
           git push
