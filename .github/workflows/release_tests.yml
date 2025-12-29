@@ -4,13 +4,13 @@ on:
   push:
     paths:
       - .github/workflows/release_tests.yml
-      - release.py
-      - release_tests.py
+      - scripts/release.py
+      - scripts/release_tests.py
   pull_request:
     paths:
       - .github/workflows/release_tests.yml
-      - release.py
-      - release_tests.py
+      - scripts/release.py
+      - scripts/release_tests.py
 
 permissions: {}
 

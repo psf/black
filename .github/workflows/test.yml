@@ -2,14 +2,20 @@ name: test
 
 on:
   push:
-    paths-ignore:
-      - "docs/**"
-      - "*.md"
+    paths:
+      - .github/workflows/test.yml
+      - src/**
+      - tests/**
+      - tox.ini
+      - pyproject.toml
 
   pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "*.md"
+    paths:
+      - .github/workflows/test.yml
+      - src/**
+      - tests/**
+      - tox.ini
+      - pyproject.toml
 
 permissions:
   contents: read

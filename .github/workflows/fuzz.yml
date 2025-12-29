@@ -2,14 +2,22 @@ name: fuzz
 
 on:
   push:
-    paths-ignore:
-      - "docs/**"
-      - "*.md"
+    paths:
+      - tox.ini
+      - .github/workflows/fuzz.yml
+      - scripts/fuzz.py
+      - src/**
+      - tests/**
+      - pyproject.toml
 
   pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "*.md"
+    paths:
+      - tox.ini
+      - .github/workflows/fuzz.yml
+      - scripts/fuzz.py
+      - src/**
+      - tests/**
+      - pyproject.toml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

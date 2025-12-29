@@ -3,8 +3,9 @@ name: zizmor
 on:
   push:
     branches: ["main"]
+    paths: ["**.yml"]
   pull_request:
-    branches: ["**"]
+    paths: ["**.yml"]
 
 permissions: {}
 
