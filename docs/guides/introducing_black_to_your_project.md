@@ -1,8 +1,7 @@
 # Introducing _Black_ to your project
 
 ```{note}
-This guide is incomplete. Contributions are welcomed and would be deeply
-appreciated!
+This guide is incomplete. Contributions are welcomed and would be deeply appreciated!
 ```
 
 ## Avoiding ruining git blame

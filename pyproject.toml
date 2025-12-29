@@ -1,19 +1,19 @@
 # Example configuration for Black.
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
-# It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
-# character.
+# It's the equivalent of r-strings in Python.
+# Multiline strings are treated as verbose regular expressions by Black.
+# Use [ ] to denote a significant space character.
 
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ["py310"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  # The following are specific to Black, you probably don't want those.
-  tests/data/
-  | profiling/
+    # The following are specific to Black, you probably don't want those.
+    tests/data/
+    | profiling/
 )
 '''
 # We use the unstable style for formatting Black itself. If you
@@ -35,32 +35,22 @@ description = "The uncompromising code formatter."
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
-authors = [
-  { name = "Łukasz Langa", email = "lukasz@langa.pl" },
-]
-keywords = [
-  "automation",
-  "autopep8",
-  "formatter",
-  "gofmt",
-  "pyfmt",
-  "rustfmt",
-  "yapf",
-]
+authors = [{ name = "Łukasz Langa", email = "lukasz@langa.pl" }]
+keywords = ["automation", "autopep8", "formatter", "gofmt", "pyfmt", "rustfmt", "yapf"]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
-  "Environment :: Console",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: Software Development :: Quality Assurance",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
     "click>=8.0.0",
@@ -127,19 +117,16 @@ Issues = "https://github.com/psf/black/issues"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
-fragments = [
-  { path = "README.md" },
-  { path = "CHANGES.md" },
-]
+fragments = [{ path = "README.md" }, { path = "CHANGES.md" }]
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/_black_version.py"
-template = '''
+template = """
 version = "{version}"
-'''
+"""
 
 [tool.hatch.build.targets.sdist]
 exclude = ["/profiling"]
@@ -155,19 +142,19 @@ enable-by-default = false
 dependencies = ["hatch-mypyc>=0.16.0", "mypy==1.19.0"]
 require-runtime-dependencies = true
 exclude = [
-  # There's no good reason for blackd to be compiled.
-  "/src/blackd",
-  # Not performance sensitive, so save bytes + compilation time:
-  "/src/blib2to3/__init__.py",
-  "/src/blib2to3/pgen2/__init__.py",
-  "/src/black/output.py",
-  "/src/black/concurrency.py",
-  "/src/black/files.py",
-  "/src/black/report.py",
-  # Breaks the test suite when compiled (and is also useless):
-  "/src/black/debug.py",
-  # Compiled modules can't be run directly and that's a problem here:
-  "/src/black/__main__.py",
+    # There's no good reason for blackd to be compiled.
+    "/src/blackd",
+    # Not performance sensitive, so save bytes + compilation time:
+    "/src/blib2to3/__init__.py",
+    "/src/blib2to3/pgen2/__init__.py",
+    "/src/black/output.py",
+    "/src/black/concurrency.py",
+    "/src/black/files.py",
+    "/src/black/report.py",
+    # Breaks the test suite when compiled (and is also useless):
+    "/src/black/debug.py",
+    # Compiled modules can't be run directly and that's a problem here:
+    "/src/black/__main__.py",
 ]
 mypy-args = ["--ignore-missing-imports"]
 options = { debug_level = "0" }
@@ -185,7 +172,7 @@ skip = [
     "*-musllinux_*",
     "*-win32",
     "pp*",
-    "cp31?t-*",  # mypyc doesn't have great support for free threaded builds
+    "cp31?t-*",         # mypyc doesn't have great support for free threaded builds
 ]
 
 test-groups = ["tests"]
@@ -217,21 +204,14 @@ known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 # Option below requires `tests/optional.py`
 addopts = "--strict-config --strict-markers"
 optional-tests = [
-  "no_blackd: run when `d` extra NOT installed",
-  "no_jupyter: run when `jupyter` extra NOT installed",
+    "no_blackd: run when `d` extra NOT installed",
+    "no_jupyter: run when `jupyter` extra NOT installed",
 ]
-markers = [
-  "incompatible_with_mypyc: run when testing mypyc compiled black"
-]
+markers = ["incompatible_with_mypyc: run when testing mypyc compiled black"]
 xfail_strict = true
 filterwarnings = ["error"]
 [tool.coverage.report]
-omit = [
-  "src/blib2to3/*",
-  "tests/data/*",
-  "*/site-packages/*",
-  ".tox/*"
-]
+omit = ["src/blib2to3/*", "tests/data/*", "*/site-packages/*", ".tox/*"]
 [tool.coverage.run]
 relative_files = true
 branch = true
