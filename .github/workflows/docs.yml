@@ -34,14 +34,8 @@ jobs:
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
-          allow-prereleases: true
-
-      - name: Install dependencies
-        run: |
-          python -m pip install uv
-          python -m uv venv
-          python -m uv pip install -e ".[d]"
-          python -m uv pip install -r "docs/requirements.txt"
+          pip-version: "25.3"
+          pip-install: -e .[d] --group docs
 
       - name: Build documentation
         run: sphinx-build -a -b html -W --keep-going docs/ docs/_build

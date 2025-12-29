@@ -22,7 +22,7 @@ $ python3 -m venv .venv
 $ source .venv/bin/activate # activation for linux and mac
 $ .venv\Scripts\activate # activation for windows
 
-(.venv)$ pip install -r test_requirements.txt
+(.venv)$ pip install --group dev
 (.venv)$ pip install -e ".[d]"
 (.venv)$ pre-commit install
 ```
@@ -138,8 +138,8 @@ instead and write the changelog entry under the dedicated "Preview style" headin
 
 If you make changes to docs, you can test they still build locally too.
 
-```console
-(.venv)$ pip install -r docs/requirements.txt
+```sh
+(.venv)$ pip install --group docs
 (.venv)$ pip install -e ".[d]"
 (.venv)$ sphinx-build -a -b html -W docs/ docs/_build/
 ```

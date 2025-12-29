@@ -41,19 +41,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+          pip-version: "25.3"
+          pip-install: --group coverage
 
       - name: Print Python Version
         run: python --version --version && which python
 
+      - name: Print Pip Version
+        run: pip --version && which pip
+
       - name: Print Git Version
         run: git --version && which git
 
-      - name: Update pip, setuptools + wheels
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-
       - name: Run unit tests via coverage + print report
         run: |
-          python -m pip install coverage
           coverage run scripts/release_tests.py
           coverage report --show-missing

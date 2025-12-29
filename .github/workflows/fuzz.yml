@@ -43,12 +43,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade tox
+          pip-version: "25.3"
+          pip-install: --group tox
 
       - name: Run fuzz tests
-        run: |
-          tox -e fuzz
+        run: tox -e fuzz
