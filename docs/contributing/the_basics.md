@@ -31,17 +31,10 @@ Before submitting pull requests, run lints and tests with the following commands
 the root of the black repo:
 
 ```console
-# Linting
-(.venv)$ pre-commit run -a
-
-# Unit tests
-(.venv)$ tox -e py
-
-# Optional Fuzz testing
-(.venv)$ tox -e fuzz
-
-# Format Black itself
-(.venv)$ tox -e run_self
+(.venv)$ pre-commit run -a # Linting
+(.venv)$ tox -e py # Unit tests
+(.venv)$ tox -e fuzz # Optional Fuzz testing
+(.venv)$ tox -e run_self # Format Black itself
 ```
 
 ### Development
@@ -49,23 +42,10 @@ the root of the black repo:
 Further examples of invoking the tests
 
 ```console
-# Run all of the above mentioned, in parallel
-(.venv)$ tox --parallel=auto
-
-# Run tests on a specific python version
-(.venv)$ tox -e py314
-
-# Run an individual test
-(.venv)$ pytest -k <test name>
-
-# Pass arguments to pytest
-(.venv)$ tox -e py -- --no-cov
-
-# Print full tree diff, see documentation below
-(.venv)$ tox -e py -- --print-full-tree
-
-# Disable diff printing, see documentation below
-(.venv)$ tox -e py -- --print-tree-diff=False
+(.venv)$ tox --parallel=auto # Run all the above in parallel
+(.venv)$ tox -e py314 # Run tests on a specific python version
+(.venv)$ pytest -k <test name> # Run an individual test
+(.venv)$ tox -e py -- --no-cov # Pass arguments to pytest
 ```
 
 ### Testing
@@ -99,10 +79,18 @@ the input ("actual"), and the tree that's yielded after parsing the output ("exp
 Note that a test can fail with different output with the same CST. This used to be the
 default, but now defaults to `False`.
 
+```console
+(.venv)$ tox -e py -- --print-full-tree
+```
+
 #### `--print-tree-diff`
 
 Upon a failing test, print the diff of the trees as described above. This is the
 default. To turn it off pass `--print-tree-diff=False`.
+
+```console
+(.venv)$ tox -e py -- --print-tree-diff=False
+```
 
 ### News / Changelog Requirement
 
@@ -138,7 +126,7 @@ instead and write the changelog entry under the dedicated "Preview style" headin
 
 If you make changes to docs, you can test they still build locally too.
 
-```sh
+```console
 (.venv)$ pip install --group docs
 (.venv)$ pip install -e ".[d]"
 (.venv)$ sphinx-build -a -b html -W docs/ docs/_build/
