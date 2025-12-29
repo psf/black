@@ -68,7 +68,7 @@ files in the `tests/data/cases` directory. These files consist of up to three pa
   If this is omitted, the test asserts that _Black_ will leave the input code unchanged.
 
 _Black_ has two pytest command-line options affecting test files in `tests/data/` that
-are split into an input part, and an output part, separated by a line with`# output`.
+are split into an input part, and an output part, separated by a line with `# output`.
 These can be passed to `pytest` through `tox`, or directly into pytest if not using
 `tox`.
 
@@ -116,11 +116,17 @@ does not need to go back and workout what to add to the `CHANGES.md` for each re
 
 ### Style Changes
 
+Please familiarize yourself with our [stability policy](labels/stability-policy).
+Therefore, most style changes must be added to the `--preview` style. Exceptions are
+fixing crashes or changes that would not affect an already-formatted file.
+
 If a change would affect the advertised code style, please modify the documentation (The
 _Black_ code style) to reflect that change. Patches that fix unintended bugs in
-formatting don't need to be mentioned separately though. If the change is implemented
-with the `--preview` flag, please include the change in the future style document
-instead and write the changelog entry under the dedicated "Preview style" heading.
+formatting don't need to be mentioned separately.
+
+If the change is implemented with the `--preview` flag, please include the change in the
+Future Style document instead and write the changelog entry under the dedicated "Preview
+style" heading.
 
 ### Docs Testing
 
