@@ -8,9 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: Changelog Entry Check
-
+  check:
     runs-on: ubuntu-latest
 
     steps:

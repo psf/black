@@ -29,6 +29,7 @@ def f():
 ```python
 def f(
     ):
+    "Make sure this code is blackened"""
     pass
 ```
 

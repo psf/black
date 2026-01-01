@@ -73,7 +73,7 @@ and look for the `--target-version` option to see the full list of supported ver
 You should include all versions that your code supports. If you support Python 3.11
 through 3.13, you should write:
 
-```console
+```sh
 $ black -t py311 -t py312 -t py313
 ```
 

@@ -19,7 +19,7 @@ Unit: [NAME '='] ( STRING [Repeater]
                  | NAME [Details] [Repeater]
                  | '(' Alternatives ')' [Repeater]
                  | '[' Alternatives ']'
-		 )
+                 )
 
 NegatedUnit: 'not' (STRING | NAME [Details] | '(' Alternatives ')')
 

@@ -1,21 +1,21 @@
-name: Release tool CI
+name: test release tool
 
 on:
   push:
     paths:
       - .github/workflows/release_tests.yml
-      - release.py
-      - release_tests.py
+      - scripts/release.py
+      - scripts/release_tests.py
   pull_request:
     paths:
       - .github/workflows/release_tests.yml
-      - release.py
-      - release_tests.py
+      - scripts/release.py
+      - scripts/release_tests.py
 
 permissions: {}
 
 jobs:
-  build:
+  test-release-tool:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
     # by the push to the branch. Without this if check, checks are duplicated since
     # internal PRs match both the push and pull_request events.
@@ -23,7 +23,6 @@ jobs:
       github.event_name == 'push' || github.event.pull_request.head.repo.full_name !=
       github.repository
 
-    name: Running python ${{ matrix.python-version }} on ${{matrix.os}}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -36,24 +35,25 @@ jobs:
           # Give us all history, branches and tags
           fetch-depth: 0
           persist-credentials: false
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+          pip-version: "25.3"
+          pip-install: --group coverage
 
       - name: Print Python Version
         run: python --version --version && which python
 
+      - name: Print Pip Version
+        run: pip --version && which pip
+
       - name: Print Git Version
         run: git --version && which git
 
-      - name: Update pip, setuptools + wheels
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-
       - name: Run unit tests via coverage + print report
         run: |
-          python -m pip install coverage
           coverage run scripts/release_tests.py
           coverage report --show-missing

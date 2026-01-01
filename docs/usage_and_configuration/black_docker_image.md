@@ -38,13 +38,13 @@ More about _Black_ usage can be found in
 
 ### Check Black version
 
-```console
+```sh
 $ docker run --rm pyfound/black:latest_release black --version
 ```
 
 ### Check code
 
-```console
+```sh
 $ docker run --rm --volume $(pwd):/src --workdir /src pyfound/black:latest_release black --check .
 ```
 
