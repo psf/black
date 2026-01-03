@@ -18,12 +18,13 @@
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
   string literals, or on dictionary entries with long lines (#4872)
 - Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
-- Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had 
-  a trailing comma (#4884)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
+- Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had 
+  a trailing comma (#4884)
 
 ### Configuration
 
