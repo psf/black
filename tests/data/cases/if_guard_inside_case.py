@@ -1,3 +1,5 @@
+# flags: --preview
+
 def f(x):
     match x:
         # good refactor

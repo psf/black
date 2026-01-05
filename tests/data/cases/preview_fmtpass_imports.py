@@ -3,10 +3,8 @@
 # Regression test for https://github.com/psf/black/issues/3438
 
 import ast
-
 import collections  # fmt: skip
 import dataclasses
-
 # fmt: off
 import os
 # fmt: on
