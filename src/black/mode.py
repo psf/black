@@ -242,7 +242,6 @@ class Preview(Enum):
     fix_if_guard_explosion_in_case_statement = auto()
 
 
-
 UNSTABLE_FEATURES: set[Preview] = {
     # Many issues, see summary in https://github.com/psf/black/issues/4042
     Preview.string_processing,
