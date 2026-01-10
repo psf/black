@@ -89,6 +89,11 @@ def reformat_many(
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         workers = min(workers, 60)
+    if getattr(sys, "frozen", False):
+        # In frozen (PyInstaller) builds, avoid multiprocessing to prevent shutdown
+        # errors when worker processes try to import modules after cleanup begins.
+        # See https://github.com/psf/black/issues/4823
+        workers = 1
 
     executor: Executor | None = None
     if workers > 1:
