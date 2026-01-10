@@ -100,7 +100,7 @@ def test_fstring() -> None:
 
 def test_backslash_continuation() -> None:
     """Test that backslash continuations with no indentation are handled correctly.
-    
+
     This is a regression test for https://github.com/psf/black/issues/XXXX
     where Black failed to parse code with backslash continuations followed by
     unindented lines.
@@ -130,7 +130,7 @@ def test_backslash_continuation() -> None:
             Token(type="ENDMARKER", string="", start=(5, 0), end=(5, 0)),
         ],
     )
-    
+
     # Multiple backslash continuations
     assert_tokenizes(
         "if True:\n    result = 1+\\\n2+\\\n3\n    print(result)\n",
