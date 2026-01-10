@@ -95,7 +95,7 @@ jobs:
           -v --work-dir projects-cache/ ${{ matrix.force-flag }}
 
       - name: Upload baseline analysis
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.baseline-analysis }}
           path: ${{ matrix.baseline-analysis }}
@@ -157,7 +157,7 @@ jobs:
           -v --work-dir projects-cache/ ${{ matrix.force-flag }}
 
       - name: Upload target analysis
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.target-analysis }}
           path: ${{ matrix.target-analysis }}
@@ -200,7 +200,7 @@ jobs:
           ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
 
       - name: Upload diff report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.mode }}-diff.html
           path: diff.html
@@ -215,7 +215,7 @@ jobs:
 
       - name: Upload summary file (PR only)
         if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: .pr-comment.json
           path: .pr-comment.json
