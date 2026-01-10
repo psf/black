@@ -92,7 +92,8 @@
           "normalize_cr_newlines",
           "fix_module_docstring_detection",
           "fix_type_expansion_split",
-          "remove_parens_from_assignment_lhs"
+          "remove_parens_from_assignment_lhs",
+          "fix_if_guard_explosion_in_case_statement"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."

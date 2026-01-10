@@ -17,6 +17,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had
+  a trailing comma (#4884)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
