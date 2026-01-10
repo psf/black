@@ -159,46 +159,52 @@ async def schedule_formatting(
     cancelled = []
     sources_to_cache = []
     lock = None
+    manager = None
     if write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         # For diff output, we need locks to ensure we don't interleave output
         # from different processes.
         manager = Manager()
         lock = manager.Lock()
-    tasks = {
-        asyncio.ensure_future(
-            loop.run_in_executor(
-                executor, format_file_in_place, src, fast, mode, write_back, lock
-            )
-        ): src
-        for src in sorted(sources)
-    }
-    pending = tasks.keys()
+
     try:
-        loop.add_signal_handler(signal.SIGINT, cancel, pending)
-        loop.add_signal_handler(signal.SIGTERM, cancel, pending)
-    except NotImplementedError:
-        # There are no good alternatives for these on Windows.
-        pass
-    while pending:
-        done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-        for task in done:
-            src = tasks.pop(task)
-            if task.cancelled():
-                cancelled.append(task)
-            elif exc := task.exception():
-                if report.verbose:
-                    traceback.print_exception(type(exc), exc, exc.__traceback__)
-                report.failed(src, str(exc))
-            else:
-                changed = Changed.YES if task.result() else Changed.NO
-                # If the file was written back or was successfully checked as
-                # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
-                ):
-                    sources_to_cache.append(src)
-                report.done(src, changed)
-    if cancelled:
-        await asyncio.gather(*cancelled, return_exceptions=True)
-    if sources_to_cache and not no_cache and cache is not None:
-        cache.write(sources_to_cache)
+        tasks = {
+            asyncio.ensure_future(
+                loop.run_in_executor(
+                    executor, format_file_in_place, src, fast, mode, write_back, lock
+                )
+            ): src
+            for src in sorted(sources)
+        }
+        pending = tasks.keys()
+        try:
+            loop.add_signal_handler(signal.SIGINT, cancel, pending)
+            loop.add_signal_handler(signal.SIGTERM, cancel, pending)
+        except NotImplementedError:
+            # There are no good alternatives for these on Windows.
+            pass
+        while pending:
+            done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            for task in done:
+                src = tasks.pop(task)
+                if task.cancelled():
+                    cancelled.append(task)
+                elif exc := task.exception():
+                    if report.verbose:
+                        traceback.print_exception(type(exc), exc, exc.__traceback__)
+                    report.failed(src, str(exc))
+                else:
+                    changed = Changed.YES if task.result() else Changed.NO
+                    # If the file was written back or was successfully checked as
+                    # well-formatted, store this information in the cache.
+                    if write_back is WriteBack.YES or (
+                        write_back is WriteBack.CHECK and changed is Changed.NO
+                    ):
+                        sources_to_cache.append(src)
+                    report.done(src, changed)
+        if cancelled:
+            await asyncio.gather(*cancelled, return_exceptions=True)
+        if sources_to_cache and not no_cache and cache is not None:
+            cache.write(sources_to_cache)
+    finally:
+        if manager is not None:
+            manager.shutdown()
