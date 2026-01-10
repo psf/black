@@ -1,43 +1,44 @@
+from __future__ import annotations
+
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any, Optional
 
 import black.concurrency as concurrency
 from black import Mode, WriteBack
+from black.report import Report
 
 
 class FakeManager:
-    def __init__(self):
+    shutdown_called: bool
+
+    def __init__(self) -> None:
         self.shutdown_called = False
 
-    def Lock(self):
+    def Lock(self) -> object:
         return object()
 
-    def shutdown(self):
+    def shutdown(self) -> None:
         self.shutdown_called = True
 
 
-class DummyReport:
-    verbose = False
-
-    def done(self, src, changed):
-        pass
-
-    def failed(self, src, message):
-        raise AssertionError(f"Unexpected failure for {src}: {message}")
-
-
-def test_manager_shutdown_called_for_diff(monkeypatch, tmp_path: Path):
+def test_manager_shutdown_called_for_diff(monkeypatch: Any, tmp_path: Path) -> None:
     """
-    Repro for #4950:
     schedule_formatting() creates multiprocessing.Manager() for DIFF/COLOR_DIFF
-    but must shut it down deterministically.
+    and must shut it down deterministically.
     """
     fake_manager = FakeManager()
 
     monkeypatch.setattr(concurrency, "Manager", lambda: fake_manager)
 
-    def fake_format_file_in_place(src, fast, mode, write_back, lock):
+    def fake_format_file_in_place(
+        src: Path,
+        fast: bool,
+        mode: Mode,
+        write_back: WriteBack,
+        lock: Optional[object],
+    ) -> bool:
         assert lock is not None
         return False
 
@@ -46,7 +47,7 @@ def test_manager_shutdown_called_for_diff(monkeypatch, tmp_path: Path):
     src = tmp_path / "a.py"
     src.write_text("x=1\n", encoding="utf8")
 
-    async def run():
+    async def run() -> None:
         loop = asyncio.get_running_loop()
         with ThreadPoolExecutor(max_workers=1) as executor:
             await concurrency.schedule_formatting(
@@ -54,7 +55,7 @@ def test_manager_shutdown_called_for_diff(monkeypatch, tmp_path: Path):
                 fast=False,
                 write_back=WriteBack.DIFF,
                 mode=Mode(),
-                report=DummyReport(),
+                report=Report(),
                 loop=loop,
                 executor=executor,
                 no_cache=True,
@@ -62,5 +63,4 @@ def test_manager_shutdown_called_for_diff(monkeypatch, tmp_path: Path):
 
     asyncio.run(run())
 
-    # Fails BEFORE fix
     assert fake_manager.shutdown_called is True
