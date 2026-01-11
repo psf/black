@@ -42,11 +42,11 @@ class TestManagerCleanup:
                 mock_lock = MagicMock()
                 mock_manager.Lock.return_value = mock_lock
                 mock_manager_class.return_value = mock_manager
-                
+
                 # Create mock executor and loop
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
-                
+
                 # Call the function with DIFF write_back
                 # (which triggers Manager creation)
                 with patch("black.concurrency.Cache.read", return_value=None):
@@ -60,12 +60,12 @@ class TestManagerCleanup:
                         executor=mock_executor,
                         no_cache=True
                     )
-                
+
                 # CRITICAL ASSERTION: Manager.shutdown() MUST be called
                 # This FAILS on base commit because shutdown is never called
                 # This PASSES after solution when shutdown is in finally block
                 mock_manager.shutdown.assert_called_once()
-        
+
         run_async(run_test())
 
     def test_manager_shutdown_called_on_exception(self) -> None:
@@ -82,11 +82,11 @@ class TestManagerCleanup:
                 mock_lock = MagicMock()
                 mock_manager.Lock.return_value = mock_lock
                 mock_manager_class.return_value = mock_manager
-                
+
                 # Create mock executor that will raise an exception
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
-                
+
                 # Mock asyncio.wait to raise an exception
                 with patch(
                     "black.concurrency.asyncio.wait",
@@ -104,12 +104,12 @@ class TestManagerCleanup:
                                 executor=mock_executor,
                                 no_cache=True
                             )
-                
+
                 # CRITICAL: Manager.shutdown() must be called after exception
                 # This FAILS on base commit (no cleanup on exception)
                 # This PASSES after solution (finally ensures cleanup)
                 mock_manager.shutdown.assert_called_once()
-        
+
         run_async(run_test())
 
     def test_no_manager_created_for_non_diff_writeback(self) -> None:
@@ -122,7 +122,7 @@ class TestManagerCleanup:
             with patch('black.concurrency.Manager') as mock_manager_class:
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
-                
+
                 # Call with WriteBack.YES (not DIFF, so no Manager needed)
                 with patch("black.concurrency.Cache.read", return_value=None):
                     await schedule_formatting(
@@ -135,10 +135,10 @@ class TestManagerCleanup:
                         executor=mock_executor,
                         no_cache=True
                     )
-                
+
                 # ASSERTION: Manager should NOT be created for non-DIFF writeback
                 mock_manager_class.assert_not_called()
-        
+
         run_async(run_test())
 
     def test_manager_shutdown_with_early_return(self) -> None:
@@ -151,11 +151,11 @@ class TestManagerCleanup:
             with patch('black.concurrency.Manager') as mock_manager_class:
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
-                
+
                 # Mock Cache to return all sources as cached
                 mock_cache = MagicMock()
                 mock_cache.filtered_cached.return_value = (set(), {Path("cached.py")})
-                
+
                 with patch(
                     "black.concurrency.Cache.read", return_value=mock_cache
                 ):
@@ -169,8 +169,8 @@ class TestManagerCleanup:
                         executor=mock_executor,
                         no_cache=False
                     )
-                
+
                 # Manager should not be created because function returns early
                 mock_manager_class.assert_not_called()
-        
+
         run_async(run_test())

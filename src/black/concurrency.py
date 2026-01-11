@@ -207,4 +207,3 @@ async def schedule_formatting(
     finally:
         if manager is not None:
             manager.shutdown()
-
