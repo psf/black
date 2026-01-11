@@ -36,29 +36,35 @@ class TestManagerCleanup:
         """
 
         async def run_test() -> None:
-            with patch('black.concurrency.Manager') as mock_manager_class:
+            with patch("black.concurrency.Manager") as mock_manager_class:
                 # Setup mock Manager
                 mock_manager = MagicMock()
                 mock_lock = MagicMock()
                 mock_manager.Lock.return_value = mock_lock
                 mock_manager_class.return_value = mock_manager
 
-                # Create mock executor and loop
+                # Create mock executor and loop that returns completed futures
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
 
-                # Call the function with DIFF write_back
-                # (which triggers Manager creation)
+                # Mock the executor to return a completed future
+                from concurrent.futures import Future
+
+                future = Future()
+                future.set_result(False)  # Simulate no changes made
+                mock_executor.submit.return_value = future
+
+                # Provide actual source file to trigger manager creation
                 with patch("black.concurrency.Cache.read", return_value=None):
                     await schedule_formatting(
-                        sources=set(),  # Empty sources to avoid actual formatting
+                        sources={Path("test.py")},  # Actual source file
                         fast=False,
                         write_back=WriteBack.DIFF,
                         mode=Mode(),
                         report=Report(),
                         loop=loop,
                         executor=mock_executor,
-                        no_cache=True
+                        no_cache=True,
                     )
 
                 # CRITICAL ASSERTION: Manager.shutdown() MUST be called
@@ -76,16 +82,23 @@ class TestManagerCleanup:
         """
 
         async def run_test() -> None:
-            with patch('black.concurrency.Manager') as mock_manager_class:
+            with patch("black.concurrency.Manager") as mock_manager_class:
                 # Setup mock Manager
                 mock_manager = MagicMock()
                 mock_lock = MagicMock()
                 mock_manager.Lock.return_value = mock_lock
                 mock_manager_class.return_value = mock_manager
 
-                # Create mock executor that will raise an exception
+                # Create mock executor
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
+
+                # Mock the executor to return a future
+                from concurrent.futures import Future
+
+                future = Future()
+                future.set_result(False)
+                mock_executor.submit.return_value = future
 
                 # Mock asyncio.wait to raise an exception
                 with patch(
@@ -95,14 +108,14 @@ class TestManagerCleanup:
                     with patch("black.concurrency.Cache.read", return_value=None):
                         with pytest.raises(RuntimeError):
                             await schedule_formatting(
-                                sources={Path("test.py")},
+                                sources={Path("test.py")},  # Actual source
                                 fast=False,
                                 write_back=WriteBack.COLOR_DIFF,
                                 mode=Mode(),
                                 report=Report(),
                                 loop=loop,
                                 executor=mock_executor,
-                                no_cache=True
+                                no_cache=True,
                             )
 
                 # CRITICAL: Manager.shutdown() must be called after exception
