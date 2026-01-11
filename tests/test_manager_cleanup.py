@@ -1,17 +1,20 @@
 """Tests for Manager cleanup in concurrency module - Bug Fix Verification"""
 
-import asyncio
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock, call
-from multiprocessing import Manager
+from __future__ import annotations
 
-from black import WriteBack, Mode
+import asyncio
+from pathlib import Path
+from typing import Any
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+from black import Mode, WriteBack
 from black.concurrency import schedule_formatting
 from black.report import Report
 
 
-def run_async(coro):
+def run_async(coro: Any) -> Any:
     """Helper to run async function in sync test"""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -25,13 +28,14 @@ def run_async(coro):
 class TestManagerCleanup:
     """Verify Manager is properly shutdown after use in schedule_formatting"""
 
-    def test_manager_shutdown_called_on_success(self):
+    def test_manager_shutdown_called_on_success(self) -> None:
         """Test that Manager.shutdown() is called after successful execution
-        
+
         This test FAILS on base commit (no shutdown)
         This test PASSES after solution (with shutdown in finally block)
         """
-        async def run_test():
+
+        async def run_test() -> None:
             with patch('black.concurrency.Manager') as mock_manager_class:
                 # Setup mock Manager
                 mock_manager = MagicMock()
@@ -43,8 +47,9 @@ class TestManagerCleanup:
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
                 
-                # Call the function with DIFF write_back (which triggers Manager creation)
-                with patch('black.concurrency.Cache.read', return_value=None):
+                # Call the function with DIFF write_back
+                # (which triggers Manager creation)
+                with patch("black.concurrency.Cache.read", return_value=None):
                     await schedule_formatting(
                         sources=set(),  # Empty sources to avoid actual formatting
                         fast=False,
@@ -63,13 +68,14 @@ class TestManagerCleanup:
         
         run_async(run_test())
 
-    def test_manager_shutdown_called_on_exception(self):
+    def test_manager_shutdown_called_on_exception(self) -> None:
         """Test that Manager.shutdown() is called even when exception occurs
-        
+
         This test FAILS on base commit (no shutdown)
         This test PASSES after solution (shutdown in finally ensures cleanup)
         """
-        async def run_test():
+
+        async def run_test() -> None:
             with patch('black.concurrency.Manager') as mock_manager_class:
                 # Setup mock Manager
                 mock_manager = MagicMock()
@@ -82,8 +88,11 @@ class TestManagerCleanup:
                 mock_executor = MagicMock()
                 
                 # Mock asyncio.wait to raise an exception
-                with patch('black.concurrency.asyncio.wait', side_effect=RuntimeError("Test exception")):
-                    with patch('black.concurrency.Cache.read', return_value=None):
+                with patch(
+                    "black.concurrency.asyncio.wait",
+                    side_effect=RuntimeError("Test exception"),
+                ):
+                    with patch("black.concurrency.Cache.read", return_value=None):
                         with pytest.raises(RuntimeError):
                             await schedule_formatting(
                                 sources={Path("test.py")},
@@ -96,25 +105,26 @@ class TestManagerCleanup:
                                 no_cache=True
                             )
                 
-                # CRITICAL ASSERTION: Manager.shutdown() MUST be called even after exception
+                # CRITICAL: Manager.shutdown() must be called after exception
                 # This FAILS on base commit (no cleanup on exception)
-                # This PASSES after solution (finally block ensures cleanup)
+                # This PASSES after solution (finally ensures cleanup)
                 mock_manager.shutdown.assert_called_once()
         
         run_async(run_test())
 
-    def test_no_manager_created_for_non_diff_writeback(self):
+    def test_no_manager_created_for_non_diff_writeback(self) -> None:
         """Test that Manager is not created when not using DIFF writeback
-        
+
         This documents that Manager is only needed for DIFF output
         """
-        async def run_test():
+
+        async def run_test() -> None:
             with patch('black.concurrency.Manager') as mock_manager_class:
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
                 
                 # Call with WriteBack.YES (not DIFF, so no Manager needed)
-                with patch('black.concurrency.Cache.read', return_value=None):
+                with patch("black.concurrency.Cache.read", return_value=None):
                     await schedule_formatting(
                         sources=set(),  # Empty sources
                         fast=False,
@@ -131,12 +141,13 @@ class TestManagerCleanup:
         
         run_async(run_test())
 
-    def test_manager_shutdown_with_early_return(self):
-        """Test that Manager is not created when sources are empty after cache filtering
-        
+    def test_manager_shutdown_with_early_return(self) -> None:
+        """Test that Manager is not created on early return.
+
         Tests the early return path when no sources need formatting
         """
-        async def run_test():
+
+        async def run_test() -> None:
             with patch('black.concurrency.Manager') as mock_manager_class:
                 loop = asyncio.get_event_loop()
                 mock_executor = MagicMock()
@@ -145,7 +156,9 @@ class TestManagerCleanup:
                 mock_cache = MagicMock()
                 mock_cache.filtered_cached.return_value = (set(), {Path("cached.py")})
                 
-                with patch('black.concurrency.Cache.read', return_value=mock_cache):
+                with patch(
+                    "black.concurrency.Cache.read", return_value=mock_cache
+                ):
                     await schedule_formatting(
                         sources={Path("cached.py")},
                         fast=False,
