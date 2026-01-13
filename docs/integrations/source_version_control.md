@@ -52,9 +52,10 @@ The `black-jupyter` hook became available in version 21.8b0.
 ## Excluding files with pre-commit
 
 When using pre-commit, there's an important distinction in how file exclusions work.
-Pre-commit passes files directly to Black via the command line, rather than letting Black
-discover files recursively. This means Black's `--exclude` option won't work as expected
-because it only applies to files discovered during recursive directory traversal.
+Pre-commit passes files directly to Black via the command line, rather than letting
+Black discover files recursively. This means Black's `--exclude` option won't work as
+expected because it only applies to files discovered during recursive directory
+traversal.
 
 To exclude files when using pre-commit, you have two options:
 
@@ -88,7 +89,8 @@ repos:
         args: [--force-exclude]
 ```
 
-When using `--force-exclude`, Black will read exclusion patterns from your `pyproject.toml`:
+When using `--force-exclude`, Black will read exclusion patterns from your
+`pyproject.toml`:
 
 ```toml
 [tool.black]
