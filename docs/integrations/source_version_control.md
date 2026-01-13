@@ -51,7 +51,7 @@ The `black-jupyter` hook became available in version 21.8b0.
 
 [pre-commit-mutable-rev]:
   https://pre-commit.com/#using-the-latest-version-for-a-repository
- 
+
 ### Recommended: use pre-commit’s own exclude
 
 The most reliable way to prevent files from being formatted is to use pre-commit’s
