@@ -51,15 +51,7 @@ The `black-jupyter` hook became available in version 21.8b0.
 
 [pre-commit-mutable-rev]:
   https://pre-commit.com/#using-the-latest-version-for-a-repository
-
-## Using Black with pre-commit: how excludes work
-
-When Black is used through pre-commit, pre-commit passes an explicit list of file paths
-directly to Black. Because these paths are supplied on the command line, Black will
-format them even if they match exclude or extend-exclude patterns from pyproject.toml.
-Black applies those patterns only during its own file discovery step, which pre-commit
-bypasses.
-
+ 
 ### Recommended: use pre-commit’s own exclude
 
 The most reliable way to prevent files from being formatted is to use pre-commit’s
@@ -75,6 +67,12 @@ repos:
 ```
 
 ### Excluding files in pyproject.toml
+
+When Black is used through pre-commit, pre-commit passes an explicit list of file paths
+directly to Black. Because these paths are supplied on the command line, Black will
+format them even if they match exclude or extend-exclude patterns from pyproject.toml.
+Black applies those patterns only during its own file discovery step, which pre-commit
+bypasses.
 
 You can also configure exclusions inside pyproject.toml so that Black applies them when
 used from the command line or other tools. However, these patterns will not stop
