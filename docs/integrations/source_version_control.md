@@ -49,5 +49,61 @@ repos:
 The `black-jupyter` hook became available in version 21.8b0.
 ```
 
+## Excluding files with pre-commit
+
+When using pre-commit, there's an important distinction in how file exclusions work.
+Pre-commit passes files directly to Black via the command line, rather than letting Black
+discover files recursively. This means Black's `--exclude` option won't work as expected
+because it only applies to files discovered during recursive directory traversal.
+
+To exclude files when using pre-commit, you have two options:
+
+### Option 1: Use pre-commit's exclude (Recommended)
+
+Configure exclusions directly in `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.12.0
+    hooks:
+      - id: black
+        exclude: ^migrations/|^generated/
+```
+
+This is the recommended approach because pre-commit filters files before passing them to
+Black, avoiding unnecessary processing.
+
+### Option 2: Use Black's --force-exclude
+
+The `--force-exclude` option forces Black to respect exclusion patterns even for files
+passed directly via the command line:
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 25.12.0
+    hooks:
+      - id: black
+        args: [--force-exclude]
+```
+
+When using `--force-exclude`, Black will read exclusion patterns from your `pyproject.toml`:
+
+```toml
+[tool.black]
+force-exclude = '''
+(
+  ^migrations/
+  | ^generated/
+)
+'''
+```
+
+```{note}
+The `--force-exclude` option was added in version 20.8b0 specifically to support
+pre-commit workflows where files are passed directly via CLI.
+```
+
 [pre-commit-mutable-rev]:
   https://pre-commit.com/#using-the-latest-version-for-a-repository
