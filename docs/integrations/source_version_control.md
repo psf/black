@@ -75,22 +75,11 @@ repos:
 This is the recommended approach because pre-commit filters files before passing them to
 Black, avoiding unnecessary processing.
 
-### Option 2: Use Black's --force-exclude
+### Option 2: Use Black's force-exclude in pyproject.toml
 
-The `--force-exclude` option forces Black to respect exclusion patterns even for files
-passed directly via the command line:
-
-```yaml
-repos:
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.12.0
-    hooks:
-      - id: black
-        args: [--force-exclude]
-```
-
-When using `--force-exclude`, Black will read exclusion patterns from your
-`pyproject.toml`:
+Black's `force-exclude` configuration option excludes files even when they are passed
+explicitly as command-line arguments (which is how pre-commit invokes Black). Simply
+add the pattern to your `pyproject.toml`:
 
 ```toml
 [tool.black]
@@ -102,9 +91,13 @@ force-exclude = '''
 '''
 ```
 
+Black automatically reads this configuration—no additional CLI arguments are needed in
+your `.pre-commit-config.yaml`.
+
 ```{note}
-The `--force-exclude` option was added in version 20.8b0 specifically to support
-pre-commit workflows where files are passed directly via CLI.
+The `force-exclude` option was added in version 20.8b0 specifically to support
+workflows where files are passed directly via CLI, such as pre-commit hooks and
+editor plugins.
 ```
 
 [pre-commit-mutable-rev]:
