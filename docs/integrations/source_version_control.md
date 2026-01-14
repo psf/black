@@ -78,8 +78,8 @@ Black, avoiding unnecessary processing.
 ### Option 2: Use Black's force-exclude in pyproject.toml
 
 Black's `force-exclude` configuration option excludes files even when they are passed
-explicitly as command-line arguments (which is how pre-commit invokes Black). Simply
-add the pattern to your `pyproject.toml`:
+explicitly as command-line arguments (which is how pre-commit invokes Black). Simply add
+the pattern to your `pyproject.toml`:
 
 ```toml
 [tool.black]
