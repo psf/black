@@ -2640,6 +2640,9 @@ class TestFileCollection:
             Path(path / "b/exclude/a.pie"),
             Path(path / "b/exclude/a.py"),
             Path(path / "b/exclude/a.pyi"),
+            Path(path / "b/exclude/still_exclude/a.pie"),
+            Path(path / "b/exclude/still_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.pyi"),
             Path(path / "b/dont_exclude/a.pie"),
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
@@ -2667,6 +2670,7 @@ class TestFileCollection:
         src = [path]
         expected = [
             Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.py"),
             Path(path / "b/.definitely_exclude/a.py"),
         ]
         assert_collected_sources(
@@ -2678,6 +2682,7 @@ class TestFileCollection:
         src = [path]
         expected = [
             Path(path / "b/exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.py"),
             Path(path / "b/dont_exclude/a.py"),
         ]
         assert_collected_sources(
