@@ -28,7 +28,7 @@ import pytest
 from click import unstyle
 from click.testing import CliRunner
 from packaging.version import Version
-from pathspec import PathSpec
+from pathspec import GitIgnoreSpec
 
 import black
 import black.files
@@ -2514,8 +2514,8 @@ class TestFileCollection:
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
         report = black.Report()
-        gitignore = PathSpec.from_lines(
-            "gitwildmatch", ["exclude/", ".definitely_exclude"]
+        gitignore = GitIgnoreSpec.from_lines(
+            ["exclude/", ".definitely_exclude", "!exclude/still_exclude/"]
         )
         sources: list[Path] = []
         expected = [
@@ -2690,7 +2690,7 @@ class TestFileCollection:
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
+        gitignore = GitIgnoreSpec.from_lines([])
 
         regular = MagicMock()
         regular.relative_to.return_value = Path("regular.py")

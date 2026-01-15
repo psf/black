@@ -9,6 +9,26 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+This release alo bumps `pathspec` to v1.0.0 and fixes inconsistencies with Git's
+`.gitignore` logic (#4958). Now, files will be ignored if a pattern matches them, even
+if the parent directory is directly unignored. For example, Black would previously
+format `foo/bar.py` with this `.gitignore`:
+
+```
+*
+!foo/
+```
+
+Now, `foo/bar.py` will remain ignored. To ensure `foo/` and all of it's children are
+included in formatting (and in Git), use this `.gitignore`:
+
+```
+*
+!foo/**
+```
+
+This new behavior matches Git.
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
