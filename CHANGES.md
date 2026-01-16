@@ -9,6 +9,28 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+This release alo bumps `pathspec` to v1.0.0 and fixes inconsistencies with Git's
+`.gitignore` logic (#4958). Now, files will be ignored if a pattern matches them, even
+if the parent directory is directly unignored. For example, Black would previously
+format `exclude/not_this/foo.py` with this `.gitignore`:
+
+```
+exclude/
+!exclude/not_this/
+```
+
+Now, `exclude/not_this/foo.py` will remain ignored. To ensure `exclude/not_this/` and
+all of it's children are included in formatting (and in Git), use this `.gitignore`:
+
+```
+*/exclude/*
+!*/exclude/not_this/
+```
+
+This new behavior matches Git. The leading `*/` are only necessary if you wish to ignore
+matching subdirectories (like the previous behavior did), and not just matching root
+directories.
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
@@ -60,6 +82,7 @@
 
 ### Stable style
 
+- Fix Shutdown multiprocessing Manager in schedule_formatting (#4952)
 - Fix bug where comments preceding `# fmt: off`/`# fmt: on` blocks were incorrectly
   removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4845)
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on

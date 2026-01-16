@@ -4,18 +4,14 @@ formats:
   - htmlzip
 
 build:
-  os: ubuntu-22.04
+  os: ubuntu-lts-latest
   tools:
-    python: "3.11"
-
-python:
-  install:
-    - requirements: docs/requirements.txt
-
-    - method: pip
-      path: .
-      extra_requirements:
-        - d
+    python: "3.13"
+  jobs:
+    install:
+      - pip install --upgrade pip
+      - pip install .[d]
+      - pip install --group docs
 
 sphinx:
   configuration: docs/conf.py
