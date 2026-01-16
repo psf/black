@@ -55,6 +55,8 @@ directories.
 
 <!-- Changes that improve Black's performance. -->
 
+- Format files from largest to smallest to improve benefits from concurrency (#4784)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->

@@ -146,14 +146,19 @@ async def schedule_formatting(
     :func:`format_file_in_place`.
     """
     cache = None if no_cache else Cache.read(mode)
-    if cache is not None and write_back not in (
+    if cache is None or write_back in (
         WriteBack.DIFF,
         WriteBack.COLOR_DIFF,
     ):
-        sources, cached = cache.filtered_cached(sources)
+        sources_with_stats: Iterable[tuple[Optional[os.stat_result], Path]] = (
+            (None, src) for src in sources
+        )
+    else:
+        sources_with_stats, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
-    if not sources:
+
+    if not sources_with_stats:
         return
 
     cancelled = []
@@ -170,7 +175,7 @@ async def schedule_formatting(
                 executor, format_file_in_place, src, fast, mode, write_back, lock
             )
         ): src
-        for src in sorted(sources)
+        for _, src in sorted(sources_with_stats, key=_sources_sort_key)
     }
     pending = tasks.keys()
     try:
@@ -202,3 +207,14 @@ async def schedule_formatting(
         await asyncio.gather(*cancelled, return_exceptions=True)
     if sources_to_cache and not no_cache and cache is not None:
         cache.write(sources_to_cache)
+
+
+def _sources_sort_key(
+    source: tuple[Optional[os.stat_result], Path],
+) -> tuple[int, Path]:
+    stat, src = source
+
+    if not stat:
+        stat = src.stat()
+
+    return -stat.st_size, src
