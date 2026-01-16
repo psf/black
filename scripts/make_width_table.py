@@ -12,7 +12,7 @@ the version of wcwidth and Unicode that it was generated for.
 In order to run this script, you need to install the latest version of wcwidth.
 You can do this by running:
 
-    pip install -U wcwidth
+    pip install --group width-table
 
 """
 

@@ -2,10 +2,10 @@
 " Author: Łukasz Langa
 " Created: Mon Mar 26 23:27:53 2018 -0700
 " Requires: Vim Ver7.0+
-" Version:  1.2
+" Version: 1.2
 "
 " Documentation:
-"   This plugin formats Python files.
+"    This plugin formats Python files.
 "
 " History:
 "  1.0:
@@ -16,7 +16,7 @@
 "    - use autoload script
 
 if exists("g:load_black")
-  finish
+    finish
 endif
 
 if v:version < 700 || !has('python3')
@@ -24,10 +24,10 @@ if v:version < 700 || !has('python3')
         let messages = []
 
         if v:version < 700
-          call add(messages, "vim7.0+")
+            call add(messages, "vim7.0+")
         endif
         if !has('python3')
-          call add(messages, "Python 3.10 support")
+            call add(messages, "Python 3.10 support")
         endif
 
         echo "The black.vim plugin requires" join(messages, " and ")
@@ -40,53 +40,53 @@ endif
 
 let g:load_black = "py1.0"
 if !exists("g:black_virtualenv")
-  if has("nvim")
-    let g:black_virtualenv = "~/.local/share/nvim/black"
-  else
-    let g:black_virtualenv = "~/.vim/black"
-  endif
+    if has("nvim")
+        let g:black_virtualenv = "~/.local/share/nvim/black"
+    else
+        let g:black_virtualenv = "~/.vim/black"
+    endif
 endif
 if !exists("g:black_fast")
-  let g:black_fast = 0
+    let g:black_fast = 0
 endif
 if !exists("g:black_linelength")
-  let g:black_linelength = 88
+    let g:black_linelength = 88
 endif
 if !exists("g:black_skip_string_normalization")
-  if exists("g:black_string_normalization")
-    let g:black_skip_string_normalization = !g:black_string_normalization
-  else
-    let g:black_skip_string_normalization = 0
-  endif
+    if exists("g:black_string_normalization")
+        let g:black_skip_string_normalization = !g:black_string_normalization
+    else
+        let g:black_skip_string_normalization = 0
+    endif
 endif
 if !exists("g:black_skip_magic_trailing_comma")
-  if exists("g:black_magic_trailing_comma")
-    let g:black_skip_magic_trailing_comma = !g:black_magic_trailing_comma
-  else
-    let g:black_skip_magic_trailing_comma = 0
-  endif
+    if exists("g:black_magic_trailing_comma")
+        let g:black_skip_magic_trailing_comma = !g:black_magic_trailing_comma
+    else
+        let g:black_skip_magic_trailing_comma = 0
+    endif
 endif
 if !exists("g:black_quiet")
-  let g:black_quiet = 0
+    let g:black_quiet = 0
 endif
 if !exists("g:black_target_version")
-  let g:black_target_version = ""
+    let g:black_target_version = ""
 endif
 if !exists("g:black_use_virtualenv")
-  let g:black_use_virtualenv = 1
+    let g:black_use_virtualenv = 1
 endif
 if !exists("g:black_preview")
-  let g:black_preview = 0
+    let g:black_preview = 0
 endif
 
 function BlackComplete(ArgLead, CmdLine, CursorPos)
-  return [
-\    'target_version=py310',
-\    'target_version=py311',
-\    'target_version=py312',
-\    'target_version=py313',
-\    'target_version=py314',
-\  ]
+    return [
+\       'target_version=py310',
+\       'target_version=py311',
+\       'target_version=py312',
+\       'target_version=py313',
+\       'target_version=py314',
+\   ]
 endfunction
 
 command! -nargs=* -complete=customlist,BlackComplete Black :call black#Black(<f-args>)

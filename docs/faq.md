@@ -123,12 +123,12 @@ CPython doesn't accept.
 
 While _Black_ is indeed a pure Python project, we use [mypyc] to compile _Black_ into a
 C Python extension, usually doubling performance. These compiled wheels are available
-for 64-bit versions of Windows, Linux (via the manylinux standard), and macOS across all
-supported CPython versions.
+for 64-bit versions of Windows (both AMD and ARM), Linux (via the manylinux standard),
+and macOS across all supported CPython versions.
 
-Platforms including musl-based and/or ARM Linux distributions, and ARM Windows are
-currently **not** supported. These platforms will fall back to the slower pure Python
-wheel available on PyPI.
+Platforms including musl-based and/or ARM Linux distributions are currently **not**
+supported. These platforms will fall back to the slower pure Python wheel available on
+PyPI.
 
 If you are experiencing exceptionally weird issues or even segfaults, you can try
 passing `--no-binary black` to your pip install invocation. This flag excludes all
