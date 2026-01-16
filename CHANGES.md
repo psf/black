@@ -23,11 +23,13 @@ Now, `exclude/not_this/foo.py` will remain ignored. To ensure `exclude/not_this/
 all of it's children are included in formatting (and in Git), use this `.gitignore`:
 
 ```
-exclude/*
-!exclude/not_this/
+*/exclude/*
+!*/exclude/not_this/
 ```
 
-This new behavior matches Git.
+This new behavior matches Git. The leading `*/` are only necessary if you wish to ignore
+matching subdirectories (like the previous behavior did), and not just matching root
+directories.
 
 ### Stable style
 
