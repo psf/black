@@ -103,7 +103,7 @@ jobs:
           --force-${{ matrix.style }}-style -v
 
       - name: Upload baseline analysis
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.baseline-analysis }}
           path: ${{ matrix.baseline-analysis }}
@@ -166,7 +166,7 @@ jobs:
           --force-${{ matrix.style }}-style -v
 
       - name: Upload target analysis
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.target-analysis }}
           path: ${{ matrix.target-analysis }}
@@ -189,7 +189,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           merge-multiple: true
 
@@ -205,7 +205,7 @@ jobs:
           compare --diff ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
 
       - name: Upload diff report
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.style }}-diff.html
           path: diff.html
@@ -221,7 +221,7 @@ jobs:
 
       - name: Upload summary file (PR only)
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: .${{ matrix.style }}.pr-comment.md
           path: .${{ matrix.style }}.pr-comment.md
