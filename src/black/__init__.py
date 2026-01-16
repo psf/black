@@ -23,8 +23,8 @@ from typing import Any
 import click
 from click.core import ParameterSource
 from mypy_extensions import mypyc_attr
-from pathspec import PathSpec
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+from pathspec import GitIgnoreSpec
+from pathspec.patterns.gitignore import GitIgnorePatternError
 
 from _black_version import version as __version__
 from black.cache import Cache
@@ -685,7 +685,7 @@ def main(
                 report=report,
                 stdin_filename=stdin_filename,
             )
-        except GitWildMatchPatternError:
+        except GitIgnorePatternError:
             ctx.exit(1)
 
         if not sources:
@@ -749,7 +749,7 @@ def get_sources(
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
-    gitignore: dict[Path, PathSpec] | None = None
+    gitignore: dict[Path, GitIgnoreSpec] | None = None
     root_gitignore = get_gitignore(root)
 
     for s in src:

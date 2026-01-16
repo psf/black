@@ -35,7 +35,7 @@ builds all release artifacts and publishes them to the various platforms we publ
 We now have a `scripts/release.py` script to help with cutting the release PRs.
 
 - `python3 scripts/release.py --help` is your friend.
-  - `release.py` has only been tested in Python 3.12 (so get with the times :D)
+  - `release.py` has only been tested in Python 3.12+ (so get with the times :D)
 
 To cut a release:
 
@@ -43,7 +43,7 @@ To cut a release:
    - **_Black_ follows the [CalVer] versioning standard using the `YY.M.N` format**
      - So unless there already has been a release during this month, `N` should be `0`
    - Example: the first release in January, 2022 → `22.1.0`
-   - `release.py` will calculate this and log to stderr for you copy paste pleasure
+   - `release.py` will calculate this and log it to stdout for your copy-paste pleasure
 1. Double-check that no changelog entries since the last release were put in the wrong
    section (e.g., run `git diff origin/stable CHANGES.md`)
 1. File a PR editing `CHANGES.md` and the docs to version the latest changes
@@ -102,7 +102,7 @@ They are triggered by the publication of a [GitHub Release].
 
 Below are descriptions of our release workflows.
 
-### Publish to PyPI
+### build and publish
 
 This is our main workflow. It builds an [sdist] and [wheels] to upload to PyPI where the
 vast majority of users will download Black from. It's divided into three job groups:
@@ -110,10 +110,10 @@ vast majority of users will download Black from. It's divided into three job gro
 #### sdist + pure wheel
 
 This single job builds the sdist and pure Python wheel (i.e., a wheel that only contains
-Python code) using [build] and then uploads them to PyPI using [twine]. These artifacts
-are general-purpose and can be used on basically any platform supported by Python.
+Python code) using [Hatch]. These artifacts are general-purpose and can be used on
+basically any platform supported by Python.
 
-#### mypyc wheels (…)
+#### generate wheels matrix / mypyc wheels (…)
 
 We use [mypyc] to compile _Black_ into a CPython C extension for significantly improved
 performance. Wheels built with mypyc are platform and Python version specific.
@@ -124,9 +124,12 @@ extensions for many environments for us. Since building these wheels is slow, th
 multiple mypyc wheels jobs (hence the term "matrix") that build for a specific platform
 (as noted in the job name in parentheses).
 
-Like the previous job group, the built wheels are uploaded to PyPI using [twine].
+#### publish-hatch / publish-mypyc
 
-#### Update stable branch
+These jobs upload the built sdist and all wheels to PyPI using [Trusted
+publishing][trusted-publishing].
+
+#### update stable branch
 
 So this job doesn't _really_ belong here, but updating the `stable` branch after the
 other PyPI jobs pass (they must pass for this job to start) makes the most sense. This
@@ -134,7 +137,7 @@ saves us from remembering to update the branch sometime after cutting the releas
 
 - _Currently this workflow uses an API token associated with @ambv's PyPI account_
 
-### Publish executables
+### publish binaries
 
 This workflow builds native executables for multiple platforms using [PyInstaller]. This
 allows people to download the executable for their platform and run _Black_ without a
@@ -155,18 +158,16 @@ This also runs on each push to `main`.
 ```
 
 [black-actions]: https://github.com/psf/black/actions
-[build]: https://pypa-build.readthedocs.io/
 [calver]: https://calver.org
 [cibuildwheel]: https://cibuildwheel.readthedocs.io/
 [gh-4563]: https://github.com/psf/black/pull/4563
 [github actions]: https://github.com/features/actions
 [github release]: https://github.com/psf/black/releases
-[new-release]: https://github.com/psf/black/releases/new
+[hatch]: https://hatch.pypa.io/latest/
 [mypyc]: https://mypyc.readthedocs.io/
-[mypyc-platform-support]:
-  /faq.html#what-is-compiled-yes-no-all-about-in-the-version-output
+[new-release]: https://github.com/psf/black/releases/new
 [pyinstaller]: https://www.pyinstaller.org/
 [sdist]:
-  https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist
-[twine]: https://github.com/features/actions
-[wheels]: https://packaging.python.org/en/latest/glossary/#term-Wheel
+  https://packaging.python.org/en/latest/glossary/#term-source-distribution-or-sdist
+[trusted-publishing]: https://docs.pypi.org/trusted-publishers/
+[wheels]: https://packaging.python.org/en/latest/glossary/#term-wheel
