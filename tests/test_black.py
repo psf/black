@@ -2514,18 +2514,45 @@ class TestFileCollection:
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
         report = black.Report()
-        gitignore = GitIgnoreSpec.from_lines([
-            "exclude/",
-            ".definitely_exclude",
-            "!exclude/still_exclude/",
-            "!exclude/include_this/**",
-        ])
+        gitignore = GitIgnoreSpec.from_lines(
+            ["exclude/", ".definitely_exclude", "!exclude/still_exclude/"]
+        )
         sources: list[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
-            Path(path / "b/exclude/include_this/a.py"),
-            Path(path / "b/exclude/include_this/a.pyi"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
+    def test_gitignore_reinclude(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = GitIgnoreSpec.from_lines(
+            ["exclude/*", ".definitely_exclude", "!exclude/still_exclude/"]
+        )
+        sources: list[Path] = []
+        expected = [
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+            Path(path / "b/exclude/still_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.pyi"),
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
@@ -2648,9 +2675,6 @@ class TestFileCollection:
             Path(path / "b/exclude/still_exclude/a.pie"),
             Path(path / "b/exclude/still_exclude/a.py"),
             Path(path / "b/exclude/still_exclude/a.pyi"),
-            Path(path / "b/exclude/include_this/a.pie"),
-            Path(path / "b/exclude/include_this/a.py"),
-            Path(path / "b/exclude/include_this/a.pyi"),
             Path(path / "b/dont_exclude/a.pie"),
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
@@ -2679,7 +2703,6 @@ class TestFileCollection:
         expected = [
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/exclude/still_exclude/a.py"),
-            Path(path / "b/exclude/include_this/a.py"),
             Path(path / "b/.definitely_exclude/a.py"),
         ]
         assert_collected_sources(
@@ -2692,7 +2715,6 @@ class TestFileCollection:
         expected = [
             Path(path / "b/exclude/a.py"),
             Path(path / "b/exclude/still_exclude/a.py"),
-            Path(path / "b/exclude/include_this/a.py"),
             Path(path / "b/dont_exclude/a.py"),
         ]
         assert_collected_sources(
