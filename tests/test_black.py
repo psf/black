@@ -2452,7 +2452,7 @@ def assert_collected_sources(
     )
     gs_force_exclude = None if force_exclude is None else compile_pattern(force_exclude)
     collected = black.get_sources(
-        root=root or THIS_DIR,
+        root=(root or THIS_DIR),
         src=gs_src,
         quiet=False,
         verbose=False,

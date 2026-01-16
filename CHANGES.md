@@ -39,6 +39,9 @@ directories.
 
 <!-- Changes that affect Black's preview style -->
 
+- Parenthesize complex expressions passed as keyword arguments or parameter defaults
+  (#4925)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
