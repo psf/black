@@ -1,5 +1,79 @@
 # Change Log
 
+## Unreleased
+
+<!-- PR authors:
+     Please include the PR number in the changelog entry, not the issue number -->
+
+### Highlights
+
+<!-- Include any especially major or disruptive changes here -->
+
+This release alo bumps `pathspec` to v1.0.0 and fixes inconsistencies with Git's
+`.gitignore` logic (#4958). Now, files will be ignored if a pattern matches them, even
+if the parent directory is directly unignored. For example, Black would previously
+format `exclude/not_this/foo.py` with this `.gitignore`:
+
+```
+exclude/
+!exclude/not_this/
+```
+
+Now, `exclude/not_this/foo.py` will remain ignored. To ensure `exclude/not_this/` and
+all of it's children are included in formatting (and in Git), use this `.gitignore`:
+
+```
+*/exclude/*
+!*/exclude/not_this/
+```
+
+This new behavior matches Git. The leading `*/` are only necessary if you wish to ignore
+matching subdirectories (like the previous behavior did), and not just matching root
+directories.
+
+### Stable style
+
+<!-- Changes that affect Black's stable style -->
+
+### Preview style
+
+<!-- Changes that affect Black's preview style -->
+
+### Configuration
+
+<!-- Changes to how Black can be configured -->
+
+### Packaging
+
+<!-- Changes to how Black is packaged, such as dependency requirements -->
+
+### Parser
+
+<!-- Changes to the parser or to version autodetection -->
+
+### Performance
+
+<!-- Changes that improve Black's performance. -->
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
 ## 25.12.0
 
 ### Highlights

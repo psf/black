@@ -64,7 +64,7 @@ runs:
         # Display the raw output in the step
         echo "${out}"
 
-        if [ "${{ inputs.summary }}" == "true" ]; then
+        if [ "${INPUT_SUMMARY}" == "true" ]; then
           # Display the Markdown output in the job summary
           echo "\`\`\`python" >> $GITHUB_STEP_SUMMARY
           echo "${out}" >> $GITHUB_STEP_SUMMARY
@@ -81,6 +81,7 @@ runs:
         INPUT_BLACK_ARGS: ${{ inputs.black_args }}
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_USE_PYPROJECT: ${{ inputs.use_pyproject }}
+        INPUT_SUMMARY: ${{ inputs.summary }}
         OUTPUT_FILE: ${{ inputs.output-file }}
         pythonioencoding: utf-8
       shell: bash
