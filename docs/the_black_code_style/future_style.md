@@ -139,6 +139,9 @@ The unstable style additionally includes the following features:
   brackets ([see below](labels/hug-parens))
 - `string_processing`: split long string literals and related changes
   ([see below](labels/string-processing))
+- `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
+  patterns which have trailing commas in them, even if the guard expression fits in one
+  line
 
 (labels/hug-parens)=
 
