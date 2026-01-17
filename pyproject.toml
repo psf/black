@@ -1,19 +1,19 @@
 # Example configuration for Black.
 
 # NOTE: you have to use single-quoted strings in TOML for regular expressions.
-# It's the equivalent of r-strings in Python.  Multiline strings are treated as
-# verbose regular expressions by Black.  Use [ ] to denote a significant space
-# character.
+# It's the equivalent of r-strings in Python.
+# Multiline strings are treated as verbose regular expressions by Black.
+# Use [ ] to denote a significant space character.
 
 [tool.black]
 line-length = 88
-target-version = ['py310']
+target-version = ["py310"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
-  # The following are specific to Black, you probably don't want those.
-  tests/data/
-  | profiling/
+    # The following are specific to Black, you probably don't want those.
+    tests/data/
+    | profiling/
 )
 '''
 # We use the unstable style for formatting Black itself. If you
@@ -26,7 +26,7 @@ unstable = true
 # NOTE: You don't need this in your own Black configuration.
 
 [build-system]
-requires = ["hatchling>=1.27.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
+requires = ["hatch-fancy-pypi-readme", "hatch-vcs", "hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -35,42 +35,32 @@ description = "The uncompromising code formatter."
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
-authors = [
-  { name = "Łukasz Langa", email = "lukasz@langa.pl" },
-]
-keywords = [
-  "automation",
-  "autopep8",
-  "formatter",
-  "gofmt",
-  "pyfmt",
-  "rustfmt",
-  "yapf",
-]
+authors = [{ name = "Łukasz Langa", email = "lukasz@langa.pl" }]
+keywords = ["automation", "autopep8", "formatter", "gofmt", "pyfmt", "rustfmt", "yapf"]
 classifiers = [
-  "Development Status :: 5 - Production/Stable",
-  "Environment :: Console",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: Software Development :: Quality Assurance",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
 ]
 dependencies = [
-  "click>=8.0.0",
-  "mypy_extensions>=0.4.3",
-  "packaging>=22.0",
-  "pathspec>=0.9.0",
-  "platformdirs>=2",
-  "pytokens>=0.3.0",
-  "tomli>=1.1.0; python_version < '3.11'",
-  "typing_extensions>=4.0.1; python_version < '3.11'",
+    "click>=8.0.0",
+    "mypy_extensions>=0.4.3",
+    "packaging>=22.0",
+    "pathspec>=1.0.0",
+    "platformdirs>=2",
+    "pytokens>=0.3.0",
+    "tomli>=1.1.0; python_version<'3.11'",
+    "typing_extensions>=4.0.1; python_version<'3.11'",
 ]
 dynamic = ["readme", "version"]
 
@@ -78,10 +68,39 @@ dynamic = ["readme", "version"]
 colorama = ["colorama>=0.4.3"]
 uvloop = ["uvloop>=0.15.2"]
 d = ["aiohttp>=3.10"]
-jupyter = [
-  "ipython>=7.8.0",
-  "tokenize-rt>=3.2.0",
+jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
+
+[dependency-groups]
+build = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs"]
+wheels = ["cibuildwheel==3.3.1", "pypyp==1.3.0"]
+binary = ["pyinstaller", "wheel>=0.45.1"]
+
+dev = [{ include-group = "cov-tests" }, { include-group = "tox" }, "pre-commit"]
+cov-tests = [
+    { include-group = "coverage" },
+    { include-group = "tests" },
+    "pytest-cov>=4.1.0",
 ]
+docs = [
+    "docutils==0.21.2",
+    "furo==2025.12.19",
+    "myst-parser==4.0.1",
+    "sphinx_copybutton==0.5.2",
+    "sphinx==8.2.3",
+    "sphinxcontrib-programoutput==0.18",
+]
+
+tox = ["tox>=4.22"]
+tests = ["pytest>=7", "pytest-xdist>=3.0.2"]
+coverage = ["coverage>=5.3"]
+
+fuzz = [{ include-group = "coverage" }, "hypothesis", "hypothesmith"]
+diff-shades = [
+    "diff-shades @ https://github.com/ichard26/diff-shades/archive/stable.zip",
+]
+diff-shades-comment = ["click>=8.1.7", "packaging>=22.0", "urllib3"]
+
+width-table = ["wcwidth>=0.2.6"]
 
 [project.scripts]
 black = "black:patched_main"
@@ -98,19 +117,16 @@ Issues = "https://github.com/psf/black/issues"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
-fragments = [
-  { path = "README.md" },
-  { path = "CHANGES.md" },
-]
+fragments = [{ path = "README.md" }, { path = "CHANGES.md" }]
 
 [tool.hatch.version]
 source = "vcs"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/_black_version.py"
-template = '''
+template = """
 version = "{version}"
-'''
+"""
 
 [tool.hatch.build.targets.sdist]
 exclude = ["/profiling"]
@@ -123,26 +139,22 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = [
-  "hatch-mypyc>=0.16.0",
-  "mypy==1.19.0",
-  "click>=8.1.7",
-]
+dependencies = ["hatch-mypyc>=0.16.0", "mypy==1.19.0"]
 require-runtime-dependencies = true
 exclude = [
-  # There's no good reason for blackd to be compiled.
-  "/src/blackd",
-  # Not performance sensitive, so save bytes + compilation time:
-  "/src/blib2to3/__init__.py",
-  "/src/blib2to3/pgen2/__init__.py",
-  "/src/black/output.py",
-  "/src/black/concurrency.py",
-  "/src/black/files.py",
-  "/src/black/report.py",
-  # Breaks the test suite when compiled (and is also useless):
-  "/src/black/debug.py",
-  # Compiled modules can't be run directly and that's a problem here:
-  "/src/black/__main__.py",
+    # There's no good reason for blackd to be compiled.
+    "/src/blackd",
+    # Not performance sensitive, so save bytes + compilation time:
+    "/src/blib2to3/__init__.py",
+    "/src/blib2to3/pgen2/__init__.py",
+    "/src/black/output.py",
+    "/src/black/concurrency.py",
+    "/src/black/files.py",
+    "/src/black/report.py",
+    # Breaks the test suite when compiled (and is also useless):
+    "/src/black/debug.py",
+    # Compiled modules can't be run directly and that's a problem here:
+    "/src/black/__main__.py",
 ]
 mypy-args = ["--ignore-missing-imports"]
 options = { debug_level = "0" }
@@ -160,15 +172,12 @@ skip = [
     "*-musllinux_*",
     "*-win32",
     "pp*",
-    "cp31?t-*",  # mypyc doesn't have great support for free threaded builds
+    "cp31?t-*",         # mypyc doesn't have great support for free threaded builds
 ]
 
-# This is the bare minimum needed to run the test suite. Pulling in the full
-# test_requirements.txt would download a bunch of other packages not necessary
-# here and would slow down the testing step a fair bit.
-test-requires = ["pytest>=7"]
-test-command = 'pytest {project} -k "not incompatible_with_mypyc"'
-test-extras = ["d"," jupyter"]
+test-groups = ["tests"]
+test-command = 'pytest {project} -k "not incompatible_with_mypyc" -n auto'
+test-extras = ["d", " jupyter"]
 # Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't
 # straight up crash)
 test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
@@ -177,20 +186,11 @@ test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
+CC = "clang"
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
-before-build = [
-    "yum install -y clang gcc",
-]
-
-[tool.cibuildwheel.linux.environment]
-HATCH_BUILD_HOOKS_ENABLE = "1"
-MYPYC_OPT_LEVEL = "3"
-MYPYC_DEBUG_LEVEL = "0"
-
-# Black needs Clang to compile successfully on Linux.
-CC = "clang"
+before-build = ["yum install -y clang"]
 
 [tool.isort]
 atomic = true
@@ -204,21 +204,14 @@ known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 # Option below requires `tests/optional.py`
 addopts = "--strict-config --strict-markers"
 optional-tests = [
-  "no_blackd: run when `d` extra NOT installed",
-  "no_jupyter: run when `jupyter` extra NOT installed",
+    "no_blackd: run when `d` extra NOT installed",
+    "no_jupyter: run when `jupyter` extra NOT installed",
 ]
-markers = [
-  "incompatible_with_mypyc: run when testing mypyc compiled black"
-]
+markers = ["incompatible_with_mypyc: run when testing mypyc compiled black"]
 xfail_strict = true
 filterwarnings = ["error"]
 [tool.coverage.report]
-omit = [
-  "src/blib2to3/*",
-  "tests/data/*",
-  "*/site-packages/*",
-  ".tox/*"
-]
+omit = ["src/blib2to3/*", "tests/data/*", "*/site-packages/*", ".tox/*"]
 [tool.coverage.run]
 relative_files = true
 branch = true

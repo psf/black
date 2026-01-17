@@ -28,7 +28,7 @@ import pytest
 from click import unstyle
 from click.testing import CliRunner
 from packaging.version import Version
-from pathspec import PathSpec
+from pathspec import GitIgnoreSpec
 
 import black
 import black.files
@@ -2514,13 +2514,77 @@ class TestFileCollection:
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
         report = black.Report()
-        gitignore = PathSpec.from_lines(
-            "gitwildmatch", ["exclude/", ".definitely_exclude"]
+        gitignore = GitIgnoreSpec.from_lines(
+            ["exclude/", ".definitely_exclude", "!exclude/still_exclude/"]
         )
         sources: list[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
+    def test_gitignore_reinclude(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = GitIgnoreSpec.from_lines(
+            ["*/exclude/*", ".definitely_exclude", "!*/exclude/still_exclude/"]
+        )
+        sources: list[Path] = []
+        expected = [
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+            Path(path / "b/exclude/still_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.pyi"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
+    def test_gitignore_reinclude_root(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests" / "b"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = GitIgnoreSpec.from_lines(
+            ["exclude/*", ".definitely_exclude", "!exclude/still_exclude/"]
+        )
+        sources: list[Path] = []
+        expected = [
+            Path(path / "dont_exclude/a.py"),
+            Path(path / "dont_exclude/a.pyi"),
+            Path(path / "exclude/still_exclude/a.py"),
+            Path(path / "exclude/still_exclude/a.pyi"),
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
@@ -2640,6 +2704,9 @@ class TestFileCollection:
             Path(path / "b/exclude/a.pie"),
             Path(path / "b/exclude/a.py"),
             Path(path / "b/exclude/a.pyi"),
+            Path(path / "b/exclude/still_exclude/a.pie"),
+            Path(path / "b/exclude/still_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.pyi"),
             Path(path / "b/dont_exclude/a.pie"),
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
@@ -2667,6 +2734,7 @@ class TestFileCollection:
         src = [path]
         expected = [
             Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.py"),
             Path(path / "b/.definitely_exclude/a.py"),
         ]
         assert_collected_sources(
@@ -2678,6 +2746,7 @@ class TestFileCollection:
         src = [path]
         expected = [
             Path(path / "b/exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.py"),
             Path(path / "b/dont_exclude/a.py"),
         ]
         assert_collected_sources(
@@ -2690,7 +2759,7 @@ class TestFileCollection:
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
+        gitignore = GitIgnoreSpec.from_lines([])
 
         regular = MagicMock()
         regular.relative_to.return_value = Path("regular.py")
