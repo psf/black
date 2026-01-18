@@ -36,7 +36,7 @@ The following change was not in any previous stable release:
 
 - Regenerated the `_width_table.py` and added tests for the Khmer language (#4253)
 
-This release alo bumps `pathspec` to v1.0.0 and fixes inconsistencies with Git's
+This release alo bumps `pathspec` to v1 and fixes inconsistencies with Git's
 `.gitignore` logic (#4958). Now, files will be ignored if a pattern matches them, even
 if the parent directory is directly unignored. For example, Black would previously
 format `exclude/not_this/foo.py` with this `.gitignore`:
