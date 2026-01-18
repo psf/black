@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final, Union
 
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     CLOSING_BRACKETS,
     STANDALONE_COMMENT,
@@ -176,8 +176,7 @@ def make_comment(content: str, mode: Mode) -> str:
     ):
         content = " " + content[1:]  # Replace NBSP by a simple space
     if (
-        Preview.standardize_type_comments in mode
-        and content
+        content
         and "\N{NO-BREAK SPACE}" not in content
         and is_type_comment_string("#" + content, mode=mode)
     ):
@@ -339,12 +338,10 @@ def convert_one_fmt_off_pair(
     Returns True if a pair was converted.
     """
     for leaf in node.leaves():
-        # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on processing
+        # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on/skip processing
         # to avoid reprocessing them in subsequent iterations
-        if (
-            leaf.type == STANDALONE_COMMENT
-            and hasattr(leaf, "fmt_pass_converted_first_leaf")
-            and leaf.fmt_pass_converted_first_leaf is None
+        if leaf.type == STANDALONE_COMMENT and hasattr(
+            leaf, "fmt_pass_converted_first_leaf"
         ):
             continue
 
@@ -413,7 +410,43 @@ def _handle_regular_fmt_block(
     else:
         standalone_comment_prefix = prefix[:previous_consumed] + "\n" * comment.newlines
 
-    hidden_value = "".join(str(n) for n in ignored_nodes)
+    # Ensure STANDALONE_COMMENT nodes have trailing newlines when stringified
+    # This prevents multiple fmt: skip comments from being concatenated on one line
+    parts = []
+    for node in ignored_nodes:
+        if isinstance(node, Leaf) and node.type == STANDALONE_COMMENT:
+            # Add newline after STANDALONE_COMMENT Leaf
+            node_str = str(node)
+            if not node_str.endswith("\n"):
+                node_str += "\n"
+            parts.append(node_str)
+        elif isinstance(node, Node):
+            # For nodes that might contain STANDALONE_COMMENT leaves,
+            # we need custom stringify
+            has_standalone = any(
+                leaf.type == STANDALONE_COMMENT for leaf in node.leaves()
+            )
+            if has_standalone:
+                # Stringify node with STANDALONE_COMMENT leaves having trailing newlines
+                def stringify_node(n: LN) -> str:
+                    if isinstance(n, Leaf):
+                        if n.type == STANDALONE_COMMENT:
+                            result = n.prefix + n.value
+                            if not result.endswith("\n"):
+                                result += "\n"
+                            return result
+                        return str(n)
+                    else:
+                        # For nested nodes, recursively process children
+                        return "".join(stringify_node(child) for child in n.children)
+
+                parts.append(stringify_node(node))
+            else:
+                parts.append(str(node))
+        else:
+            parts.append(str(node))
+
+    hidden_value = "".join(parts)
     comment_lineno = leaf.lineno - comment.newlines
 
     if contains_fmt_directive(comment.value, FMT_OFF):
@@ -610,22 +643,11 @@ def _generate_ignored_nodes_from_fmt_skip(
     if not comments or comment.value != comments[0].value:
         return
 
-    if Preview.fix_fmt_skip_in_one_liners in mode and not prev_sibling and parent:
+    if not prev_sibling and parent:
         prev_sibling = parent.prev_sibling
 
     if prev_sibling is not None:
         leaf.prefix = leaf.prefix[comment.consumed :]
-
-        if Preview.fix_fmt_skip_in_one_liners not in mode:
-            siblings = [prev_sibling]
-            while (
-                "\n" not in prev_sibling.prefix
-                and prev_sibling.prev_sibling is not None
-            ):
-                prev_sibling = prev_sibling.prev_sibling
-                siblings.insert(0, prev_sibling)
-            yield from siblings
-            return
 
         # Generates the nodes to be ignored by `fmt: skip`.
 
@@ -650,9 +672,30 @@ def _generate_ignored_nodes_from_fmt_skip(
         ignored_nodes = [current_node]
         if current_node.prev_sibling is None and current_node.parent is not None:
             current_node = current_node.parent
+
+        # Track seen nodes to detect cycles that can occur after tree modifications
+        seen_nodes = {id(current_node)}
+
         while "\n" not in current_node.prefix and current_node.prev_sibling is not None:
             leaf_nodes = list(current_node.prev_sibling.leaves())
-            current_node = leaf_nodes[-1] if leaf_nodes else current_node
+            next_node = leaf_nodes[-1] if leaf_nodes else current_node
+
+            # Detect infinite loop - if we've seen this node before, stop
+            # This can happen when STANDALONE_COMMENT nodes are inserted
+            # during processing
+            if id(next_node) in seen_nodes:
+                break
+
+            current_node = next_node
+            seen_nodes.add(id(current_node))
+
+            # Stop if we encounter a STANDALONE_COMMENT created by fmt processing
+            if (
+                isinstance(current_node, Leaf)
+                and current_node.type == STANDALONE_COMMENT
+                and hasattr(current_node, "fmt_pass_converted_first_leaf")
+            ):
+                break
 
             if (
                 current_node.type in CLOSING_BRACKETS
@@ -684,7 +727,7 @@ def _generate_ignored_nodes_from_fmt_skip(
                 current_node = current_node.parent
 
         # Special handling for compound statements with semicolon-separated bodies
-        if Preview.fix_fmt_skip_in_one_liners in mode and isinstance(parent, Node):
+        if isinstance(parent, Node):
             body_node = _find_compound_statement_context(parent)
             if body_node is not None:
                 header_nodes = _get_compound_statement_header(body_node, parent)
