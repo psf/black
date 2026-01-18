@@ -278,8 +278,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 25.12.0 (compiled: yes)
-$ black --required-version 25.12.0 -c "format = 'this'"
+black, 26.1.0 (compiled: yes)
+$ black --required-version 26.1.0 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -380,7 +380,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 25.12.0
+black, 26.1.0
 ```
 
 #### `--config`

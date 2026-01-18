@@ -161,9 +161,7 @@ class C:
                       8 STORE_ATTR               0 (x)
                      10 LOAD_CONST               0 (None)
                      12 RETURN_VALUE
-        """ % (
-            _C.__init__.__code__.co_firstlineno + 1,
-        )
+        """ % (_C.__init__.__code__.co_firstlineno + 1,)
 
         assert (
             expectedexpectedexpectedexpectedexpectedexpectedexpectedexpectedexpect
