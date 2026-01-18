@@ -22,7 +22,6 @@ import click
 import black
 from _black_version import version as __version__
 from black.concurrency import maybe_install_uvloop
-from black.mode import Preview
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
@@ -129,15 +128,6 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         formatted_str = await loop.run_in_executor(
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
-
-        if Preview.normalize_cr_newlines not in mode:
-            # Preserve CRLF line endings
-            nl = req_str.find("\n")
-            if nl > 0 and req_str[nl - 1] == "\r":
-                formatted_str = formatted_str.replace("\n", "\r\n")
-                # If, after swapping line endings, nothing changed, then say so
-                if formatted_str == req_str:
-                    raise black.NothingChanged
 
         # Put the source first line back
         req_str = header + req_str

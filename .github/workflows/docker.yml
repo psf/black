@@ -10,21 +10,29 @@ on:
 permissions:
   contents: read
 
+env:
+  REGISTRY: pyfound/black
+
 jobs:
-  docker:
+  build:
     if: github.repository == 'psf/black'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    name: build (${{ matrix.platform }})
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
-
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
@@ -32,42 +40,84 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Check + set version tag
-        run:
-          echo "GIT_TAG=$(git describe --candidates=0 --tags 2> /dev/null || echo
-          latest_non_release)" >> $GITHUB_ENV
+      - name: Prepare
+        id: prepare
+        run: echo "platform=${platform//\//-}" >> $GITHUB_OUTPUT
+        env:
+          platform: ${{ matrix.platform }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: pyfound/black:latest,pyfound/black:${{ env.GIT_TAG }}
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          tags: ${{ env.REGISTRY }}
+          cache-from: type=gha,scope=${{ steps.prepare.outputs.platform }}
+          cache-to: type=gha,scope=${{ steps.prepare.outputs.platform }},mode=max
 
-      - name: Build and push latest_release tag
-        if:
-          ${{ github.event_name == 'release' && github.event.action == 'published' &&
-          !github.event.release.prerelease }}
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: pyfound/black:latest_release
-
-      - name: Build and push latest_prerelease tag
-        if:
-          ${{ github.event_name == 'release' && github.event.action == 'published' &&
-          github.event.release.prerelease }}
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: pyfound/black:latest_prerelease
-
-      - name: Image digest
-        run: echo ${STEPS_DOCKER_BUILD_OUTPUTS_DIGEST}
+      - name: Export digest
+        run: |
+          mkdir -p digests
+          touch "digests/${digest#sha256:}"
         env:
-          STEPS_DOCKER_BUILD_OUTPUTS_DIGEST: ${{ steps.docker_build.outputs.digest }}
+          digest: ${{ steps.build.outputs.digest }}
+
+      - name: Upload digest
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: digests-${{ steps.prepare.outputs.platform }}
+          path: digests/*
+          if-no-files-found: error
+
+  push:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Download digests
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          path: digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Login to DockerHub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+
+      - name: Create manifest list and push
+        run: |
+          TAGS="-t $REGISTRY:latest"
+
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            TAGS="$TAGS -t $REGISTRY:$(git describe --candidates=0 --tags)"
+
+            if [[ "$PRERELEASE" == "true" ]]; then
+              TAGS="$TAGS -t $REGISTRY:latest_prerelease"
+            else
+              TAGS="$TAGS -t $REGISTRY:latest_release"
+            fi
+          else
+            TAGS="$TAGS -t $REGISTRY:latest_non_release"
+          fi
+
+          cd digests
+          docker buildx imagetools create $TAGS $(printf "$REGISTRY@sha256:%s " *)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+
+      - name: Inspect image
+        run: docker buildx imagetools inspect $REGISTRY:latest
