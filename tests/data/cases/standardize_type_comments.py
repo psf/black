@@ -1,4 +1,3 @@
-# flags: --preview
 def foo(
     a, #type:int
     b, #type: str

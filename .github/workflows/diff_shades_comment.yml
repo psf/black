@@ -1,4 +1,4 @@
-name: diff-shades-comment
+name: diff-shades comment
 
 on:
   workflow_run:
@@ -10,43 +10,63 @@ permissions: {}
 jobs:
   comment:
     runs-on: ubuntu-latest
+    # We want to comment even if there were failed files or the stable style changed
+    # That would cause the main workflow to "fail"
+    if:
+      github.event.workflow_run.event == 'pull_request' &&
+      contains(fromJSON('["success", "failure"]'), github.event.workflow_run.conclusion)
     permissions:
       pull-requests: write
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        id: artifacts
+        with:
+          merge-multiple: true
+          pattern: ".*.pr-comment.md"
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
       - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
+          pip-version: "25.3"
+          pip-install: --group diff-shades-comment
 
-      - name: Install support dependencies
-        run: |
-          python -m pip install pip --upgrade
-          python -m pip install click packaging urllib3
+      - name: Get PR number
+        id: pr
+        run:
+          echo pr=$(gh pr list --search $sha --json number --jq ".[0].number") >>
+          "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          sha: ${{ github.event.workflow_run.head_sha }}
 
       - name: Get details from initial workflow run
         id: metadata
+        run: |
+          python scripts/diff_shades_gha_helper.py comment-details \
+          $pr $run_id $(echo .*.pr-comment.md)
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >
-          python scripts/diff_shades_gha_helper.py comment-details
-          ${{github.event.workflow_run.id }}
+          pr: ${{ steps.pr.outputs.pr }}
+          run_id: ${{ github.event.workflow_run.id }}
 
       - name: Try to find pre-existing PR comment
-        if: steps.metadata.outputs.needs-comment == 'true'
         id: find-comment
         uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad
         with:
-          issue-number: ${{ steps.metadata.outputs.pr-number }}
+          issue-number: ${{ steps.pr.outputs.pr }}
           comment-author: "github-actions[bot]"
           body-includes: "diff-shades"
 
       - name: Create or update PR comment
-        if: steps.metadata.outputs.needs-comment == 'true'
         uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ steps.metadata.outputs.pr-number }}
+          issue-number: ${{ steps.pr.outputs.pr }}
           body: ${{ steps.metadata.outputs.comment-body }}
           edit-mode: replace
