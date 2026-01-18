@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, Any, Union
 from mypy_extensions import mypyc_attr
 from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
-from pathspec import PathSpec
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+from pathspec import GitIgnoreSpec
+from pathspec.patterns.gitignore import GitIgnorePatternError
 
 if sys.version_info >= (3, 11):
     try:
@@ -238,16 +238,16 @@ def find_user_pyproject_toml() -> Path:
 
 
 @lru_cache
-def get_gitignore(root: Path) -> PathSpec:
-    """Return a PathSpec matching gitignore content if present."""
+def get_gitignore(root: Path) -> GitIgnoreSpec:
+    """Return a GitIgnoreSpec matching gitignore content if present."""
     gitignore = root / ".gitignore"
     lines: list[str] = []
     if gitignore.is_file():
         with gitignore.open(encoding="utf-8") as gf:
             lines = gf.readlines()
     try:
-        return PathSpec.from_lines("gitwildmatch", lines)
-    except GitWildMatchPatternError as e:
+        return GitIgnoreSpec.from_lines(lines)
+    except GitIgnorePatternError as e:
         err(f"Could not parse {gitignore}: {e}")
         raise
 
@@ -292,7 +292,7 @@ def best_effort_relative_path(path: Path, root: Path) -> Path:
 def _path_is_ignored(
     root_relative_path: str,
     root: Path,
-    gitignore_dict: dict[Path, PathSpec],
+    gitignore_dict: dict[Path, GitIgnoreSpec],
 ) -> bool:
     path = root / root_relative_path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
@@ -325,7 +325,7 @@ def gen_python_files(
     extend_exclude: Pattern[str] | None,
     force_exclude: Pattern[str] | None,
     report: Report,
-    gitignore_dict: dict[Path, PathSpec] | None,
+    gitignore_dict: dict[Path, GitIgnoreSpec] | None,
     *,
     verbose: bool,
     quiet: bool,

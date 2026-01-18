@@ -40,7 +40,7 @@ If you're using an isort version that is older than 5.0.0 or you have some custo
 configuration for _Black_, you can tweak your isort configuration to make it compatible
 with _Black_. Below, an example for `.isort.cfg`:
 
-```
+```ini
 multi_line_output = 3
 include_trailing_comma = True
 force_grid_wrap = 0
@@ -59,7 +59,7 @@ behaviour can be
 isort's default mode of wrapping imports that extend past the `line_length` limit is
 "Grid".
 
-```py3
+```python
 from third_party import (lib1, lib2, lib3,
                          lib4, lib5, ...)
 ```
@@ -67,7 +67,7 @@ from third_party import (lib1, lib2, lib3,
 This style is incompatible with _Black_, but isort can be configured to use a different
 wrapping mode called "Vertical Hanging Indent" which looks like this:
 
-```py3
+```python
 from third_party import (
     lib1,
     lib2,
@@ -143,7 +143,7 @@ There are a few deviations that cause incompatibilities with _Black_.
 
 #### Configuration
 
-```
+```ini
 max-line-length = 88
 ignore = E203,E701
 ```
@@ -214,7 +214,7 @@ instead of using Flake8's E501, because it aligns with
 
 Install Bugbear and use the following config:
 
-```
+```ini
 [flake8]
 max-line-length = 80
 extend-select = B950
@@ -226,7 +226,7 @@ extend-ignore = E203,E501,E701
 In cases where you can't or don't want to install Bugbear, you can use this minimally
 compatible config:
 
-```
+```ini
 [flake8]
 max-line-length = 88
 extend-ignore = E203,E701
@@ -257,7 +257,7 @@ style conventions like variable naming.
 
 #### Configuration
 
-```
+```ini
 max-line-length = 88
 ```
 
@@ -284,7 +284,7 @@ max-line-length = 88
 <details>
 <summary>setup.cfg</summary>
 
-```cfg
+```ini
 [pylint]
 max-line-length = 88
 ```

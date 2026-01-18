@@ -10,18 +10,18 @@ repos:
         entry: python -m scripts.check_pre_commit_rev_in_example
         files: '(CHANGES\.md|source_version_control\.md)$'
         additional_dependencies:
-          &version_check_dependencies [
-            commonmark==0.9.1,
-            pyyaml==6.0.1,
-            beautifulsoup4==4.9.3,
-          ]
+          - beautifulsoup4>=4.14.2
+          - commonmark==0.9.1
+          - pyyaml==6.0.1
 
       - id: check-version-in-the-basics-example
         name: Check black version in the basics example
         language: python
         entry: python -m scripts.check_version_in_basics_example
         files: '(CHANGES\.md|the_basics\.md)$'
-        additional_dependencies: *version_check_dependencies
+        additional_dependencies:
+          - beautifulsoup4>=4.14.2
+          - commonmark==0.9.1
 
   - repo: https://github.com/pycqa/isort
     rev: 6.1.0
@@ -42,37 +42,41 @@ repos:
     rev: v1.19.0
     hooks:
       - id: mypy
-        exclude: ^(docs/conf.py|scripts/generate_schema.py)$
+        exclude: ^docs/conf.py$
         args: []
-        additional_dependencies: &mypy_deps
-          - types-PyYAML
-          - types-atheris
-          - tomli >= 0.2.6, < 2.0.0
-          - click >= 8.2.0
+        additional_dependencies:
           # Click is intentionally out-of-sync with pyproject.toml
           # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
-          - packaging >= 22.0
-          - platformdirs >= 2.1.0
-          - pytokens >= 0.3.0
-          - pytest
+          - click>=8.2.0
+          - packaging>=22.0
+          - platformdirs>=2
+          - pytokens>=0.3.0
+          - tomli>=1.1.0,<2.0.0
+
+          # blackd
+          - aiohttp>=3.10
+
+          # tests
+          - pytest>=7
+
+          # fuzz
           - hypothesis
-          - aiohttp >= 3.7.4
-          - types-commonmark
-          - beautifulsoup4
-          - urllib3
           - hypothesmith
-      - id: mypy
-        name: mypy (Python 3.10)
-        files: scripts/generate_schema.py
-        args: ["--python-version=3.10"]
-        additional_dependencies: *mypy_deps
+          - types-atheris
+
+          # diff-shades
+          - urllib3
+
+          # version check
+          - beautifulsoup4>=4.14.2
+          - types-commonmark
+          - types-pyyaml
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.6.2
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]
-        exclude: \.github/workflows/diff_shades\.yml
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -81,4 +85,4 @@ repos:
       - id: trailing-whitespace
 
 ci:
-  autoupdate_schedule: quarterly
+  autoupdate_schedule: weekly

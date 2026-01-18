@@ -1,4 +1,3 @@
-# flags: --preview
 """cow
 say""",
 call(3, "dogsay", textwrap.dedent("""dove
@@ -449,10 +448,8 @@ def foo():
                 """Sxxxxxxx xxxxxxxx, xxxxxxx xx xxxxxxxxx
                 xxxxxxxxxxxxx xxxxxxx xxxxxxxxx xxx-xxxxxxxxxx xxxxxx xx xxx-xxxxxx"""
             ),
-            "xxxxxxxx": (
-                """Sxxxxxxx xxxxxxxx, xxxxxxx xx xxxxxxxxx
-                xxxxxxxxxxxxx xxxxxxx xxxxxxxxx xxx-xxxxxxxxxx xxxxxx xx xxx-xxxxxx"""
-            ),
+            "xxxxxxxx": """Sxxxxxxx xxxxxxxx, xxxxxxx xx xxxxxxxxx
+                xxxxxxxxxxxxx xxxxxxx xxxxxxxxx xxx-xxxxxxxxxx xxxxxx xx xxx-xxxxxx""",
         },
     }
 
@@ -471,14 +468,12 @@ a
 a
 a"""
     ),
-    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
-        """
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": """
 a
 a
 a
 a
-a"""
-    ),
+a""",
 }
 
 a = (

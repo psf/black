@@ -226,23 +226,12 @@ class Preview(Enum):
     # for https://github.com/psf/black/issues/3117 to be fixed.
     string_processing = auto()
     hug_parens_with_braces_and_square_brackets = auto()
-    wrap_long_dict_values_in_parens = auto()
-    multiline_string_handling = auto()
-    always_one_newline_after_import = auto()
-    fix_fmt_skip_in_one_liners = auto()
-    standardize_type_comments = auto()
     wrap_comprehension_in = auto()
-    # Remove parentheses around multiple exception types in except and
-    # except* without as. See PEP 758 for details.
-    remove_parens_around_except_types = auto()
-    normalize_cr_newlines = auto()
-    fix_module_docstring_detection = auto()
-    fix_type_expansion_split = auto()
-    remove_parens_from_assignment_lhs = auto()
+    wrap_long_dict_values_in_parens = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
-    # Many issues, see summary in https://github.com/psf/black/issues/4042
+    # Many issues, see summary in https://github.com/psf/black/issues/4208
     Preview.string_processing,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,

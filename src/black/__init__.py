@@ -23,8 +23,8 @@ from typing import Any
 import click
 from click.core import ParameterSource
 from mypy_extensions import mypyc_attr
-from pathspec import PathSpec
-from pathspec.patterns.gitwildmatch import GitWildMatchPatternError
+from pathspec import GitIgnoreSpec
+from pathspec.patterns.gitignore import GitIgnorePatternError
 
 from _black_version import version as __version__
 from black.cache import Cache
@@ -685,7 +685,7 @@ def main(
                 report=report,
                 stdin_filename=stdin_filename,
             )
-        except GitWildMatchPatternError:
+        except GitIgnorePatternError:
             ctx.exit(1)
 
         if not sources:
@@ -749,7 +749,7 @@ def get_sources(
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
-    gitignore: dict[Path, PathSpec] | None = None
+    gitignore: dict[Path, GitIgnoreSpec] | None = None
     root_gitignore = get_gitignore(root)
 
     for s in src:
@@ -1010,10 +1010,8 @@ def format_stdin_to_stdout(
 
     if content is None:
         src, encoding, newline = decode_bytes(sys.stdin.buffer.read(), mode)
-    elif Preview.normalize_cr_newlines in mode:
-        src, encoding, newline = content, "utf-8", "\n"
     else:
-        src, encoding, newline = content, "utf-8", ""
+        src, encoding, newline = content, "utf-8", "\n"
 
     dst = src
     try:
@@ -1029,12 +1027,8 @@ def format_stdin_to_stdout(
         )
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content
-            if Preview.normalize_cr_newlines in mode:
-                if dst and dst[-1] != "\n" and dst[-1] != "\r":
-                    dst += newline
-            else:
-                if dst and dst[-1] != "\n":
-                    dst += "\n"
+            if dst and dst[-1] != "\n" and dst[-1] != "\r":
+                dst += newline
             f.write(dst)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
@@ -1224,16 +1218,13 @@ def format_str(
 def _format_str_once(
     src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
-    if Preview.normalize_cr_newlines in mode:
-        normalized_contents, _, newline_type = decode_bytes(
-            src_contents.encode("utf-8"), mode
-        )
+    normalized_contents, _, newline_type = decode_bytes(
+        src_contents.encode("utf-8"), mode
+    )
 
-        src_node = lib2to3_parse(
-            normalized_contents.lstrip(), target_versions=mode.target_versions
-        )
-    else:
-        src_node = lib2to3_parse(src_contents.lstrip(), mode.target_versions)
+    src_node = lib2to3_parse(
+        normalized_contents.lstrip(), target_versions=mode.target_versions
+    )
 
     dst_blocks: list[LinesBlock] = []
     if mode.target_versions:
@@ -1280,22 +1271,9 @@ def _format_str_once(
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
     if not dst_contents:
-        if Preview.normalize_cr_newlines in mode:
-            if "\n" in normalized_contents:
-                return newline_type
-        else:
-            # Use decode_bytes to retrieve the correct source newline (CRLF or LF),
-            # and check if normalized_content has more than one line
-            normalized_content, _, newline = decode_bytes(
-                src_contents.encode("utf-8"), mode
-            )
-            if "\n" in normalized_content:
-                return newline
-        return ""
-    if Preview.normalize_cr_newlines in mode:
-        return "".join(dst_contents).replace("\n", newline_type)
-    else:
-        return "".join(dst_contents)
+        if "\n" in normalized_contents:
+            return newline_type
+    return "".join(dst_contents).replace("\n", newline_type)
 
 
 def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine]:
@@ -1309,24 +1287,21 @@ def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine
     if not lines:
         return "", encoding, "\n"
 
-    if Preview.normalize_cr_newlines in mode:
-        if lines[0][-2:] == b"\r\n":
-            if b"\r" in lines[0][:-2]:
-                newline = "\r"
-            else:
-                newline = "\r\n"
-        elif lines[0][-1:] == b"\n":
-            if b"\r" in lines[0][:-1]:
-                newline = "\r"
-            else:
-                newline = "\n"
+    if lines[0][-2:] == b"\r\n":
+        if b"\r" in lines[0][:-2]:
+            newline = "\r"
         else:
-            if b"\r" in lines[0]:
-                newline = "\r"
-            else:
-                newline = "\n"
+            newline = "\r\n"
+    elif lines[0][-1:] == b"\n":
+        if b"\r" in lines[0][:-1]:
+            newline = "\r"
+        else:
+            newline = "\n"
     else:
-        newline = "\r\n" if lines[0][-2:] == b"\r\n" else "\n"
+        if b"\r" in lines[0]:
+            newline = "\r"
+        else:
+            newline = "\n"
 
     srcbuf.seek(0)
     with io.TextIOWrapper(srcbuf, encoding) as tiow:

@@ -1,6 +1,0 @@
-coverage >= 5.3
-pre-commit
-pytest >= 7
-pytest-xdist >= 3.0.2
-pytest-cov >= 4.1.0
-tox

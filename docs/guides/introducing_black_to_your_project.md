@@ -1,8 +1,7 @@
 # Introducing _Black_ to your project
 
 ```{note}
-This guide is incomplete. Contributions are welcomed and would be deeply
-appreciated!
+This guide is incomplete. Contributions are welcomed and would be deeply appreciated!
 ```
 
 ## Avoiding ruining git blame
@@ -46,7 +45,8 @@ $ git config blame.ignoreRevsFile .git-blame-ignore-revs
 
 **The one caveat is that some online Git-repositories do not yet support ignoring
 revisions using their native blame UI.** So blame information will be cluttered with a
-reformatting commit on those platforms.
-[GitHub supports `.git-blame-ignore-revs`](https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view)
-by default in blame views however.
-[GitLab supports this since version 17.10](https://about.gitlab.com/releases/2025/03/20/gitlab-17-10-released/#ignore-specific-revisions-in-git-blame)
+reformatting commit on those platforms. However,
+[GitHub](https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view)
+and
+[GitLab (since version 17.10)](https://about.gitlab.com/releases/2025/03/20/gitlab-17-10-released/#ignore-specific-revisions-in-git-blame)
+both support `.git-blame-ignore-revs` in blame views by default.

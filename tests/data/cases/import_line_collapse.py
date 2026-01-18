@@ -1,4 +1,3 @@
-# flags: --preview
 from middleman.authentication import validate_oauth_token
 
 

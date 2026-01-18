@@ -88,7 +88,7 @@ There are several different ways you can use _Black_ from PyCharm:
 
    ```console
    $ where black
-   %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+   C:\Program Files\Python313\Scripts\black.exe  # possible location
    ```
 
    Note that if you are using a virtual environment detected by PyCharm, this is an
@@ -135,7 +135,7 @@ There are several different ways you can use _Black_ from PyCharm:
 
    ```console
    $ where black
-   %LocalAppData%\Programs\Python\Python36-32\Scripts\black.exe  # possible location
+   C:\Program Files\Python313\Scripts\black.exe  # possible location
    ```
 
    Note that if you are using a virtual environment detected by PyCharm, this is an
@@ -243,7 +243,7 @@ To install with [vim-plug](https://github.com/junegunn/vim-plug):
 _Black_'s `stable` branch tracks official version updates, and can be used to simply
 follow the most recent stable version.
 
-```
+```vim
 Plug 'psf/black', { 'branch': 'stable' }
 ```
 
@@ -255,14 +255,14 @@ The following matches all stable versions (see the
 [Release Process](../contributing/release_process.md) section for documentation of
 version scheme used by Black):
 
-```
+```vim
 Plug 'psf/black', { 'tag': '*.*.*' }
 ```
 
 and the following demonstrates pinning to a specific year's stable style (2022 in this
 case):
 
-```
+```vim
 Plug 'psf/black', { 'tag': '22.*.*' }
 ```
 
@@ -270,7 +270,7 @@ Plug 'psf/black', { 'tag': '22.*.*' }
 
 or with [Vundle](https://github.com/VundleVim/Vundle.vim):
 
-```
+```vim
 Plugin 'psf/black'
 ```
 
@@ -293,7 +293,7 @@ or you can copy the plugin files from
 [plugin/black.vim](https://github.com/psf/black/blob/stable/plugin/black.vim) and
 [autoload/black.vim](https://github.com/psf/black/blob/stable/autoload/black.vim).
 
-```
+```sh
 mkdir -p ~/.vim/pack/python/start/black/plugin
 mkdir -p ~/.vim/pack/python/start/black/autoload
 curl https://raw.githubusercontent.com/psf/black/stable/plugin/black.vim -o ~/.vim/pack/python/start/black/plugin/black.vim
@@ -316,7 +316,7 @@ example you want to run a version from main), create a virtualenv manually and p
 If you would prefer to use the system installation of _Black_ rather than a virtualenv,
 then add this to your vimrc:
 
-```
+```vim
 let g:black_use_virtualenv = 0
 ```
 
@@ -327,7 +327,7 @@ whatever tool you used to install _Black_ originally.
 
 To run _Black_ on save, add the following lines to `.vimrc` or `init.vim`:
 
-```
+```vim
 augroup black_on_save
   autocmd!
   autocmd BufWritePre *.py Black
@@ -336,7 +336,7 @@ augroup end
 
 To run _Black_ on a key press (e.g. F9 below), add this:
 
-```
+```vim
 nnoremap <F9> :Black<CR>
 ```
 
@@ -368,7 +368,7 @@ $ gedit <file_name>
 1. Add a new tool using `+` button.
 1. Copy the below content to the code window.
 
-```console
+```sh
 #!/bin/bash
 Name=$GEDIT_CURRENT_DOCUMENT_NAME
 black $Name

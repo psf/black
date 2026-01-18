@@ -6,16 +6,16 @@ can be eventually be resolved somehow. This document outlines the triaging proce
 also the current guidelines and recommendations.
 
 ```{tip}
-If you're looking for a way to contribute without submitting patches, this might be
-the area for you. Since _Black_ is a popular project, its issue tracker is quite busy
-and always needs more attention than is available. While triage isn't the most
-glamorous or technically challenging form of contribution, it's still important.
-For example, we would love to know whether that old bug report is still reproducible!
+If you're looking for a way to contribute without submitting patches, this might be the
+area for you. Since _Black_ is a popular project, its issue tracker is quite busy and
+always needs more attention than is available. While triage isn't the most glamorous or
+technically challenging form of contribution, it's still important. For example, we
+would love to know whether that old bug report is still reproducible!
 
 You can get easily started by reading over this document and then responding to issues.
 
-If you contribute enough and have stayed for a long enough time, you may even be
-given Triage permissions!
+If you contribute enough and have stayed for long enough, you may even be given
+Triage permissions!
 ```
 
 ## The basics
@@ -97,8 +97,8 @@ We also have a few standalone labels:
 
 ```{note}
 We do use labels for PRs, in particular the `skip news` label, but we aren't that
-rigorous about it. Just follow your judgement on what labels make sense for the
-specific PR (if any even make sense).
+rigorous about it. Just follow your judgement on what labels make sense for the specific
+PR (if any even make sense).
 ```
 
 ## Projects
@@ -108,7 +108,8 @@ projects with no true end (e.g. the "Amazing documentation" project) while other
 more focused and have a definite end (like the "Getting to beta" project).
 
 ```{note}
-To modify GitHub Projects you need the [Write repository permission level or higher](https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-permission-levels-for-an-organization#repository-access-for-each-permission-level).
+To modify GitHub Projects you need the
+[Write repository permission level or higher](https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-permission-levels-for-an-organization#repository-access-for-each-permission-level).
 ```
 
 ## Closing issues
@@ -160,8 +161,7 @@ So no, this is not a bug, but an intended feature. Anyway, [here's the documenta
 ```text
 Hi,
 
-This is expected behaviour, please see the documentation regarding this case (emphasis
-mine):
+This is expected behaviour, please see the documentation regarding this case (emphasis mine):
 
 > PEP 8 recommends to treat : in slices as a binary operator with the lowest priority, and to leave an equal amount of space on either side, **except if a parameter is omitted (e.g. ham[1 + 1 :])**. It recommends no spaces around : operators for “simple expressions” (ham[lower:upper]), and **extra space for “complex expressions” (ham[lower : upper + offset])**. **Black treats anything more than variable names as “complex” (ham[lower : upper + 1]).** It also states that for extended slices, both : operators have to have the same amount of spacing, except if a parameter is omitted (ham[1 + 1 ::]). Black enforces these rules consistently.
 

@@ -18,17 +18,16 @@ transparent after a while and you can focus on the content instead.
 Try it out now using the [Black Playground](https://black.vercel.app).
 
 ```{admonition} Note - Black is now stable!
-*Black* is [successfully used](https://github.com/psf/black#used-by) by
-many projects, small and big. *Black* has a comprehensive test suite, with efficient
-parallel tests, our own auto formatting and parallel Continuous Integration runner.
-Now that we have become stable, you should not expect large changes to formatting in
-the future. Stylistic changes will mostly be responses to bug reports and support for new Python
+_Black_ is [successfully used](https://github.com/psf/black#used-by) by many projects,
+small and big. _Black_ has a comprehensive test suite, with efficient parallel tests,
+our own auto formatting and parallel Continuous Integration runner. Now that we have
+become stable, you should not expect large changes to formatting in the future.
+Stylistic changes will mostly be responses to bug reports and support for new Python
 syntax.
 
-Also, as a safety measure which slows down processing, *Black* will check that the
+Also, as a safety measure which slows down processing, _Black_ will check that the
 reformatted code still produces a valid AST that is effectively equivalent to the
-original (see the
-[Pragmatism](./the_black_code_style/current_style.md#pragmatism)
+original (see the [Pragmatism](./the_black_code_style/current_style.md#pragmatism)
 section for details). If you're feeling confident, use `--fast`.
 ```
 
