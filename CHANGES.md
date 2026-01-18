@@ -1,13 +1,8 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
+## 26.1.0
 
 ### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
 
 Introduces the 2026 stable style (#4892), stabilizing the following changes:
 
@@ -58,48 +53,13 @@ This new behavior matches Git. The leading `*/` are only necessary if you wish t
 matching subdirectories (like the previous behavior did), and not just matching root
 directories.
 
-### Stable style
-
-<!-- Changes that affect Black's stable style -->
-
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
+- Explicitly shutdown the multiprocessing manager when run in diff mode too (#4952)
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 - Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 25.12.0
 
@@ -109,7 +69,6 @@ directories.
 
 ### Stable style
 
-- Fix Shutdown multiprocessing Manager in schedule_formatting (#4952)
 - Fix bug where comments preceding `# fmt: off`/`# fmt: on` blocks were incorrectly
   removed, particularly affecting Jupytext's `# %% [markdown]` comments (#4845)
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
