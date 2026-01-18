@@ -2174,3 +2174,6 @@ and the first release covered by our new
 - alpha quality
 
 - date-versioned (see: <https://calver.org/>)
+
+* Fixed crash in string-processing preview for unassigned one-item string tuples with
+  trailing comma (#PR_NUMBER)
