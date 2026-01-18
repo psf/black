@@ -17,6 +17,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix `string_processing` crashing on unassigned long string literals with trailing
+  commas (one-item tuples) (#4929)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
