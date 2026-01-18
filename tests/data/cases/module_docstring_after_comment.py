@@ -1,4 +1,3 @@
-# flags: --preview
 #!/python
 
 # regression test for #4762

@@ -23,8 +23,7 @@
      - Documentation changes are necessary for most formatting changes and
        other enhancements. -->
 
-- [ ] Implement any code style changes under the `--preview` style, following the
-      stability policy?
+- [ ] Implement any code style changes under the `--preview` style, following the stability policy?
 - [ ] Add an entry in `CHANGES.md` if necessary?
 - [ ] Add / update tests if necessary?
 - [ ] Add new / update outdated documentation?
