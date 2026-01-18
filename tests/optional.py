@@ -91,7 +91,7 @@ def pytest_configure(config: "Config") -> None:
     passed_args = config.getoption("run_optional")
     if passed_args:
         ot_run.update(itertools.chain.from_iterable(a.split(",") for a in passed_args))
-    ot_run |= {no(excluded) for excluded in ot_markers - ot_run}
+    ot_run |= {no(excluded) for excluded in (ot_markers - ot_run)}
     ot_markers |= {no(m) for m in ot_markers}
 
     log.info("optional tests to run: %s", ot_run)

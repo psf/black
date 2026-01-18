@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Always wrap `in` clauses of comprehensions if they have delimiters (#4881)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
