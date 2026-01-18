@@ -100,7 +100,7 @@ diff-shades = [
 ]
 diff-shades-comment = ["click>=8.1.7", "packaging>=22.0", "urllib3"]
 
-width-table = ["wcwidth>=0.2.6"]
+width-table = ["wcwidth>=0.2.14"]
 
 [project.scripts]
 black = "black:patched_main"
