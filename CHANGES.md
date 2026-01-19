@@ -13,6 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->

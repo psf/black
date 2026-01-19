@@ -1218,12 +1218,12 @@ def format_str(
 def _format_str_once(
     src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
-    normalized_contents, _, newline_type = decode_bytes(
+    _, _, newline_type = decode_bytes(
         src_contents.encode("utf-8"), mode
     )
 
     src_node = lib2to3_parse(
-        normalized_contents.lstrip(), target_versions=mode.target_versions
+        src_contents.lstrip(), target_versions=mode.target_versions
     )
 
     dst_blocks: list[LinesBlock] = []
@@ -1271,7 +1271,7 @@ def _format_str_once(
     for block in dst_blocks:
         dst_contents.extend(block.all_lines())
     if not dst_contents:
-        if "\n" in normalized_contents:
+        if "\n" in src_contents:
             return newline_type
     return "".join(dst_contents).replace("\n", newline_type)
 
