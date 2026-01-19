@@ -1218,9 +1218,7 @@ def format_str(
 def _format_str_once(
     src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
-    _, _, newline_type = decode_bytes(
-        src_contents.encode("utf-8"), mode
-    )
+    _, _, newline_type = decode_bytes(src_contents.encode("utf-8"), mode)
 
     src_node = lib2to3_parse(
         src_contents.lstrip(), target_versions=mode.target_versions
