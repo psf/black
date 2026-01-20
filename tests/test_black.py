@@ -2087,8 +2087,12 @@ class BlackTestCase(BlackBaseTestCase):
             assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
 
     def test_decode_with_encoding(self) -> None:
-        self.assertFalse(ff(Path(THIS_DIR / "data" / "decode_with_encoding" / "first_line.py")))
-        self.assertFalse(ff(Path(THIS_DIR / "data" / "decode_with_encoding" / "second_line.py")))
+        self.assertFalse(
+            ff(Path(THIS_DIR / "data" / "decode_with_encoding" / "first_line.py"))
+        )
+        self.assertFalse(
+            ff(Path(THIS_DIR / "data" / "decode_with_encoding" / "second_line.py"))
+        )
 
 
 class TestCaching:
