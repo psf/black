@@ -139,7 +139,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc>=0.16.0", "mypy==1.19.0"]
+dependencies = ["hatch-mypyc>=0.16.0", "mypy==1.19.1"]
 require-runtime-dependencies = true
 exclude = [
     # There's no good reason for blackd to be compiled.
