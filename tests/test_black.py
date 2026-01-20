@@ -2080,11 +2080,18 @@ class BlackTestCase(BlackBaseTestCase):
             == "class A: ...\r"
         )
 
-    def test_preview_newline_type_detection(self) -> None:
+    def test_newline_type_detection(self) -> None:
         mode = Mode()
         newline_types = ["A\n", "A\r\n", "A\r"]
         for test_case in itertools.permutations(newline_types):
             assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
+
+    def test_decode_with_encoding(self) -> None:
+        first_line = "# -*- coding: iso-8859-1 -*-\n# 2002-11-22 Jürgen Hermann <jh@web.de>\n"
+        assert black.format_str(first_line, mode=black.FileMode()) == first_line
+
+        second_line = "#! /usr/bin/env python3\n# -*- coding: iso-8859-1 -*-\n#! /usr/bin/env python3\n# 2002-11-22 Jürgen Hermann <jh@web.de>\n"
+        assert black.format_str(second_line, mode=black.FileMode()) == second_line
 
 
 class TestCaching:
