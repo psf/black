@@ -2087,11 +2087,8 @@ class BlackTestCase(BlackBaseTestCase):
             assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
 
     def test_decode_with_encoding(self) -> None:
-        first_line = "# -*- coding: iso-8859-1 -*-\n# 2002-11-22 Jürgen Hermann <jh@web.de>\n"
-        assert black.format_str(first_line, mode=black.FileMode()) == first_line
-
-        second_line = "#! /usr/bin/env python3\n# -*- coding: iso-8859-1 -*-\n#! /usr/bin/env python3\n# 2002-11-22 Jürgen Hermann <jh@web.de>\n"
-        assert black.format_str(second_line, mode=black.FileMode()) == second_line
+        self.assertFalse(ff(Path(THIS_DIR / "data" / "decode_with_encoding" / "first_line.py")))
+        self.assertFalse(ff(Path(THIS_DIR / "data" / "decode_with_encoding" / "second_line.py")))
 
 
 class TestCaching:
