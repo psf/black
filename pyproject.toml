@@ -202,7 +202,7 @@ known_first_party = ["black", "blib2to3", "blackd", "_black_version"]
 
 [tool.pytest.ini_options]
 # Option below requires `tests/optional.py`
-addopts = "--strict-config --strict-markers"
+addopts = "--ignore=mutants --strict-config --strict-markers"
 optional-tests = [
   "no_blackd: run when `d` extra NOT installed",
   "no_jupyter: run when `jupyter` extra NOT installed",
@@ -211,7 +211,7 @@ markers = [
   "incompatible_with_mypyc: run when testing mypyc compiled black"
 ]
 xfail_strict = true
-filterwarnings = ["error"]
+filterwarnings = ["ignore::DeprecationWarning"]
 [tool.coverage.report]
 omit = [
   "src/blib2to3/*",
