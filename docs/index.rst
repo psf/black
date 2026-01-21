@@ -8,4 +8,3 @@ Welcome to Black's documentation!
    usage_and_configuration/the_basics
    usage_and_configuration/installation
    integrations/jupyter
-
