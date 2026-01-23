@@ -24,7 +24,7 @@ repos:
           - commonmark==0.9.1
 
   - repo: https://github.com/pycqa/isort
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: isort
 
@@ -39,7 +39,7 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.0
+    rev: v1.19.1
     hooks:
       - id: mypy
         exclude: ^docs/conf.py$
@@ -73,7 +73,7 @@ repos:
           - types-pyyaml
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.6.2
+    rev: v3.8.0
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]

@@ -1,4 +1,4 @@
-# flags: --preview --minimum-version=3.12
+# flags: --minimum-version=3.12
 
 def f1[T: (int, str)](a,): pass
 

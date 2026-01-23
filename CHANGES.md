@@ -9,36 +9,19 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
-This release alo bumps `pathspec` to v1.0.0 and fixes inconsistencies with Git's
-`.gitignore` logic (#4958). Now, files will be ignored if a pattern matches them, even
-if the parent directory is directly unignored. For example, Black would previously
-format `exclude/not_this/foo.py` with this `.gitignore`:
-
-```
-exclude/
-!exclude/not_this/
-```
-
-Now, `exclude/not_this/foo.py` will remain ignored. To ensure `exclude/not_this/` and
-all of it's children are included in formatting (and in Git), use this `.gitignore`:
-
-```
-*/exclude/*
-!*/exclude/not_this/
-```
-
-This new behavior matches Git. The leading `*/` are only necessary if you wish to ignore
-matching subdirectories (like the previous behavior did), and not just matching root
-directories.
-
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
+
+- Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix `string_processing` crashing on unassigned long string literals with trailing
+  commas (one-item tuples) (#4929)
+- Simplify implementation of the power operator "hugging" logic (#4918)
 - Parenthesize complex expressions passed as keyword arguments or parameter defaults
   (#4925)
 
@@ -49,6 +32,9 @@ directories.
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Fix shutdown errors in PyInstaller builds on macOS by disabling multiprocessing in
+  frozen environments (#4930)
 
 ### Parser
 
@@ -70,12 +56,71 @@ directories.
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
-- Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
-
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 26.1.0
+
+### Highlights
+
+Introduces the 2026 stable style (#4892), stabilizing the following changes:
+
+- `always_one_newline_after_import`: Always force one blank line after import
+  statements, except when the line after the import is a comment or an import statement
+  (#4489)
+- `fix_fmt_skip_in_one_liners`: Fix `# fmt: skip` behavior on one-liner declarations,
+  such as `def foo(): return "mock" # fmt: skip`, where previously the declaration would
+  have been incorrectly collapsed (#4800)
+- `fix_module_docstring_detection`: Fix module docstrings being treated as normal
+  strings if preceded by comments (#4764)
+- `fix_type_expansion_split`: Fix type expansions split in generic functions (#4777)
+- `multiline_string_handling`: Make expressions involving multiline strings more compact
+  (#1879)
+- `normalize_cr_newlines`: Add `\r` style newlines to the potential newlines to
+  normalize file newlines both from and to (#4710)
+- `remove_parens_around_except_types`: Remove parentheses around multiple exception
+  types in `except` and `except*` without `as` (#4720)
+- `remove_parens_from_assignment_lhs`: Remove unnecessary parentheses from the left-hand
+  side of assignments while preserving magic trailing commas and intentional multiline
+  formatting (#4865)
+- `standardize_type_comments`: Format type comments which have zero or more spaces
+  between `#` and `type:` or between `type:` and value to `# type: (value)` (#4645)
+
+The following change was not in any previous stable release:
+
+- Regenerated the `_width_table.py` and added tests for the Khmer language (#4253)
+
+This release alo bumps `pathspec` to v1 and fixes inconsistencies with Git's
+`.gitignore` logic (#4958). Now, files will be ignored if a pattern matches them, even
+if the parent directory is directly unignored. For example, Black would previously
+format `exclude/not_this/foo.py` with this `.gitignore`:
+
+```
+exclude/
+!exclude/not_this/
+```
+
+Now, `exclude/not_this/foo.py` will remain ignored. To ensure `exclude/not_this/` and
+all of it's children are included in formatting (and in Git), use this `.gitignore`:
+
+```
+*/exclude/*
+!*/exclude/not_this/
+```
+
+This new behavior matches Git. The leading `*/` are only necessary if you wish to ignore
+matching subdirectories (like the previous behavior did), and not just matching root
+directories.
+
+### Output
+
+- Explicitly shutdown the multiprocessing manager when run in diff mode too (#4952)
+
+### Integrations
+
+- Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
 
 ## 25.12.0
 
@@ -90,6 +135,8 @@ directories.
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
   string literals, or on dictionary entries with long lines (#4872)
 - Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
+- Preserve parentheses when `# type: ignore` comments would be merged with other
+  comments on the same line, preventing AST equivalence failures (#4888)
 
 ### Preview style
 
