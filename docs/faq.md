@@ -77,6 +77,9 @@ following will not be formatted:
 - invalid syntax, as it can't be safely distinguished from automagics in the absence of
   a running `IPython` kernel.
 
+See {doc}`Formatting Jupyter Notebooks </usage_and_configuration/jupyter_notebooks>` for
+complete information on using _Black_ with Jupyter Notebooks.
+
 ## Why does Flake8 report warnings?
 
 Some of Flake8's rules conflict with Black's style. We recommend disabling these rules.
