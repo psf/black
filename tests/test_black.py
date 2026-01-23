@@ -2096,7 +2096,11 @@ class BlackTestCase(BlackBaseTestCase):
                 b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
             )
             first_line.close()
-            self.assertFalse(ff(Path(first_line.name)))
+            self.assertFalse(
+                ff(Path(first_line.name)),
+                "Failed to properly detect encoding",
+            )
+
         with NamedTemporaryFile(delete=False) as second_line:
             second_line.write(
                 b"#! /usr/bin/env python3\n"
@@ -2104,7 +2108,10 @@ class BlackTestCase(BlackBaseTestCase):
                 b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
             )
             second_line.close()
-            self.assertFalse(ff(Path(second_line.name)))
+            self.assertFalse(
+                ff(Path(second_line.name)),
+                "Failed to properly detect encoding on second line",
+            )
 
 
 class TestCaching:
