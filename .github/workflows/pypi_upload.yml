@@ -1,4 +1,4 @@
-name: Build and publish
+name: build and publish
 
 on:
   release:
@@ -10,18 +10,15 @@ on:
 
 permissions: {}
 
+env:
+  PROJECT: https://pypi.org/p/black
+
 jobs:
-  main:
-    name: sdist + pure wheel
+  configure:
+    name: generate wheels matrix
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
-    environment:
-      name: release
-      url: https://pypi.org/p/black
-
-    permissions:
-      id-token: write # Required for PyPI trusted publishing
-
+    outputs:
+      include: ${{ steps.set-matrix.outputs.include }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -31,36 +28,9 @@ jobs:
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
           python-version: "3.13"
-          allow-prereleases: true
+          pip-version: "25.3"
+          pip-install: --group wheels
 
-      - name: Install latest pip, build
-        run: |
-          python -m pip install --upgrade --disable-pip-version-check pip
-          python -m pip install --upgrade build
-
-      - name: Build wheel and source distributions
-        run: python -m build
-
-      - if: github.event_name == 'release'
-        name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        with:
-          verbose: true
-
-  generate_wheels_matrix:
-    name: generate wheels matrix
-    runs-on: ubuntu-latest
-    outputs:
-      include: ${{ steps.set-matrix.outputs.include }}
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      # Keep cibuildwheel version in sync with below
-      - name: Install cibuildwheel and pypyp
-        run: |
-          pipx install cibuildwheel==3.2.1
-          pipx install pypyp==1.3.0
       - name: generate matrix
         if: |
           github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
@@ -79,6 +49,7 @@ jobs:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64 arm64
           CIBW_ARCHS_WINDOWS: AMD64
+
       - name: generate matrix (PR)
         if: |
           github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
@@ -89,51 +60,106 @@ jobs:
           } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
         env:
           CIBW_ARCHS_LINUX: x86_64
+
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
 
   mypyc:
     name: mypyc wheels ${{ matrix.only }}
-    needs: generate_wheels_matrix
+    needs: configure
     runs-on: ${{ matrix.os }}
-    if: github.event_name == 'release'
-    environment:
-      name: release
-      url: https://pypi.org/p/black
-    permissions:
-      id-token: write # Required for PyPI trusted publishing
     strategy:
-      fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.generate_wheels_matrix.outputs.include) }}
+        include: ${{ fromJson(needs.configure.outputs.include) }}
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-      # Keep cibuildwheel version in sync with above
-      - uses: pypa/cibuildwheel@63fd63b352a9a8bdcc24791c9dbee952ee9a8abc # v3.3.0
+
+      # Keep cibuildwheel version in sync with pyproject.toml
+      - uses: pypa/cibuildwheel@298ed2fb2c105540f5ed055e8a6ad78d82dd3a7e # v3.3.1
         with:
           only: ${{ matrix.only }}
 
       - name: Upload wheels as workflow artifacts
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.only }}-mypyc-wheels
-          path: ./wheelhouse/*.whl
+          path: wheelhouse/
 
-      - if: github.event_name == 'release'
-        name: Publish package distributions to PyPI
+  hatch:
+    name: sdist + pure wheel
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up latest Python
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: "3.13"
+          pip-version: "25.3"
+          pip-install: --group build
+
+      - name: Build wheel and source distributions
+        run: python -m hatch build
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+  publish-mypyc:
+    if: github.event_name == 'release'
+    needs: mypyc
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          pattern: "*-mypyc-wheels"
+          path: wheelhouse/
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           packages-dir: wheelhouse/
           verbose: true
 
-  update-stable-branch:
-    name: Update stable branch
-    needs: [main, mypyc]
-    runs-on: ubuntu-latest
+  publish-hatch:
     if: github.event_name == 'release'
+    needs: hatch
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: ${{ env.PROJECT }}
+    permissions:
+      id-token: write # Required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: sdist-and-pure-wheel
+          path: dist/
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        with:
+          verbose: true
+
+  update-stable:
+    name: update stable branch
+    needs: [publish-mypyc, publish-hatch]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.release.prerelease != 'true'
     permissions:
       contents: write
 
@@ -145,8 +171,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true # needed for `git push` below
 
-      - if: github.event_name == 'release'
-        name: Update stable branch to release tag & push
+      - name: Update stable branch to release tag & push
         run: |
           git reset --hard "${TAG_NAME}"
           git push
