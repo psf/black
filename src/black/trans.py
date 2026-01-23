@@ -66,6 +66,7 @@ def TErr(err_msg: str) -> Err[CannotTransform]:
     return Err(cant_transform)
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def hug_power_op(
     line: Line, features: Collection[Feature], mode: Mode
 ) -> Iterator[Line]:
@@ -133,6 +134,7 @@ def hug_power_op(
     yield new_line
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: set[int]) -> bool:
     """
     Handling the determination of is_simple_lookup for the lines prior to the doublestar
@@ -155,6 +157,7 @@ def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: set[int]) 
     return True
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def handle_is_simple_lookup_forward(
     line: Line, index: int, disallowed: set[int]
 ) -> bool:
@@ -181,6 +184,7 @@ def handle_is_simple_lookup_forward(
     return True
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def is_expression_chained(chained_leaves: list[Leaf]) -> bool:
     """
     Function to determine if the variable is a chained call.
