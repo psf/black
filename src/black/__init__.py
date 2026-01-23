@@ -1218,8 +1218,10 @@ def format_str(
 def _format_str_once(
     src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
 ) -> str:
+    # Use the encoding overwrite since the src_contents may contain a different
+    # magic encoding comment than utf-8
     normalized_contents, _, newline_type = decode_bytes(
-        src_contents.encode("utf-8"), mode
+        src_contents.encode("utf-8"), mode, encoding_overwrite="utf-8"
     )
 
     src_node = lib2to3_parse(
@@ -1276,14 +1278,25 @@ def _format_str_once(
     return "".join(dst_contents).replace("\n", newline_type)
 
 
-def decode_bytes(src: bytes, mode: Mode) -> tuple[FileContent, Encoding, NewLine]:
+def decode_bytes(
+    src: bytes, mode: Mode, *, encoding_overwrite: str | None = None
+) -> tuple[FileContent, Encoding, NewLine]:
     """Return a tuple of (decoded_contents, encoding, newline).
 
-    `newline` is either CRLF or LF but `decoded_contents` is decoded with
+    `newline` is either CRLF, LF, or CR, but `decoded_contents` is decoded with
     universal newlines (i.e. only contains LF).
+
+    Use the keyword only encoding_overwrite argument if the bytes are encoded
+    differently to their possible encoding magic comment.
     """
     srcbuf = io.BytesIO(src)
+
+    # Still use detect encoding even if overrite set because otherwise lines
+    # might be different
     encoding, lines = tokenize.detect_encoding(srcbuf.readline)
+    if encoding_overwrite is not None:
+        encoding = encoding_overwrite
+
     if not lines:
         return "", encoding, "\n"
 

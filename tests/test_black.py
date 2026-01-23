@@ -19,7 +19,7 @@ from importlib.metadata import version as imp_version
 from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any, TypeVar
 from unittest.mock import MagicMock, patch
 
@@ -2080,11 +2080,38 @@ class BlackTestCase(BlackBaseTestCase):
             == "class A: ...\r"
         )
 
-    def test_preview_newline_type_detection(self) -> None:
+    def test_newline_type_detection(self) -> None:
         mode = Mode()
         newline_types = ["A\n", "A\r\n", "A\r"]
         for test_case in itertools.permutations(newline_types):
             assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
+
+    def test_decode_with_encoding(self) -> None:
+        # This uses temporary files since some editors (including GitHub)
+        # struggle with displaying and/or editing non utf-8 data
+        # \xfc is iso-8859-1 for ü
+        with NamedTemporaryFile(delete=False) as first_line:
+            first_line.write(
+                b"# -*- coding: iso-8859-1 -*-\n"
+                b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
+            )
+            first_line.close()
+            self.assertFalse(
+                ff(Path(first_line.name)),
+                "Failed to properly detect encoding",
+            )
+
+        with NamedTemporaryFile(delete=False) as second_line:
+            second_line.write(
+                b"#! /usr/bin/env python3\n"
+                b"# -*- coding: iso-8859-1 -*-\n"
+                b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
+            )
+            second_line.close()
+            self.assertFalse(
+                ff(Path(second_line.name)),
+                "Failed to properly detect encoding on second line",
+            )
 
 
 class TestCaching:
