@@ -29,8 +29,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Fix shutdown errors in PyInstaller builds by disabling multiprocessing in frozen
-  environments (#4930)
+- Fix shutdown errors in PyInstaller builds on macOS by disabling multiprocessing in
+  frozen environments (#4930)
 
 ### Parser
 
