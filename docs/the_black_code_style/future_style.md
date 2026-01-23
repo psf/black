@@ -15,6 +15,9 @@ Currently, the following features are included in the preview style:
 
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
   across lines if it would otherwise exceed the maximum line length.
+- `simplify_power_operator_hugging`: Use a simpler implementation of the power operator
+  "hugging" logic (removing whitespace around `**` in simple expressions), which applies
+  also in the rare case the exponentiation is split into separate lines.
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
 

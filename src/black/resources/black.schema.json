@@ -83,6 +83,7 @@
           "string_processing",
           "hug_parens_with_braces_and_square_brackets",
           "wrap_comprehension_in",
+          "simplify_power_operator_hugging",
           "wrap_long_dict_values_in_parens"
         ]
       },
