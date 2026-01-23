@@ -948,6 +948,44 @@ def can_omit_invisible_parens(
     """
     line = rhs.body
 
+    # We can't omit parens if doing so would result in a type: ignore comment
+    # sharing a line with other comments, as that breaks type: ignore parsing.
+    # Check if the opening bracket (last leaf of head) has comments that would merge
+    # with comments from the first line of the body.
+    if rhs.head.leaves:
+        opening_bracket = rhs.head.leaves[-1]
+        head_comments = rhs.head.comments.get(id(opening_bracket), [])
+
+        # If there are comments on the opening bracket line, check if any would
+        # conflict with type: ignore comments in the body
+        if head_comments:
+            has_type_ignore_in_head = any(
+                is_type_ignore_comment(comment, mode=rhs.head.mode)
+                for comment in head_comments
+            )
+            has_other_comment_in_head = any(
+                not is_type_ignore_comment(comment, mode=rhs.head.mode)
+                for comment in head_comments
+            )
+
+            # Check for comments in the body that would potentially end up on the
+            # same line as the head comments when parens are removed
+            has_type_ignore_in_body = False
+            has_other_comment_in_body = False
+            for leaf in rhs.body.leaves:
+                for comment in rhs.body.comments.get(id(leaf), []):
+                    if is_type_ignore_comment(comment, mode=rhs.body.mode):
+                        has_type_ignore_in_body = True
+                    else:
+                        has_other_comment_in_body = True
+
+            # Preserve parens if we have both type: ignore and other comments that
+            # could end up on the same line
+            if (has_type_ignore_in_head and has_other_comment_in_body) or (
+                has_other_comment_in_head and has_type_ignore_in_body
+            ):
+                return False
+
     # We need optional parens in order to split standalone comments to their own lines
     # if there are no nested parens around the standalone comments
     closing_bracket: Leaf | None = None
