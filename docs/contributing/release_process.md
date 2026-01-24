@@ -53,9 +53,9 @@ To cut a release:
    1. Remove any empty sections for the current release
    1. (_optional_) Read through and copy-edit the changelog (eg. by moving entries,
       fixing typos, or rephrasing entries)
-   1. Update references to the latest version in
-      {doc}`/integrations/source_version_control` and
-      {doc}`/usage_and_configuration/the_basics`
+1. Update references to the latest version in
+   {doc}`/integrations/source_version_control` and
+   {doc}`/usage_and_configuration/the_basics`
    - Example PR: [GH-4563]
 1. Once the release PR is merged, wait until all CI passes
    - If CI does not pass, **stop** and investigate the failure(s) as generally we'd want
