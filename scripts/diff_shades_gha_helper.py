@@ -187,7 +187,7 @@ def comment_body(baseline: Path, target: Path, style: str, mode: str) -> None:
             "</details>"
         )
     else:
-        body = f"<code>--{style}</code> style: no changes"
+        body = f"<b><code>--{style}</code> style</b>: no changes"
 
     filename = f".{style}{COMMENT_FILE}"
     print(f"[INFO]: writing comment details to {filename}")
