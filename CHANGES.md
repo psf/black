@@ -31,6 +31,7 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Fix handling of multiline backslash continuations during parsing (#4945)
 - Fix shutdown errors in PyInstaller builds on macOS by disabling multiprocessing in
   frozen environments (#4930)
 
