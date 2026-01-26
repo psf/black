@@ -20,6 +20,41 @@ from blib2to3.pytree import Leaf, Node
 class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
+def normalize_backslash_continuations(src: str) -> str:
+    """
+    Remove explicit backslash-newline continuations before parsing.
+
+    CPython removes backslash-newline during tokenization, but blib2to3
+    does not. This normalization prevents invalid indentation states
+    during parsing.
+    """
+    lines = src.splitlines(keepends=True)
+    out: list[str] = []
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+
+        if line.rstrip().endswith("\\") and i + 1 < len(lines):
+            # Strip trailing backslash
+            merged = line.rstrip()[:-1]
+            i += 1
+
+            while i < len(lines):
+                next_line = lines[i]
+                merged += next_line.lstrip()
+                if not next_line.rstrip().endswith("\\"):
+                    break
+                merged = merged.rstrip()[:-1]
+                i += 1
+
+            out.append(merged)
+        else:
+            out.append(line)
+
+        i += 1
+
+    return "".join(out)
 
 def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
     if not target_versions:
@@ -56,6 +91,8 @@ def lib2to3_parse(
     src_txt: str, target_versions: Collection[TargetVersion] = ()
 ) -> Node:
     """Given a string with source, return the lib2to3 Node."""
+    # Normalize explicit backslash continuations before parsing
+    src_txt = normalize_backslash_continuations(src_txt)
     if not src_txt.endswith("\n"):
         src_txt += "\n"
 
