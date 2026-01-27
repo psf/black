@@ -671,7 +671,7 @@ class A:
                 "{xxxx_xxx} >> {xxxxxx_xxxx}.xxxxxxx 2>&1; xx=$$?;"
                 "xxxx $$xx".format(
                     xxxx_xxx=xxxx_xxxxxxx,
-                    xxxxxx_xxxx=xxxxxxx + "/" + xxxx_xxx_xxxx,
+                    xxxxxx_xxxx=(xxxxxxx + "/" + xxxx_xxx_xxxx),
                     x=xxx_xxxxx_xxxxx_xxx,
                 ),
                 x,

@@ -18,6 +18,8 @@ Currently, the following features are included in the preview style:
 - `simplify_power_operator_hugging`: Use a simpler implementation of the power operator
   "hugging" logic (removing whitespace around `**` in simple expressions), which applies
   also in the rare case the exponentiation is split into separate lines.
+- `arg_parens`: Parenthesize complex expressions passed as keyword arguments or
+  parameter defaults. For example, `foo(bar=x + y)` becomes `foo(bar=(x + y))`.
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
 
