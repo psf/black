@@ -8,6 +8,7 @@ hidden:
 editors
 github_actions
 source_version_control
+doctest_formatting
 ```
 
 _Black_ can be integrated into many environments, providing a better and smoother
@@ -17,6 +18,7 @@ following areas:
 - {doc}`Editor / IDE <./editors>`
 - {doc}`GitHub Actions <./github_actions>`
 - {doc}`Source version control <./source_version_control>`
+- {doc}`Doctest formatting <./doctest_formatting>`
 
 Editors and tools not listed will require external contributions.
 
