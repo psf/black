@@ -45,6 +45,9 @@ repos:
         language_version: python3.11
 ```
 
+For more information on formatting Jupyter Notebooks with _Black_, see
+{doc}`Formatting Jupyter Notebooks </usage_and_configuration/jupyter_notebooks>`.
+
 ```{note}
 The `black-jupyter` hook became available in version 21.8b0.
 ```

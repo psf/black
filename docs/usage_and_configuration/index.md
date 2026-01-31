@@ -7,6 +7,7 @@ hidden:
 
 the_basics
 file_collection_and_discovery
+jupyter_notebooks
 black_as_a_server
 black_docker_image
 ```
@@ -24,5 +25,6 @@ This section covers features of _Black_ and configuring _Black_ in detail:
 
 - {doc}`The basics <./the_basics>`
 - {doc}`File collection and discovery <file_collection_and_discovery>`
+- {doc}`Formatting Jupyter Notebooks <./jupyter_notebooks>`
 - {doc}`Black as a server (blackd) <./black_as_a_server>`
 - {doc}`Black Docker image <./black_docker_image>`
