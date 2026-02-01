@@ -2,25 +2,17 @@ name: fuzz
 
 on:
   push:
-    paths:
-      - tox.ini
-      - .github/workflows/fuzz.yml
-      - scripts/fuzz.py
-      - src/**
-      - tests/**
-      - pyproject.toml
-
+    branches: main
   pull_request:
     paths:
-      - tox.ini
       - .github/workflows/fuzz.yml
       - scripts/fuzz.py
-      - src/**
-      - tests/**
-      - pyproject.toml
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 permissions:
@@ -28,13 +20,6 @@ permissions:
 
 jobs:
   fuzz:
-    # We want to run on external PRs, but not on our own internal PRs as they'll be run
-    # by the push to the branch. Without this if check, checks are duplicated since
-    # internal PRs match both the push and pull_request events.
-    if:
-      github.event_name == 'push' || github.event.pull_request.head.repo.full_name !=
-      github.repository
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -55,4 +40,69 @@ jobs:
           pip-install: --group tox
 
       - name: Run fuzz tests
-        run: tox -e fuzz
+        id: fuzz
+        run: tox -e fuzz --result-json $python_ver
+        env:
+          python_ver: ${{ matrix.python-version }}
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        if: failure() && steps.fuzz.outcome == 'failure'
+        with:
+          name: ${{ matrix.python-version }}
+          path: ${{ matrix.python-version }}
+
+  create-issue:
+    runs-on: ubuntu-latest
+    needs: fuzz
+    if:
+      github.repository == 'psf/black' && github.event_name != 'pull_request' &&
+      failure()
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          merge-multiple: true
+          path: ./output
+
+      - name: Generate issue data
+        run: |
+          output=issue-body.html
+          touch $output
+          for FILE in ./output/*; do
+            echo "**Python $(basename $FILE)**" >> $output
+            echo -e "\`\`\`py" >> $output
+              echo -e "# stdout:" >> $output
+              echo -e "$(jq .testenvs.fuzz.test[-1].output $FILE -r)\n" >> $output
+              echo -e "# stderr:" >> $output
+              echo -e "$(jq .testenvs.fuzz.test[-1].err $FILE -r)" >> $output
+            echo -e "\`\`\`\n" >> $output
+          done
+
+      - name: Get existing issue
+        id: issue
+        run: |
+          echo "ISSUE=$( gh issue list \
+          -A github-actions[bot] -l 'ci: fuzz error' \
+          --json number -q .[0].number \
+          -R $REPO )" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+
+      - name: Create new issue
+        if: steps.issue.outputs.ISSUE == ''
+        run: >
+          gh issue create -t "Fuzz test failure" -F issue-body.html -l "ci: fuzz error"
+          -R $REPO
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+
+      - name: Edit existing issue
+        if: steps.issue.outputs.ISSUE != ''
+        run: gh issue edit $ISSUE -F issue-body.html -R $REPO
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ISSUE: ${{ steps.issue.outputs.ISSUE }}
