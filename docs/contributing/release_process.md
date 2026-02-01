@@ -129,14 +129,6 @@ multiple mypyc wheels jobs (hence the term "matrix") that build for a specific p
 These jobs upload the built sdist and all wheels to PyPI using [Trusted
 publishing][trusted-publishing].
 
-#### update stable branch
-
-So this job doesn't _really_ belong here, but updating the `stable` branch after the
-other PyPI jobs pass (they must pass for this job to start) makes the most sense. This
-saves us from remembering to update the branch sometime after cutting the release.
-
-- _Currently this workflow uses an API token associated with @ambv's PyPI account_
-
 ### publish binaries
 
 This workflow builds native executables for multiple platforms using [PyInstaller]. This
@@ -156,6 +148,21 @@ This workflow uses the QEMU powered `buildx` feature of Docker to upload an `arm
 ```{note}
 This also runs on each push to `main`.
 ```
+
+### post release
+
+This workflow runs a few miscellaneous jobs related to repository maintenance.
+
+#### update-stable
+
+Updates the `stable` branch by force pushing it to the most recent tag. This saves us
+from remembering to update the branch sometime after cutting the release.
+
+#### new-changelog
+
+Opens a new PR to add the "Unreleased" section back to the changelog. The PR is
+intentionally not auto-merged, in case there's an issue and the release needs to be
+re-cut.
 
 [black-actions]: https://github.com/psf/black/actions
 [calver]: https://calver.org
