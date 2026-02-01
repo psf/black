@@ -6,13 +6,13 @@ updates:
   - package-ecosystem: "github-actions"
     # Workflow files in .github/workflows will be checked
     directory: "/"
-    labels: ["skip news", "C: dependencies", "C: maintenance"]
+    labels: ["ci: skip news", "C: dependencies", "C: maintenance"]
     cooldown:
       default-days: 7
 
   - package-ecosystem: "pip"
     directory: "/"
-    labels: ["skip news", "C: dependencies"]
+    labels: ["ci: skip news", "C: dependencies"]
     cooldown:
       default-days: 7
 
@@ -32,4 +32,4 @@ updates:
 
 multi-ecosystem-groups:
   cibuildwheel:
-    labels: ["skip news", "C: dependencies"]
+    labels: ["ci: skip news", "C: dependencies"]

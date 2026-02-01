@@ -58,7 +58,7 @@ jobs:
         run: |
           gh pr create \
             -t "Add new changelog" -b "" \
-            -l "skip news" -l "C: maintanance" \
+            -l "ci: skip news" -l "C: maintanance" \
             -a $USER
         env:
           GITHUB_TOKEN: ${{ github.token }}

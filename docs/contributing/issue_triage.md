@@ -88,15 +88,15 @@ We also have a few standalone labels:
   banners for first-time visitors to the repository)
 - **`help wanted`**: complex issues that need and are looking for a fair bit of work as
   to progress (will also show up in various GitHub pages)
-- **`skip news`**: for PRs that are trivial and don't need a CHANGELOG entry (and skips
-  the CHANGELOG entry check)
+- **`ci: skip news`**: for PRs that are trivial and don't need a CHANGELOG entry (and
+  skips the CHANGELOG entry check)
 - **`ci: build all wheels`**: when a full wheel build is needed, such as to debug
   platform-specific issues. Black does not build wheels for every platform on each pull
   request because the full build matrix is expensive. After the label is added, the
   workflow starts only when a new commit is pushed.
 
 ```{note}
-We do use labels for PRs, in particular the `skip news` label, but we aren't that
+We do use labels for PRs, in particular the `ci: skip news` label, but we aren't that
 rigorous about it. Just follow your judgement on what labels make sense for the specific
 PR (if any even make sense).
 ```
