@@ -24,11 +24,11 @@ import black
     # Note that while Hypothesmith might generate code unlike that written by
     # humans, it's a general test that should pass for any *valid* source code.
     # (so e.g. running it against code scraped of the internet might also help)
-    src_contents=hypothesmith.from_grammar() | hypothesmith.from_node(),
+    src_contents=(hypothesmith.from_grammar() | hypothesmith.from_node()),
     # Using randomly-varied modes helps us to exercise less common code paths.
     mode=st.builds(
         black.FileMode,
-        line_length=st.just(88) | st.integers(0, 200),
+        line_length=(st.just(88) | st.integers(0, 200)),
         string_normalization=st.booleans(),
         preview=st.booleans(),
         is_pyi=st.booleans(),
