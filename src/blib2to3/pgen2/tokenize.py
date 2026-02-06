@@ -147,6 +147,10 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
     line, column = 1, 0
 
     prev_token: pytokens.Token | None = None
+    in_backslash_continuation = False
+    # Track the balance of INDENT/DEDENT tokens skipped during continuation
+    # Positive means we skipped more DEDENTs than INDENTs
+    skipped_indent_balance = 0
     try:
         for token in pytokens.tokenize(source):
             token = transform_whitespace(token, source, prev_token)
@@ -160,6 +164,33 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
             if token.type == TokenType.newline and token_str == "":
                 # Black doesn't yield empty newline tokens at the end of a file
                 # if there's no newline at the end of a file.
+                prev_token = token
+                continue
+
+            # Track if we just saw a backslash continuation (NL token starting with \)
+            if token.type == TokenType.nl and token_str.startswith("\\"):
+                in_backslash_continuation = True
+            # Skip INDENT/DEDENT tokens that come during a backslash continuation
+            # (before the logical line ends with a NEWLINE token)
+            elif in_backslash_continuation and token.type == TokenType.dedent:
+                skipped_indent_balance += 1
+                prev_token = token
+                continue
+            elif in_backslash_continuation and token.type == TokenType.indent:
+                skipped_indent_balance -= 1
+                prev_token = token
+                continue
+            # NEWLINE ends the logical line and the continuation tracking
+            elif token.type == TokenType.newline:
+                in_backslash_continuation = False
+                # Don't reset balance here - we still need to skip matching tokens
+            # After continuation ends, skip tokens to balance what we skipped during continuation
+            elif skipped_indent_balance > 0 and token.type == TokenType.indent:
+                skipped_indent_balance -= 1
+                prev_token = token
+                continue
+            elif skipped_indent_balance < 0 and token.type == TokenType.dedent:
+                skipped_indent_balance += 1
                 prev_token = token
                 continue
 
