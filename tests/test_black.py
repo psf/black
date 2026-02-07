@@ -3174,6 +3174,51 @@ class TestASTSafety(BlackBaseTestCase):
         err.match("invalid character")
         err.match(r"\(<unknown>, line 1\)")
 
+    def test_target_version_exceeds_runtime_warning(self) -> None:
+        future_minor = sys.version_info[1] + 1
+        target_name = f"py3{future_minor}"
+        code = "x = 1\n"
+        args = ["--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning: target version" in stderr
+        assert "newer than the running Python" in stderr
+
+    def test_target_version_exceeds_runtime_no_warning_with_fast(self) -> None:
+        future_minor = sys.version_info[1] + 1
+        target_name = f"py3{future_minor}"
+        code = "x = 1\n"
+        args = ["--fast", "--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning: target version" not in stderr
+
+    def test_target_version_at_runtime_no_warning(self) -> None:
+        current_minor = sys.version_info[1]
+        target_name = f"py3{current_minor}"
+        code = "x = 1\n"
+        args = ["--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning: target version" not in stderr
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_target_version_exceeds_runtime_clear_error_message(self) -> None:
+        mode = Mode(
+            target_versions={TargetVersion[f"PY3{sys.version_info[1] + 1}"]}
+        )
+        with patch.object(
+            black,
+            "assert_equivalent",
+            side_effect=ASTSafetyError("mocked parse failure"),
+        ):
+            with pytest.raises(ASTSafetyError) as exc_info:
+                black.check_stability_and_equivalence(
+                    "x = 1\n", "x = 1\n", mode=mode
+                )
+            assert "cannot parse code generated for" in str(exc_info.value)
+            assert "INTERNAL ERROR" not in str(exc_info.value)
+
 
 try:
     with open(black.__file__, encoding="utf-8") as _bf:

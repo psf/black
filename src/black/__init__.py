@@ -202,6 +202,15 @@ def target_version_option_callback(
     return [TargetVersion[val.upper()] for val in v]
 
 
+def _target_versions_exceed_runtime(
+    target_versions: set[TargetVersion],
+) -> bool:
+    if not target_versions:
+        return False
+    max_target_minor = max(tv.value for tv in target_versions)
+    return max_target_minor > sys.version_info[1]
+
+
 def enable_unstable_feature_callback(
     c: click.Context, p: click.Option | click.Parameter, v: tuple[str, ...]
 ) -> list[Preview]:
@@ -642,6 +651,23 @@ def main(
         enabled_features=set(enable_unstable_feature),
     )
 
+    if not fast and _target_versions_exceed_runtime(versions):
+        max_target = max(versions, key=lambda tv: tv.value)
+        runtime_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
+        err(
+            f"Warning: target version {max_target.pretty()} is newer than the"
+            f" running Python {runtime_version}. Black's safety check verifies"
+            " that formatted code is equivalent to the original by parsing the"
+            f" AST, but Python {runtime_version} cannot parse"
+            f" {max_target.pretty()} syntax. To fix this: (1) run Black with"
+            f" {max_target.pretty()} instead, (2) set --target-version to"
+            f" py3{sys.version_info[1]} (any valid py3{sys.version_info[1]}"
+            f" syntax is still valid {max_target.pretty()} syntax, it just may"
+            " not be the most concise), or (3) use --fast to skip the safety"
+            " check.",
+            fg="yellow",
+        )
+
     lines: list[tuple[int, int]] = []
     if line_ranges:
         if ipynb:
@@ -1055,7 +1081,21 @@ def check_stability_and_equivalence(
     equivalent, or if a second pass of the formatter would format the
     content differently.
     """
-    assert_equivalent(src_contents, dst_contents)
+    try:
+        assert_equivalent(src_contents, dst_contents)
+    except ASTSafetyError:
+        if _target_versions_exceed_runtime(mode.target_versions):
+            max_target = max(mode.target_versions, key=lambda tv: tv.value)
+            runtime_version = f"{sys.version_info[0]}.{sys.version_info[1]}"
+            raise ASTSafetyError(
+                "failed to verify equivalence of the formatted output:"
+                f" Python {runtime_version} cannot parse code generated"
+                f" for {max_target.pretty()}. To fix this: run Black with"
+                f" {max_target.pretty()}, set --target-version to"
+                f" py3{sys.version_info[1]}, or use --fast to skip this"
+                " check."
+            ) from None
+        raise
     assert_stable(src_contents, dst_contents, mode=mode, lines=lines)
 
 
