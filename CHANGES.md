@@ -49,7 +49,7 @@
 - Emit a clear warning when the target Python version is newer than the running Python
   version, since AST safety checks cannot parse newer syntax. Also replace the
   misleading "INTERNAL ERROR" message with an actionable error explaining the version
-  mismatch (#4980)
+  mismatch (#4983)
 
 ### _Blackd_
 
