@@ -115,17 +115,8 @@ f(
 Format all input files like typing stubs regardless of file extension. This is useful
 when piping source on standard input.
 
-#### `--ipynb`
-
-Format all input files like Jupyter Notebooks regardless of file extension. This is
-useful when piping source on standard input.
-
-#### `--python-cell-magics`
-
-When processing Jupyter Notebooks, add the given magic to the list of known python-
-magics. Useful for formatting cells with custom python magics.
-
 #### `-x, --skip-source-first-line`
+
 
 Skip the first line of the source code.
 
