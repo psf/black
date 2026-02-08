@@ -1,10 +1,12 @@
 # Jupyter Notebooks
 
-Black supports formatting Jupyter Notebooks natively. This page provides comprehensive information on how to install, configure, and use Black with Jupyter Notebooks.
+Black supports formatting Jupyter Notebooks natively. This page provides comprehensive
+information on how to install, configure, and use Black with Jupyter Notebooks.
 
 ## Installation
 
-To format Jupyter Notebooks with Black, you need to install Black with the `jupyter` extra:
+To format Jupyter Notebooks with Black, you need to install Black with the `jupyter`
+extra:
 
 ```sh
 pip install "black[jupyter]"
@@ -16,7 +18,8 @@ If you use pipx:
 pipx install black --preinstall jupyter
 ```
 
-The Jupyter extra installs the necessary dependencies for Black to read and format Jupyter Notebook files (`.ipynb`).
+The Jupyter extra installs the necessary dependencies for Black to read and format
+Jupyter Notebook files (`.ipynb`).
 
 ## Basic Usage
 
@@ -38,7 +41,8 @@ Black will automatically detect `.ipynb` files and format them appropriately.
 
 ### `--ipynb`
 
-Format all input files like Jupyter Notebooks regardless of file extension. This is useful when piping source on standard input.
+Format all input files like Jupyter Notebooks regardless of file extension. This is
+useful when piping source on standard input.
 
 ```sh
 cat notebook.txt | black --ipynb -
@@ -46,7 +50,8 @@ cat notebook.txt | black --ipynb -
 
 ### `--python-cell-magics`
 
-When processing Jupyter Notebooks, add the given magic to the list of known python-magics. This is useful for formatting cells with custom python magics.
+When processing Jupyter Notebooks, add the given magic to the list of known
+python-magics. This is useful for formatting cells with custom python magics.
 
 ```sh
 black --python-cell-magics writefile notebook.ipynb
@@ -68,7 +73,8 @@ You can configure Jupyter-specific options in your `pyproject.toml`:
 python-cell-magics = ["writefile", "save"]
 ```
 
-All other Black configuration options (line length, target version, etc.) apply to notebooks as well:
+All other Black configuration options (line length, target version, etc.) apply to
+notebooks as well:
 
 ```toml
 [tool.black]
@@ -79,7 +85,8 @@ python-cell-magics = ["writefile"]
 
 ## What Gets Formatted
 
-Black formats code cells in Jupyter Notebooks. However, Black is intentionally conservative about what it formats to avoid breaking notebook functionality.
+Black formats code cells in Jupyter Notebooks. However, Black is intentionally
+conservative about what it formats to avoid breaking notebook functionality.
 
 ### Cells That Are Formatted
 
@@ -91,7 +98,9 @@ Black formats code cells in Jupyter Notebooks. However, Black is intentionally c
 Black will skip cells containing any of the following:
 
 - **Automagics**: Commands like `pip install black`, `ls`, `cd`, etc.
-- **Non-Python cell magics**: Magic commands like `%%writefile`, `%%bash`, `%%html`, etc. You can add these to the list of Python cell magics with `--python-cell-magics` if they contain Python code.
+- **Non-Python cell magics**: Magic commands like `%%writefile`, `%%bash`, `%%html`,
+  etc. You can add these to the list of Python cell magics with `--python-cell-magics`
+  if they contain Python code.
 - **Multiline magics**: Magic commands that span multiple lines with line continuations:
 
   ```python
@@ -106,7 +115,8 @@ Black will skip cells containing any of the following:
   get_ipython().system('ls')
   ```
 
-- **Invalid syntax**: Code with syntax errors, as it can't be safely distinguished from automagics without a running IPython kernel.
+- **Invalid syntax**: Code with syntax errors, as it can't be safely distinguished from
+  automagics without a running IPython kernel.
 
 ## Integration with Pre-commit
 
@@ -123,15 +133,19 @@ repos:
         # Deprecated: use the main black hook with `types_or` instead
 ```
 
-The `black` hook with `types_or: [python, pyi, jupyter]` will format both Python files and Jupyter Notebooks.
+The `black` hook with `types_or: [python, pyi, jupyter]` will format both Python files
+and Jupyter Notebooks.
 
 ## Integration with Editors
 
-Many editor integrations for Black support Jupyter Notebooks. Check the [Editor Integration documentation](../integrations/editors.md) for specific instructions for your editor.
+Many editor integrations for Black support Jupyter Notebooks. Check the
+[Editor Integration documentation](../integrations/editors.md) for specific instructions
+for your editor.
 
 ### Jupyter Notebook Interface
 
-Black does not have a built-in extension for the Jupyter Notebook interface. However, you can:
+Black does not have a built-in extension for the Jupyter Notebook interface. However,
+you can:
 
 1. Format notebooks from the command line before committing
 2. Use Jupyter Lab extensions like `jupyterlab-code-formatter` which supports Black
@@ -139,7 +153,8 @@ Black does not have a built-in extension for the Jupyter Notebook interface. How
 
 ### VS Code
 
-The Python extension for VS Code supports formatting Jupyter Notebooks with Black. Make sure you have:
+The Python extension for VS Code supports formatting Jupyter Notebooks with Black. Make
+sure you have:
 
 1. Installed Black with the `jupyter` extra
 2. Set Black as your Python formatter in VS Code settings
@@ -149,7 +164,8 @@ The Python extension for VS Code supports formatting Jupyter Notebooks with Blac
 
 ### Why is my cell not formatted?
 
-If a cell isn't being formatted, it likely contains one of the patterns Black skips (see "Cells That Are Not Formatted" above). You can:
+If a cell isn't being formatted, it likely contains one of the patterns Black skips (see
+"Cells That Are Not Formatted" above). You can:
 
 - Check if the cell contains automagics or cell magics
 - If it contains a custom Python cell magic, add it with `--python-cell-magics`
@@ -157,7 +173,9 @@ If a cell isn't being formatted, it likely contains one of the patterns Black sk
 
 ### Formatting differences
 
-Note that Black may format notebook code differently than it would format the same code in a `.py` file due to the presence of IPython-specific syntax. This is intentional to maintain compatibility with the Jupyter environment.
+Note that Black may format notebook code differently than it would format the same code
+in a `.py` file due to the presence of IPython-specific syntax. This is intentional to
+maintain compatibility with the Jupyter environment.
 
 ## Examples
 
