@@ -117,7 +117,6 @@ when piping source on standard input.
 
 #### `-x, --skip-source-first-line`
 
-
 Skip the first line of the source code.
 
 #### `-S, --skip-string-normalization`
