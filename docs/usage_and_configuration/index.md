@@ -9,6 +9,7 @@ the_basics
 file_collection_and_discovery
 black_as_a_server
 black_docker_image
+jupyter
 ```
 
 Sometimes, running _Black_ with its defaults and passing filepaths to it just won't cut
@@ -26,3 +27,4 @@ This section covers features of _Black_ and configuring _Black_ in detail:
 - {doc}`File collection and discovery <file_collection_and_discovery>`
 - {doc}`Black as a server (blackd) <./black_as_a_server>`
 - {doc}`Black Docker image <./black_docker_image>`
+- {doc}`Jupyter Notebook support <./jupyter>`
