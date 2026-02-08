@@ -9,6 +9,7 @@ the_basics
 file_collection_and_discovery
 black_as_a_server
 black_docker_image
+jupyter
 ```
 
 Sometimes, running _Black_ with its defaults and passing filepaths to it just won't cut
