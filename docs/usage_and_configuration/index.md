@@ -6,6 +6,7 @@ hidden:
 ---
 
 the_basics
+jupyter_notebooks
 file_collection_and_discovery
 black_as_a_server
 black_docker_image
@@ -23,6 +24,7 @@ Configuration that will either live on the command line or in a TOML configurati
 This section covers features of _Black_ and configuring _Black_ in detail:
 
 - {doc}`The basics <./the_basics>`
+- {doc}`Jupyter Notebooks <./jupyter_notebooks>`
 - {doc}`File collection and discovery <file_collection_and_discovery>`
 - {doc}`Black as a server (blackd) <./black_as_a_server>`
 - {doc}`Black Docker image <./black_docker_image>`
