@@ -120,6 +120,17 @@ when piping source on standard input.
 Format all input files like Jupyter Notebooks regardless of file extension. This is
 useful when piping source on standard input.
 
+#### `Formatting Jupyter Notebooks via nbqa`
+
+nbqa extracts code cells from the notebook, runs Black on them, and writes the formatted code back into the notebook file.
+
+Install nbqa: `$pip install nbqa`
+
+Format a notebook: `$nbqa black my_notebook.ipynb`
+
+To check formatting without making changes: `$nbqa black my_notebook.ipynb --check`
+
+
 #### `--python-cell-magics`
 
 When processing Jupyter Notebooks, add the given magic to the list of known python-
