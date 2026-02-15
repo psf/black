@@ -1240,7 +1240,7 @@ def _format_str_once(
     lines = normalized_contents.splitlines()
     line_content = lines[lineno-1] if 0 < lineno <= len(lines) else "<line missing>"
 
-    # use caret '^' to point where the error is\ 
+    # use caret '^' to point where the error is\
     print(f"SyntexError is in line {lineno}, column {col}:\n    {line_content}\n    {'^'.rjust(col)}")
     raise SystemExit(1) from None
 
