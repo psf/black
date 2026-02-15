@@ -1226,7 +1226,7 @@ def _format_str_once(
     try:
         src_node = lib2to3_parse(
         normalized_contents.lstrip(), target_versions=mode.target_versions,
-        )
+    )
     except InvalidInput as e:
         msg = str(e)
         try:
