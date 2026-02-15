@@ -120,7 +120,7 @@ when piping source on standard input.
 Format all input files like Jupyter Notebooks regardless of file extension. This is
 useful when piping source on standard input.
 
-#### `Formatting Jupyter Notebooks via nbqa`
+##### Formatting Jupyter Notebooks via nbqa
 
 nbqa extracts code cells from the notebook, runs Black on them, and writes the formatted
 code back into the notebook file.
