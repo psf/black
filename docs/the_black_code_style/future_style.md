@@ -92,8 +92,9 @@ consistent formatting:
 ```python
 # Complex expression split across lines
 result = (
-    some_long_base_expression**
-    some_long_exponent_expression
+    some_very_long_base_expression
+    **some_very_long_exponent_expression
+    **some_very_long_third_expression
 )
 ```
 
