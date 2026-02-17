@@ -80,9 +80,13 @@ def lib2to3_parse(
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
+
+            caret_line = " " * (column - 1) + "^"
+
             errors[grammar.version] = InvalidInput(
-                f"Cannot parse{tv_str}: {lineno}:{column}: {faulty_line}"
+                print(f"SyntexError is in line {lineno}, column {column}:\n    {faulty_line}\n    {'^'.rjust(column)}")
             )
+            
 
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
