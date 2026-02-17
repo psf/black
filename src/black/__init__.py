@@ -1223,29 +1223,6 @@ def _format_str_once(
     normalized_contents, _, newline_type = decode_bytes(
         src_contents.encode("utf-8"), mode, encoding_overwrite="utf-8"
     )
-<<<<<<< HEAD
-    try:
-        src_node = lib2to3_parse(
-        normalized_contents.lstrip(), target_versions=mode.target_versions,
-    )
-    except InvalidInput as e:
-        msg = str(e)
-        try:
-            parts = msg.split(":")
-            lineno = int(parts[-3])
-            col = int(parts[-2])
-        except(ValueError, IndexError):
-            lineno, col = 1,1
-
-    # getting error line
-    lines = normalized_contents.splitlines()
-    line_content = lines[lineno-1] if 0 < lineno <= len(lines) else "<line missing>"
-
-    # use caret '^' to point where the error is\
-    print(f"SyntexError is in line {lineno}, column {col}:\n    {line_content}\n    {'^'.rjust(col)}")
-    raise SystemExit(1) from None
-=======
->>>>>>> 77405eb (remove the __init__.py exception code and add it in lib2to3_parse function)
 
     src_node = lib2to3_parse(
         normalized_contents.lstrip(), target_versions=mode.target_versions
