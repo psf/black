@@ -36,7 +36,10 @@ For example:
 
 ```python
 # Before
-result = [item.process() for item in some_very_long_function_name(argument1, argument2, argument3)]
+result = [
+    very_very_very_very_very_long_item
+    for very_very_very_very_very_long_item in some_very_very_very_very_very_very_long_function_name
+]
 ```
 
 will be formatted to:
@@ -44,9 +47,9 @@ will be formatted to:
 ```python
 # After
 result = [
-    item.process()
-    for item in some_very_long_function_name(
-        argument1, argument2, argument3
+    very_very_very_very_very_long_item
+    for very_very_very_very_very_long_item in (
+        some_very_very_very_very_very_very_long_function_name
     )
 ]
 ```
@@ -55,7 +58,10 @@ This also applies to dictionary comprehensions:
 
 ```python
 # Before
-mapping = {key: value.transform() for key, value in get_items_from_very_long_source(param1, param2)}
+mapping = {
+    very_long_key: very_very_very_long_item
+    for very_long_key, very_very_very_long_item in very_very_very_very_long_function_name
+}
 ```
 
 will be formatted to:
@@ -63,9 +69,9 @@ will be formatted to:
 ```python
 # After
 mapping = {
-    key: value.transform()
-    for key, value in get_items_from_very_long_source(
-        param1, param2
+    very_long_key: very_very_very_long_item
+    for very_long_key, very_very_very_long_item in (
+        very_very_very_very_long_function_name
     )
 }
 ```
