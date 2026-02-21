@@ -14,6 +14,7 @@
 <!-- Changes that affect Black's stable style -->
 
 - Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
+- Fix crash on standalone comment in lambda default arguments (#4993)
 
 ### Preview style
 
