@@ -54,6 +54,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Added documentation for doctest formatting tools and updated the integrations index to
+  match (#4916)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
