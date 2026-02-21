@@ -15,8 +15,8 @@ from black.brackets import (
     DOT_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
-    max_delimiter_priority_in_atom,
     max_delimiter_priority,
+    max_delimiter_priority_in_atom,
 )
 from black.comments import (
     FMT_OFF,
@@ -1053,7 +1053,7 @@ def _first_right_hand_split(
             else:
                 line_length = line.mode.line_length - sum(
                     len(str(leaf))
-                    for leaf in (hugged_opening_leaves + hugged_closing_leaves)
+                    for leaf in hugged_opening_leaves + hugged_closing_leaves
                 )
                 if is_line_short_enough(
                     inner_body, mode=replace(line.mode, line_length=line_length)
