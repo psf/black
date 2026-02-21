@@ -202,6 +202,27 @@ def target_version_option_callback(
     return [TargetVersion[val.upper()] for val in v]
 
 
+def _target_versions_exceed_runtime(
+    target_versions: set[TargetVersion],
+) -> bool:
+    if not target_versions:
+        return False
+    max_target_minor = max(tv.value for tv in target_versions)
+    return max_target_minor > sys.version_info[1]
+
+
+def _version_mismatch_message(target_versions: set[TargetVersion]) -> str:
+    max_target = max(target_versions, key=lambda tv: tv.value)
+    runtime = f"{sys.version_info[0]}.{sys.version_info[1]}"
+    return (
+        f"Python {runtime} cannot parse code formatted for"
+        f" {max_target.pretty()}. To fix this: run Black with"
+        f" {max_target.pretty()}, set --target-version to"
+        f" py3{sys.version_info[1]}, or use --fast to skip the safety"
+        " check."
+    )
+
+
 def enable_unstable_feature_callback(
     c: click.Context, p: click.Option | click.Parameter, v: tuple[str, ...]
 ) -> list[Preview]:
@@ -642,6 +663,14 @@ def main(
         enabled_features=set(enable_unstable_feature),
     )
 
+    if not fast and _target_versions_exceed_runtime(versions):
+        err(
+            f"Warning: {_version_mismatch_message(versions)} Black's safety"
+            " check verifies equivalence by parsing the AST, which fails"
+            " when the running Python is older than the target version.",
+            fg="yellow",
+        )
+
     lines: list[tuple[int, int]] = []
     if line_ranges:
         if ipynb:
@@ -1055,7 +1084,15 @@ def check_stability_and_equivalence(
     equivalent, or if a second pass of the formatter would format the
     content differently.
     """
-    assert_equivalent(src_contents, dst_contents)
+    try:
+        assert_equivalent(src_contents, dst_contents)
+    except ASTSafetyError:
+        if _target_versions_exceed_runtime(mode.target_versions):
+            raise ASTSafetyError(
+                "failed to verify equivalence of the formatted output:"
+                f" {_version_mismatch_message(mode.target_versions)}"
+            ) from None
+        raise
     assert_stable(src_contents, dst_contents, mode=mode, lines=lines)
 
 

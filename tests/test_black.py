@@ -3174,6 +3174,53 @@ class TestASTSafety(BlackBaseTestCase):
         err.match("invalid character")
         err.match(r"\(<unknown>, line 1\)")
 
+    def test_target_version_exceeds_runtime_warning(self) -> None:
+        max_target = max(TargetVersion, key=lambda tv: tv.value)
+        if sys.version_info[1] >= max_target.value:
+            pytest.skip("no target version higher than runtime available")
+        target_name = f"py3{sys.version_info[1] + 1}"
+        code = "x = 1\n"
+        args = ["--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning:" in stderr
+
+    def test_target_version_exceeds_runtime_no_warning_with_fast(self) -> None:
+        max_target = max(TargetVersion, key=lambda tv: tv.value)
+        if sys.version_info[1] >= max_target.value:
+            pytest.skip("no target version higher than runtime available")
+        target_name = f"py3{sys.version_info[1] + 1}"
+        code = "x = 1\n"
+        args = ["--fast", "--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning:" not in stderr
+
+    def test_target_version_at_runtime_no_warning(self) -> None:
+        current_minor = sys.version_info[1]
+        target_name = f"py3{current_minor}"
+        code = "x = 1\n"
+        args = ["--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning:" not in stderr
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_target_version_exceeds_runtime_clear_error_message(self) -> None:
+        max_target = max(TargetVersion, key=lambda tv: tv.value)
+        if sys.version_info[1] >= max_target.value:
+            pytest.skip("no target version higher than runtime available")
+        future_target = TargetVersion[f"PY3{sys.version_info[1] + 1}"]
+        mode = Mode(target_versions={future_target})
+        with patch.object(
+            black,
+            "assert_equivalent",
+            side_effect=ASTSafetyError("mocked parse failure"),
+        ):
+            with pytest.raises(ASTSafetyError) as exc_info:
+                black.check_stability_and_equivalence("x = 1\n", "x = 1\n", mode=mode)
+            assert "INTERNAL ERROR" not in str(exc_info.value)
+
 
 try:
     with open(black.__file__, encoding="utf-8") as _bf:
