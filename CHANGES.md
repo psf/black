@@ -22,6 +22,7 @@
 - Fix `string_processing` crashing on unassigned long string literals with trailing
   commas (one-item tuples) (#4929)
 - Simplify implementation of the power operator "hugging" logic (#4918)
+- Always wrap `in` clauses of comprehensions if they have delimiters (#4881)
 
 ### Configuration
 
