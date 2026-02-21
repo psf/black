@@ -634,8 +634,8 @@ def main(
         is_pyi=pyi,
         is_ipynb=ipynb,
         skip_source_first_line=skip_source_first_line,
-        string_normalization=not skip_string_normalization,
-        magic_trailing_comma=not skip_magic_trailing_comma,
+        string_normalization=(not skip_string_normalization),
+        magic_trailing_comma=(not skip_magic_trailing_comma),
         preview=preview,
         unstable=unstable,
         python_cell_magics=set(python_cell_magics),
@@ -787,7 +787,7 @@ def get_sources(
                 path = Path(f"{STDIN_PLACEHOLDER}{path}")
 
             if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
-                warn=verbose or not quiet
+                warn=(verbose or not quiet)
             ):
                 continue
 

@@ -1,5 +1,5 @@
 # flags: --preview
-# This is a copy of `power_op_spacing.py`. Remove when `simplify_power_operator_hugging` becomes stable.
+# This is a copy of `power_op_spacing.py` for testing `simplify_power_operator_hugging`, with output adjusted for `arg_parens`.
 
 def function(**kwargs):
     t = a**2 + b**3
@@ -81,7 +81,7 @@ return np.divide(
 
 
 # output
-# This is a copy of `power_op_spacing.py`. Remove when `simplify_power_operator_hugging` becomes stable.
+# This is a copy of `power_op_spacing.py` for testing `simplify_power_operator_hugging`, with output adjusted for `arg_parens`.
 
 
 def function(**kwargs):
@@ -145,9 +145,9 @@ if hasattr(view, "sum_of_weights"):
         view.variance,  # type: ignore[union-attr]
         view.sum_of_weights,  # type: ignore[union-attr]
         out=np.full(view.sum_of_weights.shape, np.nan),  # type: ignore[union-attr]
-        where=view.sum_of_weights**2 > view.sum_of_weights_squared,  # type: ignore[union-attr]
+        where=(view.sum_of_weights**2 > view.sum_of_weights_squared),  # type: ignore[union-attr]
     )
 
 return np.divide(
-    where=view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared,  # type: ignore
+    where=(view.sum_of_weights_of_weight_long**2 > view.sum_of_weights_squared),  # type: ignore
 )

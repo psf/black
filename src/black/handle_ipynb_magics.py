@@ -133,7 +133,7 @@ def put_trailing_semicolon_back(src: str, has_trailing_semicolon: bool) -> str:
     for idx, token in reversed_enumerate(tokens):
         if token.name in TOKENS_TO_IGNORE:
             continue
-        tokens[idx] = token._replace(src=token.src + ";")
+        tokens[idx] = token._replace(src=(token.src + ";"))
         break
     else:  # pragma: nocover
         raise AssertionError(

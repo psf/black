@@ -499,9 +499,9 @@ def _calculate_lines_mappings(
             previous_block = matching_blocks[i - 1]
             lines_mappings.append(
                 _LinesMapping(
-                    original_start=previous_block.a + previous_block.size + 1,
+                    original_start=(previous_block.a + previous_block.size + 1),
                     original_end=block.a,
-                    modified_start=previous_block.b + previous_block.size + 1,
+                    modified_start=(previous_block.b + previous_block.size + 1),
                     modified_end=block.b,
                     is_changed_block=True,
                 )
@@ -509,10 +509,10 @@ def _calculate_lines_mappings(
         if i < len(matching_blocks) - 1:
             lines_mappings.append(
                 _LinesMapping(
-                    original_start=block.a + 1,
-                    original_end=block.a + block.size,
-                    modified_start=block.b + 1,
-                    modified_end=block.b + block.size,
+                    original_start=(block.a + 1),
+                    original_end=(block.a + block.size),
+                    modified_start=(block.b + 1),
+                    modified_end=(block.b + block.size),
                     is_changed_block=False,
                 )
             )

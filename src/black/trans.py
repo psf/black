@@ -2265,7 +2265,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         string_value = LL[string_idx].value
         string_line = Line(
             mode=line.mode,
-            depth=line.depth + 1,
+            depth=(line.depth + 1),
             inside_brackets=True,
             should_split_rhs=line.should_split_rhs,
             magic_trailing_comma=line.magic_trailing_comma,

@@ -228,6 +228,7 @@ class Preview(Enum):
     hug_parens_with_braces_and_square_brackets = auto()
     wrap_comprehension_in = auto()
     simplify_power_operator_hugging = auto()
+    arg_parens = auto()
     wrap_long_dict_values_in_parens = auto()
 
 

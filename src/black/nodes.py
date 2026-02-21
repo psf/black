@@ -249,7 +249,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
             return NO
 
         elif prevp.type in VARARGS_SPECIALS:
-            if is_vararg(prevp, within=VARARGS_PARENTS | UNPACKING_PARENTS):
+            if is_vararg(prevp, within=(VARARGS_PARENTS | UNPACKING_PARENTS)):
                 return NO
 
         elif prevp.type == token.COLON:
@@ -563,11 +563,14 @@ def is_simple_exponentiation(node: LN) -> bool:
         else:
             return all(is_simple(child) for child in node.children)
 
+    return is_exponentiation(node) and is_simple(node)
+
+
+def is_exponentiation(node: LN) -> bool:
     return (
         node.type == syms.power
         and len(node.children) >= 3
         and node.children[-2].type == token.DOUBLESTAR
-        and is_simple(node)
     )
 
 
