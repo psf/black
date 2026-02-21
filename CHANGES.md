@@ -59,6 +59,10 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Expand preview style documentation with detailed examples for `wrap_comprehension_in`,
+  `simplify_power_operator_hugging`, and `wrap_long_dict_values_in_parens` features
+  (#4987)
+
 ## 26.1.0
 
 ### Highlights
