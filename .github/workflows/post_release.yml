@@ -1,0 +1,65 @@
+name: post release
+
+on:
+  release:
+    types: published
+
+permissions: {}
+
+jobs:
+  update-stable:
+    runs-on: ubuntu-latest
+    if: github.event.release.prerelease != 'true'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout stable branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: stable
+          fetch-depth: 0
+          persist-credentials: true # needed for `git push` below
+
+      - name: Update stable branch to release tag & push
+        run: |
+          git reset --hard "${TAG_NAME}"
+          git push
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+
+  new-changelog:
+    runs-on: ubuntu-latest
+    if: github.event.release.prerelease != 'true'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          fetch-tags: true
+          persist-credentials: true # Needed for git-auto-commit-action
+
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: "3.13"
+          pip-version: "25.3"
+
+      - run: python scripts/release.py -a
+
+      - uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+        with:
+          commit_message: Add new changelog
+          branch: ci/new-changelog
+          create_branch: true
+
+      - name: Create PR
+        run: |
+          gh pr create \
+            -t "Add new changelog" -b "" \
+            -l "ci: skip news" -l "C: maintanance" \
+            -a $USER
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          USER: ${{ github.event.release.author.login }}

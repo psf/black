@@ -1,20 +1,35 @@
 # https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/configuration-options-for-dependency-updates
 
 version: 2
+
 updates:
   - package-ecosystem: "github-actions"
     # Workflow files in .github/workflows will be checked
     directory: "/"
-    schedule:
-      interval: "weekly"
-    labels: ["skip news", "C: dependencies"]
+    labels: ["ci: skip news", "C: dependencies", "C: maintenance"]
     cooldown:
       default-days: 7
 
   - package-ecosystem: "pip"
     directory: "/"
-    schedule:
-      interval: "weekly"
-    labels: ["skip news", "C: dependencies"]
+    labels: ["ci: skip news", "C: dependencies"]
     cooldown:
       default-days: 7
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    patterns: ["pypa/cibuildwheel"]
+    multi-ecosystem-group: "cibuildwheel"
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    patterns: ["cibuildwheel"]
+    multi-ecosystem-group: "cibuildwheel"
+    cooldown:
+      default-days: 7
+
+multi-ecosystem-groups:
+  cibuildwheel:
+    labels: ["ci: skip news", "C: dependencies"]
