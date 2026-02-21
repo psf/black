@@ -3,10 +3,20 @@ name: diff-shades
 on:
   push:
     branches: [main]
-    paths: ["src/**", "pyproject.toml", ".github/workflows/*"]
+    paths:
+      - src/**
+      - pyproject.toml
+      - scripts/diff_shades_gha_helper.py
+      - .github/workflows/diff_shades.yml
+      - .github/workflows/diff_shades_comment.yml
 
   pull_request:
-    paths: ["src/**", "pyproject.toml", ".github/workflows/*"]
+    paths:
+      - src/**
+      - pyproject.toml
+      - scripts/diff_shades_gha_helper.py
+      - .github/workflows/diff_shades.yml
+      - .github/workflows/diff_shades_comment.yml
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
@@ -18,6 +28,8 @@ env:
   # binaries too).
   CC: clang-18
 
+permissions: {}
+
 jobs:
   configure:
     runs-on: ubuntu-latest
@@ -25,22 +37,21 @@ jobs:
       matrix: ${{ steps.set-config.outputs.matrix }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-
-      - name: Install diff-shades and support dependencies
-        run: |
-          python -m pip install 'click>=8.1.7' packaging urllib3
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+          pip-version: "25.3"
+          pip-install: --group diff-shades --group diff-shades-comment
 
       - name: Calculate run configuration & metadata
         id: set-config
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python scripts/diff_shades_gha_helper.py config ${{ github.event_name }}
+        run: python scripts/diff_shades_gha_helper.py config
 
   analysis-base:
     name: analysis / base / ${{ matrix.mode }}
@@ -53,24 +64,26 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+          pip-version: "25.3"
+          pip-install: --group diff-shades
 
-      - name: Install diff-shades
+      - name: Configure git
         run: |
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
           git config user.name "diff-shades-gha"
           git config user.email "diff-shades-gha@example.com"
 
       - name: Attempt to use cached baseline analysis
         id: baseline-cache
-        uses: actions/cache@v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}
@@ -79,18 +92,18 @@ jobs:
         if: steps.baseline-cache.outputs.cache-hit != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >
+        run: |
           ${{ matrix.baseline-setup-cmd }}
-          && python -m pip install .
+          python -m pip install .
 
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
-        run: >
-          diff-shades analyze ${{ matrix.baseline-analysis }}
-          -v --work-dir projects-cache/ ${{ matrix.force-flag }}
+        run:
+          diff-shades analyze ${{ matrix.baseline-analysis }} --work-dir projects-cache/
+          --force-${{ matrix.style }}-style -v
 
       - name: Upload baseline analysis
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.baseline-analysis }}
           path: ${{ matrix.baseline-analysis }}
@@ -106,59 +119,60 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+          pip-version: "25.3"
+          pip-install: --group diff-shades
 
-      - name: Install diff-shades
+      - name: Configure git
         run: |
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
           git config user.name "diff-shades-gha"
           git config user.email "diff-shades-gha@example.com"
 
       - name: Build and install target revision
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >
+        run: |
           ${{ matrix.target-setup-cmd }}
-          && python -m pip install .
+          python -m pip install .
 
       # Pull it from previous runs - we're NOT trying to get it from this run
       # (but it wouldn't cause problems if we theoretically did)
       - name: Attempt to find baseline analysis
         id: baseline-cache
-        uses: actions/cache@v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}
 
       - name: Analyze target revision (with repeated projects)
         if: steps.baseline-cache.outputs.cache-hit == 'true'
-        run: >
-          diff-shades analyze ${{ matrix.target-analysis }}
-          -v --work-dir projects-cache/ ${{ matrix.force-flag }}
+        run: |
+          diff-shades analyze ${{ matrix.target-analysis }} --work-dir projects-cache/ \
+          --force-${{ matrix.style }}-style -v \
           --repeat-projects-from ${{ matrix.baseline-analysis }}
 
       - name: Analyze target revision (without repeated projects)
         if: steps.baseline-cache.outputs.cache-hit != 'true'
-        run: >
-          diff-shades analyze ${{ matrix.target-analysis }}
-          -v --work-dir projects-cache/ ${{ matrix.force-flag }}
+        run:
+          diff-shades analyze ${{ matrix.target-analysis }} --work-dir projects-cache/
+          --force-${{ matrix.style }}-style -v
 
       - name: Upload target analysis
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: ${{ matrix.target-analysis }}
           path: ${{ matrix.target-analysis }}
 
       - name: Check for failed files for target revision
-        run: >
-          diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
+        run: diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
 
   compare:
     name: compare / ${{ matrix.mode }}
@@ -171,50 +185,52 @@ jobs:
         include: ${{ fromJson(needs.configure.outputs.matrix) }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           merge-multiple: true
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-
-      - name: Install diff-shades and support dependencies
-        run: |
-          python -m pip install 'click>=8.1.7' packaging urllib3
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+          pip-version: "25.3"
+          pip-install: --group diff-shades --group diff-shades-comment
 
       - name: Generate HTML diff report
-        run: >
-          diff-shades --dump-html diff.html compare --diff
-          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
+        run: |
+          diff-shades --dump-html diff.html \
+          compare --diff ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
 
       - name: Upload diff report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: ${{ matrix.mode }}-diff.html
+          name: ${{ matrix.style }}-diff.html
           path: diff.html
 
       - name: Generate summary file (PR only)
-        if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
-        run: >
-          python scripts/diff_shades_gha_helper.py comment-body
-          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
-          ${{ matrix.baseline-sha }} ${{ matrix.target-sha }}
-          ${{ github.event.pull_request.number }}
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/diff_shades_gha_helper.py comment-body \
+          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }} \
+          ${{ matrix.style }} ${{ matrix.mode }}
 
       - name: Upload summary file (PR only)
-        if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
-        uses: actions/upload-artifact@v5
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: .pr-comment.json
-          path: .pr-comment.json
+          name: .${{ matrix.style }}.pr-comment.md
+          path: .${{ matrix.style }}.pr-comment.md
           include-hidden-files: true
 
       - name: Verify zero changes (PR only)
         if: matrix.mode == 'assert-no-changes'
-        run: >
-          diff-shades compare --check ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
-          || (echo "Please verify you didn't change the stable code style unintentionally!" && exit 1)
+        run: |
+          diff-shades compare --check \
+          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }} || \
+          (echo "Please verify you didn't change the stable code style unintentionally!" \
+          && exit 1)

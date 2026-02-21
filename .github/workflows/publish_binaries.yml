@@ -1,4 +1,4 @@
-name: Publish executables
+name: publish binaries
 
 on:
   release:
@@ -8,14 +8,14 @@ permissions:
   contents: write # actions/upload-release-asset needs this.
 
 jobs:
-  build:
+  publish:
+    name: publish (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, windows-11-arm, ubuntu-22.04, ubuntu-22.04-arm, macos-latest]
         include:
-          - os: windows-2025
+          - os: windows-latest
             pathsep: ";"
             asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
@@ -23,11 +23,11 @@ jobs:
             pathsep: ";"
             asset_name: black_windows-arm.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             pathsep: ":"
             asset_name: black_linux
             executable_mime: "application/x-executable"
-          - os: ubuntu-22.04-arm
+          - os: ubuntu-24.04-arm
             pathsep: ":"
             asset_name: black_linux-arm
             executable_mime: "application/x-executable"
@@ -37,21 +37,19 @@ jobs:
             executable_mime: "application/x-mach-binary"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up latest Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-
-      - name: Install Black and PyInstaller
-        run: |
-          python -m pip install --upgrade pip wheel
-          python -m pip install .[colorama]
-          python -m pip install pyinstaller
+          pip-version: "25.3"
+          pip-install: .[colorama] --group binary
 
       - name: Build executable with PyInstaller
-        run: >
+        run:
           python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data
           'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
 
@@ -61,6 +59,6 @@ jobs:
           ./dist/${{ matrix.asset_name }} src --verbose
 
       - name: Upload binary as release asset
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           files: dist/${{ matrix.asset_name }}

@@ -416,6 +416,15 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
         if t == token.STAR:
             return NO
 
+    if Preview.simplify_power_operator_hugging in mode:
+        # Power operator hugging
+        if t == token.DOUBLESTAR and is_simple_exponentiation(p):
+            return NO
+        prevp = preceding_leaf(leaf)
+        if prevp and prevp.type == token.DOUBLESTAR:
+            if prevp.parent and is_simple_exponentiation(prevp.parent):
+                return NO
+
     return SPACE
 
 
@@ -541,6 +550,25 @@ def is_arith_like(node: LN) -> bool:
         syms.xor_expr,
         syms.and_expr,
     }
+
+
+def is_simple_exponentiation(node: LN) -> bool:
+    """Whether whitespace around `**` should be removed."""
+
+    def is_simple(node: LN) -> bool:
+        if isinstance(node, Leaf):
+            return node.type in (token.NAME, token.NUMBER, token.DOT, token.DOUBLESTAR)
+        elif node.type == syms.factor:  # unary operators
+            return is_simple(node.children[1])
+        else:
+            return all(is_simple(child) for child in node.children)
+
+    return (
+        node.type == syms.power
+        and len(node.children) >= 3
+        and node.children[-2].type == token.DOUBLESTAR
+        and is_simple(node)
+    )
 
 
 def is_docstring(node: NL) -> bool:
@@ -940,11 +968,7 @@ def is_type_comment(leaf: Leaf, mode: Mode) -> bool:
 
 
 def is_type_comment_string(value: str, mode: Mode) -> bool:
-    if Preview.standardize_type_comments in mode:
-        is_valid = value.startswith("#") and value[1:].lstrip().startswith("type:")
-    else:
-        is_valid = value.startswith("# type:")
-    return is_valid
+    return value.startswith("#") and value[1:].lstrip().startswith("type:")
 
 
 def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
@@ -959,14 +983,9 @@ def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
 def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
     ignore annotation."""
-    if Preview.standardize_type_comments in mode:
-        is_valid = is_type_comment_string(value, mode) and value.split(":", 1)[
-            1
-        ].lstrip().startswith("ignore")
-    else:
-        is_valid = value.startswith("# type: ignore")
-
-    return is_valid
+    return is_type_comment_string(value, mode) and value.split(":", 1)[
+        1
+    ].lstrip().startswith("ignore")
 
 
 def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:

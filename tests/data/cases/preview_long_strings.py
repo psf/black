@@ -39,6 +39,9 @@ T1 = ("The is a short string", "This is a really long string that can't possibly
 
 T2 = ("This is a really long string that can't be expected to fit in one line and is the only child of a tuple literal.",)
 
+# Test case for https://github.com/psf/black/issues/4912 - unassigned long string with trailing comma
+"A long string literal that is not assigned to a variable, exceeds line length when string-processing is enabled, and has a trailing comma (to make it a one-item tuple)",
+
 func_with_keywords(my_arg, my_kwarg="Long keyword strings also need to be wrapped, but they will probably need to be handled a little bit differently.")
 
 bad_split1 = (
@@ -505,6 +508,13 @@ T2 = (
         " the only child of a tuple literal."
     ),
 )
+
+# Test case for https://github.com/psf/black/issues/4912 - unassigned long string with trailing comma
+(
+    "A long string literal that is not assigned to a variable, exceeds line length when"
+    " string-processing is enabled, and has a trailing comma (to make it a one-item"
+    " tuple)"
+),
 
 func_with_keywords(
     my_arg,

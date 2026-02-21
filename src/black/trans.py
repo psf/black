@@ -66,6 +66,7 @@ def TErr(err_msg: str) -> Err[CannotTransform]:
     return Err(cant_transform)
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def hug_power_op(
     line: Line, features: Collection[Feature], mode: Mode
 ) -> Iterator[Line]:
@@ -133,6 +134,7 @@ def hug_power_op(
     yield new_line
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: set[int]) -> bool:
     """
     Handling the determination of is_simple_lookup for the lines prior to the doublestar
@@ -155,6 +157,7 @@ def handle_is_simple_look_up_prev(line: Line, index: int, disallowed: set[int]) 
     return True
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def handle_is_simple_lookup_forward(
     line: Line, index: int, disallowed: set[int]
 ) -> bool:
@@ -181,6 +184,7 @@ def handle_is_simple_lookup_forward(
     return True
 
 
+# Remove when `simplify_power_operator_hugging` becomes stable.
 def is_expression_chained(chained_leaves: list[Leaf]) -> bool:
     """
     Function to determine if the variable is a chained call.
@@ -1427,6 +1431,20 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         if self._prefer_paren_wrap_match(LL) is not None:
             return TErr("Line needs to be wrapped in parens first.")
 
+        # If the line is just STRING + COMMA (a one-item tuple) and not inside
+        # brackets, we need to defer to StringParenWrapper to wrap it first.
+        # Otherwise, splitting the string would create multiple expressions where
+        # only the last has the comma, breaking AST equivalence. See issue #4912.
+        if (
+            not line.inside_brackets
+            and len(LL) == 2
+            and LL[0].type == token.STRING
+            and LL[1].type == token.COMMA
+        ):
+            return TErr(
+                "Line with trailing comma tuple needs to be wrapped in parens first."
+            )
+
         is_valid_index = is_valid_index_factory(LL)
 
         idx = 0
@@ -1960,8 +1978,13 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._assert_match(LL)
             or self._assign_match(LL)
             or self._dict_or_lambda_match(LL)
-            or self._prefer_paren_wrap_match(LL)
         )
+
+        if string_idx is None:
+            string_idx = self._trailing_comma_tuple_match(line)
+
+        if string_idx is None:
+            string_idx = self._prefer_paren_wrap_match(LL)
 
         if string_idx is not None:
             string_value = line.leaves[string_idx].value
@@ -2154,6 +2177,32 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                         # But no more leaves are allowed...
                         if not is_valid_index(idx):
                             return string_idx
+
+        return None
+
+    @staticmethod
+    def _trailing_comma_tuple_match(line: Line) -> int | None:
+        """
+        Returns:
+            string_idx such that @line.leaves[string_idx] is equal to our target
+            (i.e. matched) string, if the line is a bare trailing comma tuple
+            (STRING + COMMA) not inside brackets.
+                OR
+            None, otherwise.
+
+        This handles the case from issue #4912 where a long string with a
+        trailing comma (making it a one-item tuple) needs to be wrapped in
+        parentheses before splitting to preserve AST equivalence.
+        """
+        LL = line.leaves
+        # Match: STRING followed by COMMA, not inside brackets
+        if (
+            not line.inside_brackets
+            and len(LL) == 2
+            and LL[0].type == token.STRING
+            and LL[1].type == token.COMMA
+        ):
+            return 0
 
         return None
 

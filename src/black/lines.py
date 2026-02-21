@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
-from black.mode import Mode, Preview
+from black.mode import Mode
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -559,20 +559,10 @@ class EmptyLineTracker:
         before, after = self._maybe_empty_lines(current_line)
         previous_after = self.previous_block.after if self.previous_block else 0
         before = max(0, before - previous_after)
-        if Preview.fix_module_docstring_detection in self.mode:
-            # Always have one empty line after a module docstring
-            if self._line_is_module_docstring(current_line):
-                before = 1
-        else:
-            if (
-                # Always have one empty line after a module docstring
-                self.previous_block
-                and self.previous_block.previous_block is None
-                and len(self.previous_block.original_line.leaves) == 1
-                and self.previous_block.original_line.is_docstring
-                and not (current_line.is_class or current_line.is_def)
-            ):
-                before = 1
+
+        # Always have one empty line after a module docstring
+        if self._line_is_module_docstring(current_line):
+            before = 1
 
         block = LinesBlock(
             mode=self.mode,
@@ -695,7 +685,7 @@ class EmptyLineTracker:
             and self.previous_line.depth == 0
             and current_line.depth == 0
             and not current_line.is_import
-            and Preview.always_one_newline_after_import in self.mode
+            and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
         ):
             return 1, 0
 
@@ -831,13 +821,6 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     if not line_str:
         line_str = line_to_string(line)
 
-    if Preview.multiline_string_handling not in mode:
-        return (
-            str_width(line_str) <= mode.line_length
-            and "\n" not in line_str  # multiline strings
-            and not line.contains_standalone_comments()
-        )
-
     if line.contains_standalone_comments():
         return False
     if "\n" not in line_str:
@@ -964,6 +947,44 @@ def can_omit_invisible_parens(
     are too long.
     """
     line = rhs.body
+
+    # We can't omit parens if doing so would result in a type: ignore comment
+    # sharing a line with other comments, as that breaks type: ignore parsing.
+    # Check if the opening bracket (last leaf of head) has comments that would merge
+    # with comments from the first line of the body.
+    if rhs.head.leaves:
+        opening_bracket = rhs.head.leaves[-1]
+        head_comments = rhs.head.comments.get(id(opening_bracket), [])
+
+        # If there are comments on the opening bracket line, check if any would
+        # conflict with type: ignore comments in the body
+        if head_comments:
+            has_type_ignore_in_head = any(
+                is_type_ignore_comment(comment, mode=rhs.head.mode)
+                for comment in head_comments
+            )
+            has_other_comment_in_head = any(
+                not is_type_ignore_comment(comment, mode=rhs.head.mode)
+                for comment in head_comments
+            )
+
+            # Check for comments in the body that would potentially end up on the
+            # same line as the head comments when parens are removed
+            has_type_ignore_in_body = False
+            has_other_comment_in_body = False
+            for leaf in rhs.body.leaves:
+                for comment in rhs.body.comments.get(id(leaf), []):
+                    if is_type_ignore_comment(comment, mode=rhs.body.mode):
+                        has_type_ignore_in_body = True
+                    else:
+                        has_other_comment_in_body = True
+
+            # Preserve parens if we have both type: ignore and other comments that
+            # could end up on the same line
+            if (has_type_ignore_in_head and has_other_comment_in_body) or (
+                has_other_comment_in_head and has_type_ignore_in_body
+            ):
+                return False
 
     # We need optional parens in order to split standalone comments to their own lines
     # if there are no nested parens around the standalone comments
