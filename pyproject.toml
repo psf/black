@@ -82,7 +82,7 @@ cov-tests = [
     "pytest-cov>=4.1.0",
 ]
 docs = [
-    "docutils==0.21.2",
+    "docutils==0.22.4",
     "furo==2025.12.19",
     "myst-parser==4.0.1",
     "sphinx_copybutton==0.5.2",
