@@ -40,7 +40,12 @@
 
 ### Performance
 
-<!-- Changes that improve Black's performance. -->
+- Introduce winloop for windows as an alternative to uvloop (#4996)
+- Remove deprecated function `uvloop.install()` in favor of `uvloop.new_event_loop()`
+  (#4996)
+- Rename `maybe_install_uvloop` function to `maybe_use_uvloop` to simplify loop
+  installation and creation of either a uvloop/winloop evenloop or default eventloop
+  (#4996)
 
 ### Output
 
@@ -48,7 +53,8 @@
 
 ### _Blackd_
 
-<!-- Changes to blackd -->
+- Introduce winloop to be used when windows in use which enables blackd to run faster on
+  windows when winloop is installed. (#4996)
 
 ### Integrations
 

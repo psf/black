@@ -52,6 +52,8 @@ repos:
           - platformdirs>=2
           - pytokens>=0.3.0
           - tomli>=1.1.0,<2.0.0
+          - uvloop>=0.15.2; sys_platform != 'win32'
+          - winloop>=0.5.0; sys_platform == 'win32'
 
           # blackd
           - aiohttp>=3.10

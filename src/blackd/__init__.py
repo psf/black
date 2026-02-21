@@ -21,7 +21,7 @@ import click
 
 import black
 from _black_version import version as __version__
-from black.concurrency import maybe_install_uvloop
+from black.concurrency import maybe_use_uvloop
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
@@ -82,7 +82,14 @@ def main(bind_host: str, bind_port: int) -> None:
     app = make_app()
     ver = black.__version__
     black.out(f"blackd version {ver} listening on {bind_host} port {bind_port}")
-    web.run_app(app, host=bind_host, port=bind_port, handle_signals=True, print=None)
+    web.run_app(
+        app,
+        host=bind_host,
+        port=bind_port,
+        handle_signals=True,
+        print=None,
+        loop=maybe_use_uvloop(),
+    )
 
 
 @cache
@@ -245,7 +252,6 @@ def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersi
 
 
 def patched_main() -> None:
-    maybe_install_uvloop()
     freeze_support()
     main()
 

@@ -27,18 +27,24 @@ from black.output import err
 from black.report import Changed, Report
 
 
-def maybe_install_uvloop() -> None:
-    """If our environment has uvloop installed we use it.
+def maybe_use_uvloop() -> asyncio.AbstractEventLoop:
+    """If our environment has uvloop or winloop installed we use it otherwise
+    a normal asyncio eventloop is called as fallback.
 
     This is called only from command-line entry points to avoid
     interfering with the parent process if Black is used as a library.
     """
     try:
-        import uvloop
+        if sys.platform != "win32":
+            import uvloop
 
-        uvloop.install()
+            return uvloop.new_event_loop()
+        else:
+            import winloop
+
+            return winloop.new_event_loop()
     except ImportError:
-        pass
+        return asyncio.new_event_loop()
 
 
 def cancel(tasks: Iterable[asyncio.Future[Any]]) -> None:
@@ -81,7 +87,6 @@ def reformat_many(
     no_cache: bool = False,
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
-    maybe_install_uvloop()
 
     if workers is None:
         workers = int(os.environ.get("BLACK_NUM_WORKERS", 0))
@@ -110,7 +115,7 @@ def reformat_many(
     if executor is None:
         executor = ThreadPoolExecutor(max_workers=1)
 
-    loop = asyncio.new_event_loop()
+    loop = maybe_use_uvloop()
     asyncio.set_event_loop(loop)
     try:
         loop.run_until_complete(
