@@ -80,12 +80,14 @@ def lib2to3_parse(
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-
-            errors[grammar.version] = InvalidInput(
-                print(f"SyntexError is in line {lineno}, column {column}:\n    {faulty_line}\n    {'^'.rjust(column)}")
-            )
-
-
+            caret_line = "^".rjust(column)
+            message = (
+                f"SyntaxError is in line {lineno}, column {column}:\n"
+                f"    {faulty_line}\n"
+                f"    {caret_line}"
+            )  
+            errors[grammar.version] = InvalidInput(message)
+            
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
