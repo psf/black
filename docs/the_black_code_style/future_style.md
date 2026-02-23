@@ -15,11 +15,97 @@ Currently, the following features are included in the preview style:
 
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
   across lines if it would otherwise exceed the maximum line length.
+  ([see below](labels/wrap-comprehension-in))
 - `simplify_power_operator_hugging`: Use a simpler implementation of the power operator
   "hugging" logic (removing whitespace around `**` in simple expressions), which applies
   also in the rare case the exponentiation is split into separate lines.
+  ([see below](labels/simplify-power-operator))
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
+
+(labels/wrap-comprehension-in)=
+
+### Wrapping long comprehension `in` clauses
+
+When a list or dictionary comprehension has a long `in` clause that would exceed the
+maximum line length, Black will wrap it across multiple lines for better readability.
+This helps keep comprehensions readable when the iterable expression is complex or
+lengthy.
+
+For example:
+
+```python
+# Before
+result = [
+    very_very_very_very_very_long_item
+    for very_very_very_very_very_long_item in some_very_very_very_very_very_very_long_function_name
+]
+```
+
+will be formatted to:
+
+```python
+# After
+result = [
+    very_very_very_very_very_long_item
+    for very_very_very_very_very_long_item in (
+        some_very_very_very_very_very_very_long_function_name
+    )
+]
+```
+
+This also applies to dictionary comprehensions:
+
+```python
+# Before
+mapping = {
+    very_long_key: very_very_very_long_item
+    for very_long_key, very_very_very_long_item in very_very_very_very_long_function_name
+}
+```
+
+will be formatted to:
+
+```python
+# After
+mapping = {
+    very_long_key: very_very_very_long_item
+    for very_long_key, very_very_very_long_item in (
+        very_very_very_very_long_function_name
+    )
+}
+```
+
+(labels/simplify-power-operator)=
+
+### Simplified power operator whitespace handling
+
+Black's power operator "hugging" logic removes whitespace around `**` in simple
+expressions (e.g., `x**2` instead of `x ** 2`). This feature uses a simpler, more
+consistent implementation that also applies when exponentiation is split across lines.
+
+For example:
+
+```python
+# Simple expressions - whitespace is removed
+result = x**2 + y**3
+value = base**exponent
+```
+
+When the exponentiation is split across lines (rare), the simplified logic ensures
+consistent formatting:
+
+```python
+# Complex expression split across lines
+result = (
+    some_very_long_base_expression
+    **some_very_long_exponent_expression
+    **some_very_long_third_expression
+)
+```
+
+This feature primarily improves the internal consistency of Black's formatting logic
+rather than making dramatic visual changes to most code.
 
 (labels/wrap-long-dict-values)=
 

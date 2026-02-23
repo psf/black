@@ -407,11 +407,6 @@ Sublime Text, Visual Studio Code and many more), you can use the
 [Python LSP Server](https://github.com/python-lsp/python-lsp-server) with the
 [python-lsp-black](https://github.com/python-lsp/python-lsp-black) plugin.
 
-## Atom/Nuclide
-
-Use [python-black](https://atom.io/packages/python-black) or
-[formatters-python](https://atom.io/packages/formatters-python).
-
 ## Gradle (the build tool)
 
 Use the [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle) plugin.
