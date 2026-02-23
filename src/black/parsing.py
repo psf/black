@@ -81,8 +81,6 @@ def lib2to3_parse(
             except IndexError:
                 faulty_line = "<line number missing in source>"
 
-            caret_line = " " * (column - 1) + "^"
-
             errors[grammar.version] = InvalidInput(
                 print(f"SyntexError is in line {lineno}, column {column}:\n    {faulty_line}\n    {'^'.rjust(column)}")
             )
