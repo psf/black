@@ -62,6 +62,7 @@
 - Expand preview style documentation with detailed examples for `wrap_comprehension_in`,
   `simplify_power_operator_hugging`, and `wrap_long_dict_values_in_parens` features
   (#4987)
+- Add comprehensive Jupyter Notebooks documentation page (#4985)
 
 ## 26.1.0
 
