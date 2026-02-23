@@ -85,9 +85,9 @@ def lib2to3_parse(
                 f"SyntaxError is in line {lineno}, column {column}:\n"
                 f"    {faulty_line}\n"
                 f"    {caret_line}"
-            )  
+            )
             errors[grammar.version] = InvalidInput(message)
-            
+
         except TokenError as te:
             # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
