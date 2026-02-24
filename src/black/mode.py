@@ -214,7 +214,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
 
 def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
     if not target_versions:
-        raise ValueError("target_versions must not be empty")
+        raise ValueError("At least one target Python version must be specified.")
 
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
