@@ -16,7 +16,7 @@ except* ValueError:
 try:
     try:
         raise ValueError(42)
-    except:
+    except Exception:
         try:
             raise TypeError(int)
         except* Exception:

@@ -1463,7 +1463,7 @@ def get_features_used(
         ):
             is_star_except = n.children[1].type == token.STAR
 
-            if is_star_except:
+            if is_star_except Exception:
                 features.add(Feature.EXCEPT_STAR)
 
             # Presence of except* pushes as clause 1 index back

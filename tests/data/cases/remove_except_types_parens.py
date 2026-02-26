@@ -3,7 +3,7 @@
 # remains unchanged
 try:
     pass
-except:
+except Exception:
     pass
 
 # remains unchanged
@@ -128,7 +128,7 @@ except* (ValueError,):
 # remains unchanged
 try:
     pass
-except:
+except Exception:
     pass
 
 # remains unchanged

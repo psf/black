@@ -32,7 +32,7 @@ def foo():
 
             # this should be ok
             a = 123
-        except:
+        except Exception:
 
             """also this"""
             a = 123
@@ -117,7 +117,7 @@ def foo():
 
             # this should be ok
             a = 123
-        except:
+        except Exception:
 
             """also this"""
             a = 123
