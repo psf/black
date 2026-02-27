@@ -106,6 +106,20 @@ them in the right place, this detection is not and cannot be perfect. Therefore,
 sometimes have to manually move these comments to the right place after you format your
 codebase with _Black_.
 
+## Does Black format doctests?
+
+No, _Black_ does not format doctests in docstrings. This is a known limitation (see
+[issue #745](https://github.com/psf/black/issues/745) and
+[issue #144](https://github.com/psf/black/issues/144)).
+
+If you need to format doctests, consider using one of these tools:
+
+- [docformatter](https://github.com/PyCQA/docformatter) - formats docstrings to follow
+  PEP 257
+- [doctestfmt](https://github.com/Plazma/doctestfmt) - formats doctest code blocks
+
+These tools can be used alongside _Black_ in your workflow.
+
 ## Can I run Black with PyPy?
 
 Yes, there is support for PyPy 3.8 and higher.
