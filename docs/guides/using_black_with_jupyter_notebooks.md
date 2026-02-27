@@ -127,8 +127,8 @@ repos:
       - id: black-jupyter
 ```
 
-The `black-jupyter` hook ID is specifically designed for formatting both Python files and
-Jupyter Notebooks.
+The `black-jupyter` hook ID is specifically designed for formatting both Python files
+and Jupyter Notebooks.
 
 ```{note}
 If you only use the `black` hook ID (without `-jupyter`), notebooks will **not** be
