@@ -18,7 +18,7 @@ how the current _Black_ style is not great: -->
 
 ```python
 def f():
-    "Make sure this code is blackened"""
+    """This code should be formatted as per the current Black style"""
     pass
 ```
 
@@ -29,6 +29,7 @@ def f():
 ```python
 def f(
     ):
+    """This code can be formatted however you suggest!"""
     pass
 ```
 

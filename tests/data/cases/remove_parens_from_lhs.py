@@ -1,4 +1,3 @@
-# flags: --preview
 # Remove unnecessary parentheses from LHS of assignments
 
 

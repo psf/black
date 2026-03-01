@@ -21,7 +21,7 @@ whatever makes `pycodestyle` happy.
 As for vertical whitespace, _Black_ tries to render one full expression or simple
 statement per line. If this fits the allotted line length, great.
 
-```py3
+```python
 # in:
 
 j = [1,
@@ -37,7 +37,7 @@ j = [1, 2, 3]
 If not, _Black_ will look at the contents of the first outer matching brackets and put
 that in a separate indented line.
 
-```py3
+```python
 # in:
 
 ImportantClass.important_method(exc, limit, lookup_lines, capture_locals, extra_argument)
@@ -55,7 +55,7 @@ matching brackets pair are comma-separated (like an argument list, or a dict lit
 and so on) then _Black_ will first try to keep them on the same line with the matching
 brackets. If that doesn't work, it will put all of them in separate lines.
 
-```py3
+```python
 # in:
 
 def very_important_function(template: str, *variables, file: os.PathLike, engine: str, header: bool = True, debug: bool = False):
@@ -95,7 +95,7 @@ indentation level (like the arguments list and the docstring in the example abov
 
 _Black_ prefers parentheses over backslashes, and will remove backslashes if found.
 
-```py3
+```python
 # in:
 
 if some_short_rule1 \
@@ -360,7 +360,7 @@ Please note that _Black_ does not add or remove any additional nested parenthese
 you might want to have for clarity or further code organization. For example those
 parentheses are not going to be removed:
 
-```py3
+```python
 return not (this or that)
 decision = (maybe.this() and values > 0) or (maybe.that() and values < 0)
 ```
@@ -373,7 +373,7 @@ those by treating dots that follow a call or an indexing operation like a very l
 priority delimiter. It's easier to show the behavior than to explain it. Look at the
 example:
 
-```py3
+```python
 def example(session):
     result = (
         session.query(models.Customer.id)
@@ -445,7 +445,7 @@ but you anticipate it will grow in the future.
 
 For example:
 
-```py3
+```python
 TRANSLATIONS = {
     "en_us": "English (US)",
     "pl_pl": "polski",

@@ -19,7 +19,7 @@ from importlib.metadata import version as imp_version
 from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any, TypeVar
 from unittest.mock import MagicMock, patch
 
@@ -28,7 +28,7 @@ import pytest
 from click import unstyle
 from click.testing import CliRunner
 from packaging.version import Version
-from pathspec import PathSpec
+from pathspec import GitIgnoreSpec
 
 import black
 import black.files
@@ -2059,17 +2059,17 @@ class BlackTestCase(BlackBaseTestCase):
                 "try:\\\r# type: ignore\n pass\nfinally:\n pass\n",
                 mode=black.FileMode(),
             )
-            == "try:  # type: ignore\n    pass\nfinally:\n    pass\n"
+            == "try:  # type: ignore\r    pass\rfinally:\r    pass\r"
         )
-        assert black.format_str("{\r}", mode=black.FileMode()) == "{}\n"
-        assert black.format_str("pass #\r#\n", mode=black.FileMode()) == "pass  #\n#\n"
+        assert black.format_str("{\r}", mode=black.FileMode()) == "{}\r"
+        assert black.format_str("pass #\r#\n", mode=black.FileMode()) == "pass  #\r#\r"
 
-        assert black.format_str("x=\\\r\n1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\r\n1", mode=black.FileMode()) == "x = 1\r\n"
         assert black.format_str("x=\\\n1", mode=black.FileMode()) == "x = 1\n"
-        assert black.format_str("x=\\\r1", mode=black.FileMode()) == "x = 1\n"
+        assert black.format_str("x=\\\r1", mode=black.FileMode()) == "x = 1\r"
         assert (
             black.format_str("class A\\\r\n:...", mode=black.FileMode())
-            == "class A: ...\n"
+            == "class A: ...\r\n"
         )
         assert (
             black.format_str("class A\\\n:...", mode=black.FileMode())
@@ -2077,14 +2077,41 @@ class BlackTestCase(BlackBaseTestCase):
         )
         assert (
             black.format_str("class A\\\r:...", mode=black.FileMode())
-            == "class A: ...\n"
+            == "class A: ...\r"
         )
 
-    def test_preview_newline_type_detection(self) -> None:
-        mode = Mode(enabled_features={Preview.normalize_cr_newlines})
+    def test_newline_type_detection(self) -> None:
+        mode = Mode()
         newline_types = ["A\n", "A\r\n", "A\r"]
         for test_case in itertools.permutations(newline_types):
             assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
+
+    def test_decode_with_encoding(self) -> None:
+        # This uses temporary files since some editors (including GitHub)
+        # struggle with displaying and/or editing non utf-8 data
+        # \xfc is iso-8859-1 for ü
+        with NamedTemporaryFile(delete=False) as first_line:
+            first_line.write(
+                b"# -*- coding: iso-8859-1 -*-\n"
+                b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
+            )
+            first_line.close()
+            self.assertFalse(
+                ff(Path(first_line.name)),
+                "Failed to properly detect encoding",
+            )
+
+        with NamedTemporaryFile(delete=False) as second_line:
+            second_line.write(
+                b"#! /usr/bin/env python3\n"
+                b"# -*- coding: iso-8859-1 -*-\n"
+                b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
+            )
+            second_line.close()
+            self.assertFalse(
+                ff(Path(second_line.name)),
+                "Failed to properly detect encoding on second line",
+            )
 
 
 class TestCaching:
@@ -2416,7 +2443,7 @@ class TestCaching:
                 # If you are looking to remove one of these features, just
                 # replace it with any other feature.
                 values = [
-                    {Preview.multiline_string_handling},
+                    {Preview.wrap_comprehension_in},
                     {Preview.string_processing},
                 ]
             elif field.type is bool:
@@ -2514,13 +2541,77 @@ class TestFileCollection:
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
         report = black.Report()
-        gitignore = PathSpec.from_lines(
-            "gitwildmatch", ["exclude/", ".definitely_exclude"]
+        gitignore = GitIgnoreSpec.from_lines(
+            ["exclude/", ".definitely_exclude", "!exclude/still_exclude/"]
         )
         sources: list[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
+    def test_gitignore_reinclude(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = GitIgnoreSpec.from_lines(
+            ["*/exclude/*", ".definitely_exclude", "!*/exclude/still_exclude/"]
+        )
+        sources: list[Path] = []
+        expected = [
+            Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/dont_exclude/a.pyi"),
+            Path(path / "b/exclude/still_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.pyi"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
+    def test_gitignore_reinclude_root(self) -> None:
+        path = THIS_DIR / "data" / "include_exclude_tests" / "b"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = GitIgnoreSpec.from_lines(
+            ["exclude/*", ".definitely_exclude", "!exclude/still_exclude/"]
+        )
+        sources: list[Path] = []
+        expected = [
+            Path(path / "dont_exclude/a.py"),
+            Path(path / "dont_exclude/a.pyi"),
+            Path(path / "exclude/still_exclude/a.py"),
+            Path(path / "exclude/still_exclude/a.pyi"),
         ]
         this_abs = THIS_DIR.resolve()
         sources.extend(
@@ -2640,6 +2731,9 @@ class TestFileCollection:
             Path(path / "b/exclude/a.pie"),
             Path(path / "b/exclude/a.py"),
             Path(path / "b/exclude/a.pyi"),
+            Path(path / "b/exclude/still_exclude/a.pie"),
+            Path(path / "b/exclude/still_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.pyi"),
             Path(path / "b/dont_exclude/a.pie"),
             Path(path / "b/dont_exclude/a.py"),
             Path(path / "b/dont_exclude/a.pyi"),
@@ -2667,6 +2761,7 @@ class TestFileCollection:
         src = [path]
         expected = [
             Path(path / "b/dont_exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.py"),
             Path(path / "b/.definitely_exclude/a.py"),
         ]
         assert_collected_sources(
@@ -2678,6 +2773,7 @@ class TestFileCollection:
         src = [path]
         expected = [
             Path(path / "b/exclude/a.py"),
+            Path(path / "b/exclude/still_exclude/a.py"),
             Path(path / "b/dont_exclude/a.py"),
         ]
         assert_collected_sources(
@@ -2690,7 +2786,7 @@ class TestFileCollection:
         include = re.compile(black.DEFAULT_INCLUDES)
         exclude = re.compile(black.DEFAULT_EXCLUDES)
         report = black.Report()
-        gitignore = PathSpec.from_lines("gitwildmatch", [])
+        gitignore = GitIgnoreSpec.from_lines([])
 
         regular = MagicMock()
         regular.relative_to.return_value = Path("regular.py")
