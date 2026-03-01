@@ -237,7 +237,6 @@ UNSTABLE_FEATURES: set[Preview] = {
     Preview.string_processing,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,
-    Preview.fix_if_guard_explosion_in_case_statement,
 }
 
 
