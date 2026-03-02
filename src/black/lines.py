@@ -6,25 +6,12 @@ from typing import Optional, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
 from black.mode import Mode
-from black.nodes import (
-    BRACKETS,
-    CLOSING_BRACKETS,
-    OPENING_BRACKETS,
-    STANDALONE_COMMENT,
-    TEST_DESCENDANTS,
-    child_towards,
-    is_docstring,
-    is_import,
-    is_multiline_string,
-    is_one_sequence_between,
-    is_type_comment,
-    is_type_ignore_comment,
-    is_with_or_async_with_stmt,
-    make_simple_prefix,
-    replace_child,
-    syms,
-    whitespace,
-)
+from black.nodes import (BRACKETS, CLOSING_BRACKETS, OPENING_BRACKETS,
+                         STANDALONE_COMMENT, TEST_DESCENDANTS, child_towards,
+                         is_docstring, is_import, is_multiline_string,
+                         is_one_sequence_between, is_type_comment,
+                         is_type_ignore_comment, is_with_or_async_with_stmt,
+                         make_simple_prefix, replace_child, syms, whitespace)
 from black.strings import str_width
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node

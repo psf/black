@@ -7,7 +7,8 @@ import sys
 import warnings
 from collections.abc import Collection, Iterator
 
-from black.mode import VERSION_TO_FEATURES, Feature, TargetVersion, supports_feature
+from black.mode import (VERSION_TO_FEATURES, Feature, TargetVersion,
+                        supports_feature)
 from black.nodes import syms
 from blib2to3 import pygram
 from blib2to3.pgen2 import driver

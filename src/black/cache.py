@@ -10,9 +10,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import NamedTuple
 
+from _black_version import version as __version__
 from platformdirs import user_cache_dir
 
-from _black_version import version as __version__
 from black.mode import Mode
 from black.output import err
 

@@ -4,17 +4,9 @@ import difflib
 from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
 
-from black.nodes import (
-    LN,
-    STANDALONE_COMMENT,
-    Leaf,
-    Node,
-    Visitor,
-    first_leaf,
-    furthest_ancestor_with_last_leaf,
-    last_leaf,
-    syms,
-)
+from black.nodes import (LN, STANDALONE_COMMENT, Leaf, Node, Visitor,
+                         first_leaf, furthest_ancestor_with_last_leaf,
+                         last_leaf, syms)
 from blib2to3.pgen2.token import ASYNC, NEWLINE
 
 

@@ -13,7 +13,8 @@ import signal
 import sys
 import traceback
 from collections.abc import Iterable
-from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import (Executor, ProcessPoolExecutor,
+                                ThreadPoolExecutor)
 from multiprocessing import Manager
 from pathlib import Path
 from typing import Any

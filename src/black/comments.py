@@ -5,18 +5,10 @@ from functools import lru_cache
 from typing import Final, Union
 
 from black.mode import Mode
-from black.nodes import (
-    CLOSING_BRACKETS,
-    STANDALONE_COMMENT,
-    STATEMENT,
-    WHITESPACE,
-    container_of,
-    first_leaf_of,
-    is_type_comment_string,
-    make_simple_prefix,
-    preceding_leaf,
-    syms,
-)
+from black.nodes import (CLOSING_BRACKETS, STANDALONE_COMMENT, STATEMENT,
+                         WHITESPACE, container_of, first_leaf_of,
+                         is_type_comment_string, make_simple_prefix,
+                         preceding_leaf, syms)
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 

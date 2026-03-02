@@ -31,27 +31,11 @@ import sys
 from collections.abc import Iterator
 
 from blib2to3.pgen2.grammar import Grammar
-from blib2to3.pgen2.token import (
-    ASYNC,
-    AWAIT,
-    COMMENT,
-    DEDENT,
-    ENDMARKER,
-    FSTRING_END,
-    FSTRING_MIDDLE,
-    FSTRING_START,
-    INDENT,
-    NAME,
-    NEWLINE,
-    NL,
-    NUMBER,
-    OP,
-    STRING,
-    TSTRING_END,
-    TSTRING_MIDDLE,
-    TSTRING_START,
-    tok_name,
-)
+from blib2to3.pgen2.token import (ASYNC, AWAIT, COMMENT, DEDENT, ENDMARKER,
+                                  FSTRING_END, FSTRING_MIDDLE, FSTRING_START,
+                                  INDENT, NAME, NEWLINE, NL, NUMBER, OP,
+                                  STRING, TSTRING_END, TSTRING_MIDDLE,
+                                  TSTRING_START, tok_name)
 
 __author__ = "Ka-Ping Yee <ping@lfw.org>"
 __credits__ = "GvR, ESR, Tim Peters, Thomas Wouters, Fred Drake, Skip Montanaro"
