@@ -44,7 +44,7 @@ repos:
 The `black-jupyter` hook became available in version 21.8b0.
 ```
 
-See the [Jupyter Notebooks guide](./guides/using_black_with_jupyter_notebooks.md) for
+See the [Jupyter Notebooks guide](../guides/using_black_with_jupyter_notebooks.md) for
 more details.
 
 ## Excluding files with pre-commit

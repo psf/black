@@ -83,7 +83,7 @@ If you want to include Jupyter Notebooks, it can be enabled by setting `jupyter`
     jupyter: true
 ```
 
-See the [Jupyter Notebooks guide](./guides/using_black_with_jupyter_notebooks.md) for
+See the [Jupyter Notebooks guide](../guides/using_black_with_jupyter_notebooks.md) for
 more details.
 
 ### CLI Options

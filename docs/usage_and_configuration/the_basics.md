@@ -124,7 +124,7 @@ useful when piping source on standard input.
 
 When processing Jupyter Notebooks, add the given magic to the list of known python-
 magics. Useful for formatting cells with custom python magics. See the
-[Jupyter Notebooks guide](./guides/using_black_with_jupyter_notebooks.md) for more
+[Jupyter Notebooks guide](../guides/using_black_with_jupyter_notebooks.md) for more
 details.
 
 #### `-x, --skip-source-first-line`
