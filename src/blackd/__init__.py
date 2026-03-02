@@ -95,7 +95,7 @@ def main(bind_host: str, bind_port: int) -> None:
     finally:
         if not loop.is_closed():
             loop.close()
-    
+
 
 
 @cache
