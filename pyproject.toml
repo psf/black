@@ -86,7 +86,7 @@ docs = [
     "furo==2025.12.19",
     "myst-parser==5.0.0",
     "sphinx_copybutton==0.5.2",
-    "sphinx==9.0.0",
+    "sphinx==9.1.0",
     "sphinxcontrib-programoutput==0.18",
 ]
 
