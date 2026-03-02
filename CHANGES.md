@@ -49,6 +49,11 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Emit a clear warning when the target Python version is newer than the running Python
+  version, since AST safety checks cannot parse newer syntax. Also replace the
+  misleading "INTERNAL ERROR" message with an actionable error explaining the version
+  mismatch (#4983)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -65,6 +70,7 @@
 - Expand preview style documentation with detailed examples for `wrap_comprehension_in`,
   `simplify_power_operator_hugging`, and `wrap_long_dict_values_in_parens` features
   (#4987)
+- Add detailed documentation for formatting Jupyter Notebooks (#5009)
 
 ## 26.1.0
 
