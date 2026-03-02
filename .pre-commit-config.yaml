@@ -24,7 +24,7 @@ repos:
           - commonmark>=0.9.1
 
   - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
+    rev: 8.0.0
     hooks:
       - id: isort
 
@@ -73,7 +73,7 @@ repos:
           - types-pyyaml>=6.0.0
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.0
+    rev: v3.8.1
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]
