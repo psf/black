@@ -24,6 +24,9 @@ Currently, the following features are included in the preview style:
   parameter defaults. For example, `foo(bar=x + y)` becomes `foo(bar=(x + y))`.
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
+- `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
+  patterns which have trailing commas in them, even if the guard expression fits in one
+  line
 
 (labels/wrap-comprehension-in)=
 
@@ -38,7 +41,10 @@ For example:
 
 ```python
 # Before
-result = [item.process() for item in some_very_long_function_name(argument1, argument2, argument3)]
+result = [
+    very_very_very_very_very_long_item
+    for very_very_very_very_very_long_item in some_very_very_very_very_very_very_long_function_name
+]
 ```
 
 will be formatted to:
@@ -46,9 +52,9 @@ will be formatted to:
 ```python
 # After
 result = [
-    item.process()
-    for item in some_very_long_function_name(
-        argument1, argument2, argument3
+    very_very_very_very_very_long_item
+    for very_very_very_very_very_long_item in (
+        some_very_very_very_very_very_very_long_function_name
     )
 ]
 ```
@@ -57,7 +63,10 @@ This also applies to dictionary comprehensions:
 
 ```python
 # Before
-mapping = {key: value.transform() for key, value in get_items_from_very_long_source(param1, param2)}
+mapping = {
+    very_long_key: very_very_very_long_item
+    for very_long_key, very_very_very_long_item in very_very_very_very_long_function_name
+}
 ```
 
 will be formatted to:
@@ -65,9 +74,9 @@ will be formatted to:
 ```python
 # After
 mapping = {
-    key: value.transform()
-    for key, value in get_items_from_very_long_source(
-        param1, param2
+    very_long_key: very_very_very_long_item
+    for very_long_key, very_very_very_long_item in (
+        very_very_very_very_long_function_name
     )
 }
 ```

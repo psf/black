@@ -24,7 +24,7 @@ repos:
           - commonmark==0.9.1
 
   - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
+    rev: 8.0.0
     hooks:
       - id: isort
 
