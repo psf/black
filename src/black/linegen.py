@@ -1598,7 +1598,18 @@ def normalize_invisible_parens(
                 break
 
             elif not is_multiline_string(child):
-                wrap_in_parentheses(node, child, visible=False)
+                if (
+                    Preview.fix_if_guard_explosion_in_case_statement in mode
+                    and node.type == syms.guard
+                ):
+                    mock_line = Line(mode=mode)
+                    for leaf in child.leaves():
+                        mock_line.append(leaf)
+                    # If it's a guard AND it's short, we DON'T wrap
+                    if not is_line_short_enough(mock_line, mode=mode):
+                        wrap_in_parentheses(node, child, visible=False)
+                else:
+                    wrap_in_parentheses(node, child, visible=False)
 
         comma_check = child.type == token.COMMA
 

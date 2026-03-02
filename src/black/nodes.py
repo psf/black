@@ -689,7 +689,7 @@ def is_one_sequence_between(
             break
 
     else:
-        raise LookupError("Opening paren not found in `leaves`")
+        return False
 
     commas = 0
     _opening_index += 1

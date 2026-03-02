@@ -58,24 +58,14 @@ _Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the
 following will not be formatted:
 
 - automagics (e.g. `pip install black`)
-- non-Python cell magics (e.g. `%%writefile`). These can be added with the flag
-  `--python-cell-magics`, e.g. `black --python-cell-magics writefile hello.ipynb`.
-- multiline magics, e.g.:
+- non-Python cell magics (e.g. `%%writefile`)
+- multiline magics
+- code which `IPython`'s `TransformerManager` would transform magics into
+- invalid syntax
 
-  ```python
-  %timeit f(1, \
-          2, \
-          3)
-  ```
-
-- code which `IPython`'s `TransformerManager` would transform magics into, e.g.:
-
-  ```python
-  get_ipython().system('ls')
-  ```
-
-- invalid syntax, as it can't be safely distinguished from automagics in the absence of
-  a running `IPython` kernel.
+See
+[Using _Black_ with Jupyter Notebooks](guides/using_black_with_jupyter_notebooks.md#cells-that-black-will-skip)
+for details.
 
 ## Why does Flake8 report warnings?
 

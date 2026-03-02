@@ -33,21 +33,19 @@ include Jupyter Notebooks. To use this hook, simply replace the hook's `id: blac
 
 ```yaml
 repos:
-  # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 26.1.0
     hooks:
       - id: black-jupyter
-        # It is recommended to specify the latest version of Python
-        # supported by your project here, or alternatively use
-        # pre-commit's default_language_version, see
-        # https://pre-commit.com/#top_level-default_language_version
         language_version: python3.11
 ```
 
 ```{note}
 The `black-jupyter` hook became available in version 21.8b0.
 ```
+
+See the [Jupyter Notebooks guide](../guides/using_black_with_jupyter_notebooks.md) for
+more details.
 
 ## Excluding files with pre-commit
 

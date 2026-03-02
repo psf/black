@@ -123,7 +123,9 @@ useful when piping source on standard input.
 #### `--python-cell-magics`
 
 When processing Jupyter Notebooks, add the given magic to the list of known python-
-magics. Useful for formatting cells with custom python magics.
+magics. Useful for formatting cells with custom python magics. See the
+[Jupyter Notebooks guide](../guides/using_black_with_jupyter_notebooks.md) for more
+details.
 
 #### `-x, --skip-source-first-line`
 
@@ -248,8 +250,8 @@ Each range must be specified as two integers connected by a `-`: `<START>-<END>`
 `<START>` and `<END>` integer indices are 1-based and inclusive on both ends.
 
 _Black_ may still format lines outside of the ranges for multi-line statements.
-Formatting more than one file or any ipynb files with this option is not supported. This
-option cannot be specified in the `pyproject.toml` config.
+Formatting more than one file or any Jupyter Notebooks with this option is not
+supported. This option cannot be specified in the `pyproject.toml` config.
 
 Example: `black --line-ranges=1-10 --line-ranges=21-30 test.py` will format lines from
 `1` to `10` and `21` to `30`.

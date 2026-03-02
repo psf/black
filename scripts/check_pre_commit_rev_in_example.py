@@ -17,7 +17,7 @@ import yaml
 from bs4 import BeautifulSoup
 
 
-def main(changes: str, source_version_control: str) -> None:
+def main(changes: str, content: str, filename: str) -> None:
     changes_html = commonmark.commonmark(changes)
     changes_soup = BeautifulSoup(changes_html, "html.parser")
     headers = changes_soup.find_all("h2")
@@ -25,20 +25,21 @@ def main(changes: str, source_version_control: str) -> None:
         header.string for header in headers if header.string != "Unreleased"
     )
 
-    source_version_control_html = commonmark.commonmark(source_version_control)
+    source_version_control_html = commonmark.commonmark(content)
     source_version_control_soup = BeautifulSoup(
         source_version_control_html, "html.parser"
     )
-    pre_commit_repos = yaml.safe_load(
-        source_version_control_soup.find(class_="language-yaml").string  # type: ignore[union-attr, arg-type]
-    )["repos"]
+    codeblocks = source_version_control_soup.find_all(class_="language-yaml")
 
-    for repo in pre_commit_repos:
-        pre_commit_rev = repo["rev"]
+    for codeblock in codeblocks:
+        parsed = yaml.safe_load(codeblock.string)  # type: ignore[arg-type]
+        if not isinstance(parsed, dict):
+            return
+        pre_commit_rev = parsed["repos"][0]["rev"]
         if not pre_commit_rev == latest_tag:
             print(
-                "Please set the rev in ``source_version_control.md`` to be the latest "
-                f"one.\nExpected {latest_tag}, got {pre_commit_rev}.\n"
+                f"Please set the rev in ``{filename}`` to be the latest one.\n"
+                f"Expected {latest_tag}, got {pre_commit_rev}.\n"
             )
             sys.exit(1)
 
@@ -50,5 +51,11 @@ if __name__ == "__main__":
         os.path.join("docs", "integrations", "source_version_control.md"),
         encoding="utf-8",
     ) as fd:
-        source_version_control = fd.read()
-    main(changes, source_version_control)
+        content = fd.read()
+        main(changes, content, "source_version_control.md")
+    with open(
+        os.path.join("docs", "guides", "using_black_with_jupyter_notebooks.md"),
+        encoding="utf-8",
+    ) as fd:
+        content = fd.read()
+        main(changes, content, "using_black_with_jupyter_notebooks.md")

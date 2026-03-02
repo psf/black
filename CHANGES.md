@@ -14,11 +14,14 @@
 <!-- Changes that affect Black's stable style -->
 
 - Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
+- Fix crash on standalone comment in lambda default arguments (#4993)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had
+  a trailing comma (#4884)
 - Fix `string_processing` crashing on unassigned long string literals with trailing
   commas (one-item tuples) (#4929)
 - Simplify implementation of the power operator "hugging" logic (#4918)
@@ -51,6 +54,11 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Emit a clear warning when the target Python version is newer than the running Python
+  version, since AST safety checks cannot parse newer syntax. Also replace the
+  misleading "INTERNAL ERROR" message with an actionable error explaining the version
+  mismatch (#4983)
+
 ### _Blackd_
 
 - Introduce winloop to be used when windows in use which enables blackd to run faster on
@@ -64,6 +72,11 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Expand preview style documentation with detailed examples for `wrap_comprehension_in`,
+  `simplify_power_operator_hugging`, and `wrap_long_dict_values_in_parens` features
+  (#4987)
+- Add detailed documentation for formatting Jupyter Notebooks (#5009)
 
 ## 26.1.0
 
