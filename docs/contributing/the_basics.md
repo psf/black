@@ -96,8 +96,8 @@ default. To turn it off pass `--print-tree-diff=False`.
 
 `Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
 you feel this PR does not require a changelog entry please state that in a comment and a
-maintainer can add a `skip news` label to make the CI pass. Otherwise, please ensure you
-have a line in the following format added below the appropriate header:
+maintainer can add a `ci: skip news` label to make the CI pass. Otherwise, please ensure
+you have a line in the following format added below the appropriate header:
 
 ```md
 - `Black` is now more awesome (#X)
