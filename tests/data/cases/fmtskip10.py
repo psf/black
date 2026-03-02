@@ -1,4 +1,3 @@
-# flags: --preview
 def foo(): return "mock"  # fmt: skip
 if True: print("yay")  # fmt: skip
 for i in range(10): print(i)  # fmt: skip

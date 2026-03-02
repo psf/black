@@ -1,4 +1,4 @@
-# flags: --preview --minimum-version=3.14
+# flags: --minimum-version=3.14
 # SEE PEP 758 FOR MORE DETAILS
 # remains unchanged
 try:
