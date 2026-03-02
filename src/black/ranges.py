@@ -492,7 +492,7 @@ def _calculate_lines_mappings(
                         original_end=block.a,
                         modified_start=1,
                         modified_end=block.b,
-                        is_changed_block=False,
+                        is_changed_block=True,
                     )
                 )
         else:

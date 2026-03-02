@@ -183,6 +183,23 @@ def test_diffs(lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]) ->
     assert adjusted == adjusted_lines(lines, original_source, modified_source)
 
 
+def test_first_block_changed() -> None:
+    """Changes in the first block (before any matching content) should be included."""
+    original_source = """\
+x = 1
+y = 2
+z = 3
+"""
+    modified_source = """\
+x = 10
+y = 2
+z = 3
+"""
+    # Line 1 was changed, so range (1, 1) should map to (1, 1) in the output.
+    result = adjusted_lines([(1, 1)], original_source, modified_source)
+    assert result == [(1, 1)]
+
+
 @pytest.mark.parametrize(
     "lines,sanitized",
     [
