@@ -82,14 +82,20 @@ def main(bind_host: str, bind_port: int) -> None:
     app = make_app()
     ver = black.__version__
     black.out(f"blackd version {ver} listening on {bind_host} port {bind_port}")
-    web.run_app(
-        app,
-        host=bind_host,
-        port=bind_port,
-        handle_signals=True,
-        print=None,
-        loop=maybe_use_uvloop(),
-    )
+    loop = maybe_use_uvloop()
+    try:
+        web.run_app(
+            app,
+            host=bind_host,
+            port=bind_port,
+            handle_signals=True,
+            print=None,
+            loop=loop,
+        )
+    finally:
+        if not loop.is_closed():
+            loop.close()
+    
 
 
 @cache
