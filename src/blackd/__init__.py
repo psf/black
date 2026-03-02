@@ -97,7 +97,6 @@ def main(bind_host: str, bind_port: int) -> None:
             loop.close()
 
 
-
 @cache
 def executor() -> Executor:
     return ProcessPoolExecutor()
