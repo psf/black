@@ -41,12 +41,25 @@ from black.output import color_diff, diff
 from black.parsing import ASTSafetyError
 from black.report import Report
 from black.strings import lines_with_leading_tabs_expanded
+
 # Import other test classes
-from tests.util import (DATA_DIR, DEFAULT_MODE, DETERMINISTIC_HEADER,
-                        PROJECT_ROOT, PY36_VERSIONS, THIS_DIR,
-                        BlackBaseTestCase, assert_format, change_directory,
-                        dump_to_stderr, ff, fs, get_case_path, read_data,
-                        read_data_from_file)
+from tests.util import (
+    DATA_DIR,
+    DEFAULT_MODE,
+    DETERMINISTIC_HEADER,
+    PROJECT_ROOT,
+    PY36_VERSIONS,
+    THIS_DIR,
+    BlackBaseTestCase,
+    assert_format,
+    change_directory,
+    dump_to_stderr,
+    ff,
+    fs,
+    get_case_path,
+    read_data,
+    read_data_from_file,
+)
 
 THIS_FILE = Path(__file__)
 EMPTY_CONFIG = THIS_DIR / "data" / "empty_pyproject.toml"

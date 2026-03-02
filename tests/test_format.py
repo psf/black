@@ -7,8 +7,13 @@ import pytest
 
 import black
 from black.mode import TargetVersion
-from tests.util import (all_data_cases, assert_format, dump_to_stderr,
-                        read_data, read_data_with_mode)
+from tests.util import (
+    all_data_cases,
+    assert_format,
+    dump_to_stderr,
+    read_data,
+    read_data_with_mode,
+)
 
 
 @pytest.fixture(autouse=True)

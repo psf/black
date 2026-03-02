@@ -4,9 +4,18 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Final, Union
 
-from black.nodes import (BRACKET, CLOSING_BRACKETS, COMPARATORS,
-                         LOGIC_OPERATORS, MATH_OPERATORS, OPENING_BRACKETS,
-                         UNPACKING_PARENTS, VARARGS_PARENTS, is_vararg, syms)
+from black.nodes import (
+    BRACKET,
+    CLOSING_BRACKETS,
+    COMPARATORS,
+    LOGIC_OPERATORS,
+    MATH_OPERATORS,
+    OPENING_BRACKETS,
+    UNPACKING_PARENTS,
+    VARARGS_PARENTS,
+    is_vararg,
+    syms,
+)
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 

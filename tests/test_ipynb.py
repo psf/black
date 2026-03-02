@@ -9,8 +9,14 @@ import pytest
 from _pytest.monkeypatch import MonkeyPatch
 from click.testing import CliRunner
 
-from black import (Mode, NothingChanged, format_cell, format_file_contents,
-                   format_file_in_place, main)
+from black import (
+    Mode,
+    NothingChanged,
+    format_cell,
+    format_file_contents,
+    format_file_in_place,
+    main,
+)
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 from tests.util import DATA_DIR, get_case_path, read_jupyter_notebook
 

@@ -18,9 +18,9 @@ except ImportError as ie:
     ) from None
 
 import click
-from _black_version import version as __version__
 
 import black
+from _black_version import version as __version__
 from black.concurrency import maybe_install_uvloop
 
 # This is used internally by tests to shut down the server prematurely
