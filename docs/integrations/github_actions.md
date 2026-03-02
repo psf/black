@@ -24,7 +24,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: psf/black@stable
 ```
 
@@ -60,7 +60,7 @@ To read the version from the `pyproject.toml` file instead, set `use_pyproject` 
 the setup-python action may be required, for example:
 
 ```yaml
-- uses: actions/setup-python@v5
+- uses: actions/setup-python@v6
   with:
     python-version: "3.13"
 - uses: psf/black@stable
