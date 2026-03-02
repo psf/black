@@ -84,9 +84,9 @@ cov-tests = [
 docs = [
     "docutils==0.22.4",
     "furo==2025.12.19",
-    "myst-parser==4.0.1",
+    "myst-parser==5.0.0",
     "sphinx_copybutton==0.5.2",
-    "sphinx==8.2.3",
+    "sphinx==9.0.0",
     "sphinxcontrib-programoutput==0.18",
 ]
 
