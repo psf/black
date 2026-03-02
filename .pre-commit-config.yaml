@@ -8,7 +8,7 @@ repos:
         name: Check pre-commit rev in example
         language: python
         entry: python -m scripts.check_pre_commit_rev_in_example
-        files: '(CHANGES\.md|source_version_control\.md)$'
+        files: '(CHANGES|source_version_control|using_black_with_jupyter_notebooks)\.md$'
         additional_dependencies:
           - beautifulsoup4>=4.14.2
           - commonmark>=0.9.1
@@ -18,7 +18,7 @@ repos:
         name: Check black version in the basics example
         language: python
         entry: python -m scripts.check_version_in_basics_example
-        files: '(CHANGES\.md|the_basics\.md)$'
+        files: '(CHANGES|the_basics)\.md$'
         additional_dependencies:
           - beautifulsoup4>=4.14.2
           - commonmark>=0.9.1

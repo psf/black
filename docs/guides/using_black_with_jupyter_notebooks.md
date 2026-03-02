@@ -1,7 +1,6 @@
 # Using _Black_ with Jupyter Notebooks
 
-_Black_ has built-in support for formatting Jupyter Notebooks (`.ipynb` files). This
-guide covers installation, usage, configuration, and common questions.
+_Black_ supports formatting Jupyter Notebooks (`.ipynb` files) natively.
 
 ## Installation
 
@@ -10,8 +9,6 @@ To format Jupyter Notebooks, install _Black_ with the `jupyter` extra:
 ```sh
 pip install "black[jupyter]"
 ```
-
-This installs the additional `tokenize-rt` dependency needed for notebook support.
 
 ```{note}
 Without the `jupyter` extra, _Black_ will not be able to format `.ipynb` files.
@@ -43,7 +40,7 @@ _Black_ to treat the input as a Jupyter Notebook:
 cat notebook.ipynb | black --ipynb -
 ```
 
-## How it works
+## What is (and isn't) formatted
 
 _Black_ formats the Python code cells in your notebook while preserving:
 
@@ -54,12 +51,42 @@ _Black_ formats the Python code cells in your notebook while preserving:
 
 Only the source code within Python code cells is reformatted.
 
-## Cell magics
+### Cells that _Black_ will skip
+
+_Black_ is cautious about formatting notebook cells. The following cells will **not** be
+formatted:
+
+- **Automagics** — e.g. `pip install black` (without the `%` prefix)
+- **Non-Python cell magics** — e.g.:
+  ```python
+  %%writefile script.py
+  print("hello")
+  ```
+- **Multiline magics** — e.g.:
+  ```python
+  %timeit f(1, \
+          2, \
+          3)
+  ```
+- **IPython internal calls** — code that `IPython`'s `TransformerManager` would
+  transform, e.g.:
+  ```python
+  get_ipython().system('ls')
+  ```
+- **Invalid syntax** — as it cannot be safely distinguished from automagics without a
+  running IPython kernel.
+
+If you notice a cell is not being formatted, it is likely because it contains one of the
+above constructs.
+
+Additionally, _Black_ cannot format Jupyter Notebooks with the `--line-ranges` option.
+
+### Cell magics
 
 _Black_ understands IPython magics, but is conservative about which cells it will
 format. By default, _Black_ recognizes standard IPython magics.
 
-### Custom python cell magics
+#### Custom python cell magics
 
 If you use custom cell magics that contain Python code, you can tell _Black_ about them
 using the `--python-cell-magics` flag:
@@ -75,62 +102,33 @@ This also works in `pyproject.toml`:
 python-cell-magics = ["writefile", "my_custom_magic"]
 ```
 
-## Cells that _Black_ will skip
+## Integrations
 
-_Black_ is cautious about formatting notebook cells. The following cells will **not** be
-formatted:
+### pre-commit
 
-- **Automagics** — e.g. `pip install black` (without the `%` prefix)
-- **Non-Python cell magics** — e.g. `%%writefile` (unless added via
-  `--python-cell-magics`)
-- **Multiline magics** — e.g.:
-
-  ```python
-  %timeit f(1, \
-          2, \
-          3)
-  ```
-
-- **IPython internal calls** — code that `IPython`'s `TransformerManager` would
-  transform, e.g.:
-
-  ```python
-  get_ipython().system('ls')
-  ```
-
-- **Invalid syntax** — as it cannot be safely distinguished from automagics without a
-  running IPython kernel.
-
-If you notice a cell is not being formatted, it is likely because it contains one of the
-above constructs.
-
-## Editor integration
-
-Many editors and IDEs support running _Black_ on Jupyter Notebooks:
-
-- **VS Code**: The Python extension supports formatting notebooks with _Black_. Set
-  `"notebook.formatOnSave.enabled": true` and configure _Black_ as your formatter.
-- **JupyterLab**: You can use
-  [jupyterlab-code-formatter](https://github.com/ryantam626/jupyterlab-code-formatter)
-  to run _Black_ from within JupyterLab.
-
-## Pre-commit hook
-
-If you use [pre-commit](https://pre-commit.com/), _Black_ will format notebooks
-automatically. Make sure to include `jupyter` in the `additional_dependencies`:
+Simply replace the `black` hook with `black-jupyter`.
 
 ```yaml
 repos:
-  - repo: https://github.com/psf/black
-    rev: 25.1.0
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 26.1.0
     hooks:
       - id: black-jupyter
+        language_version: python3.11
 ```
 
-The `black-jupyter` hook ID is specifically designed for formatting both Python files
-and Jupyter Notebooks.
+See the [source version control integration](../integrations/source_version_control.md)
+docs for more examples of using Black with pre-commit.
 
-```{note}
-If you only use the `black` hook ID (without `-jupyter`), notebooks will **not** be
-formatted.
+### GitHub Actions
+
+Set the `jupyter` option to `true`.
+
+```yaml
+- uses: psf/black@stable
+  with:
+    jupyter: true
 ```
+
+See the [GitHub Actions integration](../integrations/source_version_control.md) docs for
+more examples of using Black with GitHub Actions.
