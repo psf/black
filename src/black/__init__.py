@@ -5,7 +5,12 @@ import re
 import sys
 import tokenize
 import traceback
-from collections.abc import Collection, Generator, MutableMapping, Sequence
+from collections.abc import (
+    Collection,
+    Generator,
+    MutableMapping,
+    Sequence,
+)
 from contextlib import nullcontext
 from dataclasses import replace
 from datetime import datetime, timezone
