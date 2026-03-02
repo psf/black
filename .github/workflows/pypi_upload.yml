@@ -2,11 +2,10 @@ name: build and publish
 
 on:
   release:
-    types: [published]
+    types: published
   pull_request:
   push:
-    branches:
-      - main
+    branches: main
 
 permissions: {}
 
@@ -154,26 +153,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           verbose: true
-
-  update-stable:
-    name: update stable branch
-    needs: [publish-mypyc, publish-hatch]
-    runs-on: ubuntu-latest
-    if: github.event_name == 'release' && github.event.release.prerelease != 'true'
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout stable branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: stable
-          fetch-depth: 0
-          persist-credentials: true # needed for `git push` below
-
-      - name: Update stable branch to release tag & push
-        run: |
-          git reset --hard "${TAG_NAME}"
-          git push
-        env:
-          TAG_NAME: ${{ github.event.release.tag_name }}

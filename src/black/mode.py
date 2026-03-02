@@ -214,7 +214,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
 
 def supports_feature(target_versions: set[TargetVersion], feature: Feature) -> bool:
     if not target_versions:
-        raise ValueError("target_versions must not be empty")
+        raise ValueError("At least one target Python version must be specified.")
 
     return all(feature in VERSION_TO_FEATURES[version] for version in target_versions)
 
@@ -229,6 +229,7 @@ class Preview(Enum):
     wrap_comprehension_in = auto()
     simplify_power_operator_hugging = auto()
     wrap_long_dict_values_in_parens = auto()
+    fix_if_guard_explosion_in_case_statement = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

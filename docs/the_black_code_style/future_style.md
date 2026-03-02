@@ -22,6 +22,9 @@ Currently, the following features are included in the preview style:
   ([see below](labels/simplify-power-operator))
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
+- `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
+  patterns which have trailing commas in them, even if the guard expression fits in one
+  line
 
 (labels/wrap-comprehension-in)=
 
