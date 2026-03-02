@@ -7,12 +7,16 @@ updates:
     # Workflow files in .github/workflows will be checked
     directory: "/"
     labels: ["ci: skip news", "C: dependencies", "C: maintenance"]
+    schedule:
+      interval: daily
     cooldown:
       default-days: 7
 
   - package-ecosystem: "pip"
     directory: "/"
     labels: ["ci: skip news", "C: dependencies"]
+    schedule:
+      interval: daily
     cooldown:
       default-days: 7
 
@@ -20,16 +24,16 @@ updates:
     directory: "/"
     patterns: ["pypa/cibuildwheel"]
     multi-ecosystem-group: "cibuildwheel"
-    cooldown:
-      default-days: 7
 
   - package-ecosystem: "pip"
     directory: "/"
     patterns: ["cibuildwheel"]
     multi-ecosystem-group: "cibuildwheel"
-    cooldown:
-      default-days: 7
 
 multi-ecosystem-groups:
   cibuildwheel:
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 7
     labels: ["ci: skip news", "C: dependencies"]
