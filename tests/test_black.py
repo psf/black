@@ -19,7 +19,7 @@ from importlib.metadata import version as imp_version
 from io import BytesIO
 from pathlib import Path, WindowsPath
 from platform import system
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any, TypeVar
 from unittest.mock import MagicMock, patch
 
@@ -2080,11 +2080,38 @@ class BlackTestCase(BlackBaseTestCase):
             == "class A: ...\r"
         )
 
-    def test_preview_newline_type_detection(self) -> None:
+    def test_newline_type_detection(self) -> None:
         mode = Mode()
         newline_types = ["A\n", "A\r\n", "A\r"]
         for test_case in itertools.permutations(newline_types):
             assert black.format_str("".join(test_case), mode=mode) == test_case[0] * 3
+
+    def test_decode_with_encoding(self) -> None:
+        # This uses temporary files since some editors (including GitHub)
+        # struggle with displaying and/or editing non utf-8 data
+        # \xfc is iso-8859-1 for ü
+        with NamedTemporaryFile(delete=False) as first_line:
+            first_line.write(
+                b"# -*- coding: iso-8859-1 -*-\n"
+                b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
+            )
+            first_line.close()
+            self.assertFalse(
+                ff(Path(first_line.name)),
+                "Failed to properly detect encoding",
+            )
+
+        with NamedTemporaryFile(delete=False) as second_line:
+            second_line.write(
+                b"#! /usr/bin/env python3\n"
+                b"# -*- coding: iso-8859-1 -*-\n"
+                b"# 2002-11-22 J\xfcrgen Hermann <jh@web.de>\n"
+            )
+            second_line.close()
+            self.assertFalse(
+                ff(Path(second_line.name)),
+                "Failed to properly detect encoding on second line",
+            )
 
 
 class TestCaching:
@@ -3146,6 +3173,53 @@ class TestASTSafety(BlackBaseTestCase):
         # can't match it directly.
         err.match("invalid character")
         err.match(r"\(<unknown>, line 1\)")
+
+    def test_target_version_exceeds_runtime_warning(self) -> None:
+        max_target = max(TargetVersion, key=lambda tv: tv.value)
+        if sys.version_info[1] >= max_target.value:
+            pytest.skip("no target version higher than runtime available")
+        target_name = f"py3{sys.version_info[1] + 1}"
+        code = "x = 1\n"
+        args = ["--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning:" in stderr
+
+    def test_target_version_exceeds_runtime_no_warning_with_fast(self) -> None:
+        max_target = max(TargetVersion, key=lambda tv: tv.value)
+        if sys.version_info[1] >= max_target.value:
+            pytest.skip("no target version higher than runtime available")
+        target_name = f"py3{sys.version_info[1] + 1}"
+        code = "x = 1\n"
+        args = ["--fast", "--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning:" not in stderr
+
+    def test_target_version_at_runtime_no_warning(self) -> None:
+        current_minor = sys.version_info[1]
+        target_name = f"py3{current_minor}"
+        code = "x = 1\n"
+        args = ["--target-version", target_name, "--code", code]
+        result = CliRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning:" not in stderr
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_target_version_exceeds_runtime_clear_error_message(self) -> None:
+        max_target = max(TargetVersion, key=lambda tv: tv.value)
+        if sys.version_info[1] >= max_target.value:
+            pytest.skip("no target version higher than runtime available")
+        future_target = TargetVersion[f"PY3{sys.version_info[1] + 1}"]
+        mode = Mode(target_versions={future_target})
+        with patch.object(
+            black,
+            "assert_equivalent",
+            side_effect=ASTSafetyError("mocked parse failure"),
+        ):
+            with pytest.raises(ASTSafetyError) as exc_info:
+                black.check_stability_and_equivalence("x = 1\n", "x = 1\n", mode=mode)
+            assert "INTERNAL ERROR" not in str(exc_info.value)
 
 
 try:

@@ -288,9 +288,11 @@ def normalize_fstring_quotes(
         # edge case:
         new_segments[-1] = new_segments[-1][:-1] + '\\"'
 
+    orig_escape_count = 0
+    new_escape_count = 0
     for middle, new_segment in zip(middles, new_segments, strict=True):
-        orig_escape_count = middle.value.count("\\")
-        new_escape_count = new_segment.count("\\")
+        orig_escape_count += middle.value.count("\\")
+        new_escape_count += new_segment.count("\\")
 
     if new_escape_count > orig_escape_count:
         return middles, quote  # Do not introduce more escaping

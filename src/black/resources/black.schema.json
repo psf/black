@@ -84,7 +84,8 @@
           "hug_parens_with_braces_and_square_brackets",
           "wrap_comprehension_in",
           "simplify_power_operator_hugging",
-          "wrap_long_dict_values_in_parens"
+          "wrap_long_dict_values_in_parens",
+          "fix_if_guard_explosion_in_case_statement"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
