@@ -11,8 +11,8 @@ repos:
         files: '(CHANGES\.md|source_version_control\.md)$'
         additional_dependencies:
           - beautifulsoup4>=4.14.2
-          - commonmark==0.9.1
-          - pyyaml==6.0.1
+          - commonmark>=0.9.1
+          - pyyaml>=6.0.1
 
       - id: check-version-in-the-basics-example
         name: Check black version in the basics example
@@ -21,7 +21,7 @@ repos:
         files: '(CHANGES\.md|the_basics\.md)$'
         additional_dependencies:
           - beautifulsoup4>=4.14.2
-          - commonmark==0.9.1
+          - commonmark>=0.9.1
 
   - repo: https://github.com/pycqa/isort
     rev: 8.0.0
@@ -33,7 +33,7 @@ repos:
     hooks:
       - id: flake8
         additional_dependencies:
-          - flake8-bugbear==24.2.6
+          - flake8-bugbear
           - flake8-comprehensions
           - flake8-simplify
         exclude: ^src/blib2to3/
@@ -47,11 +47,11 @@ repos:
         additional_dependencies:
           # Click is intentionally out-of-sync with pyproject.toml
           # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
-          - click>=8.2.0
+          - click>=8.0.0
           - packaging>=22.0
           - platformdirs>=2
-          - pytokens>=0.3.0
-          - tomli>=1.1.0,<2.0.0
+          - pytokens~=0.4.0
+          - tomli>=1.1.0
 
           # blackd
           - aiohttp>=3.10
@@ -69,8 +69,8 @@ repos:
 
           # version check
           - beautifulsoup4>=4.14.2
-          - types-commonmark
-          - types-pyyaml
+          - types-commonmark>=0.9.0
+          - types-pyyaml>=6.0.0
 
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.8.1
@@ -83,6 +83,3 @@ repos:
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
-
-ci:
-  autoupdate_schedule: weekly

@@ -26,7 +26,7 @@ unstable = true
 # NOTE: You don't need this in your own Black configuration.
 
 [build-system]
-requires = ["hatch-fancy-pypi-readme", "hatch-vcs", "hatchling>=1.27.0"]
+requires = ["hatch-fancy-pypi-readme", "hatch-vcs>=0.3.0", "hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -54,13 +54,13 @@ classifiers = [
 ]
 dependencies = [
     "click>=8.0.0",
-    "mypy_extensions>=0.4.3",
+    "mypy-extensions>=0.4.3",
     "packaging>=22.0",
     "pathspec>=1.0.0",
     "platformdirs>=2",
-    "pytokens>=0.3.0",
+    "pytokens~=0.4.0",
     "tomli>=1.1.0; python_version<'3.11'",
-    "typing_extensions>=4.0.1; python_version<'3.11'",
+    "typing-extensions>=4.0.1; python_version<'3.11'",
 ]
 dynamic = ["readme", "version"]
 
@@ -71,8 +71,8 @@ d = ["aiohttp>=3.10"]
 jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 
 [dependency-groups]
-build = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs", "virtualenv<21.0.0"]
-wheels = ["cibuildwheel==3.3.1", "pypyp==1.3.0"]
+build = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs>=0.3.0", "virtualenv<21.0.0"]
+wheels = ["cibuildwheel==3.3.1", "pypyp"]
 binary = ["pyinstaller", "wheel>=0.45.1"]
 
 dev = [{ include-group = "cov-tests" }, { include-group = "tox" }, "pre-commit"]
@@ -85,7 +85,7 @@ docs = [
     "docutils==0.21.2",
     "furo==2025.12.19",
     "myst-parser==4.0.1",
-    "sphinx_copybutton==0.5.2",
+    "sphinx-copybutton==0.5.2",
     "sphinx==8.2.3",
     "sphinxcontrib-programoutput==0.18",
 ]
@@ -100,7 +100,7 @@ diff-shades = [
 ]
 diff-shades-comment = ["click>=8.1.7", "packaging>=22.0", "urllib3"]
 
-width-table = ["wcwidth>=0.2.14"]
+width-table = ["wcwidth==0.2.14"]
 
 [project.scripts]
 black = "black:patched_main"
