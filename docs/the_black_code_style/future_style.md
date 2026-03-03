@@ -26,9 +26,55 @@ Currently, the following features are included in the preview style:
   patterns which have trailing commas in them, even if the guard expression fits in one
   line
 - `pyi_overload_group_blank_lines`: In `.pyi` stub files, enforce consistent blank line
-  handling around overload groups. Consecutive decorated functions with the same name
-  (e.g., `@overload` groups) have no blank lines between them, while blank lines are
-  enforced before and after such groups.
+  handling around decorated function groups. ([see below](labels/pyi-overload-group))
+
+(labels/pyi-overload-group)=
+
+### Consistent blank lines around decorated function groups in stub files
+
+In `.pyi` stub files, Black now enforces consistent blank lines around groups of
+consecutive decorated functions that share the same name (such as `@overload` groups).
+Two rules are applied:
+
+1. **Before a decorated function**: a blank line is always inserted, unless the
+   preceding statement is a same-name decorated function (i.e. part of the same group)
+   or the function is the first statement in its block.
+2. **After a decorated function**: a blank line is always inserted, unless the following
+   statement is a same-name decorated function.
+
+These rules apply regardless of what the adjacent statement is — whether it's another
+function definition, a variable annotation, or any other statement.
+
+Previously, Black could insert unwanted blank lines _within_ an overload group when one
+of the overloads had a docstring, and did not consistently enforce blank lines at the
+boundaries of overload groups:
+
+```python
+# Before
+
+@overload
+def foo(x: int) -> int:
+    """Docs."""
+
+@overload                    # unwanted blank line within group
+def foo(x: str) -> str: ...
+def bar(x): ...        # no blank line after group
+```
+
+With this feature enabled, the group is kept together and clearly separated from
+surrounding code:
+
+```python
+# After (with --preview)
+
+@overload
+def foo(x: int) -> int:
+    """Docs."""
+@overload
+def foo(x: str) -> str: ...
+
+def bar(x): ...
+```
 
 (labels/wrap-comprehension-in)=
 
