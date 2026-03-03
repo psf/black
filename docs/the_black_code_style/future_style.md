@@ -25,20 +25,21 @@ Currently, the following features are included in the preview style:
 - `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
   patterns which have trailing commas in them, even if the guard expression fits in one
   line
-- `pyi_overload_group_blank_lines`: In `.pyi` stub files, enforce consistent blank line
-  handling around decorated function groups. ([see below](labels/pyi-overload-group))
+- `pyi_overload_group_blank_lines`: In `.pyi` stub files, improve heuristics around when
+  blank lines should appear before, after and within decorated function groups.
+  ([see below](labels/pyi-overload-group))
 
 (labels/pyi-overload-group)=
 
-### Consistent blank lines around decorated function groups in stub files
+### Improved heuristics for blank lines before, after and within decorated function groups in stub files
 
-In `.pyi` stub files, Black now enforces consistent blank lines around groups of
-consecutive decorated functions that share the same name (such as `@overload` groups).
-Two rules are applied:
+In `.pyi` stub files, Black now has improved heuristics regarding when blank lines
+should appear before, after or within groups of decorated functions that share the same
+name (such as `@overload` groups). Two rules are applied:
 
 1. **Before a decorated function**: a blank line is always inserted, unless the
-   preceding statement is a same-name decorated function (i.e. part of the same group)
-   or the function is the first statement in its block.
+   preceding statement is a same-name decorated function (i.e. part of an `@overload`
+   group) or the function is the first statement in its block.
 2. **After a decorated function**: a blank line is always inserted, unless the following
    statement is a same-name decorated function.
 
@@ -58,7 +59,7 @@ def foo(x: int) -> int:
 
 @overload                    # unwanted blank line within group
 def foo(x: str) -> str: ...
-def bar(x): ...        # no blank line after group
+def bar(x): ...              # no blank line after group
 ```
 
 With this feature enabled, the group is kept together and clearly separated from
