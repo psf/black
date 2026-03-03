@@ -650,10 +650,7 @@ class EmptyLineTracker:
             self.semantic_leading_comment = None
 
         # Maintain _pyi_previous_decorated_func state for overload groups.
-        if (
-            self.mode.is_pyi
-            and Preview.pyi_overload_group_blank_lines in self.mode
-        ):
+        if self.mode.is_pyi and Preview.pyi_overload_group_blank_lines in self.mode:
             if current_line.is_def and self._is_line_decorated(current_line):
                 name = self._get_def_name(current_line)
                 if name is not None:
