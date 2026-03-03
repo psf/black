@@ -726,14 +726,8 @@ class EmptyLineTracker:
             if self.mode.is_pyi:
                 if previous_def.is_class and not previous_def.is_stub_class:
                     before = 1
-                elif depth and not current_line.is_def and self.previous_line.is_def:
-                    # Empty lines between attributes and methods should be preserved.
-                    before = 1 if user_had_newline else 0
-                elif depth:
-                    before = 0
                 elif (
                     Preview.pyi_overload_group_blank_lines in self.mode
-                    and (current_line.is_decorator or current_line.is_def)
                     and self._pyi_previous_decorated_func is not None
                 ):
                     prev_name, prev_depth = self._pyi_previous_decorated_func
@@ -742,10 +736,23 @@ class EmptyLineTracker:
                         if current_line.is_decorator
                         else self._get_def_name(current_line)
                     )
-                    if cur_name == prev_name and prev_depth == depth:
+                    if (
+                        cur_name is not None
+                        and cur_name == prev_name
+                        and prev_depth == depth
+                        and (
+                            current_line.is_decorator
+                            or self._is_line_decorated(current_line)
+                        )
+                    ):
                         before = 0
                     else:
                         before = 1
+                elif depth and not current_line.is_def and self.previous_line.is_def:
+                    # Empty lines between attributes and methods should be preserved.
+                    before = 1 if user_had_newline else 0
+                elif depth:
+                    before = 0
                 else:
                     before = 1
             else:
@@ -860,17 +867,6 @@ class EmptyLineTracker:
                 else:
                     newlines = 1
             elif (
-                current_line.is_def or current_line.is_decorator
-            ) and not self.previous_line.is_def:
-                if current_line.depth:
-                    # In classes empty lines between attributes and methods should
-                    # be preserved.
-                    newlines = min(1, before)
-                else:
-                    # Blank line between a block of functions (maybe with preceding
-                    # decorators) and a block of non-functions
-                    newlines = 1
-            elif (
                 Preview.pyi_overload_group_blank_lines in self.mode
                 and self._pyi_previous_decorated_func is not None
             ):
@@ -881,7 +877,8 @@ class EmptyLineTracker:
                     else self._get_def_name(current_line)
                 )
                 is_same_group = (
-                    cur_name == prev_name
+                    cur_name is not None
+                    and cur_name == prev_name
                     and prev_depth == current_line.depth
                     and (
                         current_line.is_decorator
@@ -891,11 +888,23 @@ class EmptyLineTracker:
                 newlines = 0 if is_same_group else 1
             elif (
                 Preview.pyi_overload_group_blank_lines in self.mode
-                and self.previous_line.is_def
                 and current_line.is_decorator
+                and self.previous_line.depth >= current_line.depth
             ):
-                # Previous def was not decorated, but current is a decorator.
+                # Before a decorated function, enforce blank line unless
+                # first statement in the block.
                 newlines = 1
+            elif (
+                current_line.is_def or current_line.is_decorator
+            ) and not self.previous_line.is_def:
+                if current_line.depth:
+                    # In classes empty lines between attributes and methods should
+                    # be preserved.
+                    newlines = min(1, before)
+                else:
+                    # Blank line between a block of functions (maybe with preceding
+                    # decorators) and a block of non-functions
+                    newlines = 1
             else:
                 newlines = 0
         else:
