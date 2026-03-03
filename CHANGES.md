@@ -21,7 +21,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Enforce consistent blank lines around groups of same-name decorated functions (such as
-  `@overload` groups) in `.pyi` stub files (#XXXX)
+  `@overload` groups) in `.pyi` stub files (#5021)
 - Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had
   a trailing comma (#4884)
 - Fix `string_processing` crashing on unassigned long string literals with trailing
