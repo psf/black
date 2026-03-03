@@ -25,6 +25,10 @@ Currently, the following features are included in the preview style:
 - `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
   patterns which have trailing commas in them, even if the guard expression fits in one
   line
+- `pyi_overload_group_blank_lines`: In `.pyi` stub files, enforce consistent blank line
+  handling around overload groups. Consecutive decorated functions with the same name
+  (e.g., `@overload` groups) have no blank lines between them, while blank lines are
+  enforced before and after such groups.
 
 (labels/wrap-comprehension-in)=
 

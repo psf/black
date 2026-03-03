@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Optional, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -544,6 +544,69 @@ class EmptyLineTracker:
     previous_block: LinesBlock | None = None
     previous_defs: list[Line] = field(default_factory=list)
     semantic_leading_comment: LinesBlock | None = None
+    _pyi_previous_decorated_func: tuple[str, int] | None = None
+
+    @staticmethod
+    def _get_def_name(line: Line) -> str | None:
+        """Extract the function name from a line that is a function definition."""
+        if not line.is_def:
+            return None
+        if line.leaves[0].value == "def":
+            return line.leaves[1].value
+        # async def
+        return line.leaves[2].value
+
+    @staticmethod
+    def _is_line_decorated(line: Line) -> bool:
+        """Check if a def line is part of a decorated statement."""
+        if not line.is_def or not line.leaves:
+            return False
+        node = line.leaves[0].parent
+        while node is not None:
+            if node.type == syms.decorated:
+                return True
+            # Stop at class/function boundaries to avoid matching a
+            # decorated *class* that contains this function.
+            if node.type in (syms.classdef, syms.funcdef, syms.async_funcdef):
+                node = node.parent
+                continue
+            if node.type == syms.suite:
+                # A suite means we've entered a class/function body;
+                # any decorated node above here belongs to the enclosing
+                # scope, not to this function.
+                return False
+            node = node.parent
+        return False
+
+    @staticmethod
+    def _get_decorator_target_name(line: Line) -> str | None:
+        """For a decorator line, extract the name of the function it decorates."""
+        if not line.is_decorator or not line.leaves:
+            return None
+        node = line.leaves[0].parent
+        while node is not None:
+            if node.type != syms.decorated:
+                node = node.parent
+                continue
+            for child in node.children:
+                funcdef = child
+                if child.type == syms.async_funcdef:
+                    # async_funcdef has children: ASYNC, funcdef
+                    for sub in child.children:
+                        if sub.type == syms.funcdef:
+                            funcdef = sub
+                            break
+                if funcdef.type != syms.funcdef:
+                    continue
+                for leaf in funcdef.children:
+                    if (
+                        isinstance(leaf, Leaf)
+                        and leaf.type == token.NAME
+                        and leaf.value != "def"
+                    ):
+                        return leaf.value
+            break
+        return None
 
     def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
         """Return the number of extra empty lines before and after the `current_line`.
@@ -585,6 +648,24 @@ class EmptyLineTracker:
         # `or before` means this decorator already has an empty line before
         elif not current_line.is_decorator or before:
             self.semantic_leading_comment = None
+
+        # Maintain _pyi_previous_decorated_func state for overload groups.
+        if (
+            self.mode.is_pyi
+            and Preview.pyi_overload_group_blank_lines in self.mode
+        ):
+            if current_line.is_def and self._is_line_decorated(current_line):
+                name = self._get_def_name(current_line)
+                if name is not None:
+                    self._pyi_previous_decorated_func = (name, current_line.depth)
+            elif not current_line.is_decorator and (
+                self._pyi_previous_decorated_func is None
+                or current_line.depth <= self._pyi_previous_decorated_func[1]
+            ):
+                # Only reset when we see a non-decorator line at the same or
+                # lower depth.  Body lines (docstrings, ...) at deeper depth
+                # should not clear the state.
+                self._pyi_previous_decorated_func = None
 
         self.previous_line = current_line
         self.previous_block = block
@@ -650,6 +731,21 @@ class EmptyLineTracker:
                     before = 1 if user_had_newline else 0
                 elif depth:
                     before = 0
+                elif (
+                    Preview.pyi_overload_group_blank_lines in self.mode
+                    and (current_line.is_decorator or current_line.is_def)
+                    and self._pyi_previous_decorated_func is not None
+                ):
+                    prev_name, prev_depth = self._pyi_previous_decorated_func
+                    cur_name = (
+                        self._get_decorator_target_name(current_line)
+                        if current_line.is_decorator
+                        else self._get_def_name(current_line)
+                    )
+                    if cur_name == prev_name and prev_depth == depth:
+                        before = 0
+                    else:
+                        before = 1
                 else:
                     before = 1
             else:
@@ -750,7 +846,19 @@ class EmptyLineTracker:
             # statement in the same level, we always want a blank line if there's
             # something with a body preceding.
             elif self.previous_line.depth > current_line.depth:
-                newlines = 1
+                if (
+                    Preview.pyi_overload_group_blank_lines in self.mode
+                    and self._pyi_previous_decorated_func is not None
+                    and current_line.is_decorator
+                ):
+                    prev_name, prev_depth = self._pyi_previous_decorated_func
+                    cur_name = self._get_decorator_target_name(current_line)
+                    if cur_name == prev_name and prev_depth == current_line.depth:
+                        newlines = 0
+                    else:
+                        newlines = 1
+                else:
+                    newlines = 1
             elif (
                 current_line.is_def or current_line.is_decorator
             ) and not self.previous_line.is_def:
@@ -762,6 +870,32 @@ class EmptyLineTracker:
                     # Blank line between a block of functions (maybe with preceding
                     # decorators) and a block of non-functions
                     newlines = 1
+            elif (
+                Preview.pyi_overload_group_blank_lines in self.mode
+                and self._pyi_previous_decorated_func is not None
+            ):
+                prev_name, prev_depth = self._pyi_previous_decorated_func
+                cur_name = (
+                    self._get_decorator_target_name(current_line)
+                    if current_line.is_decorator
+                    else self._get_def_name(current_line)
+                )
+                is_same_group = (
+                    cur_name == prev_name
+                    and prev_depth == current_line.depth
+                    and (
+                        current_line.is_decorator
+                        or self._is_line_decorated(current_line)
+                    )
+                )
+                newlines = 0 if is_same_group else 1
+            elif (
+                Preview.pyi_overload_group_blank_lines in self.mode
+                and self.previous_line.is_def
+                and current_line.is_decorator
+            ):
+                # Previous def was not decorated, but current is a decorator.
+                newlines = 1
             else:
                 newlines = 0
         else:
