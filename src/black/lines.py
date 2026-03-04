@@ -547,9 +547,29 @@ class EmptyLineTracker:
     _pyi_previous_decorated_func: tuple[str, int, bool] | None = None
 
     @staticmethod
+    def _get_funcdef_name(node: Node | Leaf) -> str | None:
+        """Extract the function name from a funcdef or async_funcdef node."""
+        funcdef: Node | Leaf = node
+        if isinstance(node, Node) and node.type == syms.async_funcdef:
+            for sub in node.children:
+                if sub.type == syms.funcdef:
+                    funcdef = sub
+                    break
+        if not isinstance(funcdef, Node) or funcdef.type != syms.funcdef:
+            return None
+        for child in funcdef.children:
+            if (
+                isinstance(child, Leaf)
+                and child.type == token.NAME
+                and child.value != "def"
+            ):
+                return child.value
+        return None
+
+    @staticmethod
     def _get_def_name(line: Line) -> str | None:
         """Extract the function name from a line that is a function definition."""
-        if not line.is_def:
+        if not line.is_def or not line.leaves:
             return None
         if line.leaves[0].value == "def":
             return line.leaves[1].value
@@ -589,22 +609,8 @@ class EmptyLineTracker:
                 node = node.parent
                 continue
             for child in node.children:
-                funcdef = child
-                if child.type == syms.async_funcdef:
-                    # async_funcdef has children: ASYNC, funcdef
-                    for sub in child.children:
-                        if sub.type == syms.funcdef:
-                            funcdef = sub
-                            break
-                if funcdef.type != syms.funcdef:
-                    continue
-                for leaf in funcdef.children:
-                    if (
-                        isinstance(leaf, Leaf)
-                        and leaf.type == token.NAME
-                        and leaf.value != "def"
-                    ):
-                        return leaf.value
+                if child.type in (syms.funcdef, syms.async_funcdef):
+                    return EmptyLineTracker._get_funcdef_name(child)
             break
         return None
 
@@ -643,25 +649,13 @@ class EmptyLineTracker:
         for child in parent.children:
             if found:
                 if child.type == syms.decorated:
-                    # Extract the function name from this decorated sibling.
                     for subchild in child.children:
-                        if subchild.type not in (syms.funcdef, syms.async_funcdef):
-                            continue
-                        funcdef = subchild
-                        if subchild.type == syms.async_funcdef:
-                            for sub in subchild.children:
-                                if sub.type == syms.funcdef:
-                                    funcdef = sub
-                                    break
-                        for leaf in funcdef.children:
-                            if (
-                                isinstance(leaf, Leaf)
-                                and leaf.type == token.NAME
-                                and leaf.value != "def"
-                            ):
-                                return leaf.value == cur_name
-                        break
-                    break
+                        if subchild.type in (syms.funcdef, syms.async_funcdef):
+                            sibling_name = EmptyLineTracker._get_funcdef_name(
+                                subchild
+                            )
+                            return sibling_name == cur_name
+                    return False
                 elif child.type in (
                     token.NEWLINE,
                     token.NL,
@@ -672,7 +666,7 @@ class EmptyLineTracker:
                 ):
                     continue
                 else:
-                    break
+                    return False
             elif child is decorated_node:
                 found = True
 
@@ -737,7 +731,7 @@ class EmptyLineTracker:
                         current_line.depth,
                         is_multi or (prev is not None and prev[0] == name and prev[2]),
                     )
-            elif not current_line.is_decorator and (
+            elif not current_line.is_decorator and not current_line.is_comment and (
                 self._pyi_previous_decorated_func is None
                 or (
                     current_line.depth <= self._pyi_previous_decorated_func[1]
@@ -810,6 +804,10 @@ class EmptyLineTracker:
 
         if previous_def is not None:
             assert self.previous_line is not None
+            # Note: for decorator/def/class lines, `before` computed here is
+            # passed to _maybe_empty_lines_for_class_or_def which may override
+            # it. This block still matters for non-decorator/def/class lines
+            # (e.g. a `var: int` statement following an overload group).
             if self.mode.is_pyi:
                 if previous_def.is_class and not previous_def.is_stub_class:
                     before = 1
