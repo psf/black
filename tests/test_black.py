@@ -1147,9 +1147,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("miscellaneous", "force_pyi")
         result = CliRunner().invoke(
-            black.main,
-            ["-", "-q", "--pyi", "--config", str(THIS_DIR / "empty.toml")],
-            input=BytesIO(source.encode("utf-8")),
+            black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf-8"))
         )
         self.assertEqual(result.exit_code, 0)
         actual = result.output
