@@ -724,9 +724,11 @@ class EmptyLineTracker:
         while sibling is not None:
             if sibling.type == syms.decorated:
                 for sub in sibling.children:
-                    if sub.type in (syms.funcdef, syms.async_funcdef):
-                        if EmptyLineTracker._get_funcdef_name(sub) == func_name:
-                            return True
+                    if (
+                        sub.type in (syms.funcdef, syms.async_funcdef)
+                        and EmptyLineTracker._get_funcdef_name(sub) == func_name
+                    ):
+                        return True
                 break
             elif sibling.type in (
                 token.NEWLINE,
@@ -748,12 +750,17 @@ class EmptyLineTracker:
                 and child is not suite
             ):
                 for stmt in child.children:
-                    if isinstance(stmt, Node) and stmt.type == syms.decorated:
-                        for sub in stmt.children:
-                            if sub.type in (syms.funcdef, syms.async_funcdef):
-                                if EmptyLineTracker._get_funcdef_name(sub) == func_name:
-                                    return True
-                        break
+                    if not isinstance(stmt, Node):
+                        continue
+                    if stmt.type != syms.decorated:
+                        continue
+                    for sub in stmt.children:
+                        if (
+                            sub.type in (syms.funcdef, syms.async_funcdef)
+                            and EmptyLineTracker._get_funcdef_name(sub) == func_name
+                        ):
+                            return True
+                    break
 
         return False
 
@@ -927,9 +934,8 @@ class EmptyLineTracker:
                         )
                     ):
                         before = 0
-                    elif (
-                        current_line.opens_block
-                        and self._get_block_first_decorated_funcname(current_line)
+                    elif current_line.opens_block and (
+                        self._get_block_first_decorated_funcname(current_line)
                         == prev_name
                     ):
                         before = 0
