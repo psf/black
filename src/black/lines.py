@@ -818,6 +818,7 @@ class EmptyLineTracker:
                     Preview.pyi_overload_group_blank_lines in self.mode
                     and self._pyi_previous_decorated_func is not None
                     and self._pyi_previous_decorated_func[2]
+                    and not current_line.is_comment
                 ):
                     prev_name, prev_depth, _ = self._pyi_previous_decorated_func
                     cur_name = (
@@ -981,6 +982,12 @@ class EmptyLineTracker:
                 and current_line.is_decorator
                 and self.previous_line.depth >= current_line.depth
                 and self._is_start_of_decorated_group(current_line)
+                and (
+                    self._pyi_previous_decorated_func is None
+                    or self._pyi_previous_decorated_func[0]
+                    != self._get_decorator_target_name(current_line)
+                    or self._pyi_previous_decorated_func[1] != current_line.depth
+                )
             ):
                 newlines = 1
             elif (
