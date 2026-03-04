@@ -651,9 +651,7 @@ class EmptyLineTracker:
                 if child.type == syms.decorated:
                     for subchild in child.children:
                         if subchild.type in (syms.funcdef, syms.async_funcdef):
-                            sibling_name = EmptyLineTracker._get_funcdef_name(
-                                subchild
-                            )
+                            sibling_name = EmptyLineTracker._get_funcdef_name(subchild)
                             return sibling_name == cur_name
                     return False
                 elif child.type in (
@@ -731,15 +729,19 @@ class EmptyLineTracker:
                         current_line.depth,
                         is_multi or (prev is not None and prev[0] == name and prev[2]),
                     )
-            elif not current_line.is_decorator and not current_line.is_comment and (
-                self._pyi_previous_decorated_func is None
-                or (
-                    current_line.depth <= self._pyi_previous_decorated_func[1]
-                    # Don't reset on else/elif — they continue an if/else
-                    # chain that may contain overloads at a deeper depth.
-                    and not (
-                        current_line.leaves
-                        and current_line.leaves[0].value in ("else", "elif")
+            elif (
+                not current_line.is_decorator
+                and not current_line.is_comment
+                and (
+                    self._pyi_previous_decorated_func is None
+                    or (
+                        current_line.depth <= self._pyi_previous_decorated_func[1]
+                        # Don't reset on else/elif — they continue an if/else
+                        # chain that may contain overloads at a deeper depth.
+                        and not (
+                            current_line.leaves
+                            and current_line.leaves[0].value in ("else", "elif")
+                        )
                     )
                 )
             ):
