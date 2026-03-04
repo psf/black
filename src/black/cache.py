@@ -49,6 +49,14 @@ CACHE_DIR = get_cache_dir()
 
 
 def get_cache_file(mode: Mode) -> Path:
+    """Get the cache file path for the given mode.
+
+    Args:
+        mode: The Black mode used for formatting.
+
+    Returns:
+        Path to the cache file.
+    """
     return CACHE_DIR / f"cache.{mode.get_cache_key()}.pickle"
 
 
