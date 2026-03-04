@@ -147,7 +147,7 @@ my_dict = {
 In `.pyi` stub files, Black now has improved heuristics regarding when blank lines
 should appear before, after or within groups of decorated functions that share the same
 name (such as `@overload` groups). Two rules are applied when a decorated function is
-determined to be part of a series of >=1 decorated functions with the same name:
+determined to be part of a series of >=2 decorated functions with the same name:
 
 1. **Before the decorated function**: a blank line is always inserted, unless the
    preceding statement is a same-name decorated function (i.e. part of an `@overload`

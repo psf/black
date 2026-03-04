@@ -599,19 +599,34 @@ class EmptyLineTracker:
         return False
 
     @staticmethod
-    def _get_decorator_target_name(line: Line) -> str | None:
-        """For a decorator line, extract the name of the function it decorates."""
-        if not line.is_decorator or not line.leaves:
+    def _find_decorated_node(line: Line) -> Node | None:
+        """Walk up from a decorator line's '@' leaf to its `decorated` node."""
+        if not line.leaves:
             return None
         node = line.leaves[0].parent
         while node is not None:
-            if node.type != syms.decorated:
-                node = node.parent
-                continue
-            for child in node.children:
-                if child.type in (syms.funcdef, syms.async_funcdef):
-                    return EmptyLineTracker._get_funcdef_name(child)
-            break
+            if node.type == syms.decorated:
+                assert isinstance(node, Node)
+                return node
+            if node.type in (syms.suite, syms.file_input):
+                return None
+            node = node.parent
+        return None
+
+    @staticmethod
+    def _get_decorator_target_name(line: Line) -> str | None:
+        """For a decorator line, extract the name of the function it decorates.
+
+        Only handles decorated functions, not decorated classes.
+        """
+        if not line.is_decorator:
+            return None
+        decorated = EmptyLineTracker._find_decorated_node(line)
+        if decorated is None:
+            return None
+        for child in decorated.children:
+            if child.type in (syms.funcdef, syms.async_funcdef):
+                return EmptyLineTracker._get_funcdef_name(child)
         return None
 
     @staticmethod
@@ -623,50 +638,36 @@ class EmptyLineTracker:
         Returns True when the very next statement-level sibling of the current
         decorated node is also a decorated function with the same name.
         """
-        if not line.is_decorator or not line.leaves:
+        if not line.is_decorator:
             return False
 
         cur_name = EmptyLineTracker._get_decorator_target_name(line)
         if cur_name is None:
             return False
 
-        # Walk up from the '@' leaf to the enclosing `decorated` node.
-        node = line.leaves[0].parent
-        while node is not None and node.type != syms.decorated:
-            if node.type in (syms.suite, syms.file_input):
-                return False
-            node = node.parent
-        if node is None:
-            return False
-
-        decorated_node = node
-        parent = decorated_node.parent
-        if parent is None:
+        decorated_node = EmptyLineTracker._find_decorated_node(line)
+        if decorated_node is None or decorated_node.parent is None:
             return False
 
         # Scan forward through siblings to find the next statement node.
-        found = False
-        for child in parent.children:
-            if found:
-                if child.type == syms.decorated:
-                    for subchild in child.children:
-                        if subchild.type in (syms.funcdef, syms.async_funcdef):
-                            sibling_name = EmptyLineTracker._get_funcdef_name(subchild)
-                            return sibling_name == cur_name
-                    return False
-                elif child.type in (
-                    token.NEWLINE,
-                    token.NL,
-                    token.INDENT,
-                    token.DEDENT,
-                    token.COMMENT,
-                    token.ENDMARKER,
-                ):
-                    continue
-                else:
-                    return False
-            elif child is decorated_node:
-                found = True
+        sibling = decorated_node.next_sibling
+        while sibling is not None:
+            if sibling.type == syms.decorated:
+                for subchild in sibling.children:
+                    if subchild.type in (syms.funcdef, syms.async_funcdef):
+                        return EmptyLineTracker._get_funcdef_name(subchild) == cur_name
+                return False
+            elif sibling.type in (
+                token.NEWLINE,
+                token.NL,
+                token.INDENT,
+                token.DEDENT,
+                token.COMMENT,
+                token.ENDMARKER,
+            ):
+                sibling = sibling.next_sibling
+            else:
+                return False
 
         return False
 
