@@ -29,54 +29,6 @@ Currently, the following features are included in the preview style:
   blank lines should appear before, after and within decorated function groups.
   ([see below](labels/pyi-overload-group))
 
-(labels/pyi-overload-group)=
-
-### Improved heuristics for blank lines before, after and within decorated function groups in stub files
-
-In `.pyi` stub files, Black now has improved heuristics regarding when blank lines
-should appear before, after or within groups of decorated functions that share the same
-name (such as `@overload` groups). Two rules are applied:
-
-1. **Before a decorated function**: a blank line is always inserted, unless the
-   preceding statement is a same-name decorated function (i.e. part of an `@overload`
-   group) or the function is the first statement in its block.
-2. **After a decorated function**: a blank line is always inserted, unless the following
-   statement is a same-name decorated function.
-
-These rules apply regardless of what the adjacent statement is — whether it's another
-function definition, a variable annotation, or any other statement.
-
-Previously, Black could insert unwanted blank lines _within_ an overload group when one
-of the overloads had a docstring, and did not consistently enforce blank lines at the
-boundaries of overload groups:
-
-```python
-# Before
-
-@overload
-def foo(x: int) -> int:
-    """Docs."""
-
-@overload                    # unwanted blank line within group
-def foo(x: str) -> str: ...
-def bar(x): ...              # no blank line after group
-```
-
-With this feature enabled, the group is kept together and clearly separated from
-surrounding code:
-
-```python
-# After (with --preview)
-
-@overload
-def foo(x: int) -> int:
-    """Docs."""
-@overload
-def foo(x: str) -> str: ...
-
-def bar(x): ...
-```
-
 (labels/wrap-comprehension-in)=
 
 ### Wrapping long comprehension `in` clauses
@@ -186,6 +138,55 @@ my_dict = {
     ),
     "another key": short_value,
 }
+```
+
+(labels/pyi-overload-group)=
+
+### Improved overload groups in stub files
+
+In `.pyi` stub files, Black now has improved heuristics regarding when blank lines
+should appear before, after or within groups of decorated functions that share the same
+name (such as `@overload` groups). Two rules are applied when a decorated function is
+determined to be part of a series of >=1 decorated functions with the same name:
+
+1. **Before the decorated function**: a blank line is always inserted, unless the
+   preceding statement is a same-name decorated function (i.e. part of an `@overload`
+   group) or the function is the first statement in its block.
+2. **After the decorated function**: a blank line is always inserted, unless the
+   following statement is a same-name decorated function.
+
+These rules apply regardless of what the adjacent statement is — whether it's another
+function definition, a variable annotation, or any other statement.
+
+Previously, Black could insert unwanted blank lines _within_ an overload group when one
+of the overloads had a docstring, and did not consistently enforce blank lines at the
+boundaries of overload groups:
+
+```python
+# Before
+
+@overload
+def foo(x: int) -> int:
+    """Docs."""
+
+@overload                    # unwanted blank line within group
+def foo(x: str) -> str: ...
+def bar(x): ...              # no blank line after group
+```
+
+With this feature enabled, the group is kept together and clearly separated from
+surrounding code:
+
+```python
+# After (with --preview)
+
+@overload
+def foo(x: int) -> int:
+    """Docs."""
+@overload
+def foo(x: str) -> str: ...
+
+def bar(x): ...
 ```
 
 ## Unstable style
