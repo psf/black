@@ -514,9 +514,9 @@ different tools. _Black_ is using the `[tool.black]` section. The option keys ar
 same as long names of options on the command line.
 
 Most command-line options can be configured in `[tool.black]` by using their long name
-without the leading `--` (for example, `--line-length` becomes `line-length`).
-Options that cannot be configured in `pyproject.toml` are called out explicitly in the
-option reference above.
+without the leading `--` (for example, `--line-length` becomes `line-length`). Options
+that cannot be configured in `pyproject.toml` are called out explicitly in the option
+reference above.
 
 Note that you have to use single-quoted strings in TOML for regular expressions. It's
 the equivalent of r-strings in Python. Multiline strings are treated as verbose regular
