@@ -106,7 +106,7 @@ Yes, Black cleans up the indentation of docstrings and removes superfluous white
 but it does not format the code inside docstrings (including doctests).
 
 If you need to format doctests, consider using a dedicated tool such as
-[doctestfmt](https://github.com/itsafely/doctestfmt) or
+[blacken-docs](https://github.com/adamchainz/blacken-docs) or
 [pytest-doctestplus](https://pypi.org/project/pytest-doctestplus/) with
 `pytest --doctest-modules --doctest-format=pep8`.
 
