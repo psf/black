@@ -2,10 +2,10 @@ import itertools
 import math
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
-from typing import Optional, TypeVar, Union, cast
+from typing import NamedTuple, Optional, TypeVar, Union, cast
 
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
@@ -529,6 +529,14 @@ class LinesBlock:
         return [prefix] + self.content_lines + [empty_line * self.after]
 
 
+class _DecoratedFuncInfo(NamedTuple):
+    """Tracks the most recently seen decorated function for overload grouping."""
+
+    name: str
+    depth: int
+    is_multi: bool
+
+
 @dataclass
 class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
@@ -544,6 +552,224 @@ class EmptyLineTracker:
     previous_block: LinesBlock | None = None
     previous_defs: list[Line] = field(default_factory=list)
     semantic_leading_comment: LinesBlock | None = None
+    _pyi_previous_decorated_func: _DecoratedFuncInfo | None = None
+
+    @staticmethod
+    def _get_funcdef_name(node: Node | Leaf) -> str | None:
+        """Extract the function name from a funcdef or async_funcdef node."""
+        funcdef: Node | Leaf = node
+        if isinstance(node, Node) and node.type == syms.async_funcdef:
+            for sub in node.children:
+                if sub.type == syms.funcdef:
+                    funcdef = sub
+                    break
+        if not isinstance(funcdef, Node) or funcdef.type != syms.funcdef:
+            return None
+        # Grammar: funcdef = 'def' NAME parameters ':' ...
+        name_node = funcdef.children[1]
+        assert isinstance(name_node, Leaf)
+        return name_node.value
+
+    @staticmethod
+    def _get_def_name(line: Line) -> str | None:
+        """Extract the function name from a line that is a function definition."""
+        if not line.is_def or not line.leaves:
+            return None
+        if line.leaves[0].value == "def":
+            return line.leaves[1].value
+        # async def
+        return line.leaves[2].value
+
+    @staticmethod
+    def _is_line_decorated(line: Line) -> bool:
+        """Check if a def line is part of a decorated statement."""
+        if not line.is_def or not line.leaves:
+            return False
+        return EmptyLineTracker._find_decorated_node(line) is not None
+
+    @staticmethod
+    def _find_decorated_node(line: Line) -> Node | None:
+        """Walk up from a decorator line's '@' leaf to its `decorated` node."""
+        if not line.leaves:
+            return None
+        node = line.leaves[0].parent
+        while node is not None:
+            if node.type == syms.decorated:
+                assert isinstance(node, Node)
+                return node
+            if node.type in (syms.suite, syms.file_input):
+                return None
+            node = node.parent
+        return None
+
+    @staticmethod
+    def _get_decorator_target_name(line: Line) -> str | None:
+        """For a decorator line, extract the name of the function it decorates.
+
+        Only handles decorated functions, not decorated classes.
+        """
+        if not line.is_decorator:
+            return None
+        decorated = EmptyLineTracker._find_decorated_node(line)
+        if decorated is None:
+            return None
+        for child in decorated.children:
+            if child.type in (syms.funcdef, syms.async_funcdef):
+                return EmptyLineTracker._get_funcdef_name(child)
+        return None
+
+    def _is_in_current_group(self, current_line: Line) -> bool:
+        """Check if current_line belongs to the same overload group being tracked."""
+        prev = self._pyi_previous_decorated_func
+        if prev is None:
+            return False
+        cur_name = (
+            self._get_decorator_target_name(current_line)
+            if current_line.is_decorator
+            else self._get_def_name(current_line)
+        )
+        return (
+            cur_name is not None
+            and cur_name == prev.name
+            and prev.depth == current_line.depth
+            and (current_line.is_decorator or self._is_line_decorated(current_line))
+        )
+
+    @staticmethod
+    def _decorated_node_starts_group(decorated_node: Node) -> bool:
+        """Check if a `decorated` AST node is the first in a multi-function group.
+
+        Returns True when the next statement-level sibling is also a decorated
+        function with the same name.
+        """
+        name = None
+        for child in decorated_node.children:
+            if child.type in (syms.funcdef, syms.async_funcdef):
+                name = EmptyLineTracker._get_funcdef_name(child)
+                break
+        if name is None:
+            return False
+        sibling = decorated_node.next_sibling
+        while sibling is not None:
+            if sibling.type == syms.decorated:
+                for sub in sibling.children:
+                    if sub.type in (syms.funcdef, syms.async_funcdef):
+                        return EmptyLineTracker._get_funcdef_name(sub) == name
+                return False
+            elif sibling.type in (
+                token.NEWLINE,
+                token.NL,
+                token.INDENT,
+                token.DEDENT,
+                token.COMMENT,
+                token.ENDMARKER,
+            ):
+                sibling = sibling.next_sibling
+            else:
+                return False
+        return False
+
+    @staticmethod
+    def _is_start_of_decorated_group(line: Line) -> bool:
+        """Check if a decorator line starts a multi-function group.
+
+        A multi-function group is 2+ consecutive decorated functions sharing the
+        same name (e.g. @overload groups, @property + setter pairs).
+        """
+        if not line.is_decorator:
+            return False
+        decorated_node = EmptyLineTracker._find_decorated_node(line)
+        if decorated_node is None or decorated_node.parent is None:
+            return False
+        return EmptyLineTracker._decorated_node_starts_group(decorated_node)
+
+    @staticmethod
+    def _get_block_first_decorated_funcname(line: Line) -> str | None:
+        """Return the function name of the first decorated function in a block.
+
+        *line* must be a block-opening line (ending with ``:``) such as
+        ``if ...:``.  Returns ``None`` when the block doesn't start with a
+        decorated function.
+        """
+        if not line.leaves or line.leaves[-1].type != token.COLON:
+            return None
+        suite = line.leaves[-1].next_sibling
+        if suite is None or not isinstance(suite, Node) or suite.type != syms.suite:
+            return None
+        for child in suite.children:
+            if isinstance(child, Node) and child.type == syms.decorated:
+                for sub in child.children:
+                    if sub.type in (syms.funcdef, syms.async_funcdef):
+                        return EmptyLineTracker._get_funcdef_name(sub)
+                break
+            if child.type not in (token.NEWLINE, token.NL, token.INDENT, token.DEDENT):
+                break
+        return None
+
+    @staticmethod
+    def _block_is_part_of_overload_group(line: Line) -> bool:
+        """Check if a block-opening line contains a decorated function that is
+        part of a larger overload group — either because the ``if_stmt``'s next
+        sibling is a same-name decorated function, or because another branch of
+        the same ``if_stmt`` has one.
+        """
+        func_name = EmptyLineTracker._get_block_first_decorated_funcname(line)
+        if func_name is None:
+            return False
+
+        suite = line.leaves[-1].next_sibling
+        if suite is None or not isinstance(suite, Node):
+            return False
+        if_stmt = suite.parent
+        if if_stmt is None:
+            return False
+
+        # Check if the if_stmt's next sibling is a same-name decorated function.
+        sibling = if_stmt.next_sibling
+        while sibling is not None:
+            if sibling.type == syms.decorated:
+                for sub in sibling.children:
+                    if (
+                        sub.type in (syms.funcdef, syms.async_funcdef)
+                        and EmptyLineTracker._get_funcdef_name(sub) == func_name
+                    ):
+                        return True
+                break
+            elif sibling.type in (
+                token.NEWLINE,
+                token.NL,
+                token.INDENT,
+                token.DEDENT,
+                token.COMMENT,
+                token.ENDMARKER,
+            ):
+                sibling = sibling.next_sibling
+            else:
+                break
+
+        # Check other branches (elif/else) of the same if_stmt.
+        for child in if_stmt.children:
+            if not isinstance(child, Node):
+                continue
+            if child.type != syms.suite:
+                continue
+            if child is suite:
+                continue
+
+            for stmt in child.children:
+                if not isinstance(stmt, Node):
+                    continue
+                if stmt.type != syms.decorated:
+                    continue
+                for sub in stmt.children:
+                    if sub.type not in (syms.funcdef, syms.async_funcdef):
+                        continue
+                    if EmptyLineTracker._get_funcdef_name(sub) != func_name:
+                        continue
+                    return True
+                break
+
+        return False
 
     def maybe_empty_lines(self, current_line: Line) -> LinesBlock:
         """Return the number of extra empty lines before and after the `current_line`.
@@ -585,6 +811,46 @@ class EmptyLineTracker:
         # `or before` means this decorator already has an empty line before
         elif not current_line.is_decorator or before:
             self.semantic_leading_comment = None
+
+        # Maintain _pyi_previous_decorated_func state for overload groups.
+        # The tuple is (name, depth, is_multi) where is_multi indicates
+        # the group has 2+ same-name decorated functions.
+        if self.mode.is_pyi and Preview.pyi_overload_group_blank_lines in self.mode:
+            if current_line.is_def and self._is_line_decorated(current_line):
+                name = self._get_def_name(current_line)
+                if name is not None:
+                    prev = self._pyi_previous_decorated_func
+                    is_multi = (
+                        prev is not None
+                        and prev.name == name
+                        and prev.depth == current_line.depth
+                    )
+                    self._pyi_previous_decorated_func = _DecoratedFuncInfo(
+                        name=name,
+                        depth=current_line.depth,
+                        is_multi=is_multi
+                        or (prev is not None and prev.name == name and prev.is_multi),
+                    )
+            elif (
+                not current_line.is_decorator
+                and not current_line.is_comment
+                and (
+                    self._pyi_previous_decorated_func is None
+                    or (
+                        current_line.depth <= self._pyi_previous_decorated_func.depth
+                        # Don't reset on else/elif — they continue an if/else
+                        # chain that may contain overloads at a deeper depth.
+                        and not (
+                            current_line.leaves
+                            and current_line.leaves[0].value in ("else", "elif")
+                        )
+                    )
+                )
+            ):
+                # Only reset when we see a non-decorator line at the same or
+                # lower depth.  Body lines (docstrings, ...) at deeper depth
+                # should not clear the state.
+                self._pyi_previous_decorated_func = None
 
         self.previous_line = current_line
         self.previous_block = block
@@ -642,12 +908,45 @@ class EmptyLineTracker:
 
         if previous_def is not None:
             assert self.previous_line is not None
+            # Note: for decorator/def/class lines, `before` computed here is
+            # passed to _maybe_empty_lines_for_class_or_def which may override
+            # it. This block still matters for non-decorator/def/class lines
+            # (e.g. a `var: int` statement following an overload group).
             if self.mode.is_pyi:
                 if previous_def.is_class and not previous_def.is_stub_class:
                     before = 1
+                elif (
+                    Preview.pyi_overload_group_blank_lines in self.mode
+                    and self._pyi_previous_decorated_func is not None
+                    and self._pyi_previous_decorated_func.is_multi
+                    and not current_line.is_comment
+                    and self.previous_line.depth >= current_line.depth
+                    and not (
+                        current_line.leaves
+                        and current_line.leaves[0].value in ("else", "elif")
+                    )
+                ):
+                    if self._is_in_current_group(current_line):
+                        before = 0
+                    elif current_line.opens_block and (
+                        self._get_block_first_decorated_funcname(current_line)
+                        == self._pyi_previous_decorated_func.name
+                    ):
+                        before = 0
+                    else:
+                        before = 1
                 elif depth and not current_line.is_def and self.previous_line.is_def:
-                    # Empty lines between attributes and methods should be preserved.
-                    before = 1 if user_had_newline else 0
+                    if (
+                        Preview.pyi_overload_group_blank_lines in self.mode
+                        and current_line.opens_block
+                        and self.previous_line.depth <= current_line.depth
+                        and self._block_is_part_of_overload_group(current_line)
+                    ):
+                        before = 1
+                    else:
+                        # Empty lines between attributes and methods should
+                        # be preserved.
+                        before = 1 if user_had_newline else 0
                 elif depth:
                     before = 0
                 else:
@@ -750,6 +1049,32 @@ class EmptyLineTracker:
             # statement in the same level, we always want a blank line if there's
             # something with a body preceding.
             elif self.previous_line.depth > current_line.depth:
+                if (
+                    Preview.pyi_overload_group_blank_lines in self.mode
+                    and self._is_in_current_group(current_line)
+                ):
+                    newlines = 0
+                else:
+                    newlines = 1
+            elif (
+                Preview.pyi_overload_group_blank_lines in self.mode
+                and self._pyi_previous_decorated_func is not None
+                and self._pyi_previous_decorated_func.is_multi
+                and self.previous_line.depth >= current_line.depth
+            ):
+                newlines = 0 if self._is_in_current_group(current_line) else 1
+            elif (
+                Preview.pyi_overload_group_blank_lines in self.mode
+                and current_line.is_decorator
+                and self.previous_line.depth >= current_line.depth
+                and self._is_start_of_decorated_group(current_line)
+                and (
+                    self._pyi_previous_decorated_func is None
+                    or self._pyi_previous_decorated_func.name
+                    != self._get_decorator_target_name(current_line)
+                    or self._pyi_previous_decorated_func.depth != current_line.depth
+                )
+            ):
                 newlines = 1
             elif (
                 current_line.is_def or current_line.is_decorator
