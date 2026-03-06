@@ -68,6 +68,8 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Remove unused gallery script (#5030)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
