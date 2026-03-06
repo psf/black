@@ -73,7 +73,7 @@
   `black @ https://...` are rejected. Users should upgrade to the latest version of the
   action as soon as possible. This update is received automatically when using
   `psf/black@stable`, and is independent of the version of Black installed by the
-  action.
+  action. (#5031)
 
 ### Documentation
 
