@@ -59,6 +59,11 @@ To read the version from the `pyproject.toml` file instead, set `use_pyproject` 
 `project.optional-dependencies` table. Note that this requires Python >= 3.11, so using
 the setup-python action may be required, for example:
 
+**Security note:** `use_pyproject` only accepts standard version specifiers for `black`
+(for example `==`, `~=`, `>=` and ranges like `>=25,<26`). Direct references such as
+`black @ https://...` are not supported. If your workflow runs on untrusted pull
+requests (for example from forks), prefer setting `with.version` explicitly.
+
 ```yaml
 - uses: actions/setup-python@v6
   with:

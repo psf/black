@@ -69,6 +69,12 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Remove unused gallery script (#5030)
+- Harden parsing of `black` requirements in the GitHub Action when `use_pyproject` is
+  enabled so that only version specifiers are accepted and direct references such as
+  `black @ https://...` are rejected. Users should upgrade to the latest version of the
+  action as soon as possible. This update is received automatically when using
+  `psf/black@stable`, and is independent of the version of Black installed by the
+  action. (#5031)
 
 ### Documentation
 
