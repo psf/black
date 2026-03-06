@@ -1,24 +1,15 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
-
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
+## 26.3.0
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
 - Fix crash on standalone comment in lambda default arguments (#4993)
+- Preserve parentheses when `# type: ignore` comments would be merged with other
+  comments on the same line, preventing AST equivalence failures (#4888)
 
 ### Preview style
-
-<!-- Changes that affect Black's preview style -->
 
 - Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had
   a trailing comma (#4884)
@@ -26,20 +17,10 @@
   commas (one-item tuples) (#4929)
 - Simplify implementation of the power operator "hugging" logic (#4918)
 
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
 ### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Fix shutdown errors in PyInstaller builds on macOS by disabling multiprocessing in
   frozen environments (#4930)
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
 
 ### Performance
 
@@ -51,8 +32,6 @@
   (#4996)
 
 ### Output
-
-<!-- Changes to Black's terminal output and error messages -->
 
 - Emit a clear warning when the target Python version is newer than the running Python
   version, since AST safety checks cannot parse newer syntax. Also replace the
@@ -66,8 +45,6 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 - Remove unused gallery script (#5030)
 - Harden parsing of `black` requirements in the GitHub Action when `use_pyproject` is
   enabled so that only version specifiers are accepted and direct references such as
@@ -77,9 +54,6 @@
   action. (#5031)
 
 ### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 - Expand preview style documentation with detailed examples for `wrap_comprehension_in`,
   `simplify_power_operator_hugging`, and `wrap_long_dict_values_in_parens` features
@@ -160,8 +134,6 @@ directories.
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
   string literals, or on dictionary entries with long lines (#4872)
 - Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
-- Preserve parentheses when `# type: ignore` comments would be merged with other
-  comments on the same line, preventing AST equivalence failures (#4888)
 
 ### Preview style
 
