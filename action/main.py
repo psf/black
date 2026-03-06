@@ -17,7 +17,11 @@ VERSION = os.getenv("INPUT_VERSION", default="")
 USE_PYPROJECT = os.getenv("INPUT_USE_PYPROJECT") == "true"
 OUTPUT_FILE = os.getenv("OUTPUT_FILE", default="")
 
-BLACK_VERSION_RE = re.compile(r"^black([^A-Z0-9._-]+.*)$", re.IGNORECASE)
+BLACK_VERSION_RE = re.compile(
+    r"^black((?:\s*(?:~=|==|!=|<=|>=|<|>|===)\s*[A-Za-z0-9*+._-]+)"
+    r"(?:\s*,\s*(?:~=|==|!=|<=|>=|<|>|===)\s*[A-Za-z0-9*+._-]+)*)\s*$",
+    re.IGNORECASE,
+)
 EXTRAS_RE = re.compile(r"\[.*\]")
 EXPORT_SUBST_FAIL_RE = re.compile(r"\$Format:.*\$")
 
