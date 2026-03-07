@@ -70,6 +70,14 @@ dict_with_really_long_names = {
     )
 }
 
+# Short `in`s with delimiters
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions or [] if trait
+]
+
 # output
 [
     a
@@ -159,3 +167,11 @@ dict_with_really_long_names = {
     key_with_super_really_long_name: key_with_super_really_long_name
     for key in dictionary
 }
+
+# Short `in`s with delimiters
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
