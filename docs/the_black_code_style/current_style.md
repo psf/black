@@ -6,7 +6,8 @@ _Black_ aims for consistency, generality, readability and reducing git diffs. Si
 language constructs are formatted with similar rules. Style configuration options are
 deliberately limited and rarely added. Previous formatting is taken into account as
 little as possible, with rare exceptions like the magic trailing comma. The coding style
-used by _Black_ can be viewed as a strict subset of PEP 8.
+used by _Black_ follows PEP 8 in spirit and enforces a consistent subset of its
+formatting recommendations. It does not implement every style rule covered by PEP 8.
 
 This document describes the current formatting style. If you're interested in trying out
 where the style is heading, see [future style](./future_style.md) and try running
