@@ -66,7 +66,10 @@ dynamic = ["readme", "version"]
 
 [project.optional-dependencies]
 colorama = ["colorama>=0.4.3"]
-uvloop = ["uvloop>=0.15.2"]
+uvloop = [
+    "uvloop>=0.15.2; sys_platform != 'win32'",
+    "winloop>=0.5.0; sys_platform == 'win32'"
+]
 d = ["aiohttp>=3.10"]
 jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 

@@ -13,9 +13,6 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
-- Fix crash on standalone comment in lambda default arguments (#4993)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -23,11 +20,6 @@
 - Improve heuristics around whether blank lines should appear before, within and after
   groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
   files (#5021)
-- Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had
-  a trailing comma (#4884)
-- Fix `string_processing` crashing on unassigned long string literals with trailing
-  commas (one-item tuples) (#4929)
-- Simplify implementation of the power operator "hugging" logic (#4918)
 
 ### Configuration
 
@@ -36,9 +28,6 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
-
-- Fix shutdown errors in PyInstaller builds on macOS by disabling multiprocessing in
-  frozen environments (#4930)
 
 ### Parser
 
@@ -52,11 +41,6 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Emit a clear warning when the target Python version is newer than the running Python
-  version, since AST safety checks cannot parse newer syntax. Also replace the
-  misleading "INTERNAL ERROR" message with an actionable error explaining the version
-  mismatch (#4983)
-
 ### _Blackd_
 
 <!-- Changes to blackd -->
@@ -69,6 +53,61 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+## 26.3.0
+
+### Stable style
+
+- Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
+- Fix crash on standalone comment in lambda default arguments (#4993)
+- Preserve parentheses when `# type: ignore` comments would be merged with other
+  comments on the same line, preventing AST equivalence failures (#4888)
+
+### Preview style
+
+- Fix bug where `if` guards in `case` blocks were incorrectly split when the pattern had
+  a trailing comma (#4884)
+- Fix `string_processing` crashing on unassigned long string literals with trailing
+  commas (one-item tuples) (#4929)
+- Simplify implementation of the power operator "hugging" logic (#4918)
+
+### Packaging
+
+- Fix shutdown errors in PyInstaller builds on macOS by disabling multiprocessing in
+  frozen environments (#4930)
+
+### Performance
+
+- Introduce winloop for windows as an alternative to uvloop (#4996)
+- Remove deprecated function `uvloop.install()` in favor of `uvloop.new_event_loop()`
+  (#4996)
+- Rename `maybe_install_uvloop` function to `maybe_use_uvloop` to simplify loop
+  installation and creation of either a uvloop/winloop evenloop or default eventloop
+  (#4996)
+
+### Output
+
+- Emit a clear warning when the target Python version is newer than the running Python
+  version, since AST safety checks cannot parse newer syntax. Also replace the
+  misleading "INTERNAL ERROR" message with an actionable error explaining the version
+  mismatch (#4983)
+
+### _Blackd_
+
+- Introduce winloop to be used when windows in use which enables blackd to run faster on
+  windows when winloop is installed. (#4996)
+
+### Integrations
+
+- Remove unused gallery script (#5030)
+- Harden parsing of `black` requirements in the GitHub Action when `use_pyproject` is
+  enabled so that only version specifiers are accepted and direct references such as
+  `black @ https://...` are rejected. Users should upgrade to the latest version of the
+  action as soon as possible. This update is received automatically when using
+  `psf/black@stable`, and is independent of the version of Black installed by the
+  action. (#5031)
+
+### Documentation
 
 - Expand preview style documentation with detailed examples for `wrap_comprehension_in`,
   `simplify_power_operator_hugging`, and `wrap_long_dict_values_in_parens` features
@@ -149,8 +188,6 @@ directories.
 - Fix crash when multiple `# fmt: skip` comments are used in a multi-part if-clause, on
   string literals, or on dictionary entries with long lines (#4872)
 - Fix possible crash when `fmt: ` directives aren't on the top level (#4856)
-- Preserve parentheses when `# type: ignore` comments would be merged with other
-  comments on the same line, preventing AST equivalence failures (#4888)
 
 ### Preview style
 

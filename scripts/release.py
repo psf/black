@@ -103,6 +103,7 @@ class SourceFiles:
         self.version_doc_paths = (
             self.docs_path / "integrations" / "source_version_control.md",
             self.docs_path / "usage_and_configuration" / "the_basics.md",
+            self.docs_path / "guides" / "using_black_with_jupyter_notebooks.md",
         )
         self.current_version = self.get_current_version()
         self.next_version = self.get_next_version()

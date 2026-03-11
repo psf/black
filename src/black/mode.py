@@ -241,10 +241,6 @@ UNSTABLE_FEATURES: set[Preview] = {
 }
 
 
-class Deprecated(UserWarning):
-    """Visible deprecation warning."""
-
-
 _MAX_CACHE_KEY_PART_LENGTH: Final = 32
 
 
