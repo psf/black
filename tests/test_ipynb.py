@@ -6,6 +6,7 @@ from contextlib import ExitStack as does_not_raise
 from dataclasses import replace
 
 import pytest
+from pytest import MonkeyPatch
 from click.testing import CliRunner
 
 from black import (
