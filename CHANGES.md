@@ -13,6 +13,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Prevent Jupyter notebook magic masking collisions from corrupting cells by using
+  exact-length placeholders for short magics and aborting if a placeholder can no
+  longer be unmasked safely
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -20,6 +24,9 @@
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Always hash cache filename components derived from `--python-cell-magics` so custom
+  magic names cannot affect cache paths
 
 ### Packaging
 

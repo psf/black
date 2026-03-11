@@ -6,7 +6,6 @@ from contextlib import ExitStack as does_not_raise
 from dataclasses import replace
 
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 from click.testing import CliRunner
 
 from black import (
@@ -17,7 +16,12 @@ from black import (
     format_file_in_place,
     main,
 )
-from black.handle_ipynb_magics import jupyter_dependencies_are_installed
+from black.handle_ipynb_magics import (
+    Replacement,
+    create_token,
+    jupyter_dependencies_are_installed,
+    unmask_cell,
+)
 from tests.util import DATA_DIR, get_case_path, read_jupyter_notebook
 
 with contextlib.suppress(ModuleNotFoundError):
@@ -37,6 +41,17 @@ def test_noop() -> None:
     src = 'foo = "a"'
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
+@pytest.mark.parametrize("n_chars", [1, 2, 3, 4, 5, 17])
+def test_create_token_uses_requested_length(n_chars: int) -> None:
+    assert len(create_token(n_chars)) == n_chars
+
+
+def test_unmask_cell_raises_when_token_is_not_unique() -> None:
+    replacement = Replacement(mask='b"dead"', src="%time")
+    with pytest.raises(NothingChanged):
+        unmask_cell(f'{replacement.mask}\nvalue = {replacement.mask}', [replacement])
 
 
 @pytest.mark.parametrize("fast", [True, False])
