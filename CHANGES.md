@@ -14,8 +14,8 @@
 <!-- Changes that affect Black's stable style -->
 
 - Prevent Jupyter notebook magic masking collisions from corrupting cells by using
-  exact-length placeholders for short magics and aborting if a placeholder can no
-  longer be unmasked safely (#5038)
+  exact-length placeholders for short magics and aborting if a placeholder can no longer
+  be unmasked safely (#5038)
 
 ### Preview style
 
