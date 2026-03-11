@@ -1070,8 +1070,10 @@ class EmptyLineTracker:
                 and self._is_start_of_decorated_group(current_line)
                 and (
                     self._pyi_previous_decorated_func is None
-                    or self._pyi_previous_decorated_func.name
-                    != self._get_decorator_target_name(current_line)
+                    or (
+                        self._pyi_previous_decorated_func.name
+                        != self._get_decorator_target_name(current_line)
+                    )
                     or self._pyi_previous_decorated_func.depth != current_line.depth
                 )
             ):
