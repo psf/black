@@ -842,10 +842,6 @@ def is_parent_function_or_class(node: Node) -> bool:
     return node.parent.type in {syms.funcdef, syms.classdef}
 
 
-def is_function_or_class(node: Node) -> bool:
-    return node.type in {syms.funcdef, syms.classdef, syms.async_funcdef}
-
-
 def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
     if node.parent is not None and not is_parent_function_or_class(node):
