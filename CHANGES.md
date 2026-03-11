@@ -41,6 +41,10 @@
 
 <!-- Changes to blackd -->
 
+- Disable browser-originated requests by default, add configurable origin allowlisting
+  and request body limits, and bound executor submissions to improve backpressure
+  (#5039)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->

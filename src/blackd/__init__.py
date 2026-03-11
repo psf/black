@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime, timezone
 from functools import cache, partial
@@ -55,6 +56,8 @@ BLACK_HEADERS = [
 
 # Response headers
 BLACK_VERSION_HEADER = "X-Black-Version"
+DEFAULT_MAX_BODY_SIZE = 5 * 1024 * 1024
+DEFAULT_WORKERS = os.cpu_count() or 1
 
 
 class HeaderError(Exception):
@@ -76,10 +79,30 @@ class InvalidVariantHeader(Exception):
 @click.option(
     "--bind-port", type=int, help="Port to listen on", default=45484, show_default=True
 )
+@click.option(
+    "--cors-allow-origin",
+    "cors_allow_origins",
+    multiple=True,
+    help="Origin allowed to access blackd over CORS. Can be passed multiple times.",
+)
+@click.option(
+    "--max-body-size",
+    type=click.IntRange(min=1),
+    default=DEFAULT_MAX_BODY_SIZE,
+    show_default=True,
+    help="Maximum request body size in bytes.",
+)
 @click.version_option(version=black.__version__)
-def main(bind_host: str, bind_port: int) -> None:
+def main(
+    bind_host: str,
+    bind_port: int,
+    cors_allow_origins: tuple[str, ...],
+    max_body_size: int,
+) -> None:
     logging.basicConfig(level=logging.INFO)
-    app = make_app()
+    app = make_app(
+        cors_allow_origins=cors_allow_origins, max_body_size=max_body_size
+    )
     ver = black.__version__
     black.out(f"blackd version {ver} listening on {bind_host} port {bind_port}")
     loop = maybe_use_uvloop()
@@ -99,18 +122,44 @@ def main(bind_host: str, bind_port: int) -> None:
 
 @cache
 def executor() -> Executor:
-    return ProcessPoolExecutor()
+    return ProcessPoolExecutor(max_workers=DEFAULT_WORKERS)
 
 
-def make_app() -> web.Application:
+def make_app(
+    *,
+    cors_allow_origins: tuple[str, ...] = (),
+    max_body_size: int = DEFAULT_MAX_BODY_SIZE,
+) -> web.Application:
     app = web.Application(
-        middlewares=[cors(allow_headers=(*BLACK_HEADERS, "Content-Type"))]
+        client_max_size=max_body_size,
+        middlewares=[
+            cors(
+                allow_headers=(*BLACK_HEADERS, "Content-Type"),
+                allow_origins=frozenset(cors_allow_origins),
+                expose_headers=(BLACK_VERSION_HEADER,),
+            )
+        ],
     )
-    app.add_routes([web.post("/", partial(handle, executor=executor()))])
+    app.add_routes(
+        [
+            web.post(
+                "/",
+                partial(
+                    handle,
+                    executor=executor(),
+                    executor_semaphore=asyncio.BoundedSemaphore(DEFAULT_WORKERS),
+                ),
+            )
+        ]
+    )
     return app
 
 
-async def handle(request: web.Request, executor: Executor) -> web.Response:
+async def handle(
+    request: web.Request,
+    executor: Executor,
+    executor_semaphore: asyncio.BoundedSemaphore,
+) -> web.Response:
     headers = {BLACK_VERSION_HEADER: __version__}
     try:
         if request.headers.get(PROTOCOL_VERSION_HEADER, "1") != "1":
@@ -125,7 +174,7 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             mode = parse_mode(request.headers)
         except HeaderError as e:
             return web.Response(status=400, text=e.args[0])
-        req_bytes = await request.content.read()
+        req_bytes = await request.read()
         charset = request.charset if request.charset is not None else "utf8"
         req_str = req_bytes.decode(charset)
         then = datetime.now(timezone.utc)
@@ -136,26 +185,20 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
             header = req_str[:first_newline_position]
             req_str = req_str[first_newline_position:]
 
-        loop = asyncio.get_event_loop()
-        formatted_str = await loop.run_in_executor(
-            executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
+        only_diff = bool(request.headers.get(DIFF_HEADER, False))
+        formatted_str = await format_code(
+            req_str=req_str,
+            fast=fast,
+            mode=mode,
+            then=then,
+            only_diff=only_diff,
+            executor=executor,
+            executor_semaphore=executor_semaphore,
         )
 
         # Put the source first line back
         req_str = header + req_str
         formatted_str = header + formatted_str
-
-        # Only output the diff in the HTTP response
-        only_diff = bool(request.headers.get(DIFF_HEADER, False))
-        if only_diff:
-            now = datetime.now(timezone.utc)
-            src_name = f"In\t{then}"
-            dst_name = f"Out\t{now}"
-            loop = asyncio.get_event_loop()
-            formatted_str = await loop.run_in_executor(
-                executor,
-                partial(black.diff, req_str, formatted_str, src_name, dst_name),
-            )
 
         return web.Response(
             content_type=request.content_type,
@@ -167,9 +210,39 @@ async def handle(request: web.Request, executor: Executor) -> web.Response:
         return web.Response(status=204, headers=headers)
     except black.InvalidInput as e:
         return web.Response(status=400, headers=headers, text=str(e))
+    except web.HTTPException:
+        raise
     except Exception as e:
         logging.exception("Exception during handling a request")
         return web.Response(status=500, headers=headers, text=str(e))
+
+
+async def format_code(
+    *,
+    req_str: str,
+    fast: bool,
+    mode: black.FileMode,
+    then: datetime,
+    only_diff: bool,
+    executor: Executor,
+    executor_semaphore: asyncio.BoundedSemaphore,
+) -> str:
+    async with executor_semaphore:
+        loop = asyncio.get_event_loop()
+        formatted_str = await loop.run_in_executor(
+            executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
+        )
+
+        if not only_diff:
+            return formatted_str
+
+        now = datetime.now(timezone.utc)
+        src_name = f"In\t{then}"
+        dst_name = f"Out\t{now}"
+        return await loop.run_in_executor(
+            executor,
+            partial(black.diff, req_str, formatted_str, src_name, dst_name),
+        )
 
 
 def parse_mode(headers: MultiMapping[str]) -> black.Mode:
