@@ -15,7 +15,7 @@
 
 - Prevent Jupyter notebook magic masking collisions from corrupting cells by using
   exact-length placeholders for short magics and aborting if a placeholder can no
-  longer be unmasked safely
+  longer be unmasked safely (#5038)
 
 ### Preview style
 
@@ -26,7 +26,7 @@
 <!-- Changes to how Black can be configured -->
 
 - Always hash cache filename components derived from `--python-cell-magics` so custom
-  magic names cannot affect cache paths
+  magic names cannot affect cache paths (#5038)
 
 ### Packaging
 
