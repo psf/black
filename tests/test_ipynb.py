@@ -52,7 +52,7 @@ def test_create_token_uses_requested_length(n_chars: int) -> None:
 def test_unmask_cell_raises_when_token_is_not_unique() -> None:
     replacement = Replacement(mask='b"dead"', src="%time")
     with pytest.raises(NothingChanged):
-        unmask_cell(f'{replacement.mask}\nvalue = {replacement.mask}', [replacement])
+        unmask_cell(f"{replacement.mask}\nvalue = {replacement.mask}", [replacement])
 
 
 @pytest.mark.parametrize("fast", [True, False])
