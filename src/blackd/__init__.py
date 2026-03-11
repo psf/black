@@ -100,9 +100,7 @@ def main(
     max_body_size: int,
 ) -> None:
     logging.basicConfig(level=logging.INFO)
-    app = make_app(
-        cors_allow_origins=cors_allow_origins, max_body_size=max_body_size
-    )
+    app = make_app(cors_allow_origins=cors_allow_origins, max_body_size=max_body_size)
     ver = black.__version__
     black.out(f"blackd version {ver} listening on {bind_host} port {bind_port}")
     loop = maybe_use_uvloop()
@@ -140,18 +138,16 @@ def make_app(
             )
         ],
     )
-    app.add_routes(
-        [
-            web.post(
-                "/",
-                partial(
-                    handle,
-                    executor=executor(),
-                    executor_semaphore=asyncio.BoundedSemaphore(DEFAULT_WORKERS),
-                ),
-            )
-        ]
-    )
+    app.add_routes([
+        web.post(
+            "/",
+            partial(
+                handle,
+                executor=executor(),
+                executor_semaphore=asyncio.BoundedSemaphore(DEFAULT_WORKERS),
+            ),
+        )
+    ])
     return app
 
 
