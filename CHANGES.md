@@ -47,9 +47,6 @@
 
 ### Documentation
 
-- Remove unused internal code: `matches_grammar`, `lib2to3_unparse`, `is_function_or_class`,
-  and `Deprecated` (#5041)
-
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
