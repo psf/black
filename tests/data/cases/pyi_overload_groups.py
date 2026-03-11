@@ -270,26 +270,96 @@ class MyClassWithComments:
 
     @overload
     def three_overload_methods(self, x: int) -> int: ...
-    # comment after first
+
+    # comment after first with gap above that is retained
     @overload
     def three_overload_methods(self, x: str) -> str: ...
-    # comment after second
+    # comment after second with gap below that is removed
+
     @overload
     def three_overload_methods(self, x: bytes) -> bytes: ...
     def after_three_overloads(self) -> None: ...
 
     @overload
     def four_overload_methods(self, x: int) -> int: ...
-    # comment after first
+
+    # comment after first with gaps on both lines
+
     @overload
     def four_overload_methods(self, x: str) -> str: ...
 
-    # comment after second, preceded by blank line that is retained
+
+    # comment after second with too many gaps above
     @overload
     def four_overload_methods(self, x: bytes) -> bytes: ...
-    # comment after third
+
+
+    # comment after third with large gaps below and above
+
+
     @overload
     def four_overload_methods(self, x: list[bytes]) -> bytes: ...
+
+@overload
+def commented_gap_above(x: int) -> int: ...
+
+# comment with gap above that is retained
+@overload
+def commented_gap_above(x: str) -> str: ...
+
+@overload
+def commented_gap_below(x: int) -> int: ...
+# comment with gap below that is removed
+
+@overload
+def commented_gap_below(x: str) -> str: ...
+
+@overload
+def commented_gaps_both(x: int) -> int: ...
+
+# comment with gaps on both sides
+
+@overload
+def commented_gaps_both(x: str) -> str: ...
+
+@overload
+def multi_comment(x: int) -> int: ...
+# first comment
+# second comment
+@overload
+def multi_comment(x: str) -> str: ...
+
+@overload
+def large_comment_gaps(x: int) -> int: ...
+
+
+# comment with large gaps above that are collapsed
+@overload
+def large_comment_gaps(x: str) -> str: ...
+
+
+# comment with large gaps above and below that are collapsed
+
+
+@overload
+def large_comment_gaps(x: int) -> int: ...
+
+@overload
+def conditional_commented(x: int) -> int: ...
+
+
+# comment
+
+if sys.version_info >= (3, 10):
+
+    # comment
+    @overload
+    def conditional_commented(x: str) -> str: ...
+else:
+
+    # comment
+    @overload
+    def conditional_commented(x: str) -> str: ...
 
 def before_comment_group() -> None: ...
 # comment before overload group
@@ -309,6 +379,24 @@ class ClassWithConditionalOverloads:
         def conditional(self, x: str) -> str: ...
     @overload
     def conditional(self, x: bytes) -> bytes: ...
+
+    @overload
+    def conditional_commented(self, x: int) -> int: ...
+
+    # comment
+
+    if sys.version_info >= (3, 10):
+
+        # comment
+
+        @overload
+        def conditional_commented(self, x: str) -> str: ...
+    else:
+
+        # comment
+
+        @overload
+        def conditional_commented(self, x: str) -> str: ...
 
 class ClassWithOverloadThenConditional:
     @overload
@@ -570,7 +658,6 @@ if sys.version_info >= (3, 10):
     @overload
     def conditional_overload(x: int) -> int:
         """Int."""
-
 else:
     @overload
     def conditional_overload(x: int) -> int:
@@ -586,7 +673,6 @@ if sys.version_info >= (3, 10):
     @overload
     def conditional_overload_with_gaps(x: int) -> int:
         """Int."""
-
 else:
     @overload
     def conditional_overload_with_gaps(x: int) -> int:
@@ -611,7 +697,6 @@ else:
 
 @overload
 def commented(x: int) -> int: ...
-
 # comment in overload group
 @overload
 def commented(x: str) -> str: ...
@@ -629,10 +714,11 @@ class MyClassWithComments:
 
     @overload
     def three_overload_methods(self, x: int) -> int: ...
-    # comment after first
+
+    # comment after first with gap above that is retained
     @overload
     def three_overload_methods(self, x: str) -> str: ...
-    # comment after second
+    # comment after second with gap below that is removed
     @overload
     def three_overload_methods(self, x: bytes) -> bytes: ...
 
@@ -640,16 +726,72 @@ class MyClassWithComments:
 
     @overload
     def four_overload_methods(self, x: int) -> int: ...
-    # comment after first
+
+    # comment after first with gaps on both lines
     @overload
     def four_overload_methods(self, x: str) -> str: ...
 
-    # comment after second, preceded by blank line that is retained
+    # comment after second with too many gaps above
     @overload
     def four_overload_methods(self, x: bytes) -> bytes: ...
-    # comment after third
+
+    # comment after third with large gaps below and above
     @overload
     def four_overload_methods(self, x: list[bytes]) -> bytes: ...
+
+@overload
+def commented_gap_above(x: int) -> int: ...
+
+# comment with gap above that is retained
+@overload
+def commented_gap_above(x: str) -> str: ...
+
+@overload
+def commented_gap_below(x: int) -> int: ...
+# comment with gap below that is removed
+@overload
+def commented_gap_below(x: str) -> str: ...
+
+@overload
+def commented_gaps_both(x: int) -> int: ...
+
+# comment with gaps on both sides
+@overload
+def commented_gaps_both(x: str) -> str: ...
+
+@overload
+def multi_comment(x: int) -> int: ...
+# first comment
+# second comment
+@overload
+def multi_comment(x: str) -> str: ...
+
+@overload
+def large_comment_gaps(x: int) -> int: ...
+
+# comment with large gaps above that are collapsed
+@overload
+def large_comment_gaps(x: str) -> str: ...
+
+# comment with large gaps above and below that are collapsed
+@overload
+def large_comment_gaps(x: int) -> int: ...
+
+@overload
+def conditional_commented(x: int) -> int: ...
+
+# comment
+
+if sys.version_info >= (3, 10):
+
+    # comment
+    @overload
+    def conditional_commented(x: str) -> str: ...
+else:
+
+    # comment
+    @overload
+    def conditional_commented(x: str) -> str: ...
 
 def before_comment_group() -> None: ...
 
@@ -673,6 +815,22 @@ class ClassWithConditionalOverloads:
 
     @overload
     def conditional(self, x: bytes) -> bytes: ...
+
+    @overload
+    def conditional_commented(self, x: int) -> int: ...
+
+    # comment
+
+    if sys.version_info >= (3, 10):
+
+        # comment
+        @overload
+        def conditional_commented(self, x: str) -> str: ...
+    else:
+
+        # comment
+        @overload
+        def conditional_commented(self, x: str) -> str: ...
 
 class ClassWithOverloadThenConditional:
     @overload

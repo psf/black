@@ -728,12 +728,12 @@ class EmptyLineTracker:
         sibling = if_stmt.next_sibling
         while sibling is not None:
             if sibling.type == syms.decorated:
-                for sub in sibling.children:
-                    if (
-                        sub.type in (syms.funcdef, syms.async_funcdef)
-                        and EmptyLineTracker._get_funcdef_name(sub) == func_name
-                    ):
-                        return True
+                if any(
+                    sub.type in (syms.funcdef, syms.async_funcdef)
+                    and EmptyLineTracker._get_funcdef_name(sub) == func_name
+                    for sub in sibling.children
+                ):
+                    return True
                 break
             elif sibling.type in (
                 token.NEWLINE,
@@ -761,11 +761,96 @@ class EmptyLineTracker:
                     continue
                 if stmt.type != syms.decorated:
                     continue
-                for sub in stmt.children:
-                    if sub.type not in (syms.funcdef, syms.async_funcdef):
-                        continue
-                    if EmptyLineTracker._get_funcdef_name(sub) != func_name:
-                        continue
+                if any(
+                    sub.type in (syms.funcdef, syms.async_funcdef)
+                    and EmptyLineTracker._get_funcdef_name(sub) == func_name
+                    for sub in stmt.children
+                ):
+                    return True
+                break
+
+        return False
+
+    @staticmethod
+    def _is_decorator_in_conditional_overload(line: Line) -> bool:
+        """Check if a decorator is inside an if/else block that is part of a
+        broader overload group (a sibling or another branch of the same
+        ``if_stmt`` contains a same-name decorated function)."""
+        name = EmptyLineTracker._get_decorator_target_name(line)
+        if name is None:
+            return False
+
+        decorated = EmptyLineTracker._find_decorated_node(line)
+        if decorated is None:
+            return False
+
+        suite = decorated.parent
+        if suite is None or suite.type != syms.suite:
+            return False
+
+        if_stmt = suite.parent
+        if if_stmt is None or if_stmt.type != syms.if_stmt:
+            return False
+
+        SKIP = (
+            token.NEWLINE,
+            token.NL,
+            token.INDENT,
+            token.DEDENT,
+            token.COMMENT,
+            token.ENDMARKER,
+        )
+
+        # Check if_stmt's previous sibling for same-name decorated function.
+        sibling = if_stmt.prev_sibling
+        while sibling is not None:
+            if sibling.type == syms.decorated:
+                if any(
+                    sub.type in (syms.funcdef, syms.async_funcdef)
+                    and EmptyLineTracker._get_funcdef_name(sub) == name
+                    for sub in sibling.children
+                ):
+                    return True
+                break
+            elif sibling.type in SKIP:
+                sibling = sibling.prev_sibling
+            else:
+                break
+
+        # Check if_stmt's next sibling for same-name decorated function.
+        sibling = if_stmt.next_sibling
+        while sibling is not None:
+            if sibling.type == syms.decorated:
+                if any(
+                    sub.type in (syms.funcdef, syms.async_funcdef)
+                    and EmptyLineTracker._get_funcdef_name(sub) == name
+                    for sub in sibling.children
+                ):
+                    return True
+                break
+            elif sibling.type in SKIP:
+                sibling = sibling.next_sibling
+            else:
+                break
+
+        # Check other branches of the same if_stmt.
+        for child in if_stmt.children:
+            if not isinstance(child, Node):
+                continue
+            if child.type != syms.suite:
+                continue
+            if child is suite:
+                continue
+            for stmt in child.children:
+                if not isinstance(stmt, Node):
+                    continue
+                if stmt.type != syms.decorated:
+                    continue
+                if any(
+                    sub.type in (syms.funcdef, syms.async_funcdef)
+                    and EmptyLineTracker._get_funcdef_name(sub) == name
+                    for sub in stmt.children
+                ):
                     return True
                 break
 
@@ -935,6 +1020,16 @@ class EmptyLineTracker:
                         before = 0
                     else:
                         before = 1
+                elif (
+                    Preview.pyi_overload_group_blank_lines in self.mode
+                    and current_line.opens_block
+                    and current_line.leaves
+                    and current_line.leaves[0].value in ("else", "elif")
+                    and self._block_is_part_of_overload_group(current_line)
+                ):
+                    # else/elif continuing a conditional overload group:
+                    # don't insert a blank line above.
+                    before = 0
                 elif depth and not current_line.is_def and self.previous_line.is_def:
                     if (
                         Preview.pyi_overload_group_blank_lines in self.mode
@@ -947,6 +1042,17 @@ class EmptyLineTracker:
                         # Empty lines between attributes and methods should
                         # be preserved.
                         before = 1 if user_had_newline else 0
+                elif (
+                    Preview.pyi_overload_group_blank_lines in self.mode
+                    and current_line.is_comment
+                    and self._pyi_previous_decorated_func is not None
+                    and self._pyi_previous_decorated_func.depth == current_line.depth
+                ):
+                    # Own-line comments after a decorated function in .pyi:
+                    # preserve a single user blank line but never insert one.
+                    # For non-overload cases the comment_to_add_newlines
+                    # mechanism will retroactively add needed blank lines.
+                    before = 1 if user_had_newline else 0
                 elif depth:
                     before = 0
                 else:
@@ -1065,13 +1171,22 @@ class EmptyLineTracker:
                 newlines = 0 if self._is_in_current_group(current_line) else 1
             elif (
                 Preview.pyi_overload_group_blank_lines in self.mode
+                and self._is_in_current_group(current_line)
+            ):
+                # A comment between overloads may prevent is_multi from being
+                # set, but _is_in_current_group still detects name continuity.
+                newlines = 0
+            elif (
+                Preview.pyi_overload_group_blank_lines in self.mode
                 and current_line.is_decorator
                 and self.previous_line.depth >= current_line.depth
                 and self._is_start_of_decorated_group(current_line)
                 and (
                     self._pyi_previous_decorated_func is None
-                    or self._pyi_previous_decorated_func.name
-                    != self._get_decorator_target_name(current_line)
+                    or (
+                        self._pyi_previous_decorated_func.name
+                        != self._get_decorator_target_name(current_line)
+                    )
                     or self._pyi_previous_decorated_func.depth != current_line.depth
                 )
             ):
@@ -1079,7 +1194,16 @@ class EmptyLineTracker:
             elif (
                 current_line.is_def or current_line.is_decorator
             ) and not self.previous_line.is_def:
-                if current_line.depth:
+                if (
+                    Preview.pyi_overload_group_blank_lines in self.mode
+                    and current_line.is_decorator
+                    and self.previous_line.is_comment
+                    and self._is_decorator_in_conditional_overload(current_line)
+                ):
+                    # Comment before an overload inside a conditional block:
+                    # remove blank lines between the comment and decorator.
+                    newlines = 0
+                elif current_line.depth:
                     # In classes empty lines between attributes and methods should
                     # be preserved.
                     newlines = min(1, before)
