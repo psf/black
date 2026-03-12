@@ -135,7 +135,7 @@ class BlackDTestCase(AioHTTPTestCase):
                 "/", data=code, headers={blackd.PYTHON_VARIANT_HEADER: header_value}
             )
             self.assertEqual(
-                response.status, expected_status, msg=await response.text()
+                response.status, expected_status, msg=(await response.text())
             )
 
         await check("3.6", 200)
@@ -266,7 +266,7 @@ class BlackDTestCase(AioHTTPTestCase):
     async def test_preserves_line_endings(self) -> None:
         for data in (b"c\r\nc\r\n", b"l\nl\n"):
             # test preserved newlines when reformatted
-            response = await self.client.post("/", data=data + b" ")
+            response = await self.client.post("/", data=(data + b" "))
             self.assertEqual(await response.text(), data.decode())
             # test 204 when no change
             response = await self.client.post("/", data=data)
