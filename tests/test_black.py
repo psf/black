@@ -272,6 +272,19 @@ class BlackTestCase(BlackBaseTestCase):
             features = black.get_features_used(root)
             self.assertIn(black.Feature.TYPE_PARAM_DEFAULTS, features)
 
+    def test_python315_version_detection(self) -> None:
+        source, _ = read_data("cases", "python315")
+        root = black.lib2to3_parse(source)
+        features = black.get_features_used(root)
+        self.assertIn(black.Feature.LAZY_IMPORTS, features)
+        self.assertIn(black.Feature.UNPACKING_IN_COMPREHENSIONS, features)
+        self.assertNotIn(
+            black.Feature.LAZY_IMPORTS,
+            black.get_features_used(black.lib2to3_parse("lazy = 1\n")),
+        )
+        versions = black.detect_target_versions(root)
+        self.assertIn(black.TargetVersion.PY315, versions)
+
     def test_expression_ff(self) -> None:
         source, expected = read_data("cases", "expression.py")
         tmp_file = Path(black.dump_to_file(source))
@@ -432,6 +445,17 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_python315(self) -> None:
+        source_path = get_case_path("cases", "python315")
+        _, source, expected = read_data_from_file(source_path)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        if sys.version_info >= (3, 15):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+        self.invokeBlack([str(source_path), "--target-version", "py315", "--fast"])
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -1524,6 +1548,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1534,6 +1559,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
@@ -1546,6 +1572,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1557,6 +1584,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1572,6 +1600,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1589,6 +1618,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             ("==3.8.*", [TargetVersion.PY38]),

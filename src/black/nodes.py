@@ -922,10 +922,13 @@ def is_import(leaf: Leaf) -> bool:
     t = leaf.type
     v = leaf.value
     return bool(
-        t == token.NAME
-        and (
-            (v == "import" and p and p.type == syms.import_name)
-            or (v == "from" and p and p.type == syms.import_from)
+        (t == token.LAZY and p and p.type == syms.lazy_import)
+        or (
+            t == token.NAME
+            and (
+                (v == "import" and p and p.type == syms.import_name)
+                or (v == "from" and p and p.type == syms.import_from)
+            )
         )
     )
 
