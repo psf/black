@@ -1,3 +1,4 @@
+# flags: --fast
 lazy import json
 lazy from package.subpackage import (
     alpha,
