@@ -15,8 +15,6 @@ _Black_ makes code review faster by producing the smallest diffs possible. Black
 code looks the same regardless of the project you're reading. Formatting becomes
 transparent after a while and you can focus on the content instead.
 
-Try it out now using the [Black Playground](https://black.vercel.app).
-
 ```{admonition} Note - Black is now stable!
 _Black_ is [successfully used](https://github.com/psf/black#used-by) by many projects,
 small and big. _Black_ has a comprehensive test suite, with efficient parallel tests,
