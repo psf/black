@@ -102,22 +102,6 @@ def lib2to3_parse(
     return result
 
 
-def matches_grammar(src_txt: str, grammar: Grammar) -> bool:
-    drv = driver.Driver(grammar)
-    try:
-        drv.parse_string(src_txt, False)
-    except (ParseError, TokenError, IndentationError):
-        return False
-    else:
-        return True
-
-
-def lib2to3_unparse(node: Node) -> str:
-    """Given a lib2to3 node, return its string representation."""
-    code = str(node)
-    return code
-
-
 class ASTSafetyError(Exception):
     """Raised when Black's generated code is not equivalent to the old AST."""
 

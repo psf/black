@@ -53,6 +53,25 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+## 26.3.1
+
+### Stable style
+
+- Prevent Jupyter notebook magic masking collisions from corrupting cells by using
+  exact-length placeholders for short magics and aborting if a placeholder can no longer
+  be unmasked safely (#5038)
+
+### Configuration
+
+- Always hash cache filename components derived from `--python-cell-magics` so custom
+  magic names cannot affect cache paths (#5038)
+
+### _Blackd_
+
+- Disable browser-originated requests by default, add configurable origin allowlisting
+  and request body limits, and bound executor submissions to improve backpressure
+  (#5039)
+
 ## 26.3.0
 
 ### Stable style
