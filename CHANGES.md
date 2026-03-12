@@ -1,65 +1,23 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
-
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
+## 26.3.1
 
 ### Stable style
-
-<!-- Changes that affect Black's stable style -->
 
 - Prevent Jupyter notebook magic masking collisions from corrupting cells by using
   exact-length placeholders for short magics and aborting if a placeholder can no longer
   be unmasked safely (#5038)
 
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
 ### Configuration
-
-<!-- Changes to how Black can be configured -->
 
 - Always hash cache filename components derived from `--python-cell-magics` so custom
   magic names cannot affect cache paths (#5038)
 
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
 ### _Blackd_
-
-<!-- Changes to blackd -->
 
 - Disable browser-originated requests by default, add configurable origin allowlisting
   and request body limits, and bound executor submissions to improve backpressure
   (#5039)
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## 26.3.0
 
