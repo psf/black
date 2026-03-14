@@ -83,6 +83,7 @@ class _python_symbols(Symbols):
     import_from: int
     import_name: int
     import_stmt: int
+    lazy_import: int
     lambdef: int
     listmaker: int
     match_stmt: int

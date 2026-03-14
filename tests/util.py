@@ -34,6 +34,7 @@ PY36_VERSIONS = {
     TargetVersion.PY37,
     TargetVersion.PY38,
     TargetVersion.PY39,
+    TargetVersion.PY315,
 }
 
 DEFAULT_MODE = black.Mode()

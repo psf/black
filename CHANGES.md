@@ -13,6 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
+  both new syntactic features in Python 3.15 (#5048)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
