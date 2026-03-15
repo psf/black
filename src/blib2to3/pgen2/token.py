@@ -81,15 +81,3 @@ tok_name: Final[dict[int, str]] = {}
 for _name, _value in list(globals().items()):
     if type(_value) is int:
         tok_name[_value] = _name
-
-
-def ISTERMINAL(x: int) -> bool:
-    return x < NT_OFFSET
-
-
-def ISNONTERMINAL(x: int) -> bool:
-    return x >= NT_OFFSET
-
-
-def ISEOF(x: int) -> bool:
-    return x == ENDMARKER
