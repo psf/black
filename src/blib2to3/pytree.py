@@ -66,7 +66,6 @@ class Base:
     parent: Optional["Node"] = None  # Parent node pointer, or None
     children: list[NL]  # List of subnodes
     was_changed: bool = False
-    was_checked: bool = False
 
     def __new__(cls, *args, **kwds):
         """Constructor that prevents Base from being instantiated."""
