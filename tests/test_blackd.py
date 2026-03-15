@@ -1,5 +1,9 @@
+import asyncio
 import gc
 import re
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
+from threading import Event
 from unittest.mock import patch
 
 import pytest
@@ -188,19 +192,76 @@ class BlackDTestCase(AioHTTPTestCase):
             "/",
             headers={
                 "Access-Control-Request-Method": "POST",
-                "Origin": "*",
+                "Origin": "https://example.com",
                 "Access-Control-Request-Headers": "Content-Type",
             },
         )
-        self.assertEqual(response.status, 200)
-        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Origin"))
-        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Headers"))
-        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Methods"))
+        self.assertEqual(response.status, 403)
+        self.assertIsNone(response.headers.get("Access-Control-Allow-Origin"))
+        self.assertIsNone(response.headers.get("Access-Control-Allow-Headers"))
+        self.assertIsNone(response.headers.get("Access-Control-Allow-Methods"))
 
-    async def test_cors_headers_present(self) -> None:
-        response = await self.client.post("/", headers={"Origin": "*"})
-        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Origin"))
-        self.assertIsNotNone(response.headers.get("Access-Control-Expose-Headers"))
+    async def test_cors_requests_rejected_by_default(self) -> None:
+        response = await self.client.post(
+            "/", headers={"Origin": "https://example.com"}
+        )
+        self.assertEqual(response.status, 403)
+        self.assertIsNone(response.headers.get("Access-Control-Allow-Origin"))
+        self.assertIsNone(response.headers.get("Access-Control-Expose-Headers"))
+
+    async def test_blackd_format_code_limits_executor_queue(self) -> None:
+        started = Event()
+        release = Event()
+        calls: list[str] = []
+        executor = ThreadPoolExecutor(max_workers=2)
+        executor_semaphore = asyncio.BoundedSemaphore(1)
+
+        def slow_format(src: str, *, fast: bool, mode: black.Mode) -> str:
+            calls.append(src)
+            started.set()
+            release.wait(timeout=1)
+            return src
+
+        try:
+            with patch("blackd.black.format_file_contents", side_effect=slow_format):
+                task1 = asyncio.create_task(
+                    blackd.format_code(
+                        req_str="print(1)\n",
+                        fast=False,
+                        mode=black.Mode(),
+                        then=datetime.now(timezone.utc),
+                        only_diff=False,
+                        executor=executor,
+                        executor_semaphore=executor_semaphore,
+                    )
+                )
+
+                for _ in range(20):
+                    if started.is_set():
+                        break
+                    await asyncio.sleep(0.01)
+                self.assertTrue(started.is_set())
+
+                task2 = asyncio.create_task(
+                    blackd.format_code(
+                        req_str="print(2)\n",
+                        fast=False,
+                        mode=black.Mode(),
+                        then=datetime.now(timezone.utc),
+                        only_diff=False,
+                        executor=executor,
+                        executor_semaphore=executor_semaphore,
+                    )
+                )
+                await asyncio.sleep(0.05)
+                self.assertEqual(len(calls), 1)
+
+                release.set()
+                self.assertEqual(await task1, "print(1)\n")
+                self.assertEqual(await task2, "print(2)\n")
+                self.assertEqual(len(calls), 2)
+        finally:
+            executor.shutdown(wait=True)
 
     async def test_preserves_line_endings(self) -> None:
         for data in (b"c\r\nc\r\n", b"l\nl\n"):
@@ -221,6 +282,60 @@ class BlackDTestCase(AioHTTPTestCase):
         response = await self.client.post("/", data="1")
         self.assertEqual(await response.text(), "1\n")
         self.assertEqual(response.status, 200)
+
+
+@pytest.mark.blackd
+class BlackDConfiguredCorsTestCase(AioHTTPTestCase):
+    def tearDown(self) -> None:
+        gc.collect()
+        super().tearDown()
+
+    async def get_application(self) -> web.Application:
+        return blackd.make_app(cors_allow_origins=("https://example.com",))
+
+    async def test_cors_preflight(self) -> None:
+        response = await self.client.options(
+            "/",
+            headers={
+                "Access-Control-Request-Method": "POST",
+                "Origin": "https://example.com",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "https://example.com",
+        )
+        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Headers"))
+        self.assertIsNotNone(response.headers.get("Access-Control-Allow-Methods"))
+
+    async def test_cors_headers_present(self) -> None:
+        response = await self.client.post(
+            "/", headers={"Origin": "https://example.com"}
+        )
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "https://example.com",
+        )
+        self.assertIn(
+            blackd.BLACK_VERSION_HEADER,
+            response.headers.get("Access-Control-Expose-Headers", ""),
+        )
+
+
+@pytest.mark.blackd
+class BlackDSmallBodyLimitTestCase(AioHTTPTestCase):
+    def tearDown(self) -> None:
+        gc.collect()
+        super().tearDown()
+
+    async def get_application(self) -> web.Application:
+        return blackd.make_app(max_body_size=16)
+
+    async def test_blackd_rejects_large_request_body(self) -> None:
+        response = await self.client.post("/", data=b"x" * 17)
+        self.assertEqual(response.status, 413)
 
 
 @pytest.mark.blackd

@@ -2166,6 +2166,15 @@ class TestCaching:
             # doesn't get too crazy.
             assert len(cache_file.name) <= 96
 
+    def test_cache_file_path_ignores_python_cell_magic_separators(self) -> None:
+        mode = replace(DEFAULT_MODE, python_cell_magics={"../../../tmp/pwned"})
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode)
+            assert cache_file.parent == workspace
+            assert "/" not in cache_file.name
+            assert ".." not in cache_file.name
+            assert "../../../tmp/pwned" not in mode.get_cache_key()
+
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:

@@ -51,12 +51,17 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+Cross-origin browser requests are rejected by default. If you need to access `blackd`
+from a browser-based client, pass one or more `--cors-allow-origin` options to allow
+specific origins.
+
 ## Protocol
 
 `blackd` only accepts `POST` requests at the `/` path. The body of the request should
 contain the python source code to be formatted, encoded according to the `charset` field
 in the `Content-Type` request header. If no `charset` is specified, `blackd` assumes
-`UTF-8`.
+`UTF-8`. Request bodies are limited to 5 MiB by default; use `--max-body-size` to change
+that limit.
 
 There are a few HTTP headers that control how the source code is formatted. These
 correspond to command line flags for _Black_. There is one exception to this:
