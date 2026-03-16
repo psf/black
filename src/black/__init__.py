@@ -542,10 +542,7 @@ def validate_regex(
     "-E",
     "--explain",
     is_flag=True,
-    help=(
-        "Enable explain mode: show why each candidate path was included for "
-        "formatting or ignored."
-    ),
+    help="Enable explain mode: show why each candidate path was included for formatting or ignored.",
 )
 @click.option(
     "--explain-format",
@@ -570,9 +567,7 @@ def validate_regex(
 @click.option(
     "--explain-simulate",
     is_flag=True,
-    help=(
-        "Simulate mode: only run explain (file discovery), do not format any files."
-    ),
+    help="Simulate mode: only run explain (file discovery), do not format any files.",
 )
 @click.pass_context
 def main(
