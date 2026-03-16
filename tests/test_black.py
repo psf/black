@@ -39,6 +39,15 @@ from black.debug import DebugVisitor
 from black.mode import Mode, Preview
 from black.output import color_diff, diff
 from black.parsing import ASTSafetyError
+from black.explain import (
+    Decision,
+    EvalContext,
+    ExplainEntry,
+    ExplainProvenance,
+    ExplainReason,
+    ExplainReport,
+    RulesetEvaluator,
+)
 from black.report import Report
 from black.strings import lines_with_leading_tabs_expanded
 
@@ -3059,6 +3068,412 @@ class TestDeFactoAPI:
 
         with pytest.raises(black.NothingChanged):
             black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
+
+
+class ExplainTestCase(BlackBaseTestCase):
+    """Tests for --explain and related flags."""
+
+    def test_explain_flag_basic(self) -> None:
+        """Test --explain outputs reason codes for paths."""
+        with TemporaryDirectory() as workspace:
+            # Create a simple python file
+            py_file = Path(workspace) / "test.py"
+            py_file.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                ["--explain", "--config", str(EMPTY_CONFIG), str(py_file)],
+            )
+            self.assertEqual(result.exit_code, 0)
+            # Should contain the file path and a code
+            self.assertIn(str(py_file), result.output)
+            # Should contain provenance for included file
+            self.assertIn("EXPLICIT_FILE", result.output)
+
+    def test_explain_simulate_forces_explain(self) -> None:
+        """Test --explain-simulate implies --explain."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "test.py"
+            py_file.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                ["--explain-simulate", "--config", str(EMPTY_CONFIG), str(py_file)],
+            )
+            self.assertEqual(result.exit_code, 0)
+            # Should show explain output even without --explain flag
+            self.assertIn(str(py_file), result.output)
+
+    def test_explain_simulate_no_formatting(self) -> None:
+        """Test --explain-simulate does not format files."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "test.py"
+            original = "x=1\n"
+            py_file.write_text(original)
+            result = BlackRunner().invoke(
+                black.main,
+                ["--explain-simulate", "--config", str(EMPTY_CONFIG), str(py_file)],
+            )
+            self.assertEqual(result.exit_code, 0)
+            # File should be unchanged
+            self.assertEqual(py_file.read_text(), original)
+
+    def test_explain_format_json(self) -> None:
+        """Test --explain-format json outputs valid JSON."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "test.py"
+            py_file.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--explain",
+                    "--explain-format",
+                    "json",
+                    "--config",
+                    str(EMPTY_CONFIG),
+                    str(py_file),
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            import json
+
+            data = json.loads(result.output)
+            self.assertIn("entries", data)
+            self.assertIsInstance(data["entries"], list)
+
+    def test_explain_format_jsonl(self) -> None:
+        """Test --explain-format jsonl outputs one JSON per line."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "test.py"
+            py_file.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--explain",
+                    "--explain-format",
+                    "jsonl",
+                    "--config",
+                    str(EMPTY_CONFIG),
+                    str(py_file),
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            lines = [l for l in result.output.strip().split("\n") if l]
+            import json
+
+            for line in lines:
+                data = json.loads(line)
+                self.assertIn("path", data)
+
+    def test_explain_show_included_only(self) -> None:
+        """Test --explain-show included filters to included only."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "test.py"
+            py_file.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--explain",
+                    "--explain-show",
+                    "included",
+                    "--config",
+                    str(EMPTY_CONFIG),
+                    str(py_file),
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("EXPLICIT_FILE", result.output)
+
+    def test_explain_show_ignored_only(self) -> None:
+        """Test --explain-show ignored filters to ignored only."""
+        with TemporaryDirectory() as workspace:
+            # Create a non-python file
+            txt_file = Path(workspace) / "test.txt"
+            txt_file.write_text("hello")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--explain",
+                    "--explain-show",
+                    "ignored",
+                    "--config",
+                    str(EMPTY_CONFIG),
+                    str(txt_file),
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("NOT_INCLUDED", result.output)
+
+    def test_explain_limit(self) -> None:
+        """Test --explain-limit limits output entries."""
+        with TemporaryDirectory() as workspace:
+            # Create multiple python files
+            for i in range(5):
+                (Path(workspace) / f"test{i}.py").write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--explain",
+                    "--explain-limit",
+                    "2",
+                    "--config",
+                    str(EMPTY_CONFIG),
+                    workspace,
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            # Count included entries (lines starting with +)
+            included_count = result.output.count("\n+")
+            self.assertLessEqual(included_count, 2)
+
+    def test_explain_excluded_by_gitignore(self) -> None:
+        """Test files matching .gitignore show GITIGNORE_MATCH."""
+        with TemporaryDirectory() as workspace:
+            # Create .gitignore
+            (Path(workspace) / ".gitignore").write_text("ignored.py\n")
+            # Create ignored file
+            ignored = Path(workspace) / "ignored.py"
+            ignored.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                ["--explain", "--config", str(EMPTY_CONFIG), str(ignored)],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("GITIGNORE_MATCH", result.output)
+
+    def test_explain_excluded_by_pattern(self) -> None:
+        """Test files matching --exclude show EXCLUDE_REGEX."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "skip_me.py"
+            py_file.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--explain",
+                    "--exclude",
+                    r"skip_me",
+                    "--config",
+                    str(EMPTY_CONFIG),
+                    str(py_file),
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("EXCLUDE_REGEX", result.output)
+
+    def test_explain_force_excluded(self) -> None:
+        """Test files matching --force-exclude show FORCE_EXCLUDE_REGEX."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "force_skip.py"
+            py_file.write_text("x=1\n")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--explain",
+                    "--force-exclude",
+                    r"force_skip",
+                    "--config",
+                    str(EMPTY_CONFIG),
+                    str(py_file),
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("FORCE_EXCLUDE_REGEX", result.output)
+
+    # ==================== Explain module unit tests ====================
+
+    def test_explain_reason_enum_values(self) -> None:
+        """Test ExplainReason enum has expected values."""
+        self.assertEqual(ExplainReason.GITIGNORE_MATCH.value, "GITIGNORE_MATCH")
+        self.assertEqual(ExplainReason.EXCLUDE_REGEX.value, "EXCLUDE_REGEX")
+        self.assertEqual(ExplainReason.FORCE_EXCLUDE_REGEX.value, "FORCE_EXCLUDE_REGEX")
+        self.assertEqual(ExplainReason.NOT_INCLUDED.value, "NOT_INCLUDED")
+
+    def test_explain_provenance_enum_values(self) -> None:
+        """Test ExplainProvenance enum has expected values."""
+        self.assertEqual(ExplainProvenance.EXPLICIT_FILE.value, "EXPLICIT_FILE")
+        self.assertEqual(ExplainProvenance.DISCOVERED_VIA_WALK.value, "DISCOVERED_VIA_WALK")
+
+    def test_explain_entry_to_dict(self) -> None:
+        """Test ExplainEntry.to_dict() returns correct structure."""
+        entry = ExplainEntry(
+            path=Path("/foo/bar.py"),
+            status="included",
+            code="EXPLICIT_FILE",
+            detail="explicit file argument",
+            source="command line",
+        )
+        d = entry.to_dict()
+        self.assertEqual(d["path"], "/foo/bar.py")
+        self.assertEqual(d["status"], "included")
+        self.assertEqual(d["code"], "EXPLICIT_FILE")
+
+    def test_explain_entry_to_text(self) -> None:
+        """Test ExplainEntry.to_text() formats correctly."""
+        included = ExplainEntry(
+            path=Path("foo.py"),
+            status="included",
+            code="DISCOVERED_VIA_WALK",
+        )
+        ignored = ExplainEntry(
+            path=Path("bar.py"),
+            status="ignored",
+            code="NOT_INCLUDED",
+            detail="does not match pattern",
+        )
+        self.assertIn("+", included.to_text())
+        self.assertIn("-", ignored.to_text())
+
+    def test_explain_report_add_included(self) -> None:
+        """Test ExplainReport.add_included creates entry."""
+        report = ExplainReport(enabled=True)
+        report.add_included(Path("test.py"), ExplainProvenance.EXPLICIT_FILE, "test")
+        self.assertEqual(len(report.entries), 1)
+        self.assertEqual(report.entries[0].status, "included")
+
+    def test_explain_report_add_ignored(self) -> None:
+        """Test ExplainReport.add_ignored creates entry."""
+        report = ExplainReport(enabled=True)
+        report.add_ignored(Path("test.py"), ExplainReason.NOT_INCLUDED, "test")
+        self.assertEqual(len(report.entries), 1)
+        self.assertEqual(report.entries[0].status, "ignored")
+
+    def test_explain_report_disabled_noop(self) -> None:
+        """Test ExplainReport with enabled=False ignores adds."""
+        report = ExplainReport(enabled=False)
+        report.add_included(Path("test.py"), ExplainProvenance.EXPLICIT_FILE)
+        report.add_ignored(Path("test.py"), ExplainReason.NOT_INCLUDED)
+        self.assertEqual(len(report.entries), 0)
+
+    def test_explain_report_get_entries_limit(self) -> None:
+        """Test ExplainReport.get_entries() respects limit."""
+        report = ExplainReport(enabled=True, limit=2)
+        for i in range(5):
+            report.add_included(Path(f"test{i}.py"), ExplainProvenance.EXPLICIT_FILE)
+        entries = report.get_entries()
+        self.assertEqual(len(entries), 2)
+
+    def test_explain_report_get_entries_show_included(self) -> None:
+        """Test ExplainReport.get_entries(show=included) filters."""
+        report = ExplainReport(enabled=True, show="included")
+        report.add_included(Path("a.py"), ExplainProvenance.EXPLICIT_FILE)
+        report.add_ignored(Path("b.py"), ExplainReason.NOT_INCLUDED)
+        entries = report.get_entries()
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0].status, "included")
+
+    def test_explain_report_get_entries_show_ignored(self) -> None:
+        """Test ExplainReport.get_entries(show=ignored) filters."""
+        report = ExplainReport(enabled=True, show="ignored")
+        report.add_included(Path("a.py"), ExplainProvenance.EXPLICIT_FILE)
+        report.add_ignored(Path("b.py"), ExplainReason.NOT_INCLUDED)
+        entries = report.get_entries()
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0].status, "ignored")
+
+    def test_decision_code_property_included(self) -> None:
+        """Test Decision.code returns provenance for included."""
+        d = Decision(status="included", provenance="EXPLICIT_FILE")
+        self.assertEqual(d.code, "EXPLICIT_FILE")
+
+    def test_decision_code_property_ignored(self) -> None:
+        """Test Decision.code returns reason_code for ignored."""
+        d = Decision(status="ignored", reason_code="NOT_INCLUDED")
+        self.assertEqual(d.code, "NOT_INCLUDED")
+
+    def test_decision_is_included(self) -> None:
+        """Test Decision.is_included()."""
+        self.assertTrue(Decision(status="included").is_included())
+        self.assertFalse(Decision(status="ignored").is_included())
+
+    def test_decision_is_ignored(self) -> None:
+        """Test Decision.is_ignored()."""
+        self.assertTrue(Decision(status="ignored").is_ignored())
+        self.assertFalse(Decision(status="included").is_ignored())
+
+    def test_decision_to_entry(self) -> None:
+        """Test Decision.to_entry() creates ExplainEntry."""
+        d = Decision(
+            status="included",
+            provenance="DISCOVERED_VIA_WALK",
+            detail="test",
+            source="walk",
+        )
+        entry = d.to_entry(Path("foo.py"))
+        self.assertEqual(entry.path, Path("foo.py"))
+        self.assertEqual(entry.code, "DISCOVERED_VIA_WALK")
+
+    def test_decision_to_dict_full(self) -> None:
+        """Test Decision.to_dict_full() includes both fields."""
+        d = Decision(
+            status="included",
+            reason_code="",
+            provenance="EXPLICIT_FILE",
+        )
+        full = d.to_dict_full()
+        self.assertEqual(full["reason_code"], "")
+        self.assertEqual(full["provenance"], "EXPLICIT_FILE")
+
+    def test_ruleset_evaluator_default_rules(self) -> None:
+        """Test RulesetEvaluator.default_for_discovery() has rules."""
+        evaluator = RulesetEvaluator.default_for_discovery()
+        self.assertGreater(len(evaluator.rules), 0)
+
+    def test_ruleset_evaluator_evaluate_gitignore(self) -> None:
+        """Test RulesetEvaluator catches gitignore match."""
+        from black.files import get_gitignore
+        from pathlib import Path as P
+
+        with TemporaryDirectory() as workspace:
+            (P(workspace) / ".gitignore").write_text("ignored.py\n")
+            ignored = P(workspace) / "ignored.py"
+            ignored.write_text("x=1\n")
+            ctx = EvalContext(
+                root=P(workspace),
+                gitignore_dict={P(workspace): get_gitignore(P(workspace))},
+            )
+            evaluator = RulesetEvaluator.default_for_discovery()
+            decision = evaluator.evaluate(ignored, ctx)
+            self.assertEqual(decision.status, "ignored")
+            self.assertEqual(decision.reason_code, "GITIGNORE_MATCH")
+
+    def test_ruleset_evaluator_evaluate_included_file(self) -> None:
+        """Test RulesetEvaluator returns included for python file."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "test.py"
+            py_file.write_text("x=1\n")
+            ctx = EvalContext(root=Path(workspace))
+            evaluator = RulesetEvaluator.default_for_discovery()
+            decision = evaluator.evaluate(py_file, ctx)
+            self.assertEqual(decision.status, "included")
+            self.assertEqual(decision.provenance, "DISCOVERED_VIA_WALK")
+
+    def test_ruleset_evaluator_evaluate_excluded_file(self) -> None:
+        """Test RulesetEvaluator catches exclude pattern."""
+        with TemporaryDirectory() as workspace:
+            py_file = Path(workspace) / "skip.py"
+            py_file.write_text("x=1\n")
+            import re
+
+            ctx = EvalContext(
+                root=Path(workspace),
+                exclude_pattern=re.compile(r"skip"),
+            )
+            evaluator = RulesetEvaluator.default_for_discovery()
+            decision = evaluator.evaluate(py_file, ctx)
+            self.assertEqual(decision.status, "ignored")
+            self.assertEqual(decision.reason_code, "EXCLUDE_REGEX")
+
+    def test_ruleset_evaluator_add_rule(self) -> None:
+        """Test RulesetEvaluator.add_rule() adds custom rule."""
+        from black.explain import Rule
+
+        evaluator = RulesetEvaluator([])
+        custom = Rule(
+            name="custom",
+            reason_code="CUSTOM",
+            status="ignored",
+            detail="custom rule",
+        )
+        evaluator.add_rule(custom)
+        self.assertEqual(len(evaluator.rules), 1)
 
 
 class TestASTSafety(BlackBaseTestCase):
