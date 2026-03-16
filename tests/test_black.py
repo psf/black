@@ -3124,7 +3124,7 @@ class ExplainTestCase(BlackBaseTestCase):
             result = BlackRunner().invoke(
                 black.main,
                 [
-                    "--explain",
+                    "--explain-simulate",
                     "--explain-format",
                     "json",
                     "--config",
@@ -3147,7 +3147,7 @@ class ExplainTestCase(BlackBaseTestCase):
             result = BlackRunner().invoke(
                 black.main,
                 [
-                    "--explain",
+                    "--explain-simulate",
                     "--explain-format",
                     "jsonl",
                     "--config",
@@ -3171,7 +3171,7 @@ class ExplainTestCase(BlackBaseTestCase):
             result = BlackRunner().invoke(
                 black.main,
                 [
-                    "--explain",
+                    "--explain-simulate",
                     "--explain-show",
                     "included",
                     "--config",
@@ -3191,12 +3191,12 @@ class ExplainTestCase(BlackBaseTestCase):
             result = BlackRunner().invoke(
                 black.main,
                 [
-                    "--explain",
+                    "--explain-simulate",
                     "--explain-show",
                     "ignored",
                     "--config",
                     str(EMPTY_CONFIG),
-                    str(txt_file),
+                    workspace,
                 ],
             )
             self.assertEqual(result.exit_code, 0)
@@ -3234,7 +3234,7 @@ class ExplainTestCase(BlackBaseTestCase):
             ignored.write_text("x=1\n")
             result = BlackRunner().invoke(
                 black.main,
-                ["--explain", "--config", str(EMPTY_CONFIG), str(ignored)],
+                ["--explain-simulate", "--config", str(EMPTY_CONFIG), workspace],
             )
             self.assertEqual(result.exit_code, 0)
             self.assertIn("GITIGNORE_MATCH", result.output)
@@ -3247,12 +3247,12 @@ class ExplainTestCase(BlackBaseTestCase):
             result = BlackRunner().invoke(
                 black.main,
                 [
-                    "--explain",
+                    "--explain-simulate",
                     "--exclude",
                     r"skip_me",
                     "--config",
                     str(EMPTY_CONFIG),
-                    str(py_file),
+                    workspace,
                 ],
             )
             self.assertEqual(result.exit_code, 0)
