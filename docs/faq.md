@@ -52,6 +52,9 @@ Most likely because it is ignored in `.gitignore` or excluded with configuration
 [file collection and discovery](usage_and_configuration/file_collection_and_discovery.md)
 for details.
 
+You can use `--explain` (or `-E`) to see exactly why each file was included or ignored,
+e.g., `black --explain .`. Combine with `--explain-simulate` to preview without formatting.
+
 ## Why is my Jupyter Notebook cell not formatted?
 
 _Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the

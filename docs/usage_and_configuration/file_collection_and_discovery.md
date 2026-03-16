@@ -47,3 +47,84 @@ If `--exclude` is not set, _Black_ will automatically ignore files and directori
 
 If you want _Black_ to continue using `.gitignore` while also configuring the exclusion
 rules, please use `--extend-exclude`.
+
+## Explain mode
+
+_Black_ provides an `--explain` (`-E`) flag that shows why each candidate path was
+included for formatting or ignored. This is useful for debugging file collection issues
+and understanding how your configuration affects which files get formatted.
+
+### Basic usage
+
+```bash
+black --explain .
+```
+
+Output shows each path with a `+` (included) or `-` (ignored) prefix, along with a reason
+code:
+
+```
++ src/main.py [DISCOVERED_VIA_WALK]: discovered via directory walk (source: --include pattern)
+- src/data.bin [NOT_INCLUDED]: does not match --include pattern (source: --include)
+- .git [EXTEND_EXCLUDE_REGEX]: matches --extend-exclude (source: --extend-exclude)
+```
+
+### Reason codes
+
+| Code | Description |
+|------|-------------|
+| `GITIGNORE_MATCH` | Path matched a `.gitignore` pattern |
+| `EXCLUDE_REGEX` | Path matched `--exclude` regular expression |
+| `EXTEND_EXCLUDE_REGEX` | Path matched `--extend-exclude` regular expression |
+| `FORCE_EXCLUDE_REGEX` | Path matched `--force-exclude` regular expression |
+| `STDIN_FORCE_EXCLUDE` | `--stdin-filename` matched `--force-exclude` |
+| `CANNOT_STAT` | Path could not be stat'd or resolves outside root |
+| `SYMLINK_OUTSIDE_ROOT` | Symlink resolves outside project root |
+| `NOT_FILE_OR_DIR` | Path is neither file nor directory |
+| `INVALID_PATH` | Path is not a valid source |
+| `JUPYTER_DEPS_MISSING` | Jupyter dependencies not installed for `.ipynb` |
+| `NOT_INCLUDED` | File does not match `--include` pattern |
+| `EXPLICIT_FILE` | Explicit file path argument |
+| `EXPLICIT_STDIN` | Stdin input (via `-`) |
+| `EXPLICIT_STDIN_FILENAME` | Stdin with `--stdin-filename` |
+| `DISCOVERED_VIA_WALK` | Discovered via directory walk |
+
+### Output formats
+
+Control the output format with `--explain-format`:
+
+- `text` (default): Human-readable lines with `+`/`-` prefixes
+- `json`: Full JSON object with all entries
+- `jsonl`: One JSON object per line
+
+```bash
+black --explain --explain-format json .
+```
+
+### Filtering output
+
+Use `--explain-show` to filter entries:
+
+- `all` (default): Show both included and ignored paths
+- `included`: Show only included paths
+- `ignored`: Show only ignored paths
+
+### Limiting output
+
+Use `--explain-limit` to cap the number of entries shown:
+
+```bash
+black --explain --explain-limit 10 .
+```
+
+### Simulate mode
+
+Use `--explain-simulate` to run file discovery and explain output without formatting
+any files. This is useful for testing your configuration:
+
+```bash
+black --explain-simulate .
+```
+
+This implies `--explain` and exits after showing the explain report without running the
+formatter.

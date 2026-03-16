@@ -60,6 +60,11 @@ Further information can be found in our docs:
 
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
 
+Use `-E` / `--explain` to see why each file was included or ignored during discovery
+(e.g., `black --explain .`). Combine with `--explain-simulate` to preview without
+formatting. See the docs for full details on `--explain-format`, `--explain-show`,
+and `--explain-limit`.
+
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
 projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
 tests, and our own auto formatting and parallel Continuous Integration runner. Now that

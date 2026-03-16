@@ -21,6 +21,11 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Add `--explain` / `-E` flag with `--explain-format` (text/json/jsonl),
+  `--explain-show` (all/included/ignored), `--explain-limit`, and `--explain-simulate`
+  to show why each candidate path was included for formatting or ignored during file
+  discovery (#XXXX)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
