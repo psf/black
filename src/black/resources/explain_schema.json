@@ -1,0 +1,70 @@
+{
+  "reason_codes": [
+    {
+      "code": "GITIGNORE_MATCH",
+      "description": "Path matched a .gitignore pattern"
+    },
+    {
+      "code": "EXCLUDE_REGEX",
+      "description": "Path matched --exclude regular expression"
+    },
+    {
+      "code": "EXTEND_EXCLUDE_REGEX",
+      "description": "Path matched --extend-exclude regular expression"
+    },
+    {
+      "code": "FORCE_EXCLUDE_REGEX",
+      "description": "Path matched --force-exclude regular expression"
+    },
+    {
+      "code": "STDIN_FORCE_EXCLUDE",
+      "description": "--stdin-filename matched --force-exclude"
+    },
+    {
+      "code": "CANNOT_STAT",
+      "description": "Path could not be stat'd or resolved"
+    },
+    {
+      "code": "SYMLINK_OUTSIDE_ROOT",
+      "description": "Symlink resolves outside project root"
+    },
+    {
+      "code": "NOT_FILE_OR_DIR",
+      "description": "Path is neither file nor directory"
+    },
+    {
+      "code": "INVALID_PATH",
+      "description": "Path is not a valid source (neither file, dir, nor stdin)"
+    },
+    {
+      "code": "JUPYTER_DEPS_MISSING",
+      "description": "Jupyter dependencies not installed for .ipynb"
+    },
+    {
+      "code": "NOT_INCLUDED",
+      "description": "File does not match --include pattern"
+    },
+    {
+      "code": "EXPLICIT_SKIP",
+      "description": "Explicitly skipped"
+    }
+  ],
+  "provenance_types": [
+    {
+      "type": "EXPLICIT_FILE",
+      "description": "Explicit file path argument"
+    },
+    {
+      "type": "EXPLICIT_STDIN",
+      "description": "Stdin input (via -)"
+    },
+    {
+      "type": "EXPLICIT_STDIN_FILENAME",
+      "description": "Stdin with --stdin-filename"
+    },
+    {
+      "type": "DISCOVERED_VIA_WALK",
+      "description": "Discovered via directory walk"
+    }
+  ]
+}

@@ -23,6 +23,11 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
+from black.explain import (
+    ExplainProvenance,
+    ExplainReason,
+    ExplainReport,
+)
 from black.handle_ipynb_magics import jupyter_dependencies_are_installed
 from black.mode import TargetVersion
 from black.output import err
@@ -329,6 +334,7 @@ def gen_python_files(
     *,
     verbose: bool,
     quiet: bool,
+    explain_report: ExplainReport | None = None,
 ) -> Iterator[Path]:
     """Generate all files under `path` whose paths are not excluded by the
     `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
@@ -349,6 +355,19 @@ def gen_python_files(
             root_relative_path, root, gitignore_dict
         ):
             report.path_ignored(child, "matches a .gitignore file content")
+            if explain_report:
+                # Find which gitignore matched
+                source = ""
+                for gitignore_path, _ in gitignore_dict.items():
+                    if (root / root_relative_path).is_relative_to(gitignore_path):
+                        source = str(gitignore_path / ".gitignore")
+                        break
+                explain_report.add_ignored(
+                    child,
+                    ExplainReason.GITIGNORE_MATCH,
+                    detail="matches .gitignore pattern",
+                    source=source,
+                )
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
@@ -358,19 +377,49 @@ def gen_python_files(
 
         if path_is_excluded(root_relative_path, exclude):
             report.path_ignored(child, "matches the --exclude regular expression")
+            if explain_report:
+                explain_report.add_ignored(
+                    child,
+                    ExplainReason.EXCLUDE_REGEX,
+                    detail="matches --exclude",
+                    source="--exclude",
+                )
             continue
 
         if path_is_excluded(root_relative_path, extend_exclude):
             report.path_ignored(
                 child, "matches the --extend-exclude regular expression"
             )
+            if explain_report:
+                explain_report.add_ignored(
+                    child,
+                    ExplainReason.EXTEND_EXCLUDE_REGEX,
+                    detail="matches --extend-exclude",
+                    source="--extend-exclude",
+                )
             continue
 
         if path_is_excluded(root_relative_path, force_exclude):
             report.path_ignored(child, "matches the --force-exclude regular expression")
+            if explain_report:
+                explain_report.add_ignored(
+                    child,
+                    ExplainReason.FORCE_EXCLUDE_REGEX,
+                    detail="matches --force-exclude",
+                    source="--force-exclude",
+                )
             continue
 
         if resolves_outside_root_or_cannot_stat(child, root, report):
+            # resolves_outside_root_or_cannot_stat already calls report.path_ignored
+            # with appropriate message; we add a generic path issue explain entry
+            if explain_report:
+                explain_report.add_ignored(
+                    child,
+                    ExplainReason.CANNOT_STAT,
+                    detail="cannot stat or resolves outside root",
+                    source="path resolution",
+                )
             continue
 
         if child.is_dir():
@@ -394,16 +443,40 @@ def gen_python_files(
                 new_gitignore_dict,
                 verbose=verbose,
                 quiet=quiet,
+                explain_report=explain_report,
             )
 
         elif child.is_file():
             if child.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 warn=verbose or not quiet
             ):
+                if explain_report:
+                    explain_report.add_ignored(
+                        child,
+                        ExplainReason.JUPYTER_DEPS_MISSING,
+                        detail=".ipynb file but jupyter dependencies not installed",
+                        source="--ipynb requires jupyter",
+                    )
                 continue
             include_match = include.search(root_relative_path) if include else True
             if include_match:
                 yield child
+                if explain_report:
+                    explain_report.add_included(
+                        child,
+                        ExplainProvenance.DISCOVERED_VIA_WALK,
+                        detail="discovered via directory walk",
+                        source="--include pattern",
+                    )
+            else:
+                # File doesn't match include pattern - silently skipped
+                if explain_report:
+                    explain_report.add_ignored(
+                        child,
+                        ExplainReason.NOT_INCLUDED,
+                        detail="does not match --include pattern",
+                        source="--include",
+                    )
 
 
 def wrap_stream_for_windows(

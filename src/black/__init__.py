@@ -35,6 +35,11 @@ from black.const import (
     DEFAULT_LINE_LENGTH,
     STDIN_PLACEHOLDER,
 )
+from black.explain import (
+    ExplainProvenance,
+    ExplainReason,
+    ExplainReport,
+)
 from black.files import (
     best_effort_relative_path,
     find_project_root,
@@ -533,6 +538,42 @@ def validate_regex(
         " included files."
     ),
 )
+@click.option(
+    "-E",
+    "--explain",
+    is_flag=True,
+    help=(
+        "Enable explain mode: show why each candidate path was included for "
+        "formatting or ignored."
+    ),
+)
+@click.option(
+    "--explain-format",
+    type=click.Choice(["text", "json", "jsonl"]),
+    default="text",
+    show_default=True,
+    help="Output format for explain mode.",
+)
+@click.option(
+    "--explain-show",
+    type=click.Choice(["all", "included", "ignored"]),
+    default="all",
+    show_default=True,
+    help="Which entries to show in explain mode.",
+)
+@click.option(
+    "--explain-limit",
+    type=click.IntRange(min=1),
+    default=None,
+    help="Maximum number of explain entries to show.",
+)
+@click.option(
+    "--explain-simulate",
+    is_flag=True,
+    help=(
+        "Simulate mode: only run explain (file discovery), do not format any files."
+    ),
+)
 @click.pass_context
 def main(
     ctx: click.Context,
@@ -565,6 +606,11 @@ def main(
     src: tuple[str, ...],
     config: str | None,
     no_cache: bool,
+    explain: bool,
+    explain_format: str,
+    explain_show: str,
+    explain_limit: int | None,
+    explain_simulate: bool,
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
@@ -690,6 +736,15 @@ def main(
 
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
 
+    # Create explain report from CLI params
+    explain_report = ExplainReport(
+        enabled=explain,
+        format=explain_format,  # type: ignore[arg-type]
+        show=explain_show,  # type: ignore[arg-type]
+        limit=explain_limit,
+        simulate=explain_simulate,
+    )
+
     if code is not None:
         reformat_code(
             content=code,
@@ -713,9 +768,18 @@ def main(
                 force_exclude=force_exclude,
                 report=report,
                 stdin_filename=stdin_filename,
+                explain_report=explain_report,
             )
         except GitIgnorePatternError:
             ctx.exit(1)
+
+        # Print explain report if enabled
+        if explain:
+            explain_report.print_to_stdout()
+
+        # If simulate mode, exit after explain (no formatting)
+        if explain_simulate:
+            ctx.exit(0)
 
         if not sources:
             if verbose or not quiet:
@@ -771,6 +835,7 @@ def get_sources(
     force_exclude: Pattern[str] | None,
     report: "Report",
     stdin_filename: str | None,
+    explain_report: ExplainReport | None = None,
 ) -> set[Path]:
     """Compute the set of files to be formatted."""
     sources: set[Path] = set()
@@ -789,6 +854,13 @@ def get_sources(
                     path,
                     "--stdin-filename matches the --force-exclude regular expression",
                 )
+                if explain_report:
+                    explain_report.add_ignored(
+                        path,
+                        ExplainReason.STDIN_FORCE_EXCLUDE,
+                        detail="--stdin-filename matches --force-exclude",
+                        source="--force-exclude",
+                    )
                 continue
             is_stdin = True
         else:
@@ -800,6 +872,13 @@ def get_sources(
             if resolves_outside_root_or_cannot_stat(path, root, report):
                 if verbose:
                     out(f'Skipping invalid source: "{path}"', fg="red")
+                if explain_report:
+                    explain_report.add_ignored(
+                        path,
+                        ExplainReason.CANNOT_STAT,
+                        detail="cannot stat or resolves outside root",
+                        source="path resolution",
+                    )
                 continue
 
             root_relative_path = best_effort_relative_path(path, root).as_posix()
@@ -810,6 +889,13 @@ def get_sources(
                 report.path_ignored(
                     path, "matches the --force-exclude regular expression"
                 )
+                if explain_report:
+                    explain_report.add_ignored(
+                        path,
+                        ExplainReason.FORCE_EXCLUDE_REGEX,
+                        detail="matches --force-exclude",
+                        source="--force-exclude",
+                    )
                 continue
 
             if is_stdin:
@@ -818,11 +904,30 @@ def get_sources(
             if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
                 warn=verbose or not quiet
             ):
+                if explain_report:
+                    explain_report.add_ignored(
+                        path,
+                        ExplainReason.JUPYTER_DEPS_MISSING,
+                        detail=".ipynb file but jupyter dependencies not installed",
+                        source="--ipynb requires jupyter",
+                    )
                 continue
 
             if verbose:
                 out(f'Found input source: "{path}"', fg="blue")
             sources.add(path)
+            if explain_report:
+                provenance = (
+                    ExplainProvenance.EXPLICIT_STDIN_FILENAME
+                    if stdin_filename and s == "-"
+                    else ExplainProvenance.EXPLICIT_FILE
+                )
+                explain_report.add_included(
+                    path,
+                    provenance,
+                    detail="explicit file argument",
+                    source="command line",
+                )
         elif path.is_dir():
             path = root / (path.resolve().relative_to(root))
             if verbose:
@@ -845,12 +950,20 @@ def get_sources(
                     gitignore,
                     verbose=verbose,
                     quiet=quiet,
+                    explain_report=explain_report,
                 )
             )
         elif s == "-":
             if verbose:
                 out("Found input source stdin", fg="blue")
             sources.add(path)
+            if explain_report:
+                explain_report.add_included(
+                    path,
+                    ExplainProvenance.EXPLICIT_STDIN,
+                    detail="stdin input",
+                    source="-",
+                )
         else:
             err(f"invalid path: {s}")
 
