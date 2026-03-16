@@ -131,6 +131,12 @@ class ExplainReport:
             )
         )
 
+    def add_decision(self, path: Path, decision: Decision) -> None:
+        """Add an entry from a structured Decision."""
+        if not self.enabled:
+            return
+        self.entries.append(decision.to_entry(path))
+
     def get_entries(self) -> Sequence[ExplainEntry]:
         """Get filtered and limited entries."""
         result = self.entries
@@ -229,3 +235,411 @@ def save_explain_schema_to_file(path: Path) -> None:
     """Save the explain schema to a JSON file."""
     with path.open("w", encoding="utf-8") as f:
         json.dump(export_explain_schema(), f, indent=2)
+
+
+# ============================================================================
+# Structured Decision + Ruleset Evaluator
+# ============================================================================
+
+
+@dataclass(frozen=True)
+class Decision:
+    """
+    A structured decision for a path during file discovery.
+
+    Shows both reason_code (for ignored paths) and provenance (for included paths).
+    """
+
+    status: Literal["included", "ignored"]
+    reason_code: str = ""  # ExplainReason value (for ignored)
+    provenance: str = ""  # ExplainProvenance value (for included)
+    detail: str = ""
+    source: str = ""
+
+    def is_included(self) -> bool:
+        return self.status == "included"
+
+    def is_ignored(self) -> bool:
+        return self.status == "ignored"
+
+    @property
+    def code(self) -> str:
+        """Return the primary code (reason_code for ignored, provenance for included)."""
+        return self.provenance if self.is_included() else self.reason_code
+
+    def to_entry(self, path: Path) -> ExplainEntry:
+        """Convert to ExplainEntry (uses primary code)."""
+        return ExplainEntry(
+            path=path,
+            status=self.status,
+            code=self.code,
+            detail=self.detail,
+            source=self.source,
+        )
+
+    def to_dict_full(self) -> dict:
+        """Convert to dict with both reason_code and provenance."""
+        return {
+            "status": self.status,
+            "reason_code": self.reason_code,
+            "provenance": self.provenance,
+            "code": self.code,
+            "detail": self.detail,
+            "source": self.source,
+        }
+
+
+@dataclass(frozen=True)
+class EvalContext:
+    """Context for evaluating path decisions."""
+
+    root: Path
+    include_pattern: "Pattern[str] | None" = None
+    exclude_pattern: "Pattern[str] | None" = None
+    extend_exclude_pattern: "Pattern[str] | None" = None
+    force_exclude_pattern: "Pattern[str] | None" = None
+    gitignore_dict: dict[Path, "GitIgnoreSpec"] | None = None
+    is_stdin: bool = False
+    stdin_filename: str | None = None
+    jupyter_deps_available: bool = True
+
+    @classmethod
+    def from_cli(
+        cls,
+        root: Path,
+        include: "Pattern[str] | None",
+        exclude: "Pattern[str] | None",
+        extend_exclude: "Pattern[str] | None",
+        force_exclude: "Pattern[str] | None",
+        gitignore_dict: dict[Path, "GitIgnoreSpec"] | None,
+        is_stdin: bool = False,
+        stdin_filename: str | None = None,
+        jupyter_deps_available: bool = True,
+    ) -> "EvalContext":
+        """Create from CLI parameters."""
+        return cls(
+            root=root,
+            include_pattern=include,
+            exclude_pattern=exclude,
+            extend_exclude_pattern=extend_exclude,
+            force_exclude_pattern=force_exclude,
+            gitignore_dict=gitignore_dict,
+            is_stdin=is_stdin,
+            stdin_filename=stdin_filename,
+            jupyter_deps_available=jupyter_deps_available,
+        )
+
+
+@dataclass(frozen=True)
+class Rule:
+    """
+    A single rule that evaluates a path.
+
+    The evaluate() method checks conditions and returns Decision if rule matches,
+    or None if not applicable. Rules are evaluated in order by RulesetEvaluator.
+    """
+
+    name: str = "rule"
+    reason_code: str = ""  # ExplainReason value (for ignored)
+    provenance: str = ""  # ExplainProvenance value (for included)
+    status: Literal["included", "ignored"] = "ignored"
+    detail: str = ""
+    source: str = ""
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        """
+        Evaluate path against this rule.
+
+        Returns Decision if rule matches, None if not applicable.
+        Subclasses override this to add actual condition checking.
+        """
+        return Decision(
+            status=self.status,
+            reason_code=self.reason_code,
+            provenance=self.provenance,
+            detail=self.detail,
+            source=self.source,
+        )
+
+
+# Context-aware rules with actual condition checking
+
+
+@dataclass(frozen=True)
+class GitignoreRule(Rule):
+    """Rule that checks if path matches any .gitignore pattern."""
+
+    name: str = "gitignore_match"
+    reason_code: str = ExplainReason.GITIGNORE_MATCH.value
+    status: Literal["included", "ignored"] = "ignored"
+    detail: str = "matches .gitignore pattern"
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        if not ctx.gitignore_dict:
+            return None
+        from black.files import _path_is_ignored, best_effort_relative_path
+
+        try:
+            root_relative = best_effort_relative_path(path, ctx.root).as_posix()
+            if _path_is_ignored(root_relative, ctx.root, ctx.gitignore_dict):
+                source = ""
+                for gitignore_path in ctx.gitignore_dict.keys():
+                    if path.is_relative_to(gitignore_path):
+                        source = str(gitignore_path / ".gitignore")
+                        break
+                return Decision(
+                    status="ignored",
+                    reason_code=self.reason_code,
+                    detail=self.detail,
+                    source=source,
+                )
+        except Exception:
+            pass
+        return None
+
+
+@dataclass(frozen=True)
+class ExcludePatternRule(Rule):
+    """Rule that checks if path matches an exclude pattern."""
+
+    pattern_name: str = "--exclude"
+    pattern_attr: str = "exclude_pattern"
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "name", f"{self.pattern_name}_match")
+        object.__setattr__(self, "reason_code", ExplainReason.EXCLUDE_REGEX.value)
+        object.__setattr__(self, "status", "ignored")
+        object.__setattr__(self, "detail", f"matches {self.pattern_name}")
+        object.__setattr__(self, "source", self.pattern_name)
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        from black.files import path_is_excluded, best_effort_relative_path
+
+        pattern = getattr(ctx, self.pattern_attr, None)
+        if not pattern:
+            return None
+        try:
+            root_relative = best_effort_relative_path(path, ctx.root).as_posix()
+            root_relative = "/" + root_relative
+            if path.is_dir():
+                root_relative += "/"
+            if path_is_excluded(root_relative, pattern):
+                return Decision(
+                    status="ignored",
+                    reason_code=self.reason_code,
+                    detail=self.detail,
+                    source=self.source,
+                )
+        except Exception:
+            pass
+        return None
+
+
+@dataclass(frozen=True)
+class ForceExcludeRule(Rule):
+    """Rule that checks force-exclude pattern."""
+
+    name: str = "force_exclude_match"
+    reason_code: str = ExplainReason.FORCE_EXCLUDE_REGEX.value
+    status: Literal["included", "ignored"] = "ignored"
+    detail: str = "matches --force-exclude"
+    source: str = "--force-exclude"
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        from black.files import path_is_excluded, best_effort_relative_path
+
+        if not ctx.force_exclude_pattern:
+            return None
+        try:
+            root_relative = best_effort_relative_path(path, ctx.root).as_posix()
+            root_relative = "/" + root_relative
+            if path.is_dir():
+                root_relative += "/"
+            if path_is_excluded(root_relative, ctx.force_exclude_pattern):
+                return Decision(
+                    status="ignored",
+                    reason_code=self.reason_code,
+                    detail=self.detail,
+                    source=self.source,
+                )
+        except Exception:
+            pass
+        return None
+
+
+@dataclass(frozen=True)
+class StdinForceExcludeRule(Rule):
+    """Rule that checks if stdin-filename matches force-exclude."""
+
+    name: str = "stdin_force_exclude"
+    reason_code: str = ExplainReason.STDIN_FORCE_EXCLUDE.value
+    status: Literal["included", "ignored"] = "ignored"
+    detail: str = "--stdin-filename matches --force-exclude"
+    source: str = "--force-exclude"
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        from black.files import path_is_excluded
+
+        if not ctx.is_stdin or not ctx.stdin_filename or not ctx.force_exclude_pattern:
+            return None
+        if path_is_excluded(ctx.stdin_filename, ctx.force_exclude_pattern):
+            return Decision(
+                status="ignored",
+                reason_code=self.reason_code,
+                detail=self.detail,
+                source=self.source,
+            )
+        return None
+
+
+@dataclass(frozen=True)
+class CannotStatRule(Rule):
+    """Rule that checks if path cannot be stat'd or resolves outside root."""
+
+    name: str = "cannot_stat"
+    reason_code: str = ExplainReason.CANNOT_STAT.value
+    status: Literal["included", "ignored"] = "ignored"
+    detail: str = "cannot stat or resolves outside root"
+    source: str = "path resolution"
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        from black.files import _cached_resolve
+
+        try:
+            resolved = _cached_resolve(path)
+            resolved.relative_to(ctx.root)
+        except (OSError, ValueError):
+            return Decision(
+                status="ignored",
+                reason_code=self.reason_code,
+                detail=self.detail,
+                source=self.source,
+            )
+        return None
+
+
+@dataclass(frozen=True)
+class JupyterDepsMissingRule(Rule):
+    """Rule that checks if .ipynb but jupyter deps not available."""
+
+    name: str = "jupyter_deps_missing"
+    reason_code: str = ExplainReason.JUPYTER_DEPS_MISSING.value
+    status: Literal["included", "ignored"] = "ignored"
+    detail: str = ".ipynb file but jupyter dependencies not installed"
+    source: str = "--ipynb requires jupyter"
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        if path.suffix == ".ipynb" and not ctx.jupyter_deps_available:
+            return Decision(
+                status="ignored",
+                reason_code=self.reason_code,
+                detail=self.detail,
+                source=self.source,
+            )
+        return None
+
+
+@dataclass(frozen=True)
+class NotIncludedRule(Rule):
+    """Rule that checks if file doesn't match include pattern."""
+
+    name: str = "not_included"
+    reason_code: str = ExplainReason.NOT_INCLUDED.value
+    status: Literal["included", "ignored"] = "ignored"
+    detail: str = "does not match --include pattern"
+    source: str = "--include"
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        from black.files import best_effort_relative_path
+
+        if not ctx.include_pattern:
+            return None  # Empty include means all files included
+        if not path.is_file():
+            return None
+        try:
+            root_relative = best_effort_relative_path(path, ctx.root).as_posix()
+            root_relative = "/" + root_relative
+            if not ctx.include_pattern.search(root_relative):
+                return Decision(
+                    status="ignored",
+                    reason_code=self.reason_code,
+                    detail=self.detail,
+                    source=self.source,
+                )
+        except Exception:
+            pass
+        return None
+
+
+@dataclass(frozen=True)
+class ProvenanceRule(Rule):
+    """Rule that returns included with a provenance type (default pass-through)."""
+
+    name: str = "provenance"
+    provenance: str = ExplainProvenance.DISCOVERED_VIA_WALK.value
+    status: Literal["included", "ignored"] = "included"
+    detail: str = "discovered via directory walk"
+    source: str = "--include pattern"
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision | None:
+        return Decision(
+            status="included",
+            provenance=self.provenance,
+            detail=self.detail,
+            source=self.source,
+        )
+
+
+class RulesetEvaluator:
+    """
+    Evaluates a path against a set of rules and returns a Decision.
+
+    Rules are evaluated in order. First rule whose evaluate() returns non-None wins.
+    If no rule matches, defaults to included with DISCOVERED_VIA_WALK provenance.
+    """
+
+    def __init__(self, rules: list[Rule] | None = None):
+        self.rules = rules or []
+
+    def add_rule(self, rule: Rule) -> None:
+        """Add a rule to the evaluator."""
+        self.rules.append(rule)
+
+    def evaluate(self, path: Path, ctx: EvalContext) -> Decision:
+        """
+        Evaluate path against all rules. Returns first matching decision.
+
+        Rules are evaluated in order. First rule whose evaluate() returns non-None wins.
+        """
+        for rule in self.rules:
+            decision = rule.evaluate(path, ctx)
+            if decision is not None:
+                return decision
+        # Default: include with discovered_via_walk provenance
+        return Decision(
+            status="included",
+            reason_code=ExplainProvenance.DISCOVERED_VIA_WALK.value,
+            detail="discovered via directory walk",
+            source="--include pattern",
+        )
+
+    @classmethod
+    def default_for_discovery(cls) -> "RulesetEvaluator":
+        """
+        Create evaluator with default rules for file discovery.
+
+        Order matters: more specific exclusions first, then include check, then default.
+        """
+        return cls(
+            [
+                StdinForceExcludeRule(),
+                GitignoreRule(),
+                ExcludePatternRule(pattern_name="--exclude", pattern_attr="exclude_pattern"),
+                ExcludePatternRule(pattern_name="--extend-exclude", pattern_attr="extend_exclude_pattern"),
+                ForceExcludeRule(),
+                CannotStatRule(),
+                JupyterDepsMissingRule(),
+                NotIncludedRule(),
+                ProvenanceRule(),  # Final: default include
+            ]
+        )
