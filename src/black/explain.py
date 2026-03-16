@@ -3,6 +3,7 @@ Explain mode for Black file discovery.
 
 Provides reason codes and provenance types for why paths are included or ignored.
 """
+
 from __future__ import annotations
 
 import json
@@ -152,9 +153,7 @@ class ExplainReport:
         """Render the report according to format."""
         entries = self.get_entries()
         if self.format == "json":
-            return json.dumps(
-                {"entries": [e.to_dict() for e in entries]}, indent=2
-            )
+            return json.dumps({"entries": [e.to_dict() for e in entries]}, indent=2)
         elif self.format == "jsonl":
             return "\n".join(json.dumps(e.to_dict()) for e in entries)
         else:  # text
@@ -206,14 +205,22 @@ def _reason_description(r: ExplainReason) -> str:
     descriptions = {
         ExplainReason.GITIGNORE_MATCH: "Path matched a .gitignore pattern",
         ExplainReason.EXCLUDE_REGEX: "Path matched --exclude regular expression",
-        ExplainReason.EXTEND_EXCLUDE_REGEX: "Path matched --extend-exclude regular expression",
-        ExplainReason.FORCE_EXCLUDE_REGEX: "Path matched --force-exclude regular expression",
+        ExplainReason.EXTEND_EXCLUDE_REGEX: (
+            "Path matched --extend-exclude regular expression"
+        ),
+        ExplainReason.FORCE_EXCLUDE_REGEX: (
+            "Path matched --force-exclude regular expression"
+        ),
         ExplainReason.STDIN_FORCE_EXCLUDE: "--stdin-filename matched --force-exclude",
         ExplainReason.CANNOT_STAT: "Path could not be stat'd or resolved",
         ExplainReason.SYMLINK_OUTSIDE_ROOT: "Symlink resolves outside project root",
         ExplainReason.NOT_FILE_OR_DIR: "Path is neither file nor directory",
-        ExplainReason.INVALID_PATH: "Path is not a valid source (neither file, dir, nor stdin)",
-        ExplainReason.JUPYTER_DEPS_MISSING: "Jupyter dependencies not installed for .ipynb",
+        ExplainReason.INVALID_PATH: (
+            "Path is not a valid source (neither file, dir, nor stdin)"
+        ),
+        ExplainReason.JUPYTER_DEPS_MISSING: (
+            "Jupyter dependencies not installed for .ipynb"
+        ),
         ExplainReason.NOT_INCLUDED: "File does not match --include pattern",
         ExplainReason.EXPLICIT_SKIP: "Explicitly skipped",
     }
@@ -630,16 +637,18 @@ class RulesetEvaluator:
 
         Order matters: more specific exclusions first, then include check, then default.
         """
-        return cls(
-            [
-                StdinForceExcludeRule(),
-                GitignoreRule(),
-                ExcludePatternRule(pattern_name="--exclude", pattern_attr="exclude_pattern"),
-                ExcludePatternRule(pattern_name="--extend-exclude", pattern_attr="extend_exclude_pattern"),
-                ForceExcludeRule(),
-                CannotStatRule(),
-                JupyterDepsMissingRule(),
-                NotIncludedRule(),
-                ProvenanceRule(),  # Final: default include
-            ]
-        )
+        return cls([
+            StdinForceExcludeRule(),
+            GitignoreRule(),
+            ExcludePatternRule(
+                pattern_name="--exclude", pattern_attr="exclude_pattern"
+            ),
+            ExcludePatternRule(
+                pattern_name="--extend-exclude", pattern_attr="extend_exclude_pattern"
+            ),
+            ForceExcludeRule(),
+            CannotStatRule(),
+            JupyterDepsMissingRule(),
+            NotIncludedRule(),
+            ProvenanceRule(),  # Final: default include
+        ])
