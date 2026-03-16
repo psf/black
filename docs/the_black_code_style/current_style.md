@@ -285,6 +285,14 @@ end of the docstring are removed. All leading tabs are converted to spaces, but 
 inside text are preserved. Whitespace leading and trailing one-line docstrings is
 removed.
 
+### Doctest formatting
+
+_Black_ does not format code within doctests. If you want to format doctest code
+snippets, you can use one of the following tools:
+
+- [blacken-docs](https://github.com/adamchainz/blacken-docs): reformats code blocks in
+  documentation files and docstrings.
+
 ### Numeric literals
 
 _Black_ standardizes most numeric literals to use lowercase letters for the syntactic
