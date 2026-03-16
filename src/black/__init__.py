@@ -732,8 +732,10 @@ def main(
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
 
     # Create explain report from CLI params
+    # --explain-simulate implies --explain (forces explain mode on)
+    explain_enabled = explain or explain_simulate
     explain_report = ExplainReport(
-        enabled=explain,
+        enabled=explain_enabled,
         format=explain_format,  # type: ignore[arg-type]
         show=explain_show,  # type: ignore[arg-type]
         limit=explain_limit,
@@ -768,8 +770,8 @@ def main(
         except GitIgnorePatternError:
             ctx.exit(1)
 
-        # Print explain report if enabled
-        if explain:
+        # Print explain report if enabled (implied by --explain-simulate)
+        if explain_enabled:
             explain_report.print_to_stdout()
 
         # If simulate mode, exit after explain (no formatting)
