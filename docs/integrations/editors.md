@@ -4,8 +4,7 @@
 
 Options include the following:
 
-- [
-   /emacs-python-black](https://github.com/wbolster/emacs-python-black)
+- [ /emacs-python-black](https://github.com/wbolster/emacs-python-black)
 - [proofit404/blacken](https://github.com/pythonic-emacs/blacken)
 - [Elpy](https://github.com/jorgenschaefer/elpy).
 
