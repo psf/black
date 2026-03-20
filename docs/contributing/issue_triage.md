@@ -103,7 +103,7 @@ PR (if any even make sense).
 
 ## Projects
 
-For more general and broad goals we use projects to track work. Some may be longterm
+For more general and broad goals we use projects to track work. Some may be long-term
 projects with no true end (e.g. the "Amazing documentation" project) while others may be
 more focused and have a definite end (like the "Getting to beta" project).
 

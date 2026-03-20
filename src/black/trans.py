@@ -229,7 +229,7 @@ class StringTransformer(ABC):
 
     Collaborations:
         What contractual agreements does this StringTransformer have with other
-        StringTransfomers? Such collaborations should be eliminated/minimized
+        StringTransformers? Such collaborations should be eliminated/minimized
         as much as possible.
     """
 

@@ -4,7 +4,8 @@
 
 Options include the following:
 
-- [wbolster/emacs-python-black](https://github.com/wbolster/emacs-python-black)
+- [
+   /emacs-python-black](https://github.com/wbolster/emacs-python-black)
 - [proofit404/blacken](https://github.com/pythonic-emacs/blacken)
 - [Elpy](https://github.com/jorgenschaefer/elpy).
 
@@ -166,7 +167,7 @@ the Wing documentation on
 [Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
 procedure is:
 
-### Prerequistes
+### Prerequisites
 
 - Wing IDE version 8.0+
 
