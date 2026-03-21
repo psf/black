@@ -247,7 +247,7 @@ class Line:
         return False
 
     def contains_implicit_multiline_string_with_comments(self) -> bool:
-        """Chck if we have an implicit multiline string with comments on the line"""
+        """Check if we have an implicit multiline string with comments on the line"""
         for leaf_type, leaf_group_iterator in itertools.groupby(
             self.leaves, lambda leaf: leaf.type
         ):

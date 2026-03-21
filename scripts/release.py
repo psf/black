@@ -85,7 +85,7 @@ def get_git_tags(versions_only: bool = True) -> list[str]:
     return git_tags
 
 
-# TODO: Support sorting alhpa/beta releases correctly
+# TODO: Support sorting alpha/beta releases correctly
 def tuple_calver(calver: str) -> tuple[int, ...]:  # mypy can't notice maxsplit below
     """Convert a calver string into a tuple of ints for sorting"""
     try:

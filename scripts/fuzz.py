@@ -13,7 +13,7 @@ import black
 
 
 # This test uses the Hypothesis and Hypothesmith libraries to generate random
-# syntatically-valid Python source code and run Black in odd modes.
+# syntactically-valid Python source code and run Black in odd modes.
 @settings(
     max_examples=1000,  # roughly 1k tests/minute, or half that under coverage
     derandomize=True,  # deterministic mode to avoid CI flakiness
@@ -35,7 +35,7 @@ import black
         magic_trailing_comma=st.booleans(),
     ),
 )
-def test_idempotent_any_syntatically_valid_python(
+def test_idempotent_any_syntactically_valid_python(
     src_contents: str, mode: black.FileMode
 ) -> None:
     # Before starting, let's confirm that the input string is valid Python:
@@ -54,7 +54,7 @@ def test_idempotent_any_syntatically_valid_python(
 
 if __name__ == "__main__":
     # Run tests, including shrinking and reporting any known failures.
-    test_idempotent_any_syntatically_valid_python()
+    test_idempotent_any_syntactically_valid_python()
 
     # If Atheris is available, run coverage-guided fuzzing.
     # (if you want only bounded fuzzing, just use `pytest fuzz.py`)
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     except ImportError:
         pass
     else:
-        test = test_idempotent_any_syntatically_valid_python
+        test = test_idempotent_any_syntactically_valid_python
         atheris.Setup(
             sys.argv,
             test.hypothesis.fuzz_one_input,  # type: ignore[attr-defined]

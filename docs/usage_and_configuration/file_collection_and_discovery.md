@@ -13,7 +13,7 @@ location of the file depends on the _Black_ version and the system on which _Bla
 run. The file is non-portable. The standard location on common operating systems is:
 
 - Windows:
-  `C:\\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.<file-mode>.pickle`
+  `C:\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.<file-mode>.pickle`
 - macOS:
   `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.<file-mode>.pickle`
 - Linux:

@@ -497,7 +497,8 @@ Note that these are paths to the TOML file itself (meaning that they shouldn't b
 as `pyproject.toml`), not directories where you store the configuration (i.e.,
 `black`/`.black` is the file to create and add your configuration options to, in the
 `~/.config/` directory). Here, `~` refers to the path to your home directory. On
-Windows, this will be something like `C:\\Users\UserName`.
+Windows, this will be something like `C:\Users\UserName` and stored in the environment
+variable `%USERPROFILE%`.
 
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.

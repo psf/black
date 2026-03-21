@@ -97,7 +97,7 @@
 - Remove deprecated function `uvloop.install()` in favor of `uvloop.new_event_loop()`
   (#4996)
 - Rename `maybe_install_uvloop` function to `maybe_use_uvloop` to simplify loop
-  installation and creation of either a uvloop/winloop evenloop or default eventloop
+  installation and creation of either a uvloop/winloop eventloop or default eventloop
   (#4996)
 
 ### Output
@@ -427,7 +427,7 @@ The following changes were not in any previous release:
 
 ### Packaging
 
-- Packaging metadata updated: docs are explictly linked, the issue tracker is now also
+- Packaging metadata updated: docs are explicitly linked, the issue tracker is now also
   linked. This improves the PyPI listing for Black. (#4345)
 
 ### Parser
@@ -542,7 +542,7 @@ incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
 
 - Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
   due to an outstanding crash and proposed formatting tweaks (#4198)
-- Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
+- Fixed a bug where base expressions caused inconsistent formatting of \*\* in ternary
   expression (#4154)
 - Checking for newline before adding one on docstring that is almost at the line limit
   (#4185)

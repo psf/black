@@ -166,7 +166,7 @@ the Wing documentation on
 [Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
 procedure is:
 
-### Prerequistes
+### Prerequisites
 
 - Wing IDE version 8.0+
 

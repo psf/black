@@ -1328,7 +1328,7 @@ def decode_bytes(
     """
     srcbuf = io.BytesIO(src)
 
-    # Still use detect encoding even if overrite set because otherwise lines
+    # Still use detect encoding even if overwrite set because otherwise lines
     # might be different
     encoding, lines = tokenize.detect_encoding(srcbuf.readline)
     if encoding_overwrite is not None:
