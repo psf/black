@@ -353,6 +353,67 @@ nnoremap <F9> :Black<CR>
    let g:ale_fixers.python = ['black']
    ```
 
+## Neovim
+
+### Via conform.nvim
+
+[conform.nvim](https://github.com/stevearc/conform.nvim) is a lightweight formatter
+plugin for Neovim. It supports _Black_ out of the box as long as `black` is available
+in your `PATH`.
+
+1. Install `black` (e.g. `pip install black` or `pipx install black`)
+
+1. Install `conform.nvim` using your plugin manager and add the following to your Neovim
+   configuration:
+
+   ```lua
+   require("conform").setup({
+     formatters_by_ft = {
+       python = { "black" },
+     },
+   })
+   ```
+
+1. To format on save, add:
+
+   ```lua
+   require("conform").setup({
+     formatters_by_ft = {
+       python = { "black" },
+     },
+     format_on_save = {
+       timeout_ms = 500,
+       lsp_format = "fallback",
+     },
+   })
+   ```
+
+### With ALE
+
+[ALE](https://github.com/dense-analysis/ale) supports both Vim and Neovim. See the
+[Vim section](#with-ale) above for setup instructions — the same configuration works
+for Neovim.
+
+### Simple command
+
+You can invoke _Black_ on the current file directly from Neovim without any plugins:
+
+```vim
+:!black %
+```
+
+To create a convenient `:Black` command, add this to your `init.lua`:
+
+```lua
+vim.api.nvim_create_user_command(
+  "Black",
+  function()
+    vim.cmd("!black " .. vim.fn.expand("%"))
+  end,
+  { nargs = 0 }
+)
+```
+
 ## Gedit
 
 gedit is the default text editor of the GNOME, Unix like Operating Systems. Open gedit
