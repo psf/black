@@ -358,8 +358,8 @@ nnoremap <F9> :Black<CR>
 ### Via conform.nvim
 
 [conform.nvim](https://github.com/stevearc/conform.nvim) is a lightweight formatter
-plugin for Neovim. It supports _Black_ out of the box as long as `black` is available
-in your `PATH`.
+plugin for Neovim. It supports _Black_ out of the box as long as `black` is available in
+your `PATH`.
 
 1. Install `black` (e.g. `pip install black` or `pipx install black`)
 
@@ -391,8 +391,8 @@ in your `PATH`.
 ### With ALE
 
 [ALE](https://github.com/dense-analysis/ale) supports both Vim and Neovim. See the
-[Vim section](#with-ale) above for setup instructions — the same configuration works
-for Neovim.
+[Vim section](#with-ale) above for setup instructions — the same configuration works for
+Neovim.
 
 ### Simple command
 
