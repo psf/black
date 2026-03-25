@@ -413,8 +413,9 @@ Use the [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle)
 
 ## Neovim
 
-_Black_ works with Neovim using the same official plugin as Vim. The plugin automatically
-detects Neovim and uses `~/.local/share/nvim/black` as the default virtualenv location.
+_Black_ works with Neovim using the same official plugin as Vim. The plugin
+automatically detects Neovim and uses `~/.local/share/nvim/black` as the default
+virtualenv location.
 
 ### Using lazy.nvim
 
