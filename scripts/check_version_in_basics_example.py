@@ -15,7 +15,13 @@ def main(changes: str, the_basics: str) -> None:
     changes_html = commonmark.commonmark(changes)
     changes_soup = BeautifulSoup(changes_html, "html.parser")
     headers = changes_soup.find_all("h2")
-    tags = [header.string for header in headers if header.string != "Unreleased"]
+    tags = []
+    for header in headers:
+        text = header.string or ""
+        if text == "Unreleased":
+            continue
+        # Strip "Version " prefix if present
+        tags.append(text.removeprefix("Version "))
     latest_tag = tags[0]
 
     the_basics_html = commonmark.commonmark(the_basics)

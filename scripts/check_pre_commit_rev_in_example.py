@@ -22,7 +22,9 @@ def main(changes: str, content: str, filename: str) -> None:
     changes_soup = BeautifulSoup(changes_html, "html.parser")
     headers = changes_soup.find_all("h2")
     latest_tag, *_ = (
-        header.string for header in headers if header.string != "Unreleased"
+        (header.string or "").removeprefix("Version ")
+        for header in headers
+        if header.string != "Unreleased"
     )
 
     source_version_control_html = commonmark.commonmark(content)

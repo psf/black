@@ -148,7 +148,7 @@ class SourceFiles:
 
         # Change Unreleased to next version
         changes_string = changes_string.replace(
-            "## Unreleased", f"## {self.next_version}"
+            "## Unreleased", f"## Version {self.next_version}"
         )
 
         # Remove all comments
