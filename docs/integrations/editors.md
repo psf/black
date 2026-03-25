@@ -411,6 +411,86 @@ Sublime Text, Visual Studio Code and many more), you can use the
 
 Use the [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle) plugin.
 
+## Neovim
+
+_Black_ works with Neovim using the same official plugin as Vim. The plugin automatically
+detects Neovim and uses `~/.local/share/nvim/black` as the default virtualenv location.
+
+### Using lazy.nvim
+
+For Neovim 0.8+ with [lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+{
+  'psf/black',
+  branch = 'stable',
+  ft = 'python',
+  config = function()
+    -- Configure Black settings
+    vim.g.black_fast = 0
+    vim.g.black_linelength = 88
+
+    -- Format on save
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      pattern = '*.py',
+      callback = function()
+        vim.cmd('Black')
+      end,
+    })
+  end,
+}
+```
+
+### Using packer.nvim
+
+```lua
+use {
+  'psf/black',
+  branch = 'stable',
+  ft = 'python',
+  config = function()
+    -- Format on save
+    vim.cmd([[ augroup black_on_save
+      autocmd!
+      autocmd BufWritePre *.py Black
+    augroup end ]])
+  end,
+}
+```
+
+### Lua Configuration
+
+For `init.lua` users:
+
+```lua
+-- All g:black_* settings
+vim.g.black_fast = 0
+vim.g.black_linelength = 88
+vim.g.black_use_virtualenv = 1
+vim.g.black_virtualenv = '~/.local/share/nvim/black'
+
+-- Commands
+vim.keymap.set('n', '<F9>', ':Black<CR>', { silent = true })
+```
+
+### Troubleshooting
+
+**Error: Python provider not found**
+
+Ensure Neovim has Python 3 support:
+
+```vim
+:checkhealth provider
+```
+
+Install if missing:
+
+```console
+$ pip install pynvim
+```
+
+_See [Vim section](#vim) for more configuration options._
+
 ## Kakoune
 
 Add the following hook to your kakrc, then run _Black_ with `:format`.
