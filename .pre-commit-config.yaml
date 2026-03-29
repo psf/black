@@ -45,8 +45,6 @@ repos:
         exclude: ^docs/conf.py$
         args: []
         additional_dependencies:
-          # Click is intentionally out-of-sync with pyproject.toml
-          # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
           - click>=8.0.0
           - packaging>=22.0
           - platformdirs>=2
