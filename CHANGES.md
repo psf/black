@@ -6,7 +6,9 @@
      Please include the PR number in the changelog entry, not the issue number -->
 
 ### Highlights
-- Improve parse error readability by showing multi-line output with an error pointer. (#5068)
+
+- Improve parse error readability by showing multi-line output with an error pointer.
+  (#5068)
 
 <!-- Include any especially major or disruptive changes here -->
 
