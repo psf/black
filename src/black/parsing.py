@@ -84,7 +84,7 @@ def lib2to3_parse(
                             f"Cannot parse{tv_str}: {lineno}:{column}\n"
                             f"    {faulty_line}\n"
                             f"    {' ' * (column - 1)}^\n"
-                                "SyntaxError: invalid syntax"
+                                f"ParseError: {pe.msg}"
                         )
 
             errors[grammar.version] = InvalidInput(error_msg)
@@ -96,7 +96,7 @@ def lib2to3_parse(
                             f"Cannot parse{tv_str}: {lineno}:{column}\n"
                             f"    {te.args[0]}\n"
                             f"    {' ' * (column - 1)}^\n"
-                                "SyntaxError: invalid syntax"
+                                f"TokenError: {te.args[0]}"
                         )
 
         errors[grammar.version] = InvalidInput(error_msg)
