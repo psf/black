@@ -53,8 +53,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
-- Use "Version X.Y.Z" headings in changelog for stable permalink anchors on
-  ReadTheDocs (#5063)
+- Use "Version X.Y.Z" headings in changelog for stable permalink anchors on ReadTheDocs
+  (#5063)
 
 ## Version 26.3.1
 
