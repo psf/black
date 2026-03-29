@@ -53,6 +53,9 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Add Neovim configuration guide to editor integration docs, covering lazy.nvim,
+  packer.nvim, Lua configuration, and troubleshooting (#5064)
+
 ## 26.3.1
 
 ### Stable style

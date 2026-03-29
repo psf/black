@@ -451,10 +451,12 @@ use {
   ft = 'python',
   config = function()
     -- Format on save
-    vim.cmd([[ augroup black_on_save
-      autocmd!
-      autocmd BufWritePre *.py Black
-    augroup end ]])
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      pattern = '*.py',
+      callback = function()
+        vim.cmd('Black')
+      end,
+    })
   end,
 }
 ```
