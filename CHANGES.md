@@ -53,6 +53,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches (#5061)
+
 ## 26.3.1
 
 ### Stable style
