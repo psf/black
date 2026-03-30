@@ -225,29 +225,6 @@ class ParserGenerator:
                 state.addarc(st, label)
         return states  # List of DFAState instances; first one is start
 
-    def dump_nfa(self, name: str, start: "NFAState", finish: "NFAState") -> None:
-        print("Dump of NFA for", name)
-        todo = [start]
-        for i, state in enumerate(todo):
-            print("  State", i, state is finish and "(final)" or "")
-            for label, next in state.arcs:
-                if next in todo:
-                    j = todo.index(next)
-                else:
-                    j = len(todo)
-                    todo.append(next)
-                if label is None:
-                    print(f"    -> {j}")
-                else:
-                    print(f"    {label} -> {j}")
-
-    def dump_dfa(self, name: str, dfa: Sequence["DFAState"]) -> None:
-        print("Dump of DFA for", name)
-        for i, state in enumerate(dfa):
-            print("  State", i, state.isfinal and "(final)" or "")
-            for label, next in sorted(state.arcs.items()):
-                print(f"    {label} -> {dfa.index(next)}")
-
     def simplify_dfa(self, dfa: list["DFAState"]) -> None:
         # This is not theoretically optimal, but works well enough.
         # Algorithm: repeatedly look for two states that have the same
