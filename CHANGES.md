@@ -53,7 +53,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
-- Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches (#5061)
+- Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
+  (#5061)
 - Use "Version X.Y.Z" headings in changelog for stable permalink anchors on ReadTheDocs
   (#5063)
 
