@@ -206,6 +206,8 @@ async def handle(
         return web.Response(status=204, headers=headers)
     except black.InvalidInput as e:
         return web.Response(status=400, headers=headers, text=str(e))
+    except black.parsing.ASTSafetyError as e:
+        return web.Response(status=400, headers=headers, text=str(e))
     except web.HTTPException:
         raise
     except Exception as e:
