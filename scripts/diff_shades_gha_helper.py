@@ -1,4 +1,4 @@
-"""Helper script for psf/black's diff-shades Github Actions integration.
+"""Helper script for psf/black's diff-shades GitHub Actions integration.
 
 diff-shades is a tool for analyzing what happens when you run Black on
 OSS code capturing it for comparisons or other usage. It's used here to
