@@ -106,6 +106,15 @@ class ASTSafetyError(Exception):
     """Raised when Black's generated code is not equivalent to the old AST."""
 
 
+class SourceASTParseError(Exception):
+    """Raised when the source file cannot be parsed by ast.parse().
+
+    This is not a bug in Black — Black's lib2to3-based parser is more lenient
+    than Python's ast.parse(), so it may accept code that ast.parse() rejects.
+    In blackd, this should be reported as a 400 Bad Request.
+    """
+
+
 def _parse_single_version(
     src: str, version: tuple[int, int], *, type_comments: bool
 ) -> ast.AST:
