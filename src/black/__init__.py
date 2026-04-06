@@ -66,6 +66,7 @@ from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import (  # noqa F401
     ASTSafetyError,
     InvalidInput,
+    SourceASTParseError,
     lib2to3_parse,
     parse_ast,
     stringify_ast,
@@ -1632,7 +1633,7 @@ def assert_equivalent(src: str, dst: str) -> None:
     try:
         src_ast = parse_ast(src)
     except Exception as exc:
-        raise ASTSafetyError(
+        raise SourceASTParseError(
             "cannot use --safe with this file; failed to parse source file AST: "
             f"{exc}\n"
             "This could be caused by running Black with an older Python version "
