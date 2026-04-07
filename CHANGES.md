@@ -20,6 +20,10 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Improve heuristics around whether blank lines should appear before, within and after
+  groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
+  files (#5021)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
