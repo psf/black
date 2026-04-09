@@ -1315,7 +1315,7 @@ def can_be_split(line: Line) -> bool:
     """Return False if the line cannot be split *for sure*.
 
     This is not an exhaustive search but a cheap heuristic that we can use to
-    avoid some unfortunate formattings (mostly around wrapping unsplittable code
+    avoid some unfortunate formatting (mostly around wrapping unsplittable code
     in unnecessary parentheses).
     """
     leaves = line.leaves
