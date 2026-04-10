@@ -14,6 +14,7 @@ import sys
 import traceback
 from collections.abc import Iterable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
+import multiprocessing
 from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
@@ -103,8 +104,19 @@ def reformat_many(
 
     executor: Executor | None = None
     if workers > 1:
+        # Use fork context on non-Windows platforms to avoid issues with Python
+        # 3.14+'s new default of spawn on Linux. With spawn, worker processes are
+        # created lazily and can fail with OSError after construction (e.g.,
+        # "Argument list too long" on Linux when the environment is large), which
+        # is not caught by the except clause below.
+        # See https://github.com/psf/black/issues/5083
+        mp_context = (
+            None
+            if sys.platform == "win32"
+            else multiprocessing.get_context("fork")
+        )
         try:
-            executor = ProcessPoolExecutor(max_workers=workers)
+            executor = ProcessPoolExecutor(max_workers=workers, mp_context=mp_context)
         except (ImportError, NotImplementedError, OSError):
             # we arrive here if the underlying system does not support multi-processing
             # like in AWS Lambda or Termux, in which case we gracefully fallback to
