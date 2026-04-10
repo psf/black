@@ -8,13 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import multiprocessing
 import os
 import signal
 import sys
 import traceback
 from collections.abc import Iterable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
-import multiprocessing
 from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
