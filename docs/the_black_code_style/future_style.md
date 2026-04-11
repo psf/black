@@ -196,28 +196,38 @@ def bar(x): ...
 
 ### Blank line before decorated classes in stub files
 
-In `.pyi` stub files, Black already enforces blank lines around class definitions.
-However, when a class has a decorator, Black previously failed to enforce this, removing
-the blank line between a function and the decorator:
+In `.pyi` stub files, Black already enforces blank lines around class definitions in many
+situations. However, when a class has a decorator, Black previously failed to enforce
+this, instead _removing_ the blank line between a function and the decorator:
 
-```python
-# Before
+```diff
+  # Before
+  
+  def foo(): ...
+-
+  @decorator
+  class Bar: ...
 
-def foo(): ...
-@decorator
-class Bar: ...
+  def baz(): ...
+  @decorator
+  class Spam: ...
 ```
 
-With this feature enabled, the blank line is preserved, consistent with how undecorated
+With this feature enabled, a blank line is enforced, consistent with how undecorated
 classes are handled:
 
-```python
-# After (with --preview)
+```diff
+  # After (with --preview)
+  
+  def foo(): ...
 
-def foo(): ...
+  @decorator
+  class Bar: ...
 
-@decorator
-class Bar: ...
+  def baz(): ...
++
+  @decorator
+  class Spam: ...
 ```
 
 ## Unstable style
