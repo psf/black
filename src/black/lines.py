@@ -677,6 +677,16 @@ class EmptyLineTracker:
                 return EmptyLineTracker._get_funcdef_name(child)
         return None
 
+    @staticmethod
+    def _decorator_decorates_class(line: Line) -> bool:
+        """Check if a decorator line decorates a class definition."""
+        if not line.is_decorator:
+            return False
+        decorated = EmptyLineTracker._find_decorated_node(line)
+        if decorated is None:
+            return False
+        return any(child.type == syms.classdef for child in decorated.children)
+
     def _is_in_current_group(self, current_line: Line) -> bool:
         """Check if current_line belongs to the same overload group being tracked."""
         prev = self._pyi_previous_decorated_func
@@ -1173,6 +1183,12 @@ class EmptyLineTracker:
                     # Blank line between a block of functions (maybe with preceding
                     # decorators) and a block of non-functions
                     newlines = 1
+            elif (
+                Preview.pyi_blank_line_before_decorated_class in self.mode
+                and current_line.is_decorator
+                and self._decorator_decorates_class(current_line)
+            ):
+                newlines = 1
             else:
                 newlines = 0
         else:
