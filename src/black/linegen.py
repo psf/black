@@ -1589,6 +1589,20 @@ def normalize_invisible_parens(
 
             elif (
                 isinstance(child, Leaf)
+                and child.value == "case"
+                and child.next_sibling is not None
+                and child.next_sibling.type == syms.guard
+            ):
+                # A special patch for "case case if ...:" scenario. The pattern
+                # "case" must be wrapped for line splitting, but we must not
+                # also wrap the guard at the case_block level, which produces
+                # invalid syntax like "case case (\n if True\n):".
+                wrap_in_parentheses(node, child, visible=False)
+                check_lpar = False
+                continue
+
+            elif (
+                isinstance(child, Leaf)
                 and child.next_sibling is not None
                 and child.next_sibling.type == token.COLON
                 and child.value == "case"

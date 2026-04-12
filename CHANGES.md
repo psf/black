@@ -13,6 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when formatting `case case if ...:` (match/case with a pattern named `case`
+  and a guard clause) at short line lengths (#4280)
 - Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
   both new syntactic features in Python 3.15 (#5048)
 
