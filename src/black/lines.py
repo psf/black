@@ -1479,6 +1479,22 @@ def can_omit_invisible_parens(
         if _can_omit_closing_paren(line, last=last, line_length=line_length):
             return True
 
+    # For assignment RHS where the LHS contains brackets (e.g. indexed
+    # assignments like `x[key] = expr`), allow omitting optional parens
+    # if the body is short enough.  The split will happen at the LHS
+    # brackets instead, and _prefer_split_rhs_oop_over_rhs will decide
+    # whether it actually produces better output.
+    if (
+        len(rhs.head.leaves) >= 2
+        and rhs.head.leaves[-2].type == token.EQUAL
+        and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-2])
+    ):
+        # Only when the body is short enough to fit on the tail line
+        # after the LHS bracket split (e.g. `] = 10 - 5`).
+        body_length = str_width(str(line).strip("\n"))
+        if body_length <= line_length // 2:
+            return True
+
     return False
 
 

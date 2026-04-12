@@ -76,6 +76,12 @@ xxxxxxxxx_yyy_zzzzzzzz[
 ] = 1
 
 
+# Indexed assignment with a short RHS expression should not get unnecessary parens.
+dictionary_of_arrays["long_key_name_for_the_example"][
+    very_long_index_name, index_zero
+] = 10 - 5
+
+
 # Right side of assignment contains un-nested pairs of inner parens.
 some_kind_of_instance.some_kind_of_map[a_key] = (
     isinstance(some_var, SomeClass)
