@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.13"
           pip-version: "25.3"
-          pip-install: --group wheels
+          pip-install: --group cibw
 
       - name: generate matrix
         if: |
@@ -76,10 +76,15 @@ jobs:
         with:
           persist-credentials: false
 
-      # Keep cibuildwheel version in sync with pyproject.toml
-      - uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
+      - name: Set up latest Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          only: ${{ matrix.only }}
+          python-version: "3.13"
+          pip-version: "25.3"
+          pip-install: --group cibw
+
+      - name: Run cibuildwheel
+        run: cibuildwheel . --only ${{ matrix.only }}
 
       - name: Upload wheels as workflow artifacts
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
@@ -101,7 +106,7 @@ jobs:
         with:
           python-version: "3.13"
           pip-version: "25.3"
-          pip-install: --group build
+          pip-install: --group hatch
 
       - name: Build wheel and source distributions
         run: python -m hatch build

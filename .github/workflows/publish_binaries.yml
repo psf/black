@@ -46,7 +46,7 @@ jobs:
         with:
           python-version: "3.13"
           pip-version: "25.3"
-          pip-install: .[colorama] --group binary
+          pip-install: .[colorama] --group pyinstaller
 
       - name: Build executable with PyInstaller
         run:

@@ -11,7 +11,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN python -m venv $VIRTUAL_ENV
 RUN cd /src \
     && pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir --group build \
+    && pip install --no-cache-dir --group hatch \
     && hatch build -t wheel \
     && pip install --no-cache-dir dist/*-cp* \
     && pip install black[colorama,d,uvloop]
