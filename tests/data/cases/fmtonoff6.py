@@ -11,3 +11,19 @@ dependencies = {
     a: b,
     # fmt: off
 }
+
+
+# Regression test for https://github.com/psf/black/issues/4511.
+# fmt: off inside brackets with an f-string should not crash.
+(
+    # fmt: off
+    f"""
+"""
+    # fmt: on
+)
+
+[
+    # fmt: off
+    f"{x}"
+    # fmt: on
+]
