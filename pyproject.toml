@@ -74,9 +74,9 @@ d = ["aiohttp>=3.10"]
 jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 
 [dependency-groups]
-build = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs>=0.3.0", "virtualenv<21.0.0"]
-wheels = ["cibuildwheel==3.3.1", "pypyp"]
-binary = ["pyinstaller", "wheel>=0.45.1"]
+hatch = ["hatch==1.15.1", "virtualenv<21.0.0"]
+cibw = ["cibuildwheel==3.4.0", "pypyp"]
+pyinstaller = ["pyinstaller"]
 
 dev = [{ include-group = "cov-tests" }, { include-group = "tox" }, "pre-commit"]
 cov-tests = [
