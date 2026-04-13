@@ -38,7 +38,7 @@ from black.cache import FileData, get_cache_dir, get_cache_file
 from black.debug import DebugVisitor
 from black.mode import Mode, Preview
 from black.output import color_diff, diff
-from black.parsing import ASTSafetyError
+from black.parsing import ASTSafetyError, SourceASTParseError
 from black.report import Report
 from black.strings import lines_with_leading_tabs_expanded
 
@@ -3212,7 +3212,7 @@ class TestASTSafety(BlackBaseTestCase):
         )
 
     def test_equivalency_ast_parse_failure_includes_error(self) -> None:
-        with pytest.raises(ASTSafetyError) as err:
+        with pytest.raises(SourceASTParseError) as err:
             black.assert_equivalent("a«»a  = 1", "a«»a  = 1")
 
         err.match("--safe")
