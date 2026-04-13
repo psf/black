@@ -28,6 +28,9 @@ Currently, the following features are included in the preview style:
 - `pyi_overload_group_blank_lines`: In `.pyi` stub files, improve heuristics around when
   blank lines should appear before, after and within decorated function groups.
   ([see below](labels/pyi-overload-group))
+- `fix_unnecessary_parens_in_indexed_assignment`: Remove unnecessary parentheses around
+  the right-hand side of indexed assignments (e.g. `x[key] = expr`) when the expression
+  is short enough. ([see below](labels/fix-unnecessary-parens-indexed-assignment))
 
 (labels/wrap-comprehension-in)=
 
@@ -187,6 +190,33 @@ def foo(x: int) -> int:
 def foo(x: str) -> str: ...
 
 def bar(x): ...
+```
+
+(labels/fix-unnecessary-parens-indexed-assignment)=
+
+### Unnecessary parentheses in indexed assignments
+
+When an assignment target contains brackets (e.g. indexed access like `x[key] = expr`),
+Black would previously wrap the right-hand side expression in unnecessary parentheses
+when the line was too long. With this feature enabled, Black removes the unnecessary
+parentheses when the RHS expression is short enough.
+
+For example:
+
+```python
+# Before
+dictionary_of_arrays["long_key_name_for_the_example"][
+    very_long_index_name, index_zero
+] = (10 - 5)
+```
+
+will be formatted to:
+
+```python
+# After (with --preview)
+dictionary_of_arrays["long_key_name_for_the_example"][
+    very_long_index_name, index_zero
+] = 10 - 5
 ```
 
 ## Unstable style

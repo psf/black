@@ -1350,7 +1350,7 @@ def can_be_split(line: Line) -> bool:
 def can_omit_invisible_parens(
     rhs: RHSResult,
     line_length: int,
-    mode: Mode = Mode(),
+    mode: Mode,
 ) -> bool:
     """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
@@ -1493,7 +1493,9 @@ def can_omit_invisible_parens(
     ):
         # Only when the body is short enough to fit on the tail line
         # after the LHS bracket split (e.g. `] = 10 - 5`).
-        body_length = str_width(str(line).strip("\n"))
+        body_length = 4 * line.depth
+        for _index, _leaf, leaf_length in line.enumerate_with_length():
+            body_length += leaf_length
         if body_length <= line_length // 2:
             return True
 
