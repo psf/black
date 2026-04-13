@@ -102,6 +102,7 @@ def lib2to3_parse(
                 f"    {' ' * (column - 1)}^\n"
                 f"TokenError: {te.args[0]}"
             )
+            errors[grammar.version] = InvalidInput(error_msg)
 
     else:
         # Choose the latest version when raising the actual parsing error.

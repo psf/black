@@ -1990,12 +1990,14 @@ class BlackTestCase(BlackBaseTestCase):
         with pytest.raises(black.parsing.InvalidInput) as exc_info:
             black.lib2to3_parse("print(", {})
 
-            exc_info.match(
+        exc_info.match(
+            re.escape(
                 "Cannot parse: 1:6\n"
-                " Unexpected EOF in multi-line statement\n"
-                " ^\n"
+                "    print(\n"
+                "         ^\n"
                 "TokenError: Unexpected EOF in multi-line statement"
             )
+        )
 
     def test_line_ranges_with_code_option(self) -> None:
         source = textwrap.dedent("""\
