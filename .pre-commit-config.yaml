@@ -39,7 +39,7 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v1.20.1
     hooks:
       - id: mypy
         exclude: ^docs/conf.py$
@@ -73,7 +73,7 @@ repos:
           - types-pyyaml>=6.0.0
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.1
+    rev: v3.8.2
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]
