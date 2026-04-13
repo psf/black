@@ -353,10 +353,10 @@ silenced by `2>/dev/null`).
 
 ```console
 $ black src/ -q
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+error: cannot format ...: Cannot parse: 5:6
     import asyncio
-          ^
-ParseError: invalid syntax
+         ^
+ParseError: bad input
 ```
 
 #### `-v`, `--verbose`
@@ -374,7 +374,7 @@ src/black/__main__.py wasn't modified on disk since last run.
 error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
     mport asyncio
           ^
-ParseError: invalid syntax
+ParseError: bad input
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
@@ -452,7 +452,7 @@ $ black src/
 error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
     mport asyncio
           ^
-ParseError: invalid syntax
+ParseError: bad input
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py

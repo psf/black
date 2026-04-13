@@ -90,16 +90,18 @@ def lib2to3_parse(
             errors[grammar.version] = InvalidInput(error_msg)
 
         except TokenError as te:
-            # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
+            lines = src_txt.splitlines()
+            try:
+                faulty_line = lines[lineno - 1]
+            except IndexError:
+                faulty_line = "<line number missing in source>"
             error_msg = (
                 f"Cannot parse{tv_str}: {lineno}:{column}\n"
-                f"    {te.args[0]}\n"
+                f"    {faulty_line}\n"
                 f"    {' ' * (column - 1)}^\n"
                 f"TokenError: {te.args[0]}"
             )
-
-        errors[grammar.version] = InvalidInput(error_msg)
 
     else:
         # Choose the latest version when raising the actual parsing error.

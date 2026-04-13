@@ -1030,7 +1030,7 @@ class BlackTestCase(BlackBaseTestCase):
             "Cannot parse: 1:7\n"
             "    return if you can\n"
             "          ^\n"
-            "ParseError: invalid syntax",
+            "ParseError: bad input",
         )
         just_crlf = "\r\n"
         with self.assertRaises(black.NothingChanged):
@@ -1990,24 +1990,24 @@ class BlackTestCase(BlackBaseTestCase):
         with pytest.raises(black.parsing.InvalidInput) as exc_info:
             black.lib2to3_parse("print(", {})
 
-    exc_info.match(
-        "Cannot parse: 1:6\n"
-        "    Unexpected EOF in multi-line statement\n"
-        "         ^\n"
-        "TokenError: Unexpected EOF in multi-line statement"
-    )
+            exc_info.match(
+                "Cannot parse: 1:6\n"
+                " Unexpected EOF in multi-line statement\n"
+                " ^\n"
+                "TokenError: Unexpected EOF in multi-line statement"
+            )
 
     def test_line_ranges_with_code_option(self) -> None:
-        code = textwrap.dedent("""\
-            if  a  ==  b:
-                print  ( "OK" )
+        source = textwrap.dedent("""\
+            if a == b:
+                print("OK")
             """)
-        args = ["--line-ranges=1-1", "--code", code]
+        args = ["--line-ranges=1-1", "--code", source]
         result = BlackRunner().invoke(black.main, args)
 
         expected = textwrap.dedent("""\
             if a == b:
-                print  ( "OK" )
+                print("OK")
             """)
         self.compare_results(result, expected, expected_exit_code=0)
 

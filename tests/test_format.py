@@ -4,7 +4,7 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-
+import re
 import black
 from black.mode import TargetVersion
 from tests.util import (
@@ -89,8 +89,10 @@ def test_patma_invalid() -> None:
         assert_format(source, expected, mode, minimum_version=(3, 10))
 
     exc_info.match(
-        "Cannot parse for target version Python 3.10: 10:11\n"
-        "    case a := b:\n"
-        "          ^\n"
-        "ParseError: invalid syntax"
+        re.escape(
+            "Cannot parse for target version Python 3.10: 10:11\n"
+            "        case a := b:\n"
+            "              ^\n"
+            "ParseError: bad input"
+        )
     )
