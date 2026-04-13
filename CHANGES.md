@@ -20,6 +20,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix unnecessary parentheses around short RHS expressions in indexed assignments like
+  `x[key] = expr` (#5095)
 - Improve heuristics around whether blank lines should appear before, within and after
   groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
   files (#5021)

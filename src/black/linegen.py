@@ -1066,7 +1066,7 @@ def _maybe_split_omitting_optional_parens(
         # in this case; attempting a split without them is a waste of time)
         and not line.is_import
         # and we can actually remove the parens
-        and can_omit_invisible_parens(rhs, mode.line_length)
+        and can_omit_invisible_parens(rhs, mode.line_length, mode)
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:

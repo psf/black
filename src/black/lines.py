@@ -1350,6 +1350,7 @@ def can_be_split(line: Line) -> bool:
 def can_omit_invisible_parens(
     rhs: RHSResult,
     line_length: int,
+    mode: Mode = Mode(),
 ) -> bool:
     """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
@@ -1485,7 +1486,8 @@ def can_omit_invisible_parens(
     # brackets instead, and _prefer_split_rhs_oop_over_rhs will decide
     # whether it actually produces better output.
     if (
-        len(rhs.head.leaves) >= 2
+        Preview.fix_unnecessary_parens_in_indexed_assignment in mode
+        and len(rhs.head.leaves) >= 2
         and rhs.head.leaves[-2].type == token.EQUAL
         and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-2])
     ):

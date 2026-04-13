@@ -258,6 +258,7 @@ class Preview(Enum):
     wrap_long_dict_values_in_parens = auto()
     fix_if_guard_explosion_in_case_statement = auto()
     pyi_overload_group_blank_lines = auto()
+    fix_unnecessary_parens_in_indexed_assignment = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

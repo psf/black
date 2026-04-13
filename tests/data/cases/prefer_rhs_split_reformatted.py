@@ -11,9 +11,6 @@ first_value, (m1, m2,), third_value = xxxxxx_yyyyyy_zzzzzz_wwwwww_uuuuuuu_vvvvvv
 # exactly line length limit + 1, it won't be split like that.
 xxxxxxxxx_yyy_zzzzzzzz[xx.xxxxxx(x_yyy_zzzzzz.xxxxx[0]), x_yyy_zzzzzz.xxxxxx(xxxx=1)] = 1
 
-# Indexed assignment should not get unnecessary parens around the RHS (#4349).
-dictionary_of_arrays["long_key_name_for_the_example"][very_long_index_name, index_zero] = 10 - 5
-
 # Regression test for #1187
 print(
     dict(
@@ -47,11 +44,6 @@ print(
 xxxxxxxxx_yyy_zzzzzzzz[
     xx.xxxxxx(x_yyy_zzzzzz.xxxxx[0]), x_yyy_zzzzzz.xxxxxx(xxxx=1)
 ] = 1
-
-# Indexed assignment should not get unnecessary parens around the RHS (#4349).
-dictionary_of_arrays["long_key_name_for_the_example"][
-    very_long_index_name, index_zero
-] = 10 - 5
 
 # Regression test for #1187
 print(
