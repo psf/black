@@ -26,6 +26,8 @@
 - Improve heuristics around whether blank lines should appear before, within and after
   groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
   files (#5021)
+- Fix blank lines being removed between a function and a decorated class in `.pyi` stub
+  files (#5092)
 
 ### Configuration
 
