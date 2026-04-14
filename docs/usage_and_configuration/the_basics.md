@@ -351,11 +351,10 @@ This option controls the number of parallel workers. This can also be specified 
 Stop emitting all non-critical output. Error messages will still be emitted (which can
 silenced by `2>/dev/null`).
 
-````console
 $ black src/ -q
 error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
-mport asyncio
-^
+    mport asyncio
+         ^
 ParseError: bad input
 
 #### `-v`, `--verbose`
@@ -379,7 +378,6 @@ reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
 Oh no! 💥 💔 💥
 3 files reformatted, 2 files left unchanged, 1 file failed to reformat
-````
 
 #### `--version`
 

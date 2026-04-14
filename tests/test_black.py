@@ -2001,15 +2001,15 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_line_ranges_with_code_option(self) -> None:
         code = textwrap.dedent("""\
-            if a == b:
-                print( "OK" )
+            if  a  ==  b:
+                print  ( "OK" )
             """)
         args = ["--line-ranges=1-1", "--code", code]
         result = BlackRunner().invoke(black.main, args)
 
         expected = textwrap.dedent("""\
             if a == b:
-                print( "OK" )
+                print  ( "OK" )
             """)
         self.compare_results(result, expected, expected_exit_code=0)
 
