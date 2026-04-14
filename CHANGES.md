@@ -55,6 +55,8 @@
 
 - Use "Version X.Y.Z" headings in changelog for stable permalink anchors on ReadTheDocs
   (#5063)
+- Note in the editor integrations that the SublimeText `sublack` plugin is archived
+  and unmaintained (#5082)
 
 ## Version 26.3.1
 
