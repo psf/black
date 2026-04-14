@@ -47,7 +47,8 @@
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
+- Improve parse error readability by showing multi-line output with an error pointer.
+  (#5068)
 
 ### _Blackd_
 
