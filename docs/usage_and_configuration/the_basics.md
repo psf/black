@@ -351,8 +351,13 @@ This option controls the number of parallel workers. This can also be specified 
 Stop emitting all non-critical output. Error messages will still be emitted (which can
 silenced by `2>/dev/null`).
 
-$ black src/ -q error: cannot format src/black_primer/cli.py: Cannot parse: 5:6 mport
-asyncio ^ ParseError: bad input
+```console
+$ black src/ -q
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+    mport asyncio
+         ^
+ParseError: bad input
+```
 
 #### `-v`, `--verbose`
 
@@ -360,7 +365,7 @@ Emit messages about files that were not changed or were ignored due to exclusion
 patterns. If _Black_ is using a configuration file, a message detailing which one it is
 using will be emitted.
 
-````console
+```console
 $ black src/ -v
 Using configuration from /tmp/pyproject.toml.
 src/blib2to3 ignored: matches the --extend-exclude regular expression
@@ -375,6 +380,7 @@ reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
 Oh no! 💥 💔 💥
 3 files reformatted, 2 files left unchanged, 1 file failed to reformat
+```
 
 #### `--version`
 
@@ -383,7 +389,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 ```console
 $ black --version
 black, 26.3.1
-````
+```
 
 #### `--config`
 
