@@ -1,0 +1,40 @@
+---
+description: Governance rules for black — quality gates, security, conventions
+globs:
+  - "**/*.py"
+alwaysApply: true
+---
+
+# Governance — black
+
+> Generated from governance.md by crag. Regenerate: `crag compile --target cursor`
+
+**Stack:** python, docker
+
+## Quality Gates
+
+Run these checks in order before committing:
+### Lint
+- `flake8`
+- `mypy .`
+- `black --check .`
+
+### Test
+- `tox run`
+
+### Build
+- `python -m build`
+
+### Ci (inferred from workflow)
+- `docker buildx imagetools create $TAGS $(printf "$REGISTRY@sha256:%s " *)`
+- `docker buildx imagetools inspect $REGISTRY:latest`
+- `python -m hatch build`
+- `python -m black --check .`
+## Security
+
+- No hardcoded secrets — grep for sk_live, AKIA, password= before commit
+
+## Conventions
+
+- Follow project commit conventions
+- Runtimes: python, docker
