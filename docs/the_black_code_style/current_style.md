@@ -489,8 +489,8 @@ AST of the target. There are three limited cases in which the AST does differ:
    whitespace anyway.
 
 1. _Black_ manages optional parentheses for some statements. In the case of the `del`
-   statement, presence of wrapping parentheses or lack thereof changes the resulting
-   AST but is semantically equivalent in the interpreter.
+   statement, presence of wrapping parentheses or lack thereof changes the resulting AST
+   but is semantically equivalent in the interpreter.
 
 1. _Black_ might move comments around, which includes type comments. Those are part of
    the AST as of Python 3.8. While the tool implements a number of special cases for
