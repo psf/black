@@ -86,6 +86,7 @@ function BlackComplete(ArgLead, CmdLine, CursorPos)
 \       'target_version=py312',
 \       'target_version=py313',
 \       'target_version=py314',
+\       'target_version=py315',
 \   ]
 endfunction
 
