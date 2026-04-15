@@ -1,4 +1,5 @@
 <!-- crag:auto-start -->
+
 # GEMINI.md
 
 > Generated from governance.md by crag. Regenerate: `crag compile --target gemini`
@@ -20,7 +21,8 @@ Run these checks in order before committing any changes:
 3. [lint] `black --check .`
 4. [test] `tox run`
 5. [build] `python -m build`
-6. [ci (inferred from workflow)] `docker buildx imagetools create $TAGS $(printf "$REGISTRY@sha256:%s " *)`
+6. [ci (inferred from workflow)]
+   `docker buildx imagetools create $TAGS $(printf "$REGISTRY@sha256:%s " *)`
 7. [ci (inferred from workflow)] `docker buildx imagetools inspect $REGISTRY:latest`
 8. [ci (inferred from workflow)] `python -m hatch build`
 9. [ci (inferred from workflow)] `python -m black --check .`

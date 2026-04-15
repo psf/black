@@ -1,27 +1,31 @@
 <!-- crag:auto-start -->
+
 # AGENTS.md
 
 > Generated from governance.md by crag. Regenerate: `crag compile --target agents-md`
 
 ## Project: black
 
-
 ## Quality Gates
 
 All changes must pass these checks before commit:
 
 ### Lint
+
 1. `flake8`
 2. `mypy .`
 3. `black --check .`
 
 ### Test
+
 1. `tox run`
 
 ### Build
+
 1. `python -m build`
 
 ### Ci (inferred from workflow)
+
 1. `docker buildx imagetools create $TAGS $(printf "$REGISTRY@sha256:%s " *)`
 2. `docker buildx imagetools inspect $REGISTRY:latest`
 3. `python -m hatch build`
@@ -48,7 +52,7 @@ All changes must pass these checks before commit:
 
 - Framework: pytest
 - Layout: flat
-- Naming: test_*.py
+- Naming: test\_\*.py
 
 ## Code Style
 
@@ -57,6 +61,7 @@ All changes must pass these checks before commit:
 ## Anti-Patterns
 
 Do not:
+
 - Do not catch bare `Exception` — catch specific exceptions
 - Do not use mutable default arguments (e.g., `def f(x=[])`)
 - Do not use `import *` — use explicit imports
@@ -69,7 +74,8 @@ Do not:
 
 ## Workflow
 
-1. Read `governance.md` at the start of every session — it is the single source of truth.
+1. Read `governance.md` at the start of every session — it is the single source of
+   truth.
 2. Run all mandatory quality gates before committing.
 3. If a gate fails, fix the issue and re-run only the failed gate.
 4. Use the project commit conventions for all changes.

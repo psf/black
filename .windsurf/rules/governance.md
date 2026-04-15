@@ -21,11 +21,14 @@ python, docker
 
 When Windsurf's Cascade agent operates on this project:
 
-- **Always read governance.md first.** It is the single source of truth for quality gates and policies.
+- **Always read governance.md first.** It is the single source of truth for quality
+  gates and policies.
 - **Run all mandatory gates before proposing changes.** Stop on first failure.
-- **Respect classifications.** OPTIONAL gates warn but don't block. ADVISORY gates are informational.
+- **Respect classifications.** OPTIONAL gates warn but don't block. ADVISORY gates are
+  informational.
 - **Respect path scopes.** Gates with a `path:` annotation must run from that directory.
-- **No destructive commands.** Never run rm -rf, dd, DROP TABLE, force-push to main, curl|bash, docker system prune.
+- **No destructive commands.** Never run rm -rf, dd, DROP TABLE, force-push to main,
+  curl|bash, docker system prune.
 - - No hardcoded secrets — grep for sk_live, AKIA, password= before commit
 - Follow the project commit conventions.
 
