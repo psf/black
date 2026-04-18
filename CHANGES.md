@@ -66,6 +66,7 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Fix wording in line-splitting comments (#5106)
 - Use "Version X.Y.Z" headings in changelog for stable permalink anchors on ReadTheDocs
   (#5063)
 - Note in the editor integrations that the SublimeText `sublack` plugin is archived and
