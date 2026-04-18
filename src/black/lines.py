@@ -1331,7 +1331,7 @@ def can_be_split(line: Line) -> bool:
     """Return False if the line cannot be split *for sure*.
 
     This is not an exhaustive search but a cheap heuristic that we can use to
-    avoid some unfortunate formattings (mostly around wrapping unsplittable code
+    avoid some unfortunate formatting (mostly around wrapping unsplittable code
     in unnecessary parentheses).
     """
     leaves = line.leaves
@@ -1369,7 +1369,7 @@ def can_omit_invisible_parens(
 ) -> bool:
     """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
-    Returns True for only a subset of potentially nice looking formattings but
+    Returns True for only a subset of potentially nice-looking formatting but
     the point is to not return false positives that end up producing lines that
     are too long.
     """
