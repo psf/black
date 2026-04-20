@@ -197,9 +197,9 @@ def bar(x): ...
 ### Unnecessary parentheses in indexed assignments
 
 When an assignment target contains brackets (e.g. indexed access like `x[key] = expr`),
-Black would previously wrap the right-hand side expression in unnecessary parentheses
-when the line was too long. With this feature enabled, Black removes the unnecessary
-parentheses when the RHS expression is short enough.
+previously, Black would incorrectly wrap the right-hand side expression in unnecessary
+parentheses when the line was too long. With this feature enabled, Black removes the
+unnecessary parentheses when the RHS expression fits on the tail line.
 
 For example:
 
