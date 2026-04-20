@@ -205,7 +205,7 @@ standalone comments that immediately precede the given function/class.
 
 _Black_ will enforce single empty lines between a class-level docstring and the first
 following field or method. This conforms to
-[PEP 257](https://www.python.org/dev/peps/pep-0257/#multi-line-docstrings).
+[PEP 257](https://peps.python.org/pep-0257/#multi-line-docstrings).
 
 _Black_ won't insert empty lines after function docstrings unless that empty line is
 required due to an inner function starting immediately after.
@@ -263,7 +263,7 @@ _Black_ to merge consecutive string literals that ended up on the same line (see
 
 Why settle on double quotes? They anticipate apostrophes in English text. They match the
 docstring standard described in
-[PEP 257](https://www.python.org/dev/peps/pep-0257/#what-is-a-docstring). An empty
+[PEP 257](https://peps.python.org/pep-0257/#what-is-a-docstring). An empty
 string in double quotes (`""`) is impossible to confuse with a one double-quote
 regardless of fonts and syntax highlighting used. On top of this, double quotes for
 strings are consistent with C which Python interacts a lot with.
@@ -295,7 +295,7 @@ parts and uppercase letters for the digits themselves: `0xAB` instead of `0XAB` 
 
 _Black_ will break a line before a binary operator when splitting a block of code over
 multiple lines. This is so that _Black_ is compliant with the recent changes in the
-[PEP 8](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
+[PEP 8](https://peps.python.org/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
 style guide, which emphasizes that this approach improves readability.
 
 Almost all operators will be surrounded by single spaces, the only exceptions are unary
@@ -321,7 +321,7 @@ h = config['base'] ** 2
 ### Slices
 
 PEP 8
-[recommends](https://www.python.org/dev/peps/pep-0008/#whitespace-in-expressions-and-statements)
+[recommends](https://peps.python.org/pep-0008/#whitespace-in-expressions-and-statements)
 to treat `:` in slices as a binary operator with the lowest priority, and to leave an
 equal amount of space on either side, except if a parameter is omitted (e.g.
 `ham[1 + 1 :]`). It recommends no spaces around `:` operators for "simple expressions"
@@ -395,7 +395,7 @@ be written in C, or they might be third-party, or their implementation may be ov
 dynamic, and so on).
 
 To solve this,
-[stub files with the `.pyi` file extension](https://www.python.org/dev/peps/pep-0484/#stub-files)
+[stub files with the `.pyi` file extension](https://peps.python.org/pep-0484/#stub-files)
 can be used to describe typing information for an external module. Those stub files omit
 the implementation of classes and functions they describe, instead they only contain the
 structure of the file (listing globals, functions, and classes with their members). The

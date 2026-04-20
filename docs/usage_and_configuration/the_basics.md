@@ -475,7 +475,7 @@ code in compliance with many other _Black_ formatted projects.
 
 ### What on Earth is a `pyproject.toml` file?
 
-[PEP 518](https://www.python.org/dev/peps/pep-0518/) defines `pyproject.toml` as a
+[PEP 518](https://peps.python.org/pep-0518/) defines `pyproject.toml` as a
 configuration file to store build system requirements for Python projects. With the help
 of tools like [Poetry](https://python-poetry.org/),
 [Flit](https://flit.readthedocs.io/en/latest/), or
