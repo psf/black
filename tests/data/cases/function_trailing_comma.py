@@ -252,9 +252,7 @@ def foo() -> (
 
 def foo() -> (
     # comment inside parenthesised new union return type
-    int
-    | str
-    | bytes
+    int | str | bytes
 ): ...
 
 
