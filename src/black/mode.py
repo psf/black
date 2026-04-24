@@ -26,6 +26,7 @@ class TargetVersion(Enum):
     PY312 = 12
     PY313 = 13
     PY314 = 14
+    PY315 = 15
 
     def pretty(self) -> str:
         assert self.name[:2] == "PY"
@@ -56,6 +57,8 @@ class Feature(Enum):
     TYPE_PARAM_DEFAULTS = 20
     UNPARENTHESIZED_EXCEPT_TYPES = 21
     T_STRINGS = 22
+    LAZY_IMPORTS = 23
+    UNPACKING_IN_COMPREHENSIONS = 24
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -209,6 +212,30 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPARENTHESIZED_EXCEPT_TYPES,
         Feature.T_STRINGS,
     },
+    TargetVersion.PY315: {
+        Feature.F_STRINGS,
+        Feature.DEBUG_F_STRINGS,
+        Feature.NUMERIC_UNDERSCORES,
+        Feature.TRAILING_COMMA_IN_CALL,
+        Feature.TRAILING_COMMA_IN_DEF,
+        Feature.ASYNC_KEYWORDS,
+        Feature.FUTURE_ANNOTATIONS,
+        Feature.ASSIGNMENT_EXPRESSIONS,
+        Feature.RELAXED_DECORATORS,
+        Feature.POS_ONLY_ARGUMENTS,
+        Feature.UNPACKING_ON_FLOW,
+        Feature.ANN_ASSIGN_EXTENDED_RHS,
+        Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.PATTERN_MATCHING,
+        Feature.EXCEPT_STAR,
+        Feature.VARIADIC_GENERICS,
+        Feature.TYPE_PARAMS,
+        Feature.TYPE_PARAM_DEFAULTS,
+        Feature.UNPARENTHESIZED_EXCEPT_TYPES,
+        Feature.T_STRINGS,
+        Feature.LAZY_IMPORTS,
+        Feature.UNPACKING_IN_COMPREHENSIONS,
+    },
 }
 
 
@@ -230,6 +257,8 @@ class Preview(Enum):
     simplify_power_operator_hugging = auto()
     wrap_long_dict_values_in_parens = auto()
     fix_if_guard_explosion_in_case_statement = auto()
+    pyi_overload_group_blank_lines = auto()
+    pyi_blank_line_before_decorated_class = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
@@ -238,10 +267,6 @@ UNSTABLE_FEATURES: set[Preview] = {
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,
 }
-
-
-class Deprecated(UserWarning):
-    """Visible deprecation warning."""
 
 
 _MAX_CACHE_KEY_PART_LENGTH: Final = 32
@@ -292,10 +317,9 @@ class Mode:
             + "@"
             + ",".join(sorted(self.python_cell_magics))
         )
-        if len(features_and_magics) > _MAX_CACHE_KEY_PART_LENGTH:
-            features_and_magics = sha256(features_and_magics.encode()).hexdigest()[
-                :_MAX_CACHE_KEY_PART_LENGTH
-            ]
+        features_and_magics = sha256(features_and_magics.encode()).hexdigest()[
+            :_MAX_CACHE_KEY_PART_LENGTH
+        ]
         parts = [
             version_str,
             str(self.line_length),

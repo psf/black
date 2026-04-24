@@ -562,6 +562,14 @@ s = (
 
 s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:\'{my_dict["foo"]}\''
 
+# Regression test for https://github.com/psf/black/issues/4510.
+# Don't merge multi-line strings when a pragma comment follows.
+(
+    "A very very very very very very very very very very very very long string "
+    "annotated with a type ignore pragma gets merged into a single very long line "
+    "which is against the line length rule."
+)  # type: ignore
+
 
 # output
 
@@ -1252,3 +1260,11 @@ s = (
     "Lorem Ipsum is simply dummy text of the printing and typesetting"
     f' industry:\'{my_dict["foo"]}\''
 )
+
+# Regression test for https://github.com/psf/black/issues/4510.
+# Don't merge multi-line strings when a pragma comment follows.
+(
+    "A very very very very very very very very very very very very long string "
+    "annotated with a type ignore pragma gets merged into a single very long line "
+    "which is against the line length rule."
+)  # type: ignore

@@ -84,6 +84,21 @@ def f(
     ...
 
 
+def get_requires_for_build_sdist(
+    config_settings: dict[str, str | list[str]]
+    | None = None,
+) -> list[str]:
+    return ["pathspec", "pyproject_metadata"]
+
+
+def get_requires_for_build_sdist(
+    # pylint: disable-next=unused-argument
+    config_settings: dict[str, str | list[str]]
+    | None = None,
+) -> list[str]:
+    return ["pathspec", "pyproject_metadata"]
+
+
 # output
 # This has always worked
 z = (
@@ -186,3 +201,16 @@ def f(
     ),
     another_option: bool = False,
 ): ...
+
+
+def get_requires_for_build_sdist(
+    config_settings: dict[str, str | list[str]] | None = None,
+) -> list[str]:
+    return ["pathspec", "pyproject_metadata"]
+
+
+def get_requires_for_build_sdist(
+    # pylint: disable-next=unused-argument
+    config_settings: dict[str, str | list[str]] | None = None,
+) -> list[str]:
+    return ["pathspec", "pyproject_metadata"]

@@ -25,6 +25,12 @@ Currently, the following features are included in the preview style:
 - `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
   patterns which have trailing commas in them, even if the guard expression fits in one
   line
+- `pyi_overload_group_blank_lines`: In `.pyi` stub files, improve heuristics around when
+  blank lines should appear before, after and within decorated function groups.
+  ([see below](labels/pyi-overload-group))
+- `pyi_blank_line_before_decorated_class`: In `.pyi` stub files, enforce a blank line
+  before a decorated class definition when it follows a function definition.
+  ([see below](labels/pyi-blank-line-before-decorated-class))
 
 (labels/wrap-comprehension-in)=
 
@@ -135,6 +141,93 @@ my_dict = {
     ),
     "another key": short_value,
 }
+```
+
+(labels/pyi-overload-group)=
+
+### Improved overload groups in stub files
+
+In `.pyi` stub files, Black now has improved heuristics regarding when blank lines
+should appear before, after or within groups of decorated functions that share the same
+name (such as `@overload` groups). Two rules are applied when a decorated function is
+determined to be part of a series of >=2 decorated functions with the same name:
+
+1. **Before the decorated function**: a blank line is always inserted, unless the
+   preceding statement is a same-name decorated function (i.e. part of an `@overload`
+   group) or the function is the first statement in its block.
+2. **After the decorated function**: a blank line is always inserted, unless the
+   following statement is a same-name decorated function.
+
+These rules apply regardless of what the adjacent statement is — whether it's another
+function definition, a variable annotation, or any other statement.
+
+Previously, Black could insert unwanted blank lines _within_ an overload group when one
+of the overloads had a docstring, and did not consistently enforce blank lines at the
+boundaries of overload groups:
+
+```python
+# Before
+
+@overload
+def foo(x: int) -> int:
+    """Docs."""
+
+@overload                    # unwanted blank line within group
+def foo(x: str) -> str: ...
+def bar(x): ...              # no blank line after group
+```
+
+With this feature enabled, the group is kept together and clearly separated from
+surrounding code:
+
+```python
+# After (with --preview)
+
+@overload
+def foo(x: int) -> int:
+    """Docs."""
+@overload
+def foo(x: str) -> str: ...
+
+def bar(x): ...
+```
+
+(labels/pyi-blank-line-before-decorated-class)=
+
+### Blank line before decorated classes in stub files
+
+In `.pyi` stub files, Black already enforces blank lines around class definitions in
+many situations. However, when a class has a decorator, Black previously failed to
+enforce this, instead _removing_ the blank line between a function and the decorator:
+
+```diff
+  # Before
+
+  def foo(): ...
+-
+  @decorator
+  class Bar: ...
+
+  def baz(): ...
+  @decorator
+  class Spam: ...
+```
+
+With this feature enabled, a blank line is enforced, consistent with how undecorated
+classes are handled:
+
+```diff
+  # After (with --preview)
+
+  def foo(): ...
+
+  @decorator
+  class Bar: ...
+
+  def baz(): ...
++
+  @decorator
+  class Spam: ...
 ```
 
 ## Unstable style

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.release.prerelease != 'true'
     permissions:
-      contents: write
+      contents: write # Needed to push to stable
 
     steps:
       - name: Checkout stable branch
@@ -32,8 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.release.prerelease != 'true'
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # Needed to push to new branch
+      pull-requests: write # Needed to create PR
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:

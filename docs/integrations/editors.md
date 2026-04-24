@@ -166,7 +166,7 @@ the Wing documentation on
 [Auto-Reformatting](https://wingware.com/doc/edit/auto-reformatting). The detailed
 procedure is:
 
-### Prerequistes
+### Prerequisites
 
 - Wing IDE version 8.0+
 
@@ -397,8 +397,14 @@ close and reopen your File, _Black_ will be done with its job.
 
 ## SublimeText
 
-For SublimeText 3, use [sublack plugin](https://github.com/jgirardet/sublack). For
-higher versions, it is recommended to use [LSP](#python-lsp-server) as documented below.
+Use [LSP](#python-lsp-server) with the
+[python-lsp-black](https://github.com/python-lsp/python-lsp-black) plugin as documented
+below. This is the recommended approach for all versions of Sublime Text.
+
+```{note}
+The [sublack plugin](https://github.com/jgirardet/sublack) that was previously
+recommended here is no longer maintained (the repository has been archived).
+```
 
 ## Python LSP Server
 

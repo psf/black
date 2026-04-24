@@ -39,14 +39,12 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
+    rev: v1.20.2
     hooks:
       - id: mypy
         exclude: ^docs/conf.py$
         args: []
         additional_dependencies:
-          # Click is intentionally out-of-sync with pyproject.toml
-          # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
           - click>=8.0.0
           - packaging>=22.0
           - platformdirs>=2
@@ -75,7 +73,7 @@ repos:
           - types-pyyaml>=6.0.0
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.1
+    rev: v3.8.3
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]

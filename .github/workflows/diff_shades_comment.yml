@@ -16,13 +16,13 @@ jobs:
       github.event.workflow_run.event == 'pull_request' &&
       contains(fromJSON('["success", "failure"]'), github.event.workflow_run.conclusion)
     permissions:
-      pull-requests: write
+      pull-requests: write # Needed to comment on PR
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         id: artifacts
         with:
           merge-multiple: true
@@ -57,14 +57,14 @@ jobs:
 
       - name: Try to find pre-existing PR comment
         id: find-comment
-        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         with:
           issue-number: ${{ steps.pr.outputs.pr }}
           comment-author: "github-actions[bot]"
           body-includes: "diff-shades"
 
       - name: Create or update PR comment
-        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         with:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           issue-number: ${{ steps.pr.outputs.pr }}

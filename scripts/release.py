@@ -85,7 +85,7 @@ def get_git_tags(versions_only: bool = True) -> list[str]:
     return git_tags
 
 
-# TODO: Support sorting alhpa/beta releases correctly
+# TODO: Support sorting alpha/beta releases correctly
 def tuple_calver(calver: str) -> tuple[int, ...]:  # mypy can't notice maxsplit below
     """Convert a calver string into a tuple of ints for sorting"""
     try:
@@ -148,7 +148,7 @@ class SourceFiles:
 
         # Change Unreleased to next version
         changes_string = changes_string.replace(
-            "## Unreleased", f"## {self.next_version}"
+            "## Unreleased", f"## Version {self.next_version}"
         )
 
         # Remove all comments

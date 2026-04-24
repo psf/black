@@ -13,9 +13,21 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
+- Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
+  both new syntactic features in Python 3.15 (#5048)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
+
+- Prevent string merger from creating unsplittable long lines when a pragma comment
+  (e.g. `# type: ignore`) follows the closing bracket (#5096)
+- Improve heuristics around whether blank lines should appear before, within and after
+  groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
+  files (#5021)
+- Fix blank lines being removed between a function and a decorated class in `.pyi` stub
+  files (#5092)
 
 ### Configuration
 
@@ -35,7 +47,8 @@
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
+- Improve parse error readability by showing multi-line output with an error pointer.
+  (#5068)
 
 ### _Blackd_
 
@@ -45,12 +58,39 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Added documentation for doctest formatting tools and updated the integrations index to
+  match (#4916)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
-## 26.3.0
+- Use "Version X.Y.Z" headings in changelog for stable permalink anchors on ReadTheDocs
+  (#5063)
+- Note in the editor integrations that the SublimeText `sublack` plugin is archived and
+  unmaintained (#5082)
+
+## Version 26.3.1
+
+### Stable style
+
+- Prevent Jupyter notebook magic masking collisions from corrupting cells by using
+  exact-length placeholders for short magics and aborting if a placeholder can no longer
+  be unmasked safely (#5038)
+
+### Configuration
+
+- Always hash cache filename components derived from `--python-cell-magics` so custom
+  magic names cannot affect cache paths (#5038)
+
+### _Blackd_
+
+- Disable browser-originated requests by default, add configurable origin allowlisting
+  and request body limits, and bound executor submissions to improve backpressure
+  (#5039)
+
+## Version 26.3.0
 
 ### Stable style
 
@@ -78,7 +118,7 @@
 - Remove deprecated function `uvloop.install()` in favor of `uvloop.new_event_loop()`
   (#4996)
 - Rename `maybe_install_uvloop` function to `maybe_use_uvloop` to simplify loop
-  installation and creation of either a uvloop/winloop evenloop or default eventloop
+  installation and creation of either a uvloop/winloop eventloop or default eventloop
   (#4996)
 
 ### Output
@@ -110,7 +150,7 @@
   (#4987)
 - Add detailed documentation for formatting Jupyter Notebooks (#5009)
 
-## 26.1.0
+## Version 26.1.0
 
 ### Highlights
 
@@ -171,7 +211,7 @@ directories.
 
 - Upgraded PyPI upload workflow to use Trusted Publishing (#4611)
 
-## 25.12.0
+## Version 25.12.0
 
 ### Highlights
 
@@ -203,7 +243,7 @@ directories.
 - Add `output-file` input to GitHub Action `psf/black` to write formatter output to a
   file for artifact capture and log cleanliness (#4824)
 
-## 25.11.0
+## Version 25.11.0
 
 ### Highlights
 
@@ -254,7 +294,7 @@ directories.
 - Vim: Print the import paths when importing black fails (#4675)
 - Vim: Fix handling of virtualenvs that have a different Python version (#4675)
 
-## 25.9.0
+## Version 25.9.0
 
 ### Highlights
 
@@ -310,7 +350,7 @@ directories.
 
 - Add FAQ entry for windows emoji not displaying (#4714)
 
-## 25.1.0
+## Version 25.1.0
 
 ### Highlights
 
@@ -364,7 +404,7 @@ The following changes were not in any previous release:
 - If using stdin with `--stdin-filename` set to a force excluded path, stdin won't be
   formatted. (#4539)
 
-## 24.10.0
+## Version 24.10.0
 
 ### Highlights
 
@@ -400,7 +440,7 @@ The following changes were not in any previous release:
 - Added Python target version information on parse error (#4378)
 - Add information about Black version to internal error messages (#4457)
 
-## 24.8.0
+## Version 24.8.0
 
 ### Stable style
 
@@ -408,7 +448,7 @@ The following changes were not in any previous release:
 
 ### Packaging
 
-- Packaging metadata updated: docs are explictly linked, the issue tracker is now also
+- Packaging metadata updated: docs are explicitly linked, the issue tracker is now also
   linked. This improves the PyPI listing for Black. (#4345)
 
 ### Parser
@@ -430,7 +470,7 @@ The following changes were not in any previous release:
 
 - Fix blackd (and all extras installs) for docker container (#4357)
 
-## 24.4.2
+## Version 24.4.2
 
 This is a bugfix release to fix two regressions in the new f-string parser introduced in
 24.4.1.
@@ -443,7 +483,7 @@ This is a bugfix release to fix two regressions in the new f-string parser intro
 
 - Fix bad performance on certain complex string literals (#4331)
 
-## 24.4.1
+## Version 24.4.1
 
 ### Highlights
 
@@ -462,7 +502,7 @@ This is a bugfix release to fix two regressions in the new f-string parser intro
 
 - Github Action now works even when `git archive` is skipped (#4313)
 
-## 24.4.0
+## Version 24.4.0
 
 ### Stable style
 
@@ -479,7 +519,7 @@ This is a bugfix release to fix two regressions in the new f-string parser intro
 - Add a new option `use_pyproject` to the GitHub Action `psf/black`. This will read the
   Black version from `pyproject.toml`. (#4294)
 
-## 24.3.0
+## Version 24.3.0
 
 ### Highlights
 
@@ -512,7 +552,7 @@ incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
 
 - Note what happens when `--check` is used with `--quiet` (#4236)
 
-## 24.2.0
+## Version 24.2.0
 
 ### Stable style
 
@@ -523,7 +563,7 @@ incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
 
 - Move the `hug_parens_with_braces_and_square_brackets` feature to the unstable style
   due to an outstanding crash and proposed formatting tweaks (#4198)
-- Fixed a bug where base expressions caused inconsistent formatting of \*\* in tenary
+- Fixed a bug where base expressions caused inconsistent formatting of \*\* in ternary
   expression (#4154)
 - Checking for newline before adding one on docstring that is almost at the line limit
   (#4185)
@@ -548,7 +588,7 @@ incorrect changes to certain f-strings that are valid in Python 3.12 and higher.
 
 - Add a JSONSchema and provide a validate-pyproject entry-point (#4181)
 
-## 24.1.1
+## Version 24.1.1
 
 Bugfix release to fix a bug that made Black unusable on certain file systems with strict
 limits on path length.
@@ -562,7 +602,7 @@ limits on path length.
 - Shorten the length of the name of the cache file to fix crashes on file systems that
   do not support long paths (#4176)
 
-## 24.1.0
+## Version 24.1.0
 
 ### Highlights
 
@@ -642,13 +682,13 @@ release:
 - Revert the change to run Black's pre-commit integration only on specific git hooks
   (#3940) for better compatibility with older versions of pre-commit (#4137)
 
-## 23.12.1
+## Version 23.12.1
 
 ### Packaging
 
 - Fixed a bug that included dependencies from the `d` extra by default (#4108)
 
-## 23.12.0
+## Version 23.12.0
 
 ### Highlights
 
@@ -694,7 +734,7 @@ changes in `--preview` mode will be in the 2024 stable style.
 - Build docker images in parallel (#4054)
 - Build docker images with 3.12 (#4055)
 
-## 23.11.0
+## Version 23.11.0
 
 ### Highlights
 
@@ -738,7 +778,7 @@ changes in `--preview` mode will be in the 2024 stable style.
 - Black's pre-commit integration will now run only on git hooks appropriate for a code
   formatter (#3940)
 
-## 23.10.1
+## Version 23.10.1
 
 ### Highlights
 
@@ -764,7 +804,7 @@ changes in `--preview` mode will be in the 2024 stable style.
 - It is known Windows documentation CI is broken
   https://github.com/psf/black/issues/3968
 
-## 23.10.0
+## Version 23.10.0
 
 ### Stable style
 
@@ -801,7 +841,7 @@ changes in `--preview` mode will be in the 2024 stable style.
 
 - The action output displayed in the job summary is now wrapped in Markdown (#3914)
 
-## 23.9.1
+## Version 23.9.1
 
 Due to various issues, the previous release (23.9.0) did not include compiled mypyc
 wheels, which make Black significantly faster. These issues have now been fixed, and
@@ -819,7 +859,7 @@ wheels in a future release as soon as the mypyc bug is fixed.
 - Store raw tuples instead of NamedTuples in Black's cache, improving performance and
   decreasing the size of the cache (#3877)
 
-## 23.9.0
+## Version 23.9.0
 
 ### Preview style
 
@@ -850,7 +890,7 @@ wheels in a future release as soon as the mypyc bug is fixed.
 - The `.black.env` folder specified by `ENV_PATH` will now be removed on the completion
   of the GitHub Action (#3759)
 
-## 23.7.0
+## Version 23.7.0
 
 ### Highlights
 
@@ -922,7 +962,7 @@ wheels in a future release as soon as the mypyc bug is fixed.
 - Update the _classes_ and _exceptions_ documentation in Developer reference to match
   the latest code base (#3755)
 
-## 23.3.0
+## Version 23.3.0
 
 ### Highlights
 
@@ -973,7 +1013,7 @@ expected to become part of Black's stable style in January 2024.
 - Document that only the most recent release is supported for security issues;
   vulnerabilities should be reported through Tidelift (#3612)
 
-## 23.1.0
+## Version 23.1.0
 
 ### Highlights
 
@@ -1089,7 +1129,7 @@ versions separately.
 
 - Expand `vim-plug` installation instructions to offer more explicit options (#3468)
 
-## 22.12.0
+## Version 22.12.0
 
 ### Preview style
 
@@ -1121,7 +1161,7 @@ versions separately.
 - Vim plugin: Optionally allow using the system installation of Black via
   `let g:black_use_virtualenv = 0`(#3309)
 
-## 22.10.0
+## Version 22.10.0
 
 ### Highlights
 
@@ -1165,7 +1205,7 @@ versions separately.
 - Update GitHub Action to support use of version specifiers (e.g. `<23`) for Black
   version (#3265)
 
-## 22.8.0
+## Version 22.8.0
 
 ### Highlights
 
@@ -1237,7 +1277,7 @@ versions separately.
 
 - Reduce Black's startup time when formatting a single file by 15-30% (#3211)
 
-## 22.6.0
+## Version 22.6.0
 
 ### Style
 
@@ -1277,7 +1317,7 @@ versions separately.
 
 - Fix `strtobool` function. It didn't parse true/on/false/off. (#3025)
 
-## 22.3.0
+## Version 22.3.0
 
 ### Preview style
 
@@ -1319,7 +1359,7 @@ versions separately.
 - Black can now parse starred expressions in the target of `for` and `async for`
   statements, e.g `for item in *items_1, *items_2: pass` (#2879).
 
-## 22.1.0
+## Version 22.1.0
 
 At long last, _Black_ is no longer a beta product! This is the first non-beta release
 and the first release covered by our new
@@ -1410,7 +1450,7 @@ and the first release covered by our new
 - Deprecate the `black-primer` tool (#2809)
 - Document Python support policy (#2819)
 
-## 21.12b0
+## Version 21.12b0
 
 ### _Black_
 
@@ -1443,13 +1483,13 @@ and the first release covered by our new
 
 - Remove dependency on `regex` (#2644) (#2663)
 
-## 21.11b1
+## Version 21.11b1
 
 ### _Black_
 
 - Bumped regex version minimum to 2021.4.4 to fix Pattern class usage (#2621)
 
-## 21.11b0
+## Version 21.11b0
 
 ### _Black_
 
@@ -1466,7 +1506,7 @@ and the first release covered by our new
 - Fixed vim plugin with Python 3.10 by removing deprecated distutils import (#2610)
 - The vim plugin now parses `skip_magic_trailing_comma` from pyproject.toml (#2613)
 
-## 21.10b0
+## Version 21.10b0
 
 ### _Black_
 
@@ -1494,14 +1534,14 @@ and the first release covered by our new
 - Install build tools in docker file and use multi-stage build to keep the image size
   down (#2582)
 
-## 21.9b0
+## Version 21.9b0
 
 ### Packaging
 
 - Fix missing modules in self-contained binaries (#2466)
 - Fix missing toml extra used during installation (#2475)
 
-## 21.8b0
+## Version 21.8b0
 
 ### _Black_
 
@@ -1528,7 +1568,7 @@ and the first release covered by our new
 - The provided pre-commit hooks no longer specify `language_version` to avoid overriding
   `default_language_version` (#2430)
 
-## 21.7b0
+## Version 21.7b0
 
 ### _Black_
 
@@ -1553,7 +1593,7 @@ and the first release covered by our new
 - The vim plugin no longer crashes Black when there's boolean values in pyproject.toml
   (#1869)
 
-## 21.6b0
+## Version 21.6b0
 
 ### _Black_
 
@@ -1574,7 +1614,7 @@ and the first release covered by our new
 - The official Black action now supports choosing what version to use, and supports the
   major 3 OSes. (#1940)
 
-## 21.5b2
+## Version 21.5b2
 
 ### _Black_
 
@@ -1608,7 +1648,7 @@ and the first release covered by our new
 - Add new Frequently Asked Questions page (#2247)
 - Fix encoding + symlink issues preventing proper build on Windows (#2262)
 
-## 21.5b1
+## Version 21.5b1
 
 ### _Black_
 
@@ -1624,7 +1664,7 @@ and the first release covered by our new
   heading over to [the stable docs on RTD](https://black.readthedocs.io/en/stable/).
   (#2174)
 
-## 21.5b0
+## Version 21.5b0
 
 ### _Black_
 
@@ -1636,7 +1676,7 @@ and the first release covered by our new
 
 - Add `--no-diff` to black-primer to suppress formatting changes (#2187)
 
-## 21.4b2
+## Version 21.4b2
 
 ### _Black_
 
@@ -1653,7 +1693,7 @@ and the first release covered by our new
 
 - Install `primer.json` (used by `black-primer` by default) with black. (#2154)
 
-## 21.4b1
+## Version 21.4b1
 
 ### _Black_
 
@@ -1672,7 +1712,7 @@ and the first release covered by our new
 
 - Bump pathspec to >= 0.8.1 to solve invalid .gitignore exclusion handling
 
-## 21.4b0
+## Version 21.4b0
 
 ### _Black_
 
@@ -1735,14 +1775,14 @@ and the first release covered by our new
 - Self-contained native _Black_ binaries are now provided for releases via GitHub
   Releases (#1743)
 
-## 20.8b1
+## Version 20.8b1
 
 ### _Packaging_
 
 - explicitly depend on Click 7.1.2 or newer as `Black` no longer works with versions
   older than 7.0
 
-## 20.8b0
+## Version 20.8b0
 
 ### _Black_
 
@@ -1792,7 +1832,7 @@ and the first release covered by our new
 
 - prefer virtualenv packages over global packages (#1383)
 
-## 19.10b0
+## Version 19.10b0
 
 - added support for PEP 572 assignment expressions (#711)
 
@@ -1851,7 +1891,7 @@ and the first release covered by our new
 - `blackd` can now output the diff of formats on source code when the `X-Diff` header is
   provided (#969)
 
-## 19.3b0
+## Version 19.3b0
 
 - new option `--target-version` to control which Python versions _Black_-formatted code
   should target (#618)
@@ -1876,7 +1916,7 @@ and the first release covered by our new
 
 - `blackd` now supports CORS (#622)
 
-## 18.9b0
+## Version 18.9b0
 
 - numeric literals are now formatted by _Black_ (#452, #461, #464, #469):
   - numeric literals are normalized to include `_` separators on Python 3.6+ code
@@ -1919,11 +1959,11 @@ and the first release covered by our new
 - note: the Vim plugin stopped registering `,=` as a default chord as it turned out to
   be a bad idea (#415)
 
-## 18.6b4
+## Version 18.6b4
 
 - hotfix: don't freeze when multiple comments directly precede `# fmt: off` (#371)
 
-## 18.6b3
+## Version 18.6b3
 
 - typing stub files (`.pyi`) now have blank lines added after constants (#340)
 
@@ -1950,7 +1990,7 @@ and the first release covered by our new
 
 - fixed a crash due to symbolic links pointing outside of the project directory (#338)
 
-## 18.6b2
+## Version 18.6b2
 
 - added `--config` (#65)
 
@@ -1964,13 +2004,13 @@ and the first release covered by our new
 
 - fixed unnecessary slowdown in comment placement calculation on lines without comments
 
-## 18.6b1
+## Version 18.6b1
 
 - hotfix: don't output human-facing information on stdout (#299)
 
 - hotfix: don't output cake emoji on non-zero return code (#300)
 
-## 18.6b0
+## Version 18.6b0
 
 - added `--include` and `--exclude` (#270)
 
@@ -1988,7 +2028,7 @@ and the first release covered by our new
 
 - _Black_ now preserves line endings when formatting a file in place (#258)
 
-## 18.5b1
+## Version 18.5b1
 
 - added `--pyi` (#249)
 
@@ -2017,7 +2057,7 @@ and the first release covered by our new
 - fixed extra empty line between a function signature and an inner function or inner
   class (#196)
 
-## 18.5b0
+## Version 18.5b0
 
 - call chains are now formatted according to the
   [fluent interfaces](https://en.wikipedia.org/wiki/Fluent_interface) style (#67)
@@ -2072,11 +2112,11 @@ and the first release covered by our new
 
 - fixed crash when dead symlinks where encountered
 
-## 18.4a4
+## Version 18.4a4
 
 - don't populate the cache on `--check` (#175)
 
-## 18.4a3
+## Version 18.4a3
 
 - added a "cache"; files already reformatted that haven't changed on disk won't be
   reformatted again (#109)
@@ -2104,7 +2144,7 @@ and the first release covered by our new
 
 - fixed missing splits of ternary expressions (#141)
 
-## 18.4a2
+## Version 18.4a2
 
 - fixed parsing of unaligned standalone comments (#99, #112)
 
@@ -2115,7 +2155,7 @@ and the first release covered by our new
 - fixed unstable formatting when encountering unnecessarily escaped quotes in a string
   (#120)
 
-## 18.4a1
+## Version 18.4a1
 
 - added `--quiet` (#78)
 
@@ -2127,7 +2167,7 @@ and the first release covered by our new
 
 - fixed removing backslash escapes from raw strings (#100, #105)
 
-## 18.4a0
+## Version 18.4a0
 
 - added `--diff` (#87)
 
@@ -2152,7 +2192,7 @@ and the first release covered by our new
 - only allow up to two empty lines on module level and only single empty lines within
   functions (#74)
 
-## 18.3a4
+## Version 18.3a4
 
 - `# fmt: off` and `# fmt: on` are implemented (#5)
 
@@ -2174,7 +2214,7 @@ and the first release covered by our new
   [Sphinx auto-attribute comments](http://www.sphinx-doc.org/en/stable/ext/autodoc.html#directive-autoattribute)
   (#68)
 
-## 18.3a3
+## Version 18.3a3
 
 - don't remove single empty lines outside of bracketed expressions (#19)
 
@@ -2184,7 +2224,7 @@ and the first release covered by our new
 
 - even better handling of numpy-style array indexing (#33, again)
 
-## 18.3a2
+## Version 18.3a2
 
 - changed positioning of binary operators to occur at beginning of lines instead of at
   the end, following
@@ -2208,7 +2248,7 @@ and the first release covered by our new
 
 - fixed spurious space after star-based unary expressions (#31)
 
-## 18.3a1
+## Version 18.3a1
 
 - added `--check`
 
@@ -2227,7 +2267,7 @@ and the first release covered by our new
 - fixed spurious space after unary operators when the operand was a complex expression
   (#15)
 
-## 18.3a0
+## Version 18.3a0
 
 - first published version, Happy 🍰 Day 2018!
 

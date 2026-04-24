@@ -19,21 +19,3 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    patterns: ["pypa/cibuildwheel"]
-    multi-ecosystem-group: "cibuildwheel"
-
-  - package-ecosystem: "pip"
-    directory: "/"
-    patterns: ["cibuildwheel"]
-    multi-ecosystem-group: "cibuildwheel"
-
-multi-ecosystem-groups:
-  cibuildwheel:
-    schedule:
-      interval: daily
-    cooldown:
-      default-days: 7
-    labels: ["ci: skip news", "C: dependencies"]

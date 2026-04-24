@@ -280,8 +280,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 26.3.0 (compiled: yes)
-$ black --required-version 26.3.0 -c "format = 'this'"
+black, 26.3.1 (compiled: yes)
+$ black --required-version 26.3.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -353,7 +353,10 @@ silenced by `2>/dev/null`).
 
 ```console
 $ black src/ -q
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+    mport asyncio
+         ^
+ParseError: bad input
 ```
 
 #### `-v`, `--verbose`
@@ -368,7 +371,10 @@ Using configuration from /tmp/pyproject.toml.
 src/blib2to3 ignored: matches the --extend-exclude regular expression
 src/_black_version.py wasn't modified on disk since last run.
 src/black/__main__.py wasn't modified on disk since last run.
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+    mport asyncio
+         ^
+ParseError: bad input
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
@@ -382,7 +388,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 26.3.0
+black, 26.3.1
 ```
 
 #### `--config`
@@ -443,7 +449,10 @@ plus a short summary.
 
 ```console
 $ black src/
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+    mport asyncio
+         ^
+ParseError: bad input
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
@@ -466,10 +475,9 @@ code in compliance with many other _Black_ formatted projects.
 
 ### What on Earth is a `pyproject.toml` file?
 
-[PEP 518](https://www.python.org/dev/peps/pep-0518/) defines `pyproject.toml` as a
-configuration file to store build system requirements for Python projects. With the help
-of tools like [Poetry](https://python-poetry.org/),
-[Flit](https://flit.readthedocs.io/en/latest/), or
+[PEP 518](https://peps.python.org/pep-0518/) defines `pyproject.toml` as a configuration
+file to store build system requirements for Python projects. With the help of tools like
+[Poetry](https://python-poetry.org/), [Flit](https://flit.readthedocs.io/en/latest/), or
 [Hatch](https://hatch.pypa.io/latest/) it can fully replace the need for `setup.py` and
 `setup.cfg` files.
 
@@ -497,7 +505,8 @@ Note that these are paths to the TOML file itself (meaning that they shouldn't b
 as `pyproject.toml`), not directories where you store the configuration (i.e.,
 `black`/`.black` is the file to create and add your configuration options to, in the
 `~/.config/` directory). Here, `~` refers to the path to your home directory. On
-Windows, this will be something like `C:\\Users\UserName`.
+Windows, this will be something like `C:\Users\UserName` and stored in the environment
+variable `%USERPROFILE%`.
 
 You can also explicitly specify the path to a particular file that you want with
 `--config`. In this situation _Black_ will not look for any other file.

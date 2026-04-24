@@ -229,7 +229,7 @@ class StringTransformer(ABC):
 
     Collaborations:
         What contractual agreements does this StringTransformer have with other
-        StringTransfomers? Such collaborations should be eliminated/minimized
+        StringTransformers? Such collaborations should be eliminated/minimized
         as much as possible.
     """
 
@@ -844,6 +844,24 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             return TErr(
                 f"Not enough strings to merge (num_of_strings={num_of_strings})."
             )
+
+        # Also check for pragma comments on tokens that follow the string
+        # group (e.g. a closing bracket).  Merging strings when a pragma
+        # comment like `# type: ignore` follows would produce an unsplittable
+        # long line.
+        is_valid_index = is_valid_index_factory(line.leaves)
+        next_idx = string_idx + num_of_strings
+        while is_valid_index(next_idx):
+            next_leaf = line.leaves[next_idx]
+            if id(next_leaf) in line.comments:
+                if contains_pragma_comment(line.comments[id(next_leaf)]):
+                    return TErr(
+                        "Cannot merge strings when a pragma comment follows"
+                        " the string group."
+                    )
+            if next_leaf.type not in CLOSING_BRACKETS:
+                break
+            next_idx += 1
 
         if num_of_inline_string_comments > 1:
             return TErr(

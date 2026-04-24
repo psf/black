@@ -111,7 +111,7 @@ Simply replace the `black` hook with `black-jupyter`.
 ```yaml
 repos:
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.3.0
+    rev: 26.3.1
     hooks:
       - id: black-jupyter
         language_version: python3.11

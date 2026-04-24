@@ -41,6 +41,7 @@ from blib2to3.pgen2.token import (
     FSTRING_MIDDLE,
     FSTRING_START,
     INDENT,
+    LAZY,
     NAME,
     NEWLINE,
     NL,
@@ -70,6 +71,7 @@ del _token
 
 Coord = tuple[int, int]
 TokenInfo = tuple[int, str, Coord, Coord, str]
+LazyStash = tuple[pytokens.Token, str, str]
 
 TOKEN_TYPE_MAP = {
     TokenType.indent: INDENT,
@@ -147,6 +149,24 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
     line, column = 1, 0
 
     prev_token: pytokens.Token | None = None
+    lazy_stashed: LazyStash | None = None
+    stmt_start = True
+
+    def emit_stashed_lazy(*, as_keyword: bool) -> Iterator[TokenInfo]:
+        nonlocal lazy_stashed
+        if lazy_stashed is None:
+            return
+
+        stashed_token, stashed_str, stashed_line = lazy_stashed
+        yield (
+            LAZY if as_keyword else NAME,
+            stashed_str,
+            (stashed_token.start_line, stashed_token.start_col),
+            (stashed_token.end_line, stashed_token.end_col),
+            stashed_line,
+        )
+        lazy_stashed = None
+
     try:
         for token in pytokens.tokenize(source):
             token = transform_whitespace(token, source, prev_token)
@@ -164,6 +184,24 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 continue
 
             source_line = lines[token.start_line - 1]
+
+            if lazy_stashed is not None and not (
+                token.type == TokenType.identifier and token_str in ("import", "from")
+            ):
+                yield from emit_stashed_lazy(as_keyword=False)
+
+            if (
+                token.type == TokenType.identifier
+                and token_str == "lazy"
+                and stmt_start
+            ):
+                lazy_stashed = (token, token_str, source_line)
+                prev_token = token
+                stmt_start = False
+                continue
+
+            if lazy_stashed is not None:
+                yield from emit_stashed_lazy(as_keyword=True)
 
             if token.type == TokenType.identifier and token_str in ("async", "await"):
                 # Black uses `async` and `await` token types just for those two keywords
@@ -201,6 +239,19 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                     source_line,
                 )
             prev_token = token
+
+            if token.type in {
+                TokenType.indent,
+                TokenType.dedent,
+                TokenType.newline,
+                TokenType.semicolon,
+                TokenType.colon,
+            }:
+                stmt_start = True
+            elif token.type not in {TokenType.comment, TokenType.nl}:
+                stmt_start = False
+
+        yield from emit_stashed_lazy(as_keyword=False)
 
     except pytokens.UnexpectedEOF:
         raise TokenError("Unexpected EOF in multi-line statement", (line, column))

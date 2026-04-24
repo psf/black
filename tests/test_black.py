@@ -26,7 +26,7 @@ from unittest.mock import MagicMock, patch
 import click
 import pytest
 from click import unstyle
-from click.testing import CliRunner
+from click.testing import CliRunner as _CliRunner
 from packaging.version import Version
 from pathspec import GitIgnoreSpec
 
@@ -112,7 +112,7 @@ class FakeParameter(click.Parameter):
         pass
 
 
-class BlackRunner(CliRunner):
+class BlackRunner(_CliRunner):
     """Make sure STDOUT and STDERR are kept separate when testing Black via its CLI."""
 
     def __init__(self) -> None:
@@ -271,6 +271,19 @@ class BlackTestCase(BlackBaseTestCase):
             root = black.lib2to3_parse(sample)
             features = black.get_features_used(root)
             self.assertIn(black.Feature.TYPE_PARAM_DEFAULTS, features)
+
+    def test_python315_version_detection(self) -> None:
+        source, _ = read_data("cases", "python315")
+        root = black.lib2to3_parse(source)
+        features = black.get_features_used(root)
+        self.assertIn(black.Feature.LAZY_IMPORTS, features)
+        self.assertIn(black.Feature.UNPACKING_IN_COMPREHENSIONS, features)
+        self.assertNotIn(
+            black.Feature.LAZY_IMPORTS,
+            black.get_features_used(black.lib2to3_parse("lazy = 1\n")),
+        )
+        versions = black.detect_target_versions(root)
+        self.assertIn(black.TargetVersion.PY315, versions)
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("cases", "expression.py")
@@ -432,6 +445,17 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_stable(source, actual, DEFAULT_MODE)
         # ensure black can parse this when the target is 3.7
         self.invokeBlack([str(source_path), "--target-version", "py37"])
+
+    @patch("black.dump_to_file", dump_to_stderr)
+    def test_python315(self) -> None:
+        source_path = get_case_path("cases", "python315")
+        _, source, expected = read_data_from_file(source_path)
+        actual = fs(source)
+        self.assertFormatEqual(expected, actual)
+        if sys.version_info >= (3, 15):
+            black.assert_equivalent(source, actual)
+        black.assert_stable(source, actual, DEFAULT_MODE)
+        self.invokeBlack([str(source_path), "--target-version", "py315", "--fast"])
 
     def test_tab_comment_indentation(self) -> None:
         contents_tab = "if 1:\n\tif 2:\n\t\tpass\n\t# comment\n\tpass\n"
@@ -1001,8 +1025,13 @@ class BlackTestCase(BlackBaseTestCase):
         invalid = "return if you can"
         with self.assertRaises(black.InvalidInput) as e:
             black.format_file_contents(invalid, mode=mode, fast=False)
-        self.assertEqual(str(e.exception), "Cannot parse: 1:7: return if you can")
-
+        self.assertEqual(
+            str(e.exception),
+            "Cannot parse: 1:7\n"
+            "    return if you can\n"
+            "          ^\n"
+            "ParseError: bad input",
+        )
         just_crlf = "\r\n"
         with self.assertRaises(black.NothingChanged):
             black.format_file_contents(just_crlf, mode=mode, fast=False)
@@ -1146,7 +1175,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_pipe_force_pyi(self) -> None:
         source, expected = read_data("miscellaneous", "force_pyi")
-        result = CliRunner().invoke(
+        result = BlackRunner().invoke(
             black.main, ["-", "-q", "--pyi"], input=BytesIO(source.encode("utf-8"))
         )
         self.assertEqual(result.exit_code, 0)
@@ -1194,7 +1223,7 @@ class BlackTestCase(BlackBaseTestCase):
 
     def test_pipe_force_py36(self) -> None:
         source, expected = read_data("miscellaneous", "force_py36")
-        result = CliRunner().invoke(
+        result = BlackRunner().invoke(
             black.main,
             ["-", "-q", "--target-version=py36"],
             input=BytesIO(source.encode("utf-8")),
@@ -1524,6 +1553,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1534,6 +1564,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
@@ -1546,6 +1577,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1557,6 +1589,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1572,6 +1605,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             (
@@ -1589,6 +1623,7 @@ class BlackTestCase(BlackBaseTestCase):
                     TargetVersion.PY312,
                     TargetVersion.PY313,
                     TargetVersion.PY314,
+                    TargetVersion.PY315,
                 ],
             ),
             ("==3.8.*", [TargetVersion.PY38]),
@@ -1823,7 +1858,7 @@ class BlackTestCase(BlackBaseTestCase):
         """Test the code option with no changes."""
         code = 'print("Hello world")\n'
         args = ["--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
 
         self.compare_results(result, code, 0)
 
@@ -1833,20 +1868,20 @@ class BlackTestCase(BlackBaseTestCase):
         formatted = black.format_str(code, mode=DEFAULT_MODE)
 
         args = ["--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
 
         self.compare_results(result, formatted, 0)
 
     def test_code_option_check(self) -> None:
         """Test the code option when check is passed."""
         args = ["--check", "--code", 'print("Hello world")\n']
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
         self.compare_results(result, "", 0)
 
     def test_code_option_check_changed(self) -> None:
         """Test the code option when changes are required, and check is passed."""
         args = ["--check", "--code", "print('hello world')"]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
         self.compare_results(result, "", 1)
 
     def test_code_option_diff(self) -> None:
@@ -1856,7 +1891,7 @@ class BlackTestCase(BlackBaseTestCase):
         result_diff = diff(code, formatted, "STDIN", "STDOUT")
 
         args = ["--diff", "--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
 
         # Remove time from diff
         output = DIFF_TIME.sub("", result.output)
@@ -1873,7 +1908,7 @@ class BlackTestCase(BlackBaseTestCase):
         result_diff = color_diff(result_diff)
 
         args = ["--diff", "--color", "--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
 
         # Remove time from diff
         output = DIFF_TIME.sub("", result.output)
@@ -1890,7 +1925,7 @@ class BlackTestCase(BlackBaseTestCase):
             error_msg = f"{code}\nerror: cannot format <string>: \n"
 
             args = ["--safe", "--code", code]
-            result = CliRunner().invoke(black.main, args)
+            result = BlackRunner().invoke(black.main, args)
 
             assert error_msg == result.output
             assert result.exit_code == 123
@@ -1903,7 +1938,7 @@ class BlackTestCase(BlackBaseTestCase):
             formatted = black.format_str(code, mode=DEFAULT_MODE)
 
             args = ["--fast", "--code", code]
-            result = CliRunner().invoke(black.main, args)
+            result = BlackRunner().invoke(black.main, args)
 
             self.compare_results(result, formatted, 0)
 
@@ -1916,7 +1951,7 @@ class BlackTestCase(BlackBaseTestCase):
             args = ["--code", "print"]
             # This is the only directory known to contain a pyproject.toml
             with change_directory(PROJECT_ROOT):
-                CliRunner().invoke(black.main, args)
+                BlackRunner().invoke(black.main, args)
                 pyproject_path = Path(Path.cwd(), "pyproject.toml").resolve()
 
             assert (
@@ -1936,7 +1971,7 @@ class BlackTestCase(BlackBaseTestCase):
         with patch.object(black, "parse_pyproject_toml", return_value={}) as parse:
             with change_directory(THIS_DIR):
                 args = ["--code", "print"]
-                CliRunner().invoke(black.main, args)
+                BlackRunner().invoke(black.main, args)
 
                 pyproject_path = Path(Path().cwd().parent, "pyproject.toml").resolve()
                 assert (
@@ -1955,7 +1990,14 @@ class BlackTestCase(BlackBaseTestCase):
         with pytest.raises(black.parsing.InvalidInput) as exc_info:
             black.lib2to3_parse("print(", {})
 
-        exc_info.match("Cannot parse: 1:6: Unexpected EOF in multi-line statement")
+        exc_info.match(
+            re.escape(
+                "Cannot parse: 1:6\n"
+                "    print(\n"
+                "         ^\n"
+                "TokenError: Unexpected EOF in multi-line statement"
+            )
+        )
 
     def test_line_ranges_with_code_option(self) -> None:
         code = textwrap.dedent("""\
@@ -1963,7 +2005,7 @@ class BlackTestCase(BlackBaseTestCase):
                 print  ( "OK" )
             """)
         args = ["--line-ranges=1-1", "--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
 
         expected = textwrap.dedent("""\
             if a == b:
@@ -1998,7 +2040,7 @@ class BlackTestCase(BlackBaseTestCase):
                 encoding="utf-8",
             )
             args = ["--line-ranges=1-1", str(test_file)]
-            result = CliRunner().invoke(black.main, args)
+            result = BlackRunner().invoke(black.main, args)
             assert not result.exit_code
 
             formatted = test_file.read_text(encoding="utf-8")
@@ -2015,17 +2057,25 @@ class BlackTestCase(BlackBaseTestCase):
             test2_file = Path(workspace) / "test2.py"
             test2_file.write_text("", encoding="utf-8")
             args = ["--line-ranges=1-1", str(test1_file), str(test2_file)]
-            result = CliRunner().invoke(black.main, args)
+            result = BlackRunner().invoke(black.main, args)
             assert result.exit_code == 1
-            assert "Cannot use --line-ranges to format multiple files" in result.output
+            assert result.stderr_bytes is not None
+            assert (
+                "Cannot use --line-ranges to format multiple files"
+                in result.stderr_bytes.decode()
+            )
 
     def test_line_ranges_with_ipynb(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.ipynb"
             test_file.write_text("{}", encoding="utf-8")
             args = ["--line-ranges=1-1", "--ipynb", str(test_file)]
-            result = CliRunner().invoke(black.main, args)
-            assert "Cannot use --line-ranges with ipynb files" in result.output
+            result = BlackRunner().invoke(black.main, args)
+            assert result.stderr_bytes is not None
+            assert (
+                "Cannot use --line-ranges with ipynb files"
+                in result.stderr_bytes.decode()
+            )
             assert result.exit_code == 1
 
     def test_line_ranges_in_pyproject_toml(self) -> None:
@@ -2166,6 +2216,15 @@ class TestCaching:
             # doesn't get too crazy.
             assert len(cache_file.name) <= 96
 
+    def test_cache_file_path_ignores_python_cell_magic_separators(self) -> None:
+        mode = replace(DEFAULT_MODE, python_cell_magics={"../../../tmp/pwned"})
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode)
+            assert cache_file.parent == workspace
+            assert "/" not in cache_file.name
+            assert ".." not in cache_file.name
+            assert "../../../tmp/pwned" not in mode.get_cache_key()
+
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
@@ -2249,7 +2308,7 @@ class TestCaching:
     def test_no_cache_when_stdin(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir():
-            result = CliRunner().invoke(
+            result = BlackRunner().invoke(
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
             assert not result.exit_code
@@ -3181,7 +3240,7 @@ class TestASTSafety(BlackBaseTestCase):
         target_name = f"py3{sys.version_info[1] + 1}"
         code = "x = 1\n"
         args = ["--target-version", target_name, "--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
         stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
         assert "Warning:" in stderr
 
@@ -3192,7 +3251,7 @@ class TestASTSafety(BlackBaseTestCase):
         target_name = f"py3{sys.version_info[1] + 1}"
         code = "x = 1\n"
         args = ["--fast", "--target-version", target_name, "--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
         stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
         assert "Warning:" not in stderr
 
@@ -3201,7 +3260,7 @@ class TestASTSafety(BlackBaseTestCase):
         target_name = f"py3{current_minor}"
         code = "x = 1\n"
         args = ["--target-version", target_name, "--code", code]
-        result = CliRunner().invoke(black.main, args)
+        result = BlackRunner().invoke(black.main, args)
         stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
         assert "Warning:" not in stderr
 

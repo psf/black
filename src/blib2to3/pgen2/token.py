@@ -64,16 +64,17 @@ NL: Final = 54
 RARROW: Final = 55
 AWAIT: Final = 56
 ASYNC: Final = 57
-ERRORTOKEN: Final = 58
-COLONEQUAL: Final = 59
-FSTRING_START: Final = 60
-FSTRING_MIDDLE: Final = 61
-FSTRING_END: Final = 62
-BANG: Final = 63
-TSTRING_START: Final = 64
-TSTRING_MIDDLE: Final = 65
-TSTRING_END: Final = 66
-N_TOKENS: Final = 67
+LAZY: Final = 58
+ERRORTOKEN: Final = 59
+COLONEQUAL: Final = 60
+FSTRING_START: Final = 61
+FSTRING_MIDDLE: Final = 62
+FSTRING_END: Final = 63
+BANG: Final = 64
+TSTRING_START: Final = 65
+TSTRING_MIDDLE: Final = 66
+TSTRING_END: Final = 67
+N_TOKENS: Final = 68
 NT_OFFSET: Final = 256
 # --end constants--
 
@@ -81,15 +82,3 @@ tok_name: Final[dict[int, str]] = {}
 for _name, _value in list(globals().items()):
     if type(_value) is int:
         tok_name[_value] = _name
-
-
-def ISTERMINAL(x: int) -> bool:
-    return x < NT_OFFSET
-
-
-def ISNONTERMINAL(x: int) -> bool:
-    return x >= NT_OFFSET
-
-
-def ISEOF(x: int) -> bool:
-    return x == ENDMARKER
