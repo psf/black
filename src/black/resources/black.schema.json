@@ -88,7 +88,8 @@
           "wrap_long_dict_values_in_parens",
           "fix_if_guard_explosion_in_case_statement",
           "pyi_overload_group_blank_lines",
-          "fix_unnecessary_parens_in_indexed_assignment"
+          "fix_unnecessary_parens_in_indexed_assignment",
+          "pyi_blank_line_before_decorated_class"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."

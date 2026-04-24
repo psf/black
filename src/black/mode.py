@@ -259,6 +259,7 @@ class Preview(Enum):
     fix_if_guard_explosion_in_case_statement = auto()
     pyi_overload_group_blank_lines = auto()
     fix_unnecessary_parens_in_indexed_assignment = auto()
+    pyi_blank_line_before_decorated_class = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
