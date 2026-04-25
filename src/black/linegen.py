@@ -1193,6 +1193,7 @@ def _prefer_split_rhs_oop_over_rhs(
         and rhs_oop.tail.leaves
         and rhs_oop.tail.leaves[0].type == token.RSQB
         and len(rhs_oop.tail.leaves) > 1
+        and rhs_oop.tail.leaves[1].type == token.DOT
         and any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
     ):
         return False

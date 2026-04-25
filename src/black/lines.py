@@ -1441,7 +1441,7 @@ def can_omit_invisible_parens(
         Preview.fix_unnecessary_parens_in_indexed_assignment in mode
         and len(rhs.head.leaves) >= 2
         and rhs.head.leaves[-2].type == token.EQUAL
-        and any(leaf.type in BRACKETS for leaf in rhs.head.leaves[:-2])
+        and any(leaf.type in BRACKETS and leaf.value for leaf in rhs.head.leaves[:-2])
     ):
         body_length = 4 * line.depth
         has_brackets = False
