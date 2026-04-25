@@ -2695,14 +2695,12 @@ class TestFileCollection:
         exclude = re.compile(r"")
         root_gitignore = black.files.get_gitignore(path)
         report = black.Report()
-        expected: list[Path] = (
-            [
-                Path(path / "x.py"),
-                Path(path / "root/b.py"),
-                Path(path / "root/c.py"),
-                Path(path / "root/child/c.py"),
-            ]
-        )
+        expected: list[Path] = [
+            Path(path / "x.py"),
+            Path(path / "root/b.py"),
+            Path(path / "root/c.py"),
+            Path(path / "root/child/c.py"),
+        ]
         this_abs = THIS_DIR.resolve()
         sources = list(
             black.gen_python_files(
