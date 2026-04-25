@@ -1185,8 +1185,12 @@ def _prefer_split_rhs_oop_over_rhs(
     # or `.method()`), and `=` is in rhs_oop.head (split is in the RHS, not the
     # LHS), this means we split mid-chain — creating ugly output like
     # `expr + obj[\n    idx\n].attr`. Prefer paren-wrapping instead.
+    # Gated behind the same preview flag as the indexed assignment fix in
+    # can_omit_invisible_parens, since this guard only matters when that path
+    # is active (stable mode is unaffected).
     if (
-        rhs_oop.tail.leaves
+        Preview.fix_unnecessary_parens_in_indexed_assignment in mode
+        and rhs_oop.tail.leaves
         and rhs_oop.tail.leaves[0].type == token.RSQB
         and len(rhs_oop.tail.leaves) > 1
         and any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
