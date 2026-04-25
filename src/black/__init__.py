@@ -596,8 +596,9 @@ def main(
         )
         ctx.exit(1)
 
-    root, method = (
-        find_project_root(src, stdin_filename) if code is None else (None, None)
+    root, method = find_project_root(src, stdin_filename) if code is None else (
+        None,
+        None,
     )
     ctx.obj["root"] = root
 

@@ -1090,17 +1090,19 @@ class BaseStringSplitter(StringTransformer):
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
-    STRING_OPERATORS: Final = [
-        token.EQEQUAL,
-        token.GREATER,
-        token.GREATEREQUAL,
-        token.LESS,
-        token.LESSEQUAL,
-        token.NOTEQUAL,
-        token.PERCENT,
-        token.PLUS,
-        token.STAR,
-    ]
+    STRING_OPERATORS: Final = (
+        [
+            token.EQEQUAL,
+            token.GREATER,
+            token.GREATEREQUAL,
+            token.LESS,
+            token.LESSEQUAL,
+            token.NOTEQUAL,
+            token.PERCENT,
+            token.PLUS,
+            token.STAR,
+        ]
+    )
 
     @abstractmethod
     def do_splitter_match(self, line: Line) -> TMatchResult:
