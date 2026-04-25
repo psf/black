@@ -1180,6 +1180,19 @@ def _prefer_split_rhs_oop_over_rhs(
     if rhs_head_equal_count > 1 and rhs_head_equal_count > rhs_oop_head_equal_count:
         return False
 
+    # Don't prefer OOP if the split breaks inside a subscript access chain on the
+    # RHS. When rhs_oop.tail starts with `]` followed by more tokens (like `.attr`
+    # or `.method()`), and `=` is in rhs_oop.head (split is in the RHS, not the
+    # LHS), this means we split mid-chain — creating ugly output like
+    # `expr + obj[\n    idx\n].attr`. Prefer paren-wrapping instead.
+    if (
+        rhs_oop.tail.leaves
+        and rhs_oop.tail.leaves[0].type == token.RSQB
+        and len(rhs_oop.tail.leaves) > 1
+        and any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
+    ):
+        return False
+
     has_closing_bracket_after_assign = False
     for leaf in reversed(rhs_oop.head.leaves):
         if leaf.type == token.EQUAL:
