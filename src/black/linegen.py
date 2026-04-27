@@ -13,6 +13,7 @@ from typing import Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     DOT_PRIORITY,
+    LOGIC_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
@@ -1383,6 +1384,21 @@ def delimiter_split(
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+
+    # When a standalone comment is the first token on the line and precedes an
+    # arithmetic/comparator expression, let standalone_comment_split handle it so
+    # the expression can stay on one line if it fits (issue #3713). Only applies
+    # when the comment leads the line (not trailing) and the delimiter has lower
+    # priority than logical operators to avoid changing `or`/`and` behavior.
+    if (
+        line.leaves
+        and line.leaves[0].type == STANDALONE_COMMENT
+        and delimiter_priority < LOGIC_PRIORITY
+    ):
+        raise CannotSplit(
+            "Standalone comment leads line before arithmetic delimiter; deferring to"
+            " standalone_comment_split"
+        )
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
