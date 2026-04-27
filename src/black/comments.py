@@ -643,7 +643,7 @@ def _generate_ignored_nodes_from_fmt_skip(
     if not comments or comment.value != comments[0].value:
         return
 
-    if not prev_sibling and parent:
+    if not prev_sibling and parent and parent.type != syms.suite:
         prev_sibling = parent.prev_sibling
 
     if prev_sibling is not None:
