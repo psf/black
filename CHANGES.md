@@ -40,9 +40,16 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Add `SourceASTParseError` to distinguish source parse failures from internal safety
+  errors, improving error reporting when Black's lenient parser accepts input that
+  `ast.parse()` rejects (#5080)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
+
+- Return HTTP 400 (Bad Request) for source parse failures instead of HTTP 500, keeping
+  HTTP 500 only for genuine internal safety errors (#5080)
 
 ### Integrations
 
