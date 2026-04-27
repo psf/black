@@ -74,7 +74,7 @@ d = ["aiohttp>=3.10"]
 jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 
 [dependency-groups]
-hatch = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs", "virtualenv<21.0.0"]
+hatch = ["hatch==1.16.5", "hatch-fancy-pypi-readme", "hatch-vcs>=0.3.0"]
 cibw = ["cibuildwheel==3.4.0", "pypyp"]
 pyinstaller = ["pyinstaller"]
 
