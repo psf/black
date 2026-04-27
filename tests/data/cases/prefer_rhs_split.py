@@ -104,3 +104,15 @@ a = (
 ) = (
     cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 ) = ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+
+
+# Make sure that when the RHS contains a subscript access chain (attribute
+# access with subscript like obj.children[idx].attr), Black prefers wrapping
+# the RHS in parentheses rather than splitting at the subscript.
+some_node.children[1].prefix = (
+    some_node.children[0].prefix + some_node.children[1].prefix
+)
+
+another_node.children[idx].value = (
+    another_node.children[idx - 1].value + another_node.children[idx + 1].value
+)

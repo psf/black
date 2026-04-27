@@ -1077,7 +1077,7 @@ def _maybe_split_omitting_optional_parens(
         # in this case; attempting a split without them is a waste of time)
         and not line.is_import
         # and we can actually remove the parens
-        and can_omit_invisible_parens(rhs, mode.line_length)
+        and can_omit_invisible_parens(rhs, mode.line_length, mode)
     ):
         omit = {id(rhs.closing_bracket), *omit}
         try:
@@ -1178,6 +1178,24 @@ def _prefer_split_rhs_oop_over_rhs(
         token.EQUAL
     )
     if rhs_head_equal_count > 1 and rhs_head_equal_count > rhs_oop_head_equal_count:
+        return False
+
+    # Don't prefer OOP if the split breaks inside a subscript access chain on the
+    # RHS. When rhs_oop.tail starts with `]` followed by more tokens (like `.attr`
+    # or `.method()`), and `=` is in rhs_oop.head (split is in the RHS, not the
+    # LHS), this means we split mid-chain — creating ugly output like
+    # `expr + obj[\n    idx\n].attr`. Prefer paren-wrapping instead.
+    # Gated behind the same preview flag as the indexed assignment fix in
+    # can_omit_invisible_parens, since this guard only matters when that path
+    # is active (stable mode is unaffected).
+    if (
+        Preview.fix_unnecessary_parens_in_indexed_assignment in mode
+        and rhs_oop.tail.leaves
+        and rhs_oop.tail.leaves[0].type == token.RSQB
+        and len(rhs_oop.tail.leaves) > 1
+        and rhs_oop.tail.leaves[1].type == token.DOT
+        and any(leaf.type == token.EQUAL for leaf in rhs_oop.head.leaves)
+    ):
         return False
 
     has_closing_bracket_after_assign = False

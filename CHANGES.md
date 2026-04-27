@@ -21,6 +21,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix unnecessary parentheses around short RHS expressions in indexed assignments like
+  `x[key] = expr` (#5095)
 - Prevent string merger from creating unsplittable long lines when a pragma comment
   (e.g. `# type: ignore`) follows the closing bracket (#5096)
 - Improve heuristics around whether blank lines should appear before, within and after

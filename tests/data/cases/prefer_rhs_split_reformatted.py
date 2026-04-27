@@ -20,6 +20,11 @@ print(
     )
 )
 
+# Regression: subscript access chain on RHS should not be split mid-chain
+some_node.children[1].prefix = some_node.children[0].prefix + some_node.children[1].prefix
+
+another_node.children[idx].value = another_node.children[idx - 1].value + another_node.children[idx + 1].value
+
 # output
 
 
@@ -54,4 +59,13 @@ print(
         ),  # some explanation of why this is actually necessary
         c=3,
     )
+)
+
+# Regression: subscript access chain on RHS should not be split mid-chain
+some_node.children[1].prefix = (
+    some_node.children[0].prefix + some_node.children[1].prefix
+)
+
+another_node.children[idx].value = (
+    another_node.children[idx - 1].value + another_node.children[idx + 1].value
 )

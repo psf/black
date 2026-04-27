@@ -1366,6 +1366,7 @@ def can_be_split(line: Line) -> bool:
 def can_omit_invisible_parens(
     rhs: RHSResult,
     line_length: int,
+    mode: Mode,
 ) -> bool:
     """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
@@ -1428,6 +1429,28 @@ def can_omit_invisible_parens(
             and leaf.value
         ):
             closing_bracket = leaf
+
+    # For assignment RHS where the LHS contains brackets (e.g. indexed
+    # assignments like `x[key] = expr`), allow omitting optional parens
+    # if the body fits on a single line or has brackets to further split on.
+    # This check must come before the delimiter_count > 1 early return below,
+    # which would otherwise reject expressions like `1 + 1 + 1 + ...`.
+    # The downstream _prefer_split_rhs_oop_over_rhs will make the final
+    # decision on whether the result is actually better.
+    if (
+        Preview.fix_unnecessary_parens_in_indexed_assignment in mode
+        and len(rhs.head.leaves) >= 2
+        and rhs.head.leaves[-2].type == token.EQUAL
+        and any(leaf.type in BRACKETS and leaf.value for leaf in rhs.head.leaves[:-2])
+    ):
+        body_length = 4 * line.depth
+        has_brackets = False
+        for _index, _leaf, leaf_length in line.enumerate_with_length():
+            body_length += leaf_length
+            if _leaf.type in OPENING_BRACKETS:
+                has_brackets = True
+        if has_brackets or body_length <= line_length:
+            return True
 
     bt = line.bracket_tracker
     if not bt.delimiters:
