@@ -9,13 +9,15 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Python 3.15 support (#5101)
+- Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
+  both new syntactic features in Python 3.15 (#5048)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
 - Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
-- Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
-  both new syntactic features in Python 3.15 (#5048)
 
 ### Preview style
 
