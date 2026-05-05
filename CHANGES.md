@@ -36,6 +36,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix `# fmt: skip` crashing with `Cannot parse` on multiline `case` statements that
+  use backslash line continuation (e.g. `case A \ | B:  # fmt: skip`) (#5123)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
