@@ -630,6 +630,19 @@ def _get_compound_statement_header(
     return header_leaves
 
 
+def _prefix_has_real_newline(prefix: str) -> bool:
+    """Return True if prefix contains a newline that is NOT a line continuation.
+
+    A backslash immediately before a newline (``\\\n``) is a line continuation
+    and should not be treated as a logical line boundary when collecting nodes
+    to skip via ``# fmt: skip``.
+    """
+    for i, ch in enumerate(prefix):
+        if ch == "\n" and (i == 0 or prefix[i - 1] != "\\"):
+            return True
+    return False
+
+
 def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
@@ -676,7 +689,10 @@ def _generate_ignored_nodes_from_fmt_skip(
         # Track seen nodes to detect cycles that can occur after tree modifications
         seen_nodes = {id(current_node)}
 
-        while "\n" not in current_node.prefix and current_node.prev_sibling is not None:
+        while (
+            not _prefix_has_real_newline(current_node.prefix)
+            and current_node.prev_sibling is not None
+        ):
             leaf_nodes = list(current_node.prev_sibling.leaves())
             next_node = leaf_nodes[-1] if leaf_nodes else current_node
 
