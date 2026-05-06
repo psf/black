@@ -41,7 +41,7 @@ def _get_python_binary(exec_prefix, pyver):
         default = vim.eval("g:pymode_python").strip()
     except vim.error:
         default = ""
-    if default and os.path.exists(default):
+    if default and os.path.isabs(default) and os.path.isfile(default):
         return default
     if sys.platform[:3] == "win":
         return exec_prefix / "python.exe"
@@ -113,7 +113,7 @@ def _initialize_black_env(upgrade=False):
     import subprocess
     import venv
 
-    virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser()
+    virtualenv_path = Path(vim.eval("g:black_virtualenv")).expanduser().resolve()
     virtualenv_site_packages = str(
         _get_virtualenv_site_packages(virtualenv_path, pyver)
     )
