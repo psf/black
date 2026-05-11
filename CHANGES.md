@@ -37,7 +37,9 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Python 3.15 is now supported. (#5127)
+- Python 3.15 is now supported. Compiled wheels are not yet provided for Python 3.15, so
+  performance may be slower than on existing Python versions. Wheels will be provided
+  once Python 3.15 is later in its release cycle. (#5127)
 
 ### Parser
 
