@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `# fmt: skip` being ignored in nested `if` expressions with parenthesized `in`
+  clauses (#4903)
 - Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
 
 ### Preview style
@@ -39,6 +41,10 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Python 3.15 is now supported. Compiled wheels are not yet provided for Python 3.15, so
+  performance may be slower than on existing Python versions. Wheels will be provided
+  once Python 3.15 is later in its release cycle. (#5127)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
@@ -52,9 +58,16 @@
 - Improve parse error readability by showing multi-line output with an error pointer.
   (#5068)
 
+- Add `SourceASTParseError` to distinguish source parse failures from internal safety
+  errors, improving error reporting when Black's lenient parser accepts input that
+  `ast.parse()` rejects (#5080)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
+
+- Return HTTP 400 (Bad Request) for source parse failures instead of HTTP 500, keeping
+  HTTP 500 only for genuine internal safety errors (#5080)
 
 ### Integrations
 

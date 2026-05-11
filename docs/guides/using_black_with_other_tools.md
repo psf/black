@@ -138,8 +138,8 @@ profile = black
 
 [pycodestyle](https://pycodestyle.pycqa.org/) is a code linter. It warns you of syntax
 errors, possible bugs, stylistic errors, etc. For the most part, pycodestyle follows
-[PEP 8](https://www.python.org/dev/peps/pep-0008/) when warning about stylistic errors.
-There are a few deviations that cause incompatibilities with _Black_.
+[PEP 8](https://peps.python.org/pep-0008/) when warning about stylistic errors. There
+are a few deviations that cause incompatibilities with _Black_.
 
 #### Configuration
 

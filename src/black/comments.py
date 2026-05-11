@@ -7,6 +7,7 @@ from typing import Final, Union
 from black.mode import Mode
 from black.nodes import (
     CLOSING_BRACKETS,
+    OPENING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
     WHITESPACE,
@@ -448,6 +449,14 @@ def _handle_regular_fmt_block(
 
     hidden_value = "".join(parts)
     comment_lineno = leaf.lineno - comment.newlines
+    leaf_is_ignored = any(
+        ignored is leaf
+        or (
+            isinstance(ignored, Node)
+            and any(child is leaf for child in ignored.leaves())
+        )
+        for ignored in ignored_nodes
+    )
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
@@ -461,7 +470,7 @@ def _handle_regular_fmt_block(
         standalone_comment_prefix += fmt_off_prefix
         hidden_value = comment.value + "\n" + hidden_value
 
-    if is_fmt_skip:
+    if is_fmt_skip and not leaf_is_ignored:
         hidden_value += comment.leading_whitespace + comment.value
 
     if hidden_value.endswith("\n"):
@@ -630,6 +639,17 @@ def _get_compound_statement_header(
     return header_leaves
 
 
+def _find_closest_previous_sibling(node: LN) -> LN | None:
+    """Find the closest previous sibling by walking up the ancestor chain."""
+    current: LN | None = node
+    while current is not None:
+        prev_sibling = current.prev_sibling
+        if prev_sibling is not None:
+            return prev_sibling
+        current = current.parent
+    return None
+
+
 def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
@@ -643,12 +663,13 @@ def _generate_ignored_nodes_from_fmt_skip(
     if not comments or comment.value != comments[0].value:
         return
 
-    if not prev_sibling and parent:
+    if prev_sibling is None and parent is not None:
         prev_sibling = parent.prev_sibling
 
-    if prev_sibling is not None:
-        leaf.prefix = leaf.prefix[comment.consumed :]
+    if prev_sibling is None and comment.type == token.COMMENT:
+        prev_sibling = _find_closest_previous_sibling(leaf)
 
+    if prev_sibling is not None:
         # Generates the nodes to be ignored by `fmt: skip`.
 
         # Nodes to ignore are the ones on the same line as the
@@ -669,6 +690,14 @@ def _generate_ignored_nodes_from_fmt_skip(
         # or NEWLINE leaves.
 
         current_node = prev_sibling
+        if (
+            isinstance(current_node, Leaf)
+            and current_node.type in OPENING_BRACKETS
+            and current_node.parent
+            and current_node.parent.type == syms.atom
+        ):
+            current_node = current_node.parent
+
         ignored_nodes = [current_node]
         if current_node.prev_sibling is None and current_node.parent is not None:
             current_node = current_node.parent
@@ -733,6 +762,17 @@ def _generate_ignored_nodes_from_fmt_skip(
                 header_nodes = _get_compound_statement_header(body_node, parent)
                 if header_nodes:
                     ignored_nodes = header_nodes + ignored_nodes
+
+        leaf_is_ignored = any(
+            ignored is leaf
+            or (
+                isinstance(ignored, Node)
+                and any(child is leaf for child in ignored.leaves())
+            )
+            for ignored in ignored_nodes
+        )
+        if not leaf_is_ignored:
+            leaf.prefix = leaf.prefix[comment.consumed :]
 
         yield from ignored_nodes
     elif (

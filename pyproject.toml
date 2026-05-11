@@ -86,11 +86,11 @@ cov-tests = [
     "pytest-cov>=4.1.0",
 ]
 docs = [
-    "docutils==0.21.2",
+    "docutils==0.22.4",
     "furo==2025.12.19",
-    "myst-parser==4.0.1",
+    "myst-parser==5.0.0",
     "sphinx-copybutton==0.5.2",
-    "sphinx==8.2.3",
+    "sphinx==9.1.0",
     "sphinxcontrib-programoutput==0.19",
 ]
 
@@ -143,7 +143,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc>=0.16.0", "mypy==1.19.1"]
+dependencies = ["hatch-mypyc>=0.16.0", "mypy==1.20.2"]
 require-runtime-dependencies = true
 exclude = [
     # There's no good reason for blackd to be compiled.

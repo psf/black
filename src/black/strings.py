@@ -64,7 +64,7 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
 
 
 def fix_multiline_docstring(docstring: str, prefix: str) -> str:
-    # https://www.python.org/dev/peps/pep-0257/#handling-docstring-indentation
+    # https://peps.python.org/pep-0257/#handling-docstring-indentation
     assert docstring, "INTERNAL ERROR: Multiline docstrings cannot be empty"
     lines = lines_with_leading_tabs_expanded(docstring)
     # Determine minimum indentation (first line doesn't count):
