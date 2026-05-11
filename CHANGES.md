@@ -37,6 +37,8 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Python 3.15 is now supported. (#5127)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
