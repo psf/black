@@ -690,9 +690,6 @@ def _generate_ignored_nodes_from_fmt_skip(
             ignored_nodes.insert(0, grandparent.prev_sibling)
         yield from iter(ignored_nodes)
     elif prev_sibling is not None:
-        leaf.prefix = leaf.prefix[comment.consumed :]
-
-    if prev_sibling is not None:
         # Generates the nodes to be ignored by `fmt: skip`.
 
         # Nodes to ignore are the ones on the same line as the
