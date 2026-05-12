@@ -13,6 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Preserve multiline compound statement headers when `# fmt: skip` is placed on the
+  colon line (#5117)
 - Fix `# fmt: skip` being ignored in nested `if` expressions with parenthesized `in`
   clauses (#4903)
 - Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
