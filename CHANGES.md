@@ -15,6 +15,8 @@
 
 - Preserve multiline compound statement headers when `# fmt: skip` is placed on the
   colon line (#5117)
+- Fix `# fmt: skip` being ignored in nested `if` expressions with parenthesized `in`
+  clauses (#4903)
 - Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
 - Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
   both new syntactic features in Python 3.15 (#5048)
@@ -38,6 +40,10 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Python 3.15 is now supported. Compiled wheels are not yet provided for Python 3.15, so
+  performance may be slower than on existing Python versions. Wheels will be provided
+  once Python 3.15 is later in its release cycle. (#5127)
 
 ### Parser
 
