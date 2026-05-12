@@ -353,7 +353,10 @@ silenced by `2>/dev/null`).
 
 ```console
 $ black src/ -q
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+    mport asyncio
+         ^
+ParseError: bad input
 ```
 
 #### `-v`, `--verbose`
@@ -368,7 +371,10 @@ Using configuration from /tmp/pyproject.toml.
 src/blib2to3 ignored: matches the --extend-exclude regular expression
 src/_black_version.py wasn't modified on disk since last run.
 src/black/__main__.py wasn't modified on disk since last run.
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+    mport asyncio
+         ^
+ParseError: bad input
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
@@ -443,7 +449,10 @@ plus a short summary.
 
 ```console
 $ black src/
-error: cannot format src/black_primer/cli.py: Cannot parse: 5:6: mport asyncio
+error: cannot format src/black_primer/cli.py: Cannot parse: 5:6
+    mport asyncio
+         ^
+ParseError: bad input
 reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
@@ -466,10 +475,9 @@ code in compliance with many other _Black_ formatted projects.
 
 ### What on Earth is a `pyproject.toml` file?
 
-[PEP 518](https://www.python.org/dev/peps/pep-0518/) defines `pyproject.toml` as a
-configuration file to store build system requirements for Python projects. With the help
-of tools like [Poetry](https://python-poetry.org/),
-[Flit](https://flit.readthedocs.io/en/latest/), or
+[PEP 518](https://peps.python.org/pep-0518/) defines `pyproject.toml` as a configuration
+file to store build system requirements for Python projects. With the help of tools like
+[Poetry](https://python-poetry.org/), [Flit](https://flit.readthedocs.io/en/latest/), or
 [Hatch](https://hatch.pypa.io/latest/) it can fully replace the need for `setup.py` and
 `setup.cfg` files.
 

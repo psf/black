@@ -13,6 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `# fmt: skip` being ignored in nested `if` expressions with parenthesized `in`
+  clauses (#4903)
+- Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
 - Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
   both new syntactic features in Python 3.15 (#5048)
 
@@ -20,9 +23,13 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Prevent string merger from creating unsplittable long lines when a pragma comment
+  (e.g. `# type: ignore`) follows the closing bracket (#5096)
 - Improve heuristics around whether blank lines should appear before, within and after
   groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
   files (#5021)
+- Fix blank lines being removed between a function and a decorated class in `.pyi` stub
+  files (#5092)
 
 ### Configuration
 
@@ -31,6 +38,10 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Python 3.15 is now supported. Compiled wheels are not yet provided for Python 3.15, so
+  performance may be slower than on existing Python versions. Wheels will be provided
+  once Python 3.15 is later in its release cycle. (#5127)
 
 ### Parser
 
@@ -45,11 +56,19 @@
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
+- Improve parse error readability by showing multi-line output with an error pointer.
+  (#5068)
+
+- Add `SourceASTParseError` to distinguish source parse failures from internal safety
+  errors, improving error reporting when Black's lenient parser accepts input that
+  `ast.parse()` rejects (#5080)
 
 ### _Blackd_
 
 <!-- Changes to blackd -->
+
+- Return HTTP 400 (Bad Request) for source parse failures instead of HTTP 500, keeping
+  HTTP 500 only for genuine internal safety errors (#5080)
 
 ### Integrations
 
@@ -65,6 +84,8 @@
 
 - Use "Version X.Y.Z" headings in changelog for stable permalink anchors on ReadTheDocs
   (#5063)
+- Note in the editor integrations that the SublimeText `sublack` plugin is archived and
+  unmaintained (#5082)
 
 ## Version 26.3.1
 

@@ -80,16 +80,29 @@ def lib2to3_parse(
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            errors[grammar.version] = InvalidInput(
-                f"Cannot parse{tv_str}: {lineno}:{column}: {faulty_line}"
+            error_msg = (
+                f"Cannot parse{tv_str}: {lineno}:{column}\n"
+                f"    {faulty_line}\n"
+                f"    {' ' * (column - 1)}^\n"
+                f"ParseError: {pe.msg}"
             )
 
+            errors[grammar.version] = InvalidInput(error_msg)
+
         except TokenError as te:
-            # In edge cases these are raised; and typically don't have a "faulty_line".
             lineno, column = te.args[1]
-            errors[grammar.version] = InvalidInput(
-                f"Cannot parse{tv_str}: {lineno}:{column}: {te.args[0]}"
+            lines = src_txt.splitlines()
+            try:
+                faulty_line = lines[lineno - 1]
+            except IndexError:
+                faulty_line = "<line number missing in source>"
+            error_msg = (
+                f"Cannot parse{tv_str}: {lineno}:{column}\n"
+                f"    {faulty_line}\n"
+                f"    {' ' * (column - 1)}^\n"
+                f"TokenError: {te.args[0]}"
             )
+            errors[grammar.version] = InvalidInput(error_msg)
 
     else:
         # Choose the latest version when raising the actual parsing error.
@@ -104,6 +117,15 @@ def lib2to3_parse(
 
 class ASTSafetyError(Exception):
     """Raised when Black's generated code is not equivalent to the old AST."""
+
+
+class SourceASTParseError(Exception):
+    """Raised when the source file cannot be parsed by ast.parse().
+
+    This is not a bug in Black — Black's lib2to3-based parser is more lenient
+    than Python's ast.parse(), so it may accept code that ast.parse() rejects.
+    In blackd, this should be reported as a 400 Bad Request.
+    """
 
 
 def _parse_single_version(

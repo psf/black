@@ -575,6 +575,12 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_default(node)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
+        # If the fstring was converted to a STANDALONE_COMMENT by
+        # normalize_fmt_off (e.g. it was inside a # fmt: off block),
+        # skip the fstring-to-string conversion and just visit normally.
+        if any(child.type == STANDALONE_COMMENT for child in node.children):
+            yield from self.visit_default(node)
+            return
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
@@ -590,6 +596,11 @@ class LineGenerator(Visitor[Line]):
         yield from self.visit_STRING(string_leaf)
 
     def visit_tstring(self, node: Node) -> Iterator[Line]:
+        # If the tstring was converted to a STANDALONE_COMMENT by
+        # normalize_fmt_off, skip the conversion and just visit normally.
+        if any(child.type == STANDALONE_COMMENT for child in node.children):
+            yield from self.visit_default(node)
+            return
         # currently we don't want to format and split t-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)

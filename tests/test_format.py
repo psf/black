@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterator
 from dataclasses import replace
 from typing import Any
@@ -89,5 +90,10 @@ def test_patma_invalid() -> None:
         assert_format(source, expected, mode, minimum_version=(3, 10))
 
     exc_info.match(
-        "Cannot parse for target version Python 3.10: 10:11:     case a := b:"
+        re.escape(
+            "Cannot parse for target version Python 3.10: 10:11\n"
+            "        case a := b:\n"
+            "              ^\n"
+            "ParseError: bad input"
+        )
     )
