@@ -5,6 +5,13 @@ class Body(model.BaseBody[
     __slots__ = ()
 
 
+class Foo(Base[\
+    "A", "B"\
+]):  # fmt: skip
+
+    def a(self): ...
+
+
 def make_result(
     first  : int,
     second:   str,
@@ -25,3 +32,16 @@ if (
     and is_ready(  item  )
 ):  # fmt: skip
     process(item)
+
+match (method, *path.split("/")):
+    case ("GET", "parent", _, "resource", resource_id) \
+            | ("GET", "resource", resource_id):  # fmt: skip
+        pass
+    case _:
+        pass
+
+match x:
+    case a \
+        | b \
+        | c:  # fmt: skip
+        pass
