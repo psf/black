@@ -3,6 +3,11 @@ name: publish binaries
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: string
 
 permissions: {}
 
@@ -61,4 +66,5 @@ jobs:
 
       - run: gh release upload "$tag" dist/${{ matrix.asset_name }}
         env:
-          tag: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+          tag: ${{ inputs.tag || github.event.release.tag_name }}
