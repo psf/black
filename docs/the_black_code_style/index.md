@@ -29,8 +29,8 @@ _Black_:
 - If code has been formatted with _Black_, it will remain unchanged when formatted with
   the same options using any other release in the same calendar year.
 
-  This means projects can safely use `black ~= 22.0` without worrying about formatting
-  changes disrupting their project in 2022. We may still fix bugs where _Black_ crashes
+  This means projects can safely use `black ~= 26.0` without worrying about formatting
+  changes disrupting their project in 2026. We may still fix bugs where _Black_ crashes
   on some code, and make other improvements that do not affect formatting.
 
   In rare cases, we may make changes affecting code that has not been previously

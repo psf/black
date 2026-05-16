@@ -259,11 +259,11 @@ version scheme used by Black):
 Plug 'psf/black', { 'tag': '*.*.*' }
 ```
 
-and the following demonstrates pinning to a specific year's stable style (2022 in this
+and the following demonstrates pinning to a specific year's stable style (2026 in this
 case):
 
 ```vim
-Plug 'psf/black', { 'tag': '22.*.*' }
+Plug 'psf/black', { 'tag': '26.*.*' }
 ```
 
 ##### Vundle
