@@ -669,7 +669,27 @@ def _generate_ignored_nodes_from_fmt_skip(
     if prev_sibling is None and comment.type == token.COMMENT:
         prev_sibling = _find_closest_previous_sibling(leaf)
 
-    if prev_sibling is not None:
+    if parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE:
+        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
+        # statements. The ignored nodes should be previous siblings of the
+        # parent suite node. Do this before the generic "same physical line"
+        # logic so multiline headers are preserved as a whole.
+        leaf.prefix = ""
+        parent_sibling = parent.prev_sibling
+        while parent_sibling is not None and parent_sibling.type != syms.suite:
+            ignored_nodes.insert(0, parent_sibling)
+            parent_sibling = parent_sibling.prev_sibling
+        # Special case for `async_stmt` where the ASYNC token is on the
+        # grandparent node.
+        grandparent = parent.parent
+        if (
+            grandparent is not None
+            and grandparent.prev_sibling is not None
+            and grandparent.prev_sibling.type == token.ASYNC
+        ):
+            ignored_nodes.insert(0, grandparent.prev_sibling)
+        yield from iter(ignored_nodes)
+    elif prev_sibling is not None:
         # Generates the nodes to be ignored by `fmt: skip`.
 
         # Nodes to ignore are the ones on the same line as the
@@ -775,27 +795,6 @@ def _generate_ignored_nodes_from_fmt_skip(
             leaf.prefix = leaf.prefix[comment.consumed :]
 
         yield from ignored_nodes
-    elif (
-        parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
-    ):
-        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
-        # statements. The ignored nodes should be previous siblings of the
-        # parent suite node.
-        leaf.prefix = ""
-        parent_sibling = parent.prev_sibling
-        while parent_sibling is not None and parent_sibling.type != syms.suite:
-            ignored_nodes.insert(0, parent_sibling)
-            parent_sibling = parent_sibling.prev_sibling
-        # Special case for `async_stmt` where the ASYNC token is on the
-        # grandparent node.
-        grandparent = parent.parent
-        if (
-            grandparent is not None
-            and grandparent.prev_sibling is not None
-            and grandparent.prev_sibling.type == token.ASYNC
-        ):
-            ignored_nodes.insert(0, grandparent.prev_sibling)
-        yield from iter(ignored_nodes)
 
 
 def is_fmt_on(container: LN, mode: Mode) -> bool:
