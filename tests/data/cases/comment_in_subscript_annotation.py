@@ -22,6 +22,4 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: list[  # bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 def foo():
     possibly_redundant_lowlevel_checkpoints: list[  # pyright: ignore[reportUnknownVariableType]
         cst.BaseExpression
-    ] = field(
-        default_factory=list
-    )
+    ] = field(default_factory=list)
