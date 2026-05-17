@@ -17,6 +17,11 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
+  the right-hand side is a bracketed expression with a magic trailing comma. Black now
+  lets the bracket explode instead, which fixes the awkward break that was showing up in
+  comprehension `if` clauses (#5135)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

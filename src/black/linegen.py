@@ -12,6 +12,7 @@ from typing import Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
+    COMPARATOR_PRIORITY,
     DOT_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
@@ -1383,6 +1384,16 @@ def delimiter_split(
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+
+    if (
+        Preview.avoid_splitting_comparator_with_magic_trailing_comma in mode
+        and delimiter_priority == COMPARATOR_PRIORITY
+        and line.magic_trailing_comma is not None
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+    ):
+        raise CannotSplit(
+            "Bracket with magic trailing comma will split via right_hand_split"
+        )
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
