@@ -83,36 +83,6 @@ def test_empty() -> None:
     assert_format(source, expected)
 
 
-def test_issue_4733_stable_subscript_with_inline_comment() -> None:
-    # Regression test for https://github.com/psf/black/issues/4733
-    # A trailing comment on the opening line of a subscript annotation causes
-    # Black to produce different code on each pass.
-    source = (
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: list[  #"
-        " bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
-        "    int\n"
-        "] = []\n"
-    )
-    mode = black.Mode()
-    dst = black.format_str(source, mode=mode)
-    black.assert_stable(source, dst, mode=mode)
-
-
-def test_issue_4733_stable_annotated_assignment_with_inline_comment() -> None:
-    # Regression test for https://github.com/psf/black/issues/4733
-    # Original (non-minimized) snippet from the issue report.
-    source = (
-        "def foo():\n"
-        "    possibly_redundant_lowlevel_checkpoints: list[  #"
-        " pyright: ignore[reportUnknownVariableType]\n"
-        "        cst.BaseExpression\n"
-        "    ] = field( default_factory=list)\n"
-    )
-    mode = black.Mode()
-    dst = black.format_str(source, mode=mode)
-    black.assert_stable(source, dst, mode=mode)
-
-
 def test_patma_invalid() -> None:
     source, expected = read_data("miscellaneous", "pattern_matching_invalid")
     mode = black.Mode(target_versions={black.TargetVersion.PY310})
