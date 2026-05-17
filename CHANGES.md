@@ -50,6 +50,9 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
+  (#5124)
+
 ## Version 26.5.0
 
 ### Highlights
@@ -107,8 +110,6 @@
   (#5063)
 - Note in the editor integrations that the SublimeText `sublack` plugin is archived and
   unmaintained (#5082)
-- Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
-  (#5124)
 
 ## Version 26.3.1
 
