@@ -108,7 +108,7 @@
 - Note in the editor integrations that the SublimeText `sublack` plugin is archived and
   unmaintained (#5082)
 - Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
-  (#5061)
+  (#5124)
 
 ## Version 26.3.1
 
