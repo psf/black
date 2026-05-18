@@ -114,7 +114,7 @@ FileMode = Mode
 
 
 def read_pyproject_toml(
-    ctx: click.Context, param: click.Parameter, value: str | None
+    ctx: click.Context, param: click.Parameter | None, value: str | None
 ) -> str | None:
     """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
 
