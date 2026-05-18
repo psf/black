@@ -1,61 +1,15 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
-
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
+## Version 26.5.1
 
 ### Stable style
 
-<!-- Changes that affect Black's stable style -->
-
 - Fix unstable formatting of annotated assignments whose subscript annotation contains
-  an inline comment (e.g. `x: list[  # pyright: ignore[...]\n    int\n] = []`). Black no
-  longer migrates the comment outside the subscript brackets, eliminating the
-  oscillation between formatter passes reported as #4733 (#5130)
+  an inline comment (e.g. `x: list[  # pyright: ignore[...]`) (#5130)
 - Preserve inline comments (including `# type: ignore`) immediately before a
   `# fmt: skip` line, avoiding AST equivalence failures (#5139)
 
-### Preview style
-
-<!-- Changes that affect Black's preview style -->
-
-### Configuration
-
-<!-- Changes to how Black can be configured -->
-
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
-### Performance
-
-<!-- Changes that improve Black's performance. -->
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 ### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 - Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
   (#5124)
