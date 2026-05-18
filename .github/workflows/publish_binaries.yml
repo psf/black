@@ -64,7 +64,8 @@ jobs:
           ./dist/${{ matrix.asset_name }} --version
           ./dist/${{ matrix.asset_name }} src --verbose
 
-      - run: gh release upload "${{ env.tag }}" dist/${{ matrix.asset_name }}
+      - run: gh release upload "$tag" dist/${{ matrix.asset_name }}
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           tag: ${{ inputs.tag || github.event.release.tag_name }}

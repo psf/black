@@ -105,13 +105,6 @@ class FakeContext(click.Context):
         self.obj: dict[str, Any] = {"root": PROJECT_ROOT}
 
 
-class FakeParameter(click.Parameter):
-    """A fake click Parameter for when calling functions that need it."""
-
-    def __init__(self) -> None:
-        pass
-
-
 class BlackRunner(_CliRunner):
     """Make sure STDOUT and STDERR are kept separate when testing Black via its CLI."""
 
@@ -1645,7 +1638,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
         fake_ctx = FakeContext()
-        black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
+        black.read_pyproject_toml(fake_ctx, None, str(test_toml_file))
         config = fake_ctx.default_map
         self.assertEqual(config["verbose"], "1")
         self.assertEqual(config["check"], "no")
@@ -1677,7 +1670,7 @@ class BlackTestCase(BlackBaseTestCase):
             fake_ctx.params["stdin_filename"] = str(src_python)
 
             with change_directory(root):
-                black.read_pyproject_toml(fake_ctx, FakeParameter(), None)
+                black.read_pyproject_toml(fake_ctx, None, None)
 
             config = fake_ctx.default_map
             self.assertEqual(config["verbose"], "1")
