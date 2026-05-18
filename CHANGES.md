@@ -13,6 +13,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unstable formatting of annotated assignments whose subscript annotation contains
+  an inline comment (e.g. `x: list[  # pyright: ignore[...]\n    int\n] = []`). Black no
+  longer migrates the comment outside the subscript brackets, eliminating the
+  oscillation between formatter passes reported as #4733 (#5130)
 - Preserve inline comments (including `# type: ignore`) immediately before a
   `# fmt: skip` line, avoiding AST equivalence failures (#5139)
 
@@ -52,6 +56,9 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
+  (#5124)
 
 ## Version 26.5.0
 

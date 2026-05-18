@@ -80,6 +80,7 @@ from black.strings import (
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
+    str_width,
 )
 from black.trans import (
     CannotTransform,
@@ -770,7 +771,9 @@ def transform_line(
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
                 # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], mode=mode):
+                if is_line_short_enough(lines[0], mode=mode) or (
+                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+                ):
                     yield from lines
                     return
 
@@ -2013,6 +2016,37 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
+def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
+    """Return True if `line` only exceeds `mode.line_length` because of an inline
+    comment attached to a subscript opening bracket (`[`).
+
+    This is the shape produced by the original of the issue #4733 reproducer:
+    a comment inside the annotation's subscript brackets renders at the end of
+    the head line after Black splits the statement, pushing it past the limit.
+    Taking the FORCE_OPTIONAL_PARENTHESES "second opinion" in that case wraps
+    the annotation in extra parens and migrates the comment outside the
+    subscript, which then oscillates on the next formatter pass.
+    """
+    if not line.leaves:
+        return False
+    # The over-length must be caused entirely by a trailing comment.
+    indent = "    " * line.depth
+    leaves_iter = iter(line.leaves)
+    first = next(leaves_iter)
+    text_without_comments = f"{first.prefix}{indent}{first.value}"
+    text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
+    if str_width(text_without_comments) > mode.line_length:
+        return False
+    # And the comment must be attached to a subscript opening bracket.
+    for leaf_id, comments in line.comments.items():
+        if not comments:
+            continue
+        leaf = next((lf for lf in line.leaves if id(lf) == leaf_id), None)
+        if leaf is None or leaf.type != token.LSQB:
+            return False
+    return True
+
+
 def run_transformer(
     line: Line,
     transform: Transformer,
@@ -2040,6 +2074,12 @@ def run_transformer(
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()
         or is_line_short_enough(result[0], mode=mode)
+        # result[0] only exceeds the length because of a comment attached to a
+        # subscript opening bracket.  Taking the FORCE_OPTIONAL_PARENTHESES
+        # "second opinion" wraps the annotation in extra invisible parens and
+        # migrates the comment outside the subscript, which then oscillates with
+        # a deeper-bracket split on the next formatter pass (issue #4733).
+        or _over_length_only_due_to_subscript_comment(result[0], mode)
         # If any leaves have no parents (which _can_ occur since
         # `transform(line)` potentially destroys the line's underlying node
         # structure), then we can't proceed. Doing so would cause the below
