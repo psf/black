@@ -754,7 +754,10 @@ def _generate_ignored_nodes_from_fmt_skip(
                 current_node = current_node.parent
 
             if current_node.type in (token.NEWLINE, token.INDENT):
-                current_node.prefix = ""
+                if not list_comments(
+                    current_node.prefix, is_endmarker=False, mode=mode
+                ):
+                    current_node.prefix = ""
                 break
 
             if current_node.type == token.DEDENT:

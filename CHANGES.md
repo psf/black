@@ -17,6 +17,8 @@
   an inline comment (e.g. `x: list[  # pyright: ignore[...]\n    int\n] = []`). Black no
   longer migrates the comment outside the subscript brackets, eliminating the
   oscillation between formatter passes reported as #4733 (#5130)
+- Preserve inline comments (including `# type: ignore`) immediately before a
+  `# fmt: skip` line, avoiding AST equivalence failures (#5139)
 
 ### Preview style
 
