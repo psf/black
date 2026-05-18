@@ -31,10 +31,10 @@ Currently, the following features are included in the preview style:
 - `pyi_blank_line_before_decorated_class`: In `.pyi` stub files, enforce a blank line
   before a decorated class definition when it follows a function definition.
   ([see below](labels/pyi-blank-line-before-decorated-class))
-- `avoid_splitting_comparator_with_magic_trailing_comma`: Don't break a comparator
-  expression (e.g. `not in`, `==`, `is`) away from its left operand when the right
-  operand is a bracketed expression with a magic trailing comma; let the bracket explode
-  instead. ([see below](labels/avoid-splitting-comparator))
+- `avoid_splitting_comparator_with_bracketed_rhs`: Don't break a comparator expression
+  (e.g. `not in`, `==`, `is`) away from its left operand when the right operand is a
+  bracketed expression that has to break anyway; let the bracket explode instead.
+  ([see below](labels/avoid-splitting-comparator))
 
 (labels/wrap-comprehension-in)=
 
@@ -239,10 +239,11 @@ classes are handled:
 ### Keep comparators next to their left operand when the right operand is exploded
 
 When a comparator expression sits inside another bracketed construct (for example the
-`if` clause of a comprehension) and its right operand is a bracketed expression with a
-magic trailing comma, Black previously split the line right before the comparator. The
-left operand ended up alone on its own line, visually disconnected from the comparator
-and the operand that explains it:
+`if` clause of a comprehension) and its right operand is a bracketed expression that has
+to break (either via a magic trailing comma or because the line is too long), Black
+previously split the line right before the comparator. The left operand ended up alone
+on its own line, visually disconnected from the comparator and the operand that explains
+it:
 
 ```python
 # Before
