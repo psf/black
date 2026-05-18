@@ -11,7 +11,7 @@
 
 ### Packaging
 
-- Corrects the version in the published executables (#5137)
+- Correct the version in the published executables (#5137)
 
 ### Documentation
 
