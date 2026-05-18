@@ -9,6 +9,10 @@
 - Preserve inline comments (including `# type: ignore`) immediately before a
   `# fmt: skip` line, avoiding AST equivalence failures (#5139)
 
+### Packaging
+
+- Corrects the version in the published executables (#5137)
+
 ### Documentation
 
 - Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
