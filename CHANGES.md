@@ -13,6 +13,11 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unstable formatting of annotated assignments whose subscript annotation contains
+  an inline comment (e.g. `x: list[  # pyright: ignore[...]\n    int\n] = []`). Black no
+  longer migrates the comment outside the subscript brackets, eliminating the
+  oscillation between formatter passes reported as #4733 (#5130)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
