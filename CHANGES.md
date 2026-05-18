@@ -13,6 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Preserve inline comments (including `# type: ignore`) immediately before a
+  `# fmt: skip` line, avoiding AST equivalence failures (#5139)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
