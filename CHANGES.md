@@ -19,6 +19,12 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
+  the right-hand side is a bracketed expression. Black now lets the bracket explode
+  instead. This fixes the awkward break that was showing up in comprehension `if`
+  clauses (#4514) as well as the same shape inside `if`, `elif`, `assert`, and
+  parenthesized expressions (#5135)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

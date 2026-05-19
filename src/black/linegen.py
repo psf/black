@@ -12,6 +12,7 @@ from typing import Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
+    COMPARATOR_PRIORITY,
     DOT_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
@@ -1362,6 +1363,35 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
 MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
 
 
+def _can_defer_lone_comparator_to_rhs(line: Line, mode: Mode) -> bool:
+    """Return True if the lone comparator on `line` can defer to right_hand_split.
+
+    Caller has already established exactly one delimiter at
+    `COMPARATOR_PRIORITY`. We defer only when:
+
+    - the LHS up to the comparator has no opening brackets, so the existing
+      "break before the comparator" wouldn't produce a balanced two-sided
+      split anyway, and
+    - `right_hand_split` would produce a head that fits in the line length,
+      so we don't strand `if t` on its own line just to push it back onto an
+      overflowing single line when the RHS bracket can't be exploded
+      usefully (e.g. an empty `decode()` paren).
+    """
+    past_comparator = False
+    for leaf in line.leaves:
+        if leaf.type in OPENING_BRACKETS and not past_comparator:
+            return False
+        if not past_comparator and (
+            line.bracket_tracker.delimiters.get(id(leaf)) == COMPARATOR_PRIORITY
+        ):
+            past_comparator = True
+    try:
+        rhs = _first_right_hand_split(line)
+    except CannotSplit:
+        return False
+    return is_line_short_enough(rhs.head, mode=mode)
+
+
 @dont_increase_indentation
 def delimiter_split(
     line: Line, features: Collection[Feature], mode: Mode
@@ -1386,6 +1416,14 @@ def delimiter_split(
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+
+    if (
+        Preview.hug_comparator in mode
+        and delimiter_priority == COMPARATOR_PRIORITY
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and _can_defer_lone_comparator_to_rhs(line, mode)
+    ):
+        raise CannotSplit("Bracketed RHS will explode via right_hand_split")
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
