@@ -4,7 +4,9 @@
 
 <!-- PR authors:
      Please include the PR number in the changelog entry, not the issue number -->
+
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
