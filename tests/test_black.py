@@ -233,6 +233,23 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
 
+    def test_piping_diff_with_color_respects_no_color(self) -> None:
+        source, _ = read_data("cases", "expression.py")
+        args = [
+            "-",
+            "--fast",
+            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            "--diff",
+            "--color",
+            f"--config={EMPTY_CONFIG}",
+        ]
+        with patch.dict(os.environ, {"NO_COLOR": "1"}):
+            result = BlackRunner().invoke(
+                black.main, args, input=BytesIO(source.encode("utf-8"))
+            )
+        actual = result.output
+        self.assertNotIn("\033[", actual)
+
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("cases", "pep_572")
         root = black.lib2to3_parse(source)
@@ -787,6 +804,13 @@ class BlackTestCase(BlackBaseTestCase):
                 "2 files would be reformatted, 3 files would be left unchanged, 2"
                 " files would fail to reformat.",
             )
+
+    def test_report_respects_no_color(self) -> None:
+        report = Report()
+        report.done(Path("f1"), black.Changed.YES)
+        with patch.dict(os.environ, {"NO_COLOR": "1"}):
+            output = str(report)
+        self.assertEqual(output, unstyle(output))
 
     def test_lib2to3_parse(self) -> None:
         with self.assertRaises(black.InvalidInput):
