@@ -1415,7 +1415,7 @@ def delimiter_split(
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     if (
-        Preview.avoid_splitting_comparator_with_bracketed_rhs in mode
+        Preview.hug_comparator in mode
         and delimiter_priority == COMPARATOR_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
         and _can_defer_lone_comparator_to_rhs(line, mode)
