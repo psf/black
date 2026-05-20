@@ -15,6 +15,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when a standalone comment sits between tokens of a comprehension or lambda
+  (#5144)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->

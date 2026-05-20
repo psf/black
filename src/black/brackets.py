@@ -225,6 +225,17 @@ def is_split_after_delimiter(leaf: Leaf) -> Priority:
     Higher numbers are higher priority.
     """
     if leaf.type == token.COMMA:
+        # For-target commas are tuple-packing, not list delimiters; splitting
+        # on them produces invalid Python if `for` lands on another line (#4296).
+        parent = leaf.parent
+        if parent is not None and parent.type == syms.exprlist:
+            grandparent = parent.parent
+            if grandparent is not None and grandparent.type in {
+                syms.comp_for,
+                syms.old_comp_for,
+                syms.for_stmt,
+            }:
+                return 0
         return COMMA_PRIORITY
 
     return 0
