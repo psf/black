@@ -67,6 +67,43 @@ files in the `tests/data/cases` directory. These files consist of up to three pa
 - The line `# output`, followed by the output of _Black_ when run on the previous block.
   If this is omitted, the test asserts that _Black_ will leave the input code unchanged.
 
+#### Multi-cell format
+
+Large fixture files can also group multiple cases inside one file using a cell header
+inspired by [mypy's test data format][mypy-test-data]. The two formats coexist: a file
+is detected as multi-cell only when its first non-blank non-comment line is a `[case ]`
+header. Each cell starts at column 0 with `[case <name>]` and runs as an independent
+test. Cell names match `[A-Za-z_][A-Za-z0-9_]*` and must be unique within the file.
+
+[mypy-test-data]: https://github.com/python/mypy/blob/master/mypy/test/data.py
+
+```
+[case empty_call]
+foo()
+# output
+foo()
+
+[case nested_call_with_args]
+# flags: --preview
+foo(bar(x, y))
+# output
+foo(bar(x, y))
+```
+
+Rules:
+
+- Anything before the first `[case ]` is file-level prose and is ignored by the loader.
+- Within a cell, the legacy rules apply: an optional `# flags: ` line on the first
+  non-blank line, then input, then optional `# output` followed by expected output.
+  Omitting `# output` asserts idempotency.
+- Trailing whitespace on a `[case <name>]` line is tolerated; everything else on the
+  line is rejected.
+
+Pytest IDs reflect the format. Single-case files keep the legacy
+`test_simple_format[<stem>]` shape; multi-cell files produce
+`test_simple_format[<stem>::<cell_name>]`. On failure, the error message points at the
+file path, the cell header line, and the cell's `# output` marker line.
+
 _Black_ has two pytest command-line options affecting test files in `tests/data/` that
 are split into an input part, and an output part, separated by a line with `# output`.
 These can be passed to `pytest` through `tox`, or directly into pytest if not using
