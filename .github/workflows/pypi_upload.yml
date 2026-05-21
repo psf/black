@@ -10,6 +10,7 @@ on:
 permissions: {}
 
 env:
+  PIP_UPLOADED_PRIOR_TO: P2D
   PROJECT: https://pypi.org/p/black
 
 jobs:
@@ -29,7 +30,9 @@ jobs:
           python-version: "3.15"
           allow-prereleases: true
           pip-version: "26.1"
-          pip-install: --group cibw
+
+      - name: Install dependencies
+        run: python -m pip install --group cibw
 
       - name: generate matrix
         if: |
@@ -83,7 +86,9 @@ jobs:
           python-version: "3.15"
           allow-prereleases: true
           pip-version: "26.1"
-          pip-install: --group cibw
+
+      - name: Install dependencies
+        run: python -m pip install --group cibw
 
       - name: Run cibuildwheel
         run: cibuildwheel . --only ${{ matrix.only }}
@@ -109,7 +114,9 @@ jobs:
           python-version: "3.15"
           allow-prereleases: true
           pip-version: "26.1"
-          pip-install: --group hatch
+
+      - name: Install dependencies
+        run: python -m pip install --group hatch
 
       - name: Build wheel and source distributions
         run: python -m hatch build

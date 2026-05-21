@@ -24,6 +24,7 @@ concurrency:
 
 env:
   HATCH_BUILD_HOOKS_ENABLE: "1"
+  PIP_UPLOADED_PRIOR_TO: P2D
   # Clang is less picky with the C code it's given than gcc (and may generate faster
   # binaries too).
   CC: clang-18
@@ -47,7 +48,9 @@ jobs:
           python-version: "3.15"
           allow-prereleases: true
           pip-version: "26.1"
-          pip-install: --group diff-shades --group diff-shades-comment
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades --group diff-shades-comment
 
       - name: Calculate run configuration & metadata
         id: set-config
@@ -78,7 +81,9 @@ jobs:
           python-version: "3.15"
           allow-prereleases: true
           pip-version: "26.1"
-          pip-install: --group diff-shades
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades
 
       - name: Configure git
         run: |
@@ -135,7 +140,9 @@ jobs:
           python-version: "3.15"
           allow-prereleases: true
           pip-version: "26.1"
-          pip-install: --group diff-shades
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades
 
       - name: Configure git
         run: |
@@ -205,7 +212,9 @@ jobs:
           python-version: "3.15"
           allow-prereleases: true
           pip-version: "26.1"
-          pip-install: --group diff-shades --group diff-shades-comment
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades --group diff-shades-comment
 
       - name: Generate HTML diff report
         run: |
