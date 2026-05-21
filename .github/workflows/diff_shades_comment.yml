@@ -97,13 +97,13 @@ jobs:
         id: metadata
         run: |
           python scripts/diff_shades_gha_helper.py comment-details \
-          "$pr" "$run_id" \
-          "${{ steps.comment-artifacts.outputs.preview }}" \
-          "${{ steps.comment-artifacts.outputs.stable }}"
+          "$pr" "$run_id" "$preview_artifact" "$stable_artifact"
         env:
           GITHUB_TOKEN: ${{ github.token }}
           pr: ${{ steps.pr.outputs.pr }}
           run_id: ${{ github.event.workflow_run.id }}
+          preview_artifact: ${{ steps.comment-artifacts.outputs.preview }}
+          stable_artifact: ${{ steps.comment-artifacts.outputs.stable }}
 
       - name: Try to find pre-existing PR comment
         id: find-comment
