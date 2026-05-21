@@ -378,6 +378,161 @@ def test_failing_cell_message_includes_cell_header(
     assert "# output marker" in message
 
 
+def test_file_level_flags_apply_to_all_cells(tmp_path: Path) -> None:
+    path = write(
+        tmp_path,
+        "fix.py",
+        """
+        # flags: --preview --line-length=88
+
+        [case one]
+        x = 1
+        # output
+        x = 1
+
+        [case two]
+        y = 2
+        # output
+        y = 2
+        """,
+    )
+    cells = parse_cells(path.read_text(encoding="utf8"), path)
+    assert cells is not None and len(cells) == 2
+    for cell in cells:
+        assert cell.args.mode.preview is True
+        assert cell.args.mode.line_length == 88
+
+
+def test_cell_flags_override_file_level_scalars(tmp_path: Path) -> None:
+    path = write(
+        tmp_path,
+        "fix.py",
+        """
+        # flags: --line-length=88
+
+        [case default]
+        x = 1
+        # output
+        x = 1
+
+        [case wider]
+        # flags: --line-length=120
+        y = 2
+        # output
+        y = 2
+        """,
+    )
+    cells = parse_cells(path.read_text(encoding="utf8"), path)
+    assert cells is not None
+    by_name = {c.name: c for c in cells}
+    assert by_name["default"].args.mode.line_length == 88
+    assert by_name["wider"].args.mode.line_length == 120
+
+
+def test_cell_overrides_file_level_target_version(tmp_path: Path) -> None:
+    # `--target-version` uses `action="store"` in `get_flags_parser`, so the
+    # cell value wins outright rather than appending to file-level. Documented
+    # explicitly here so a future switch to `action="append"` shows up as a
+    # test break, not a silent semantic shift.
+    import black
+
+    path = write(
+        tmp_path,
+        "fix.py",
+        """
+        # flags: --target-version=PY310
+
+        [case bare]
+        x = 1
+        # output
+        x = 1
+
+        [case override_to_311]
+        # flags: --target-version=PY311
+        y = 2
+        # output
+        y = 2
+        """,
+    )
+    cells = parse_cells(path.read_text(encoding="utf8"), path)
+    assert cells is not None
+    by_name = {c.name: c for c in cells}
+    assert by_name["bare"].args.mode.target_versions == {black.TargetVersion.PY310}
+    assert by_name["override_to_311"].args.mode.target_versions == {
+        black.TargetVersion.PY311
+    }
+
+
+def test_file_level_line_ranges_rejected(tmp_path: Path) -> None:
+    # Line numbers in `--line-ranges` are absolute within each cell's own
+    # input, so a file-level range can never share meaning across cells.
+    # Reject at load time rather than silently apply it to every cell.
+    path = write(
+        tmp_path,
+        "fix.py",
+        """
+        # flags: --line-ranges=1-1
+
+        [case combines]
+        # flags: --line-ranges=2-3
+        a = 1
+        b = 2
+        c = 3
+        """,
+    )
+    with pytest.raises(
+        ValueError, match="`--line-ranges` is not allowed at the file level"
+    ):
+        parse_cells(path.read_text(encoding="utf8"), path)
+
+
+def test_duplicate_file_level_flags_raises(tmp_path: Path) -> None:
+    path = write(
+        tmp_path,
+        "fix.py",
+        """
+        # flags: --preview
+        # flags: --pyi
+
+        [case x]
+        x = 1
+        """,
+    )
+    with pytest.raises(ValueError, match="multiple top-level `# flags: ` lines"):
+        parse_cells(path.read_text(encoding="utf8"), path)
+
+
+def test_malformed_file_level_flags_raises(tmp_path: Path) -> None:
+    path = write(
+        tmp_path,
+        "fix.py",
+        """
+        # flags: --not-a-real-flag
+
+        [case x]
+        x = 1
+        """,
+    )
+    with pytest.raises(ValueError, match="malformed top-level"):
+        parse_cells(path.read_text(encoding="utf8"), path)
+
+
+def test_file_level_flags_line_after_cell_header_is_ignored(tmp_path: Path) -> None:
+    # `# flags: ` after the first `[case ]` belongs to that cell, not the file.
+    path = write(
+        tmp_path,
+        "fix.py",
+        """
+        [case alpha]
+        # flags: --pyi
+        x: int
+        """,
+    )
+    cells = parse_cells(path.read_text(encoding="utf8"), path)
+    assert cells is not None and len(cells) == 1
+    assert cells[0].args.mode.is_pyi is True
+
+
 def test_per_cell_lookup_returns_isolated_input_output(
     patch_data_dir: Path,
 ) -> None:

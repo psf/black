@@ -1,7 +1,6 @@
-# Migrated from single-case format. Source file: preview_long_strings__regression.py
+# flags: --unstable
 
 [case class_a_1]
-# flags: --unstable
 class A:
     def foo():
         result = type(message)("")
@@ -13,7 +12,6 @@ class A:
         result = type(message)("")
 
 [case don_t_merge_multiline_e_g_triple_quoted_strings]
-# flags: --unstable
 
 
 # Don't merge multiline (e.g. triple-quoted) strings.
@@ -32,7 +30,6 @@ def foo():
     )
 
 [case there_was_a_bug_where_tuples_were_being_identified_as_long_s]
-# flags: --unstable
 
 # There was a bug where tuples were being identified as long strings.
 long_tuple = ('Apple', 'Berry', 'Cherry', 'Dill', 'Evergreen', 'Fig',
@@ -55,7 +52,6 @@ long_tuple = (
 )
 
 [case stupid_format_method_bug]
-# flags: --unstable
 
 stupid_format_method_bug = "Some really long string that just so happens to be the {} {} to force the 'format' method to hang over the line length boundary. This is pretty annoying.".format("perfect", "length")
 # output
@@ -68,7 +64,6 @@ stupid_format_method_bug = (
 )
 
 [case class_a_2]
-# flags: --unstable
 
 class A:
     def foo():
@@ -85,7 +80,6 @@ class A:
         )
 
 [case class_a_3]
-# flags: --unstable
 
 
 class A:
@@ -113,7 +107,6 @@ class A:
         ))
 
 [case class_a_4]
-# flags: --unstable
 
 class A:
     class B:
@@ -145,7 +138,6 @@ class A:
             )
 
 [case fn_foo_1]
-# flags: --unstable
 
 def foo(xxxx):
     for (xxx_xxxx, _xxx_xxx, _xxx_xxxxx, xxx_xxxx) in xxxx:
@@ -167,7 +159,6 @@ def foo(xxxx):
             )
 
 [case class_a_5]
-# flags: --unstable
 
 class A:
     def disappearing_comment():
@@ -206,7 +197,6 @@ class A:
         )
 
 [case class_a_6]
-# flags: --unstable
 
 class A:
     class B:
@@ -243,7 +233,6 @@ class A:
             )
 
 [case func_call_where_string_arg_has_method_call_and_bad_parens]
-# flags: --unstable
 
 func_call_where_string_arg_has_method_call_and_bad_parens(
     (
@@ -259,7 +248,6 @@ func_call_where_string_arg_has_method_call_and_bad_parens(
 )
 
 [case func_call_where_string_arg_has_old_fmt_and_bad_parens]
-# flags: --unstable
 
 func_call_where_string_arg_has_old_fmt_and_bad_parens(
     (
@@ -274,7 +262,6 @@ func_call_where_string_arg_has_old_fmt_and_bad_parens(
 )
 
 [case func_call_where_string_arg_has_old_fmt_and_bad_parens_2]
-# flags: --unstable
 
 func_call_where_string_arg_has_old_fmt_and_bad_parens(
     (
@@ -289,7 +276,6 @@ func_call_where_string_arg_has_old_fmt_and_bad_parens(
 )
 
 [case class_a_7]
-# flags: --unstable
 
 class A:
     def append(self):
@@ -323,7 +309,6 @@ class A:
             )
 
 [case class_a_8]
-# flags: --unstable
 
 class A:
     def foo():
@@ -352,7 +337,6 @@ class A:
         ),
 
 [case class_a_9]
-# flags: --unstable
 
 class A:
     def foo():
@@ -379,7 +363,6 @@ class A:
         ),
 
 [case obfuscated_xxxxxxx]
-# flags: --unstable
 
 xxxxxxx = { 'xx' : 'xxxx xxxxxxx xxxxxxxxx -x xxx -x /xxx/{0} -x xxx,xxx -xx {1} \
 -xx {1} -xx xxx=xxx_xxxx,xxx_xx,xxx_xxx,xxx_xxxx,xxx_xx,xxx_xxx |\
@@ -405,7 +388,6 @@ xxxxxxx = {
 }
 
 [case class_a_10]
-# flags: --unstable
 
 class A:
     def foo(self):
@@ -426,7 +408,6 @@ class A:
             )
 
 [case class_a_11]
-# flags: --unstable
 
 class A:
     class B:
@@ -455,7 +436,6 @@ class A:
             }
 
 [case class_a_12]
-# flags: --unstable
 
 class A:
     def xxxx_xxx_xx_xxxxxxxxxx_xxxx_xxxxxxxxx(xxxx):
@@ -508,7 +488,6 @@ class A:
         ]
 
 [case some_dictionary_1]
-# flags: --unstable
 
 some_dictionary = {
     'xxxxx006': ['xxx-xxx xxxxx3xxxx1xx2xxxxxxxxxxxxxx0xx6xxxxxxxxxx2xxxxxx9xxxxxxxxxx0xxxxx1xxx2x/xx9xx6+x+xxxxxxxxxxxxxx4xxxxxxxxxxxxxxxxxxxxx43xxx2xx2x4x++xxx6xxxxxxxxx+xxxxx/xx9x+xxxxxxxxxxxxxx8x15xxxxxxxxxxxxxxxxx82xx/xxxxxxxxxxxxxx/x5xxxxxxxxxxxxxx6xxxxxx74x4/xxx4x+xxxxxxxxx2xxxxxxxx87xxxxx4xxxxxxxx3xx0xxxxx4xxx1xx9xx5xxxxxxx/xxxxx5xx6xx4xxxx1x/x2xxxxxxxxxxxx64xxxxxxx1x0xx5xxxxxxxxxxxxxx== xxxxx000 xxxxxxxxxx\n',
@@ -547,7 +526,6 @@ some_dictionary = {
 }
 
 [case fn_foo_2]
-# flags: --unstable
 
 def foo():
     xxx_xxx = (
@@ -563,7 +541,6 @@ def foo():
     )
 
 [case some_tuple]
-# flags: --unstable
 
 some_tuple = ("some string", "some string" " which should be joined")
 # output
@@ -572,7 +549,6 @@ some_tuple = ("some string", "some string" " which should be joined")
 some_tuple = ("some string", "some string which should be joined")
 
 [case some_commented_string]
-# flags: --unstable
 
 some_commented_string = (  # This comment stays at the top.
     "This string is long but not so long that it needs hahahah toooooo be so greatttt"
@@ -588,7 +564,6 @@ some_commented_string = (  # This comment stays at the top.
 )
 
 [case some_commented_string_2]
-# flags: --unstable
 
 some_commented_string = (
     "This string is long but not so long that it needs hahahah toooooo be so greatttt"  # But these
@@ -604,7 +579,6 @@ some_commented_string = (
 )
 
 [case lpar_and_rpar_have_comments]
-# flags: --unstable
 
 lpar_and_rpar_have_comments = func_call(  # LPAR Comment
     "Long really ridiculous type of string that shouldn't really even exist at all. I mean commmme onnn!!!",  # Comma Comment
@@ -617,7 +591,6 @@ lpar_and_rpar_have_comments = func_call(  # LPAR Comment
 )  # RPAR Comment
 
 [case cmd_fstring]
-# flags: --unstable
 
 cmd_fstring = (
     f"sudo -E deluge-console info --detailed --sort-reverse=time_added "
@@ -631,7 +604,6 @@ cmd_fstring = (
 )
 
 [case cmd_fstring_2]
-# flags: --unstable
 
 cmd_fstring = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 # output
@@ -642,7 +614,6 @@ cmd_fstring = (
 )
 
 [case cmd_fstring_3]
-# flags: --unstable
 
 cmd_fstring = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {'{{}}' if ID is None else ID} | perl -nE 'print if /^{field}:/'"
 # output
@@ -653,7 +624,6 @@ cmd_fstring = (
 )
 
 [case cmd_fstring_4]
-# flags: --unstable
 
 cmd_fstring = f"sudo -E deluge-console info --detailed --sort-reverse=time_added {{'' if ID is None else ID}} | perl -nE 'print if /^{field}:/'"
 # output
@@ -664,7 +634,6 @@ cmd_fstring = (
 )
 
 [case fstring_1]
-# flags: --unstable
 
 fstring = f"This string really doesn't need to be an {{{{fstring}}}}, but this one most certainly, absolutely {does}."
 # output
@@ -675,7 +644,6 @@ fstring = (
 )
 
 [case fstring_2]
-# flags: --unstable
 
 fstring = (
     f"We have to remember to escape {braces}."
@@ -687,7 +655,6 @@ fstring = (
 fstring = f"We have to remember to escape {braces}. Like {{these}}. But not {this}."
 
 [case class_a_13]
-# flags: --unstable
 
 class A:
     class B:
@@ -708,7 +675,6 @@ class A:
             )
 
 [case fn_foo_3]
-# flags: --unstable
 
 def foo():
     user_regex = _lazy_re_compile(
@@ -726,7 +692,6 @@ def foo():
     )
 
 [case fn_foo_4]
-# flags: --unstable
 
 def foo():
     user_regex = _lazy_re_compile(
@@ -745,7 +710,6 @@ def foo():
     )
 
 [case fn_foo_5]
-# flags: --unstable
 
 def foo():
     user_regex = _lazy_re_compile(
@@ -764,7 +728,6 @@ def foo():
     )
 
 [case class_a_14]
-# flags: --unstable
 
 class A:
     class B:
@@ -796,7 +759,6 @@ class A:
                 )
 
 [case class_a_15]
-# flags: --unstable
 
 class A:
     class B:
@@ -821,7 +783,6 @@ class A:
                 )
 
 [case assign_x_1]
-# flags: --unstable
 
 x = (
     "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -840,7 +801,6 @@ x = (
 )
 
 [case assign_step]
-# flags: --unstable
 
 class Step(StepBase):
     def who(self):
@@ -868,7 +828,6 @@ class Step(StepBase):
         )
 
 [case obfuscated_xxxxxxx_xxxxxx_xxxxxxx]
-# flags: --unstable
 
 xxxxxxx_xxxxxx_xxxxxxx = xxx(
     [
@@ -898,7 +857,6 @@ xxxxxxx_xxxxxx_xxxxxxx = xxx([
 ])
 
 [case conditional_string]
-# flags: --unstable
 
 if __name__ == "__main__":
     for i in range(4, 8):
@@ -916,7 +874,6 @@ if __name__ == "__main__":
         )
 
 [case class_a_16]
-# flags: --unstable
 
 def A():
     def B():
@@ -945,7 +902,6 @@ def A():
                             ), "%s didn't roundtrip" % tag
 
 [case obfuscated_xxxxxxxxxxxxxxxxxxxxx]
-# flags: --unstable
 
 class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
     def xxxxxxx_xxxxxx(xxxx):
@@ -966,7 +922,6 @@ class xxxxxxxxxxxxxxxxxxxxx(xxxx.xxxxxxxxxxxxx):
         )
 
 [case assign_value]
-# flags: --unstable
 
 value.__dict__[
     key
@@ -979,7 +934,6 @@ value.__dict__[key] = (
 )
 
 [case re_one_backslash]
-# flags: --unstable
 
 RE_ONE_BACKSLASH = {
     "asdf_hjkl_jkl": re.compile(
@@ -995,7 +949,6 @@ RE_ONE_BACKSLASH = {
 }
 
 [case re_two_backslashes]
-# flags: --unstable
 
 RE_TWO_BACKSLASHES = {
     "asdf_hjkl_jkl": re.compile(
@@ -1012,7 +965,6 @@ RE_TWO_BACKSLASHES = {
 }
 
 [case re_three_backslashes]
-# flags: --unstable
 
 RE_THREE_BACKSLASHES = {
     "asdf_hjkl_jkl": re.compile(
@@ -1028,7 +980,6 @@ RE_THREE_BACKSLASHES = {
 }
 
 [case we_do_not_split_on_f_string_expressions]
-# flags: --unstable
 
 # We do NOT split on f-string expressions.
 print(f"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam. {[f'{i}' for i in range(10)]}")
@@ -1041,7 +992,6 @@ print(
 )
 
 [case assign_x_2]
-# flags: --unstable
 x = f"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
 # output
 x = (
@@ -1050,7 +1000,6 @@ x = (
 )
 
 [case the_parens_should_not_be_removed_in_this_case]
-# flags: --unstable
 
 # The parens should NOT be removed in this case.
 (
@@ -1066,7 +1015,6 @@ x = (
 )
 
 [case the_parens_should_not_be_removed_in_this_case_2]
-# flags: --unstable
 
 # The parens should NOT be removed in this case.
 (
@@ -1082,7 +1030,6 @@ x = (
 )
 
 [case the_parens_should_not_be_removed_in_this_case_3]
-# flags: --unstable
 
 # The parens should NOT be removed in this case.
 (
@@ -1104,7 +1051,6 @@ x = (
 )
 
 [case legacy_listen_examples]
-# flags: --unstable
 
 
 def _legacy_listen_examples():
@@ -1128,7 +1074,6 @@ def _legacy_listen_examples():
     )
 
 [case assign_x_3]
-# flags: --unstable
 
 
 class X:
@@ -1152,7 +1097,6 @@ class X:
             )
 
 [case assign_temp_msg]
-# flags: --unstable
 
 
 temp_msg = (
@@ -1170,7 +1114,6 @@ temp_msg = (
 )
 
 [case assert_stmt_1]
-# flags: --unstable
 
 assert str(suffix_arr) == (
     "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
@@ -1187,7 +1130,6 @@ assert (
 )
 
 [case assert_stmt_2]
-# flags: --unstable
 assert str(suffix_arr) != (
     "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
     "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
@@ -1202,7 +1144,6 @@ assert (
 )
 
 [case assert_stmt_3]
-# flags: --unstable
 assert str(suffix_arr) <= (
     "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
     "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
@@ -1217,7 +1158,6 @@ assert (
 )
 
 [case assert_stmt_4]
-# flags: --unstable
 assert str(suffix_arr) >= (
     "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
     "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
@@ -1232,7 +1172,6 @@ assert (
 )
 
 [case assert_stmt_5]
-# flags: --unstable
 assert str(suffix_arr) < (
     "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
     "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
@@ -1247,7 +1186,6 @@ assert (
 )
 
 [case assert_stmt_6]
-# flags: --unstable
 assert str(suffix_arr) > (
     "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
     "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
@@ -1262,7 +1200,6 @@ assert (
 )
 
 [case assert_stmt_7]
-# flags: --unstable
 assert str(suffix_arr) in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 # output
 assert (
@@ -1273,7 +1210,6 @@ assert (
 )
 
 [case assert_stmt_8]
-# flags: --unstable
 assert str(suffix_arr) not in "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 # output
 assert (
@@ -1284,7 +1220,6 @@ assert (
 )
 
 [case assign_message_1]
-# flags: --unstable
 message = (
     f"1. Go to Google Developers Console and log in with your Google account."
     "(https://console.developers.google.com/)"
@@ -1314,7 +1249,6 @@ message = (
 )
 
 [case assign_message_2]
-# flags: --unstable
 message = (
     f"1. Go to Google Developers Console and log in with your Google account."
     "(https://console.developers.google.com/)"
@@ -1344,7 +1278,6 @@ message = (
 )
 
 [case assign_message_3]
-# flags: --unstable
 message = (
     f"1. Go to Google Developers Console and log in with your Google account."
     "(https://console.developers.google.com/)"
@@ -1374,7 +1307,6 @@ message = (
 )
 
 [case it_shouldn_t_matter_if_the_string_prefixes_are_capitalized]
-# flags: --unstable
 
 # It shouldn't matter if the string prefixes are capitalized.
 temp_msg = (
@@ -1392,7 +1324,6 @@ temp_msg = (
 )
 
 [case fstring_3]
-# flags: --unstable
 
 fstring = (
     F"We have to remember to escape {braces}."
@@ -1404,7 +1335,6 @@ fstring = (
 fstring = f"We have to remember to escape {braces}. Like {{these}}. But not {this}."
 
 [case welcome_to_programming]
-# flags: --unstable
 
 welcome_to_programming = R"hello," R" world!"
 # output
@@ -1412,7 +1342,6 @@ welcome_to_programming = R"hello," R" world!"
 welcome_to_programming = R"hello," R" world!"
 
 [case fstring_4]
-# flags: --unstable
 
 fstring = F"f-strings definitely make things more {difficult} than they need to be for {{black}}. But boy they sure are handy. The problem is that some lines will need to have the 'f' whereas others do not. This {line}, for example, needs one."
 # output
@@ -1424,7 +1353,6 @@ fstring = (
 )
 
 [case assign_x_4]
-# flags: --unstable
 
 x = F"This is a long string which contains an f-expr that should not split {{{[i for i in range(5)]}}}."
 # output
@@ -1435,7 +1363,6 @@ x = (
 )
 
 [case assign_x_5]
-# flags: --unstable
 
 x = (
     "\N{BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR}\N{VARIATION SELECTOR-16}"
@@ -1447,7 +1374,6 @@ x = (
 )
 
 [case obfuscated_long]
-# flags: --unstable
 
 xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxxxxx.xxxxxxxxx.xxxxxxxxxxxxxxxxxxxx(
     xx_xxxxxx={
@@ -1465,7 +1391,6 @@ xxxxxx_xxx_xxxx_xx_xxxxx_xxxxxxxx_xxxxxxxx_xxxxxxxxxx_xxxx_xxxx_xxxxx = xxxx.xxx
 )
 
 [case issue_3117_regression]
-# flags: --unstable
 
 # Regression test for https://github.com/psf/black/issues/3117.
 some_dict = {
@@ -1484,7 +1409,6 @@ some_dict = {
 }
 
 [case issue_3459_regression]
-# flags: --unstable
 
 # Regression test for https://github.com/psf/black/issues/3459.
 xxxx(
@@ -1516,7 +1440,6 @@ xxxx(
 )
 
 [case issue_3455_regression]
-# flags: --unstable
 
 # Regression test for https://github.com/psf/black/issues/3455.
 a_dict = {
@@ -1534,7 +1457,6 @@ a_dict = {
 }
 
 [case issue_3506_regression]
-# flags: --unstable
 
 # Regression test for https://github.com/psf/black/issues/3506.
 # Regressed again by https://github.com/psf/black/pull/4498
@@ -1556,7 +1478,6 @@ s = (
 )
 
 [case assign_s]
-# flags: --unstable
 
 s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:\'{my_dict["foo"]}\''
 # output
@@ -1567,7 +1488,6 @@ s = (
 )
 
 [case issue_4510_regression]
-# flags: --unstable
 
 # Regression test for https://github.com/psf/black/issues/4510.
 # Don't merge multi-line strings when a pragma comment follows.

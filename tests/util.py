@@ -280,30 +280,35 @@ def parse_mode(flags_line: str) -> TestCaseArgs:
 
 def _parse_cell_body(
     lines: list[str],
+    file_flags: str = "",
 ) -> tuple[TestCaseArgs, str, str, int | None]:
     """Parse one cell (or whole-file) body. Returns mode, input, output, and
     the 0-based index into ``lines`` of the ``# output`` marker (or None for
-    idempotency cells)."""
+    idempotency cells).
+
+    ``file_flags`` carries an optional multi-cell file-level ``# flags: ``
+    string (already stripped of the ``# flags: `` prefix and trailing
+    newline). It is concatenated *before* the cell's own ``# flags: `` line,
+    so scalar/store flags follow later-wins (cell beats file). ``--line-ranges``
+    is rejected at the file level by ``_extract_file_flags`` and so only ever
+    appears here from a cell.
+    """
     _input: list[str] = []
     _output: list[str] = []
     result = _input
-    mode = TestCaseArgs()
     output_offset: int | None = None
+    cell_flags: str | None = None
+    cell_flag_line: str | None = None
     for idx, line in enumerate(lines):
-        if not _input:
+        if not _input and cell_flags is None:
             if not line.strip():
                 # Tolerate leading blank lines before the optional `# flags: `
                 # line (or before the first content line, when no flags are
                 # set). Matches the doc's "first non-blank line" promise.
                 continue
             if line.startswith("# flags: "):
-                mode = parse_mode(line[len("# flags: ") :])
-                if mode.lines:
-                    # Retain the `# flags: ` line when using --line-ranges=. This requires
-                    # the `# output` section to also include this line, but retaining the
-                    # line is important to make the line ranges match what you see in the
-                    # test file.
-                    result.append(line)
+                cell_flags = line[len("# flags: ") :].rstrip("\n")
+                cell_flag_line = line
                 continue
         line = line.replace(EMPTY_LINE, "")
         if line.rstrip() == "# output":
@@ -312,6 +317,19 @@ def _parse_cell_body(
             continue
 
         result.append(line)
+
+    if cell_flags is not None or file_flags:
+        combined = f"{file_flags} {cell_flags or ''}".strip()
+        mode = parse_mode(combined)
+    else:
+        mode = TestCaseArgs()
+
+    if cell_flag_line is not None and mode.lines:
+        # Retain the cell's `# flags: ` line when --line-ranges is in effect so
+        # the input's line numbers match the ranges. Output must include the
+        # same line; that's a fixture-author responsibility.
+        _input.insert(0, cell_flag_line)
+
     if _input and not _output:
         # If there's no output marker, treat the entire file as already pre-formatted.
         _output = _input[:]
@@ -331,6 +349,7 @@ def read_data_from_file(file_name: Path) -> tuple[TestCaseArgs, str, str]:
 
 
 CELL_HEADER_RE = re.compile(r"^\[case ([A-Za-z_][A-Za-z0-9_]*)\]$")
+FILE_FLAGS_RE = re.compile(r"^# flags: (.*)$")
 
 
 @dataclass(frozen=True)
@@ -359,8 +378,11 @@ def _build_cell(
     header_lineno: int,
     block_start: int,
     body_lines: list[str],
+    file_flags: str = "",
 ) -> Cell:
-    args, input_text, output_text, output_offset = _parse_cell_body(body_lines)
+    args, input_text, output_text, output_offset = _parse_cell_body(
+        body_lines, file_flags=file_flags
+    )
     output_lineno = block_start + output_offset if output_offset is not None else None
     return Cell(
         name=name,
@@ -370,6 +392,50 @@ def _build_cell(
         header_lineno=header_lineno,
         output_lineno=output_lineno,
     )
+
+
+def _extract_file_flags(lines: list[str], path: Path) -> str:
+    """Pull a top-level ``# flags: ...`` line from the prose region before the
+    first ``[case ]`` header. At most one such line is allowed; multiples
+    raise. Returns the flag string (without the ``# flags: `` prefix), or an
+    empty string if none is present.
+    """
+    found: str | None = None
+    found_lineno: int = 0
+    for idx, line in enumerate(lines, start=1):
+        if CELL_HEADER_RE.match(line.rstrip()):
+            break
+        match = FILE_FLAGS_RE.match(line.rstrip("\n"))
+        if not match:
+            continue
+        if found is not None:
+            raise ValueError(
+                f"{path}: multiple top-level `# flags: ` lines"
+                f" (first at line {found_lineno}, again at line {idx});"
+                " only one is allowed"
+            )
+        found = match.group(1)
+        found_lineno = idx
+    if found is None:
+        return ""
+    # Parse-validate at file load time so a malformed top-level surfaces with
+    # the file path attached, not buried in a per-cell argparse trace.
+    try:
+        parsed = parse_mode(found)
+    except SystemExit as exc:
+        raise ValueError(
+            f"{path}: malformed top-level `# flags: ` on line {found_lineno}:"
+            f" {found!r}"
+        ) from exc
+    if parsed.lines:
+        raise ValueError(
+            f"{path}: `--line-ranges` is not allowed at the file level"
+            f" (line {found_lineno}). Line numbers are per-cell, so a"
+            " file-level range would apply to every cell against unrelated"
+            " content. Set `--line-ranges` inside the relevant `[case ]`"
+            " instead."
+        )
+    return found
 
 
 def parse_cells(text: str, path: Path) -> list[Cell] | None:
@@ -383,6 +449,8 @@ def parse_cells(text: str, path: Path) -> list[Cell] | None:
     lines = text.splitlines(keepends=True)
     if not is_multi_cell(lines):
         return None
+
+    file_flags = _extract_file_flags(lines, path)
 
     cells: list[Cell] = []
     current_name: str | None = None
@@ -400,6 +468,7 @@ def parse_cells(text: str, path: Path) -> list[Cell] | None:
                         current_header_lineno,
                         current_block_start,
                         current_lines,
+                        file_flags=file_flags,
                     )
                 )
             current_name = match.group(1)
@@ -417,6 +486,7 @@ def parse_cells(text: str, path: Path) -> list[Cell] | None:
                 current_header_lineno,
                 current_block_start,
                 current_lines,
+                file_flags=file_flags,
             )
         )
 
