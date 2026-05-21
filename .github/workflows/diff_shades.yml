@@ -24,6 +24,7 @@ concurrency:
 
 env:
   HATCH_BUILD_HOOKS_ENABLE: "1"
+  PIP_UPLOADED_PRIOR_TO: P2D
   # Clang is less picky with the C code it's given than gcc (and may generate faster
   # binaries too).
   CC: clang-18
@@ -44,8 +45,10 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group diff-shades --group diff-shades-comment
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades --group diff-shades-comment
 
       - name: Calculate run configuration & metadata
         id: set-config
@@ -73,8 +76,10 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group diff-shades
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades
 
       - name: Configure git
         run: |
@@ -128,8 +133,10 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group diff-shades
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades
 
       - name: Configure git
         run: |
@@ -196,8 +203,10 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group diff-shades --group diff-shades-comment
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades --group diff-shades-comment
 
       - name: Generate HTML diff report
         run: |

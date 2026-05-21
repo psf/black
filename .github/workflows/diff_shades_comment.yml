@@ -7,6 +7,9 @@ on:
 
 permissions: {}
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 jobs:
   comment:
     runs-on: ubuntu-latest
@@ -81,8 +84,10 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group diff-shades-comment
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades-comment
 
       - name: Get PR number
         id: pr
