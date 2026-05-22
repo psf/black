@@ -46,8 +46,10 @@ def has_triple_quotes(string: str) -> bool:
 
 def lines_with_leading_tabs_expanded(s: str) -> list[str]:
     """
-    Splits string into lines and expands only leading tabs (following the normal
-    Python rules)
+    Splits string into lines and expands only leading tabs.
+
+    Black normalizes code indentation to four-space columns, so leading tabs in
+    docstrings need the same width to keep relative indentation stable.
     """
     lines = []
     for line in s.splitlines():
@@ -56,7 +58,7 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
             lines.append(line)
         else:
             prefix_length = len(line) - len(stripped_line)
-            prefix = line[:prefix_length].expandtabs()
+            prefix = line[:prefix_length].expandtabs(4)
             lines.append(prefix + stripped_line)
     if s.endswith("\n"):
         lines.append("")

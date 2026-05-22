@@ -15,6 +15,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix multiline docstring indentation when leading tabs are used inside indented
+  docstrings (#5148)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
