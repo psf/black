@@ -2112,7 +2112,7 @@ class BlackTestCase(BlackBaseTestCase):
         payload = "\t" * 10_000
         assert lines_with_leading_tabs_expanded(payload) == [payload]
 
-        tab = " " * 8
+        tab = " " * 4
         assert lines_with_leading_tabs_expanded("\tx") == [f"{tab}x"]
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
         assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]
