@@ -16,12 +16,12 @@
 <!-- Changes that affect Black's stable style -->
 
 <<<<<<< fix/4296-standalone-comments-comprehensions
+
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
-  (#5144)
-=======
+  (#5144) =======
 - Fix a crash when splitting `case case if ...` match patterns at very small line
   lengths (#5147)
->>>>>>> main
+  > > > > > > > main
 
 ### Preview style
 
