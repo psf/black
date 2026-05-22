@@ -27,8 +27,56 @@ jobs:
         with:
           merge-multiple: true
           pattern: ".*.pr-comment.md"
+          path: ${{ runner.temp }}/diff-shades-artifacts
           github-token: ${{ github.token }}
           run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Validate downloaded comment artifacts
+        id: comment-artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          artifact_dir="${RUNNER_TEMP}/diff-shades-artifacts"
+          preview_artifact="${artifact_dir}/.preview.pr-comment.md"
+          stable_artifact="${artifact_dir}/.stable.pr-comment.md"
+
+          if [ ! -d "$artifact_dir" ]; then
+              echo "::error::Artifact directory does not exist: ${artifact_dir}"
+              exit 1
+          fi
+
+          while IFS= read -r -d '' entry; do
+              if [ "$(dirname "$entry")" != "$artifact_dir" ]; then
+                  echo "::error::Unexpected nested artifact path: ${entry}"
+                  exit 1
+              fi
+
+              case "$(basename "$entry")" in
+                  .preview.pr-comment.md|.stable.pr-comment.md) ;;
+                  *)
+                      echo "::error::Unexpected artifact path: ${entry}"
+                      exit 1
+                      ;;
+              esac
+
+              if [ ! -f "$entry" ] || [ -L "$entry" ]; then
+                  echo "::error::Artifact must be a regular file: ${entry}"
+                  exit 1
+              fi
+          done < <(find "$artifact_dir" -mindepth 1 -print0)
+
+          for artifact in "$preview_artifact" "$stable_artifact"; do
+              if [ ! -f "$artifact" ] || [ -L "$artifact" ]; then
+                  echo "::error::Missing expected artifact file: ${artifact}"
+                  exit 1
+              fi
+          done
+
+          {
+              echo "preview=${preview_artifact}"
+              echo "stable=${stable_artifact}"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -49,11 +97,13 @@ jobs:
         id: metadata
         run: |
           python scripts/diff_shades_gha_helper.py comment-details \
-          $pr $run_id $(echo .*.pr-comment.md)
+          "$pr" "$run_id" "$preview_artifact" "$stable_artifact"
         env:
           GITHUB_TOKEN: ${{ github.token }}
           pr: ${{ steps.pr.outputs.pr }}
           run_id: ${{ github.event.workflow_run.id }}
+          preview_artifact: ${{ steps.comment-artifacts.outputs.preview }}
+          stable_artifact: ${{ steps.comment-artifacts.outputs.stable }}
 
       - name: Try to find pre-existing PR comment
         id: find-comment

@@ -1,0 +1,8 @@
+rules:
+  dangerous-triggers:
+    ignore:
+      # The diff-shades comment workflow intentionally runs after the unprivileged
+      # diff-shades workflow so it can publish the generated PR comment. It must
+      # treat artifacts as untrusted and only read validated files from an isolated
+      # artifact directory.
+      - diff_shades_comment.yml
