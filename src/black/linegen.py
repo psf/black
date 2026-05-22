@@ -1107,6 +1107,11 @@ def _maybe_split_omitting_optional_parens(
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
                 )
+                and not (
+                    rhs.opening_bracket.parent
+                    and rhs.opening_bracket.parent.parent
+                    and rhs.opening_bracket.parent.parent.type == syms.case_block
+                )
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -1648,6 +1653,11 @@ def normalize_invisible_parens(
                 # A special patch for "case case:" scenario, the second occurrence
                 # of case will be not parsed as a Python keyword.
                 break
+
+            elif isinstance(child, Node) and child.type == syms.guard:
+                # Guard nodes handle their own inner wrapping. Wrapping the guard
+                # itself can produce invalid output when the case pattern splits.
+                pass
 
             elif not is_multiline_string(child):
                 if (
