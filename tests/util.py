@@ -424,8 +424,7 @@ def _extract_file_flags(lines: list[str], path: Path) -> str:
         parsed = parse_mode(found)
     except SystemExit as exc:
         raise ValueError(
-            f"{path}: malformed top-level `# flags: ` on line {found_lineno}:"
-            f" {found!r}"
+            f"{path}: malformed top-level `# flags: ` on line {found_lineno}: {found!r}"
         ) from exc
     if parsed.lines:
         raise ValueError(
@@ -622,9 +621,7 @@ def read_data_with_mode(
     return read_data_from_file(path)
 
 
-def read_data(
-    subdir_name: str, name: CaseId, data: bool = True
-) -> tuple[str, str]:
+def read_data(subdir_name: str, name: CaseId, data: bool = True) -> tuple[str, str]:
     """read_data('test_name') -> 'input', 'output'"""
     _, input, output = read_data_with_mode(subdir_name, name, data)
     return input, output

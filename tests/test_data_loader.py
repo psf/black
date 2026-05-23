@@ -36,9 +36,7 @@ def _clear_parse_cache() -> Iterator[None]:
 
 
 @pytest.fixture
-def patch_data_dir(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> Path:
+def patch_data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """Point `util.DATA_DIR` at a fresh temp dir for `read_data_with_mode`
     callers, with automatic restoration. Also pre-creates the subdirs that
     test_format.py's module-load parametrize decorators expect, so that
