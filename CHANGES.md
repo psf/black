@@ -62,7 +62,7 @@
   `[case <name>]` headers, inspired by mypy's test data format. Files without a header
   continue to work unchanged. Failing cells report their file path, cell header line,
   and `# output` marker line. Migrates `preview_long_strings.py` and
-  `preview_long_strings__regression.py` as the first consumers (#5147)
+  `preview_long_strings__regression.py` as the first consumers (#5149)
 
 ## Version 26.5.1
 
