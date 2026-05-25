@@ -660,6 +660,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             )
             return naked_string
 
+        is_valid_index = is_valid_index_factory(LL)
+        if not is_valid_index(next_str_idx):
+            return TErr("Cannot merge string group as it is not followed by a valid index.")
+
         # Holds the CustomSplit objects that will later be added to the custom
         # split map.
         custom_splits = []
@@ -718,6 +722,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         non_string_idx = next_str_idx
 
         S_leaf = Leaf(token.STRING, S)
+        if not self.is_valid_line_length(S_leaf, line):
+            return TErr(f"Merging this string group would result in a line that exceeds the maximum line length ({self.mode.line_length}).")
+
         if self.normalize_strings:
             S_leaf.value = normalize_string_quotes(S_leaf.value)
 
@@ -739,6 +746,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             # If not all children of the atom node are merged (this can happen
             # when there is a standalone comment in the middle) ...
             if non_string_idx - string_idx < len(atom_node.children):
+                if not self.is_valid_line_length(string_leaf, line):
+                    return TErr("Merging this string group results in a line that exceeds the maximum line length.")
                 # We need to replace the old STRING leaves with the new string leaf.
                 first_child_idx = LL[string_idx].remove()
                 for idx in range(string_idx + 1, non_string_idx):
@@ -751,6 +760,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
         self.add_custom_splits(string_leaf.value, custom_splits)
         return num_of_strings, string_leaf
+
+    def is_valid_line_length(self, leaf: Leaf, line: Line) -> bool:
+        """Check if the given leaf exceeds the line length limit."""
+        return count_chars_in_width(line, leaf, self.mode.line_length) <= self.mode.line_length
 
     @staticmethod
     def _validate_msg(line: Line, string_idx: int) -> TResult[None]:
