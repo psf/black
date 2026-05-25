@@ -1,5 +1,7 @@
 import unittest
+
 from black.strings import fix_multiline_docstring
+
 
 class TestFixMultilineDocstring(unittest.TestCase):
     def test_no_unnecessary_newlines(self):
@@ -23,7 +25,9 @@ class TestFixMultilineDocstring(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 import unittest
+
 from black.strings import fix_multiline_docstring
+
 
 class TestFixMultilineDocstring(unittest.TestCase):
     def test_no_unnecessary_newlines(self):

@@ -1,5 +1,6 @@
 import pytest
-from black import assert_equivalent, lib2to3_parse, Mode
+
+from black import Mode, assert_equivalent, lib2to3_parse
 from black.trans import StringMerger, iter_fexpr_spans
 
 
@@ -68,16 +69,16 @@ def foo():
 def test_string_merger_does_not_introduce_unnecessary_newlines(text: str, line_length: int) -> None:
     mode = Mode(line_length=line_length)
     string_merger = StringMerger(mode)
-    
+
     # Parse the text into an AST
     ast = lib2to3_parse(text)
-    
+
     # This test assumes that the StringMerger class will be used in a context similar to how Black processes files
     # The actual implementation details might vary based on how Black internally works
-    
+
     # Since the exact usage of StringMerger in the context of Black is not directly shown,
     # we'll proceed with a hypothetical test scenario that checks the essential behavior
-    
+
     assert_equivalent(text, text)  # This is a placeholder assertion
 
 
@@ -98,16 +99,16 @@ def foo():
 def test_string_merger_does_not_introduce_unnecessary_newlines(text: str, line_length: int) -> None:
     mode = Mode(line_length=line_length)
     string_merger = StringMerger(mode)
-    
+
     # Parse the text into an AST
     ast = lib2to3_parse(text)
-    
+
     # This test assumes that the StringMerger class will be used in a context similar to how Black processes files
     # The actual implementation details might vary based on how Black internally works
-    
+
     # Since the exact usage of StringMerger in the context of Black is not directly shown,
     # we'll proceed with a hypothetical test scenario that checks the essential behavior
-    
+
     assert_equivalent(text, text)  # This is a placeholder assertion
 
 
@@ -128,14 +129,14 @@ def foo():
 def test_string_merger_does_not_introduce_unnecessary_newlines(text: str, line_length: int) -> None:
     mode = Mode(line_length=line_length)
     string_merger = StringMerger(mode)
-    
+
     # Parse the text into an AST
     ast = lib2to3_parse(text)
-    
+
     # This test assumes that the StringMerger class will be used in a context similar to how Black processes files
     # The actual implementation details might vary based on how Black internally works
-    
+
     # Since the exact usage of StringMerger in the context of Black is not directly shown,
     # we'll proceed with a hypothetical test scenario that checks the essential behavior
-    
+
     assert_equivalent(text, text)  # This is a placeholder assertion
