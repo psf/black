@@ -1110,6 +1110,31 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("+ ','", out_str)
         self.assertEqual("".join(err_lines), "")
 
+    def test_trailing_newlines_fmt_off(self) -> None:
+        """Test that trailing newlines are preserved when fmt: off is used."""
+        source = """
+def main():
+    # fmt: off
+    x = 1
+
+
+    # fmt: on
+    y = 2
+
+"""
+        expected = """
+def main():
+    # fmt: off
+    x = 1
+
+
+    # fmt: on
+    y = 2
+
+"""
+        result = black.format_str(source, mode=black.Mode())
+        self.assertEqual(result, expected)
+
     @event_loop()
     @patch("concurrent.futures.ProcessPoolExecutor", MagicMock(side_effect=OSError))
     def test_works_in_mono_process_only_environment(self) -> None:
