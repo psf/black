@@ -833,7 +833,13 @@ def transform_line(
             break
 
     else:
-        yield line
+        # A leftover standalone comment would render inline and break the
+        # second pass with a parse error (#4296). Force a split so the
+        # output is at least valid Python.
+        if line.contains_standalone_comments():
+            yield from _force_standalone_comment_split(line)
+        else:
+            yield line
 
 
 def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
@@ -1526,6 +1532,24 @@ def standalone_comment_split(
         for comment_after in line.comments_after(leaf):
             yield from append_to_line(comment_after)
 
+    if current_line:
+        yield current_line
+
+
+def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
+    """Last-resort split at every standalone-comment boundary."""
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
+    for leaf in line.leaves:
+        if current_line.leaves and (
+            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+        ):
+            yield current_line
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
+        current_line.append(leaf, preformatted=True)
     if current_line:
         yield current_line
 

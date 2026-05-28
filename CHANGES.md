@@ -15,6 +15,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when a standalone comment sits between tokens of a comprehension or lambda
+  (#5144)
 - Fix a crash when splitting `case case if ...` match patterns at very small line
   lengths (#5147)
 - Fix multiline docstring indentation when leading tabs are used inside indented
