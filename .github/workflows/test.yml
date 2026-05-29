@@ -20,6 +20,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
@@ -56,8 +59,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-          pip-version: "25.3"
-          pip-install: --group tox
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group tox
 
       - name: Unit tests
         if: "!startsWith(matrix.python-version, 'pypy')"
@@ -116,8 +121,10 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: -e .[uvloop]
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install -e ".[uvloop]"
 
       - name: Format ourselves
         run: python -m black --check .

@@ -10,6 +10,7 @@ on:
 permissions: {}
 
 env:
+  PIP_UPLOADED_PRIOR_TO: P2D
   PROJECT: https://pypi.org/p/black
 
 jobs:
@@ -27,8 +28,10 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group cibw
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group cibw
 
       - name: generate matrix
         if: |
@@ -80,8 +83,10 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group cibw
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group cibw
 
       - name: Run cibuildwheel
         run: cibuildwheel . --only ${{ matrix.only }}
@@ -105,8 +110,10 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
-          pip-version: "25.3"
-          pip-install: --group hatch
+          pip-version: "26.1"
+
+      - name: Install dependencies
+        run: python -m pip install --group hatch
 
       - name: Build wheel and source distributions
         run: python -m hatch build
