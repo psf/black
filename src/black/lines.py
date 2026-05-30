@@ -607,6 +607,19 @@ class EmptyLineTracker:
         return None
 
     @staticmethod
+    def _get_suite_first_decorated_funcname(suite: Node) -> str | None:
+        """Return the function name of the first decorated function in a suite."""
+        for child in suite.children:
+            if isinstance(child, Node) and child.type == syms.decorated:
+                for sub in child.children:
+                    if sub.type in (syms.funcdef, syms.async_funcdef):
+                        return EmptyLineTracker._get_funcdef_name(sub)
+                break
+            if child.type not in (token.NEWLINE, token.NL, token.INDENT, token.DEDENT):
+                break
+        return None
+
+    @staticmethod
     def _if_stmt_branch_has_func_named(
         if_stmt: Node, exclude_suite: Node, name: str
     ) -> bool:
@@ -687,6 +700,41 @@ class EmptyLineTracker:
             return False
         return any(child.type == syms.classdef for child in decorated.children)
 
+    @staticmethod
+    def _def_is_followed_by_same_name_decorated_func(
+        line: Line, *, include_conditional_blocks: bool = False
+    ) -> bool:
+        """Check if a decorated function is followed by a same-name decorated func.
+
+        If *include_conditional_blocks* is true, the next decorated function may
+        be inside an adjacent conditional block.
+        """
+        name = EmptyLineTracker._get_def_name(line)
+        decorated = EmptyLineTracker._find_decorated_node(line)
+        if name is None or decorated is None:
+            return False
+
+        sibling = decorated.next_sibling
+        while sibling is not None and sibling.type in _WHITESPACE_TOKENS:
+            sibling = sibling.next_sibling
+
+        if sibling is None or not isinstance(sibling, Node):
+            return False
+        if sibling.type == syms.decorated:
+            return EmptyLineTracker._decorated_node_has_func_named(sibling, name)
+        if not include_conditional_blocks or sibling.type != syms.if_stmt:
+            return False
+        for child in sibling.children:
+            if not isinstance(child, Node):
+                continue
+            if child.type != syms.suite:
+                continue
+            first_decorated_funcname = (
+                EmptyLineTracker._get_suite_first_decorated_funcname(child)
+            )
+            return first_decorated_funcname == name
+        return False
+
     def _is_in_current_group(self, current_line: Line) -> bool:
         """Check if current_line belongs to the same overload group being tracked."""
         prev = self._pyi_previous_decorated_func
@@ -750,15 +798,7 @@ class EmptyLineTracker:
         suite = line.leaves[-1].next_sibling
         if suite is None or not isinstance(suite, Node) or suite.type != syms.suite:
             return None
-        for child in suite.children:
-            if isinstance(child, Node) and child.type == syms.decorated:
-                for sub in child.children:
-                    if sub.type in (syms.funcdef, syms.async_funcdef):
-                        return EmptyLineTracker._get_funcdef_name(sub)
-                break
-            if child.type not in (token.NEWLINE, token.NL, token.INDENT, token.DEDENT):
-                break
-        return None
+        return EmptyLineTracker._get_suite_first_decorated_funcname(suite)
 
     @staticmethod
     def _block_is_part_of_overload_group(line: Line) -> bool:
@@ -1005,6 +1045,17 @@ class EmptyLineTracker:
                     # else/elif continuing a conditional overload group:
                     # don't insert a blank line above.
                     before = 0
+                elif (
+                    Preview.pyi_blank_line_after_function_docstring in self.mode
+                    and previous_def.is_def
+                    and self.previous_line.is_docstring
+                    and self.previous_line.depth == previous_def.depth + 1
+                    and not self._def_is_followed_by_same_name_decorated_func(
+                        previous_def,
+                        include_conditional_blocks=overload_groups,
+                    )
+                ):
+                    before = 1
                 elif depth and not current_line.is_def and self.previous_line.is_def:
                     if (
                         overload_groups
@@ -1129,9 +1180,9 @@ class EmptyLineTracker:
                     newlines = 0
                 else:
                     newlines = 1
-            # Don't inspect the previous line if it's part of the body of the previous
-            # statement in the same level, we always want a blank line if there's
-            # something with a body preceding.
+            # Don't inspect only the previous line if it's part of the body of the
+            # preceding statement. We always want a blank line after something with a
+            # body.
             elif self.previous_line.depth > current_line.depth:
                 if overload_groups and self._is_in_current_group(current_line):
                     newlines = 0

@@ -31,6 +31,8 @@
   instead. This fixes the awkward break that was showing up in comprehension `if`
   clauses (#4514) as well as the same shape inside `if`, `elif`, `assert`, and
   parenthesized expressions (#5135)
+- In `.pyi` stub files, enforce a blank line after a function or method that has a
+  docstring-only body when another comment or statement follows it.
 
 ### Configuration
 
