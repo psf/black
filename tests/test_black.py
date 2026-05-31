@@ -1406,7 +1406,9 @@ class BlackTestCase(BlackBaseTestCase):
                     )
                 except io.UnsupportedOperation:
                     pass  # StringIO does not support detach
-                assert output.getvalue() == expected
+                assert (
+                    output.getvalue() == expected
+                ), f"incorrect formatting of {repr(content)}"
 
     def test_cli_unstable(self) -> None:
         self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
