@@ -36,6 +36,11 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix `find_project_root` returning a stale cached result when `--code` is used from
+  different working directories in the same process. The CWD fallback (used when no
+  `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
+  directory gets the correct `pyproject.toml` (#5152)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
