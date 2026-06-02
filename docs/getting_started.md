@@ -29,6 +29,10 @@ If you want to format Jupyter Notebooks, install with `pip install "black[jupyte
 See the [Jupyter Notebooks guide](./guides/using_black_with_jupyter_notebooks.md) for
 more details.
 
+If you want to run _Black_ without installing Python, download one of the
+PyInstaller-built standalone executables from the
+[latest GitHub release](https://github.com/psf/black/releases/latest).
+
 If you can't wait for the latest _hotness_ and want to install from GitHub, use:
 
 `pip install git+https://github.com/psf/black`

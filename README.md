@@ -42,6 +42,10 @@ _Black_ can be installed by running `pip install black`. It requires Python 3.10
 run. If you want to format Jupyter Notebooks, install with
 `pip install "black[jupyter]"`.
 
+If you want to run _Black_ without installing Python, download one of the
+PyInstaller-built standalone executables from the
+[latest GitHub release](https://github.com/psf/black/releases/latest).
+
 ### Usage
 
 To get started right away with sensible defaults:
