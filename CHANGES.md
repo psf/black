@@ -53,6 +53,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Improve performance on strings containing many consecutive backslashes (#5163)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
