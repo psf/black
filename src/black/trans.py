@@ -641,7 +641,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                     for span in iter_fexpr_spans(string)
                 ]
                 debug_expressions_contain_visible_quotes = any(
-                    re.search(r".*[\'\"].*(?<![!:=])={1}(?!=)(?![^\s:])", expression)
+                    re.search(r"[\'\"].*(?<![!:=])={1}(?!=)(?![^\s:])", expression)
                     for expression in f_expressions
                 )
                 if not debug_expressions_contain_visible_quotes:
