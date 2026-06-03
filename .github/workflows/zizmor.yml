@@ -2,10 +2,10 @@ name: zizmor
 
 on:
   push:
-    branches: ["main"]
-    paths: ["**.yml"]
+    branches: main
+    paths: "**.yml"
   pull_request:
-    paths: ["**.yml"]
+    paths: "**.yml"
 
 permissions: {}
 

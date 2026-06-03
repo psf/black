@@ -2,8 +2,8 @@ name: diff-shades comment
 
 on:
   workflow_run:
-    workflows: [diff-shades]
-    types: [completed]
+    workflows: diff-shades
+    types: completed
 
 permissions: {}
 
@@ -32,8 +32,8 @@ jobs:
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.13"
-          pip-version: "25.3"
+          python-version: "3.14"
+          pip-version: "26.1"
           pip-install: --group diff-shades-comment
 
       - name: Get PR number
