@@ -21,7 +21,7 @@ UNICODE_ESCAPE_RE: Final = re.compile(
     r"|(U(?P<U>[a-fA-F0-9]{8}))"  # Character with 32-bit hex value xxxxxxxx
     r"|(x(?P<x>[a-fA-F0-9]{2}))"  # Character with hex value hh
     r"|(N\{(?P<N>[a-zA-Z0-9 \-]{2,})\})"  # Character named name in the Unicode database
-    r")",
+    r")?",
     re.VERBOSE,
 )
 
@@ -319,8 +319,8 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
         groups = m.groupdict()
         back_slashes = groups["backslashes"]
 
-        if len(back_slashes) % 2 == 0:
-            return back_slashes + groups["body"]
+        if groups["body"] is None or len(back_slashes) % 2 == 0:
+            return m.group(0)
 
         if groups["u"]:
             # \u
