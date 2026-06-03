@@ -42,7 +42,7 @@ To cut a release:
 1. Determine the release's version number
    - **_Black_ follows the [CalVer] versioning standard using the `YY.M.N` format**
      - So unless there already has been a release during this month, `N` should be `0`
-   - Example: the first release in January, 2022 → `22.1.0`
+   - Example: the first release in January, 2026 → `26.1.0`
    - `release.py` will calculate this and log it to stdout for your copy-paste pleasure
 1. Double-check that no changelog entries since the last release were put in the wrong
    section (e.g., run `git diff origin/stable CHANGES.md`)

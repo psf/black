@@ -5,6 +5,8 @@
 <!-- PR authors:
      Please include the PR number in the changelog entry, not the issue number -->
 
+- Add support for NO_COLOR environment variable to disable ANSI output (#5129)
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
@@ -17,35 +19,35 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Preserve multiline compound statement headers when `# fmt: skip` is placed on the
-  colon line (#5117)
-- Fix `# fmt: skip` being ignored in nested `if` expressions with parenthesized `in`
-  clauses (#4903)
-- Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
+- Fix crash when a standalone comment sits between tokens of a comprehension or lambda
+  (#5144)
+- Fix a crash when splitting `case case if ...` match patterns at very small line
+  lengths (#5147)
+- Fix multiline docstring indentation when leading tabs are used inside indented
+  docstrings (#5148)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
-- Prevent string merger from creating unsplittable long lines when a pragma comment
-  (e.g. `# type: ignore`) follows the closing bracket (#5096)
-- Improve heuristics around whether blank lines should appear before, within and after
-  groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
-  files (#5021)
-- Fix blank lines being removed between a function and a decorated class in `.pyi` stub
-  files (#5092)
+- Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
+  the right-hand side is a bracketed expression. Black now lets the bracket explode
+  instead. This fixes the awkward break that was showing up in comprehension `if`
+  clauses (#4514) as well as the same shape inside `if`, `elif`, `assert`, and
+  parenthesized expressions (#5135)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
+- Fix `find_project_root` returning a stale cached result when `--code` is used from
+  different working directories in the same process. The CWD fallback (used when no
+  `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
+  directory gets the correct `pyproject.toml` (#5152)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
-
-- Python 3.15 is now supported. Compiled wheels are not yet provided for Python 3.15, so
-  performance may be slower than on existing Python versions. Wheels will be provided
-  once Python 3.15 is later in its release cycle. (#5127)
 
 ### Parser
 
@@ -55,33 +57,95 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Improve performance on strings containing many consecutive backslashes (#5163)
+
+### Output
+
+<!-- Changes to Black's terminal output and error messages -->
+
+### _Blackd_
+
+<!-- Changes to blackd -->
+
+### Integrations
+
+<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+### Documentation
+
+<!-- Major changes to documentation and policies. Small docs changes
+     don't need a changelog entry. -->
+
+## Version 26.5.1
+
+### Stable style
+
+- Fix unstable formatting of annotated assignments whose subscript annotation contains
+  an inline comment (e.g. `x: list[  # pyright: ignore[...]`) (#5130)
+- Preserve inline comments (including `# type: ignore`) immediately before a
+  `# fmt: skip` line, avoiding AST equivalence failures (#5139)
+
+### Packaging
+
+- Correct the version in the published executables (#5137)
+
+### Documentation
+
+- Add Neovim integration guide covering conform.nvim, ALE, and simple command approaches
+  (#5124)
+
+## Version 26.5.0
+
+### Highlights
+
+- Add support for unpacking in comprehensions (PEP 798) and for lazy imports (PEP 810),
+  both new syntactic features in Python 3.15 (#5048)
+- Python 3.15 is now supported. Compiled wheels are not yet provided for Python 3.15, so
+  performance may be slower than on existing Python versions. Wheels will be provided
+  once Python 3.15 is later in its release cycle. (#5127)
+
+### Stable style
+
+- Fix `# fmt: skip` being ignored in nested `if` expressions with parenthesized `in`
+  clauses (#4903)
+- Add syntactic support for Python 3.15 (#5048)
+- Fix crash when an f-string follows a `# fmt: off` comment inside brackets (#5097)
+- Preserve multiline compound statement headers when `# fmt: skip` is placed on the
+  colon line (#5117)
+
+### Preview style
+
+- Improve heuristics around whether blank lines should appear before, within and after
+  groups of same-name decorated functions (such as `@overload` groups) in `.pyi` stub
+  files (#5021)
+- Fix blank lines being removed between a function and a decorated class in `.pyi` stub
+  files (#5092)
+- Prevent string merger from creating unsplittable long lines when a pragma comment
+  (e.g. `# type: ignore`) follows the closing bracket (#5096)
+
+### Packaging
+
+- Run CI on 3.15 (#5127)
+
 ### Output
 
 - Improve parse error readability by showing multi-line output with an error pointer.
   (#5068)
-
 - Add `SourceASTParseError` to distinguish source parse failures from internal safety
   errors, improving error reporting when Black's lenient parser accepts input that
   `ast.parse()` rejects (#5080)
 
 ### _Blackd_
 
-<!-- Changes to blackd -->
-
 - Return HTTP 400 (Bad Request) for source parse failures instead of HTTP 500, keeping
   HTTP 500 only for genuine internal safety errors (#5080)
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 - Added documentation for doctest formatting tools and updated the integrations index to
   match (#4916)
 
 ### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 - Use "Version X.Y.Z" headings in changelog for stable permalink anchors on ReadTheDocs
   (#5063)

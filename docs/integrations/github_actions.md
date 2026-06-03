@@ -50,7 +50,7 @@ If you want to match versions covered by Black's
   with:
     options: "--check --verbose"
     src: "./src"
-    version: "~= 22.0"
+    version: "~= 26.0"
 ```
 
 To read the version from the `pyproject.toml` file instead, set `use_pyproject` to

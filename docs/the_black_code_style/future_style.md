@@ -31,6 +31,9 @@ Currently, the following features are included in the preview style:
 - `pyi_blank_line_before_decorated_class`: In `.pyi` stub files, enforce a blank line
   before a decorated class definition when it follows a function definition.
   ([see below](labels/pyi-blank-line-before-decorated-class))
+- `hug_comparator`: Don't break a comparator (`not in`, `==`, `is`, ...) away from its
+  left operand when the right operand is a bracketed expression that has to break
+  anyway; let the bracket explode instead. ([see below](labels/hug-comparator))
 
 (labels/wrap-comprehension-in)=
 
@@ -228,6 +231,89 @@ classes are handled:
 +
   @decorator
   class Spam: ...
+```
+
+(labels/hug-comparator)=
+
+### Keep comparators next to their left operand
+
+When a comparator (`not in`, `==`, `is`, ...) sits inside another bracketed construct
+and its right operand is a bracketed expression that has to break (either via a magic
+trailing comma or because the line is too long), Black used to split the line right
+before the comparator. The left operand ended up alone on its own line, visually
+disconnected from the operator and the operand that explains it:
+
+```python
+# Before
+
+x = [
+    t
+    for t in y
+    if t
+    not in {
+        LongNameOne,
+        LongNameTwo,
+        LongNameThree,
+    }
+]
+```
+
+With this feature enabled, Black skips that comparator split and lets the right-hand
+bracket explode instead, which it would have done anyway:
+
+```python
+# After (with --preview)
+
+x = [
+    t
+    for t in y
+    if t not in {
+        LongNameOne,
+        LongNameTwo,
+        LongNameThree,
+    }
+]
+```
+
+The fix is not limited to comprehensions. The same shape appears inside `if`/`elif`
+chains, `assert` statements, and parenthesized expressions, and gets the same treatment:
+
+```python
+# Before
+
+if (
+    is_scalar(value)
+    and self.dtype
+    in (np.dtype("float64"), np.dtype("float32"), np.dtype("object"))
+    and (limit is not None or inplace)
+):
+    ...
+
+assert (
+    bool
+    is _AnnotationExtractor(attr.fields(C).x.converter.__call__).get_return_type()
+)
+```
+
+```python
+# After (with --preview)
+
+if (
+    is_scalar(value)
+    and self.dtype in (
+        np.dtype("float64"),
+        np.dtype("float32"),
+        np.dtype("object"),
+    )
+    and (limit is not None or inplace)
+):
+    ...
+
+assert (
+    bool is _AnnotationExtractor(
+        attr.fields(C).x.converter.__call__
+    ).get_return_type()
+)
 ```
 
 ## Unstable style

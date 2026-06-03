@@ -954,8 +954,7 @@ class StringParenStripper(StringTransformer):
                 before_lpar = LL[idx - 2]
                 if token.PERCENT in {leaf.type for leaf in LL[idx - 1 : next_idx]} and (
                     (
-                        before_lpar.type
-                        in {
+                        before_lpar.type in {
                             token.STAR,
                             token.AT,
                             token.SLASH,

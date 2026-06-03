@@ -21,7 +21,7 @@ UNICODE_ESCAPE_RE: Final = re.compile(
     r"|(U(?P<U>[a-fA-F0-9]{8}))"  # Character with 32-bit hex value xxxxxxxx
     r"|(x(?P<x>[a-fA-F0-9]{2}))"  # Character with hex value hh
     r"|(N\{(?P<N>[a-zA-Z0-9 \-]{2,})\})"  # Character named name in the Unicode database
-    r")",
+    r")?",
     re.VERBOSE,
 )
 
@@ -46,8 +46,10 @@ def has_triple_quotes(string: str) -> bool:
 
 def lines_with_leading_tabs_expanded(s: str) -> list[str]:
     """
-    Splits string into lines and expands only leading tabs (following the normal
-    Python rules)
+    Splits string into lines and expands only leading tabs.
+
+    Black normalizes code indentation to four-space columns, so leading tabs in
+    docstrings need the same width to keep relative indentation stable.
     """
     lines = []
     for line in s.splitlines():
@@ -56,7 +58,7 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
             lines.append(line)
         else:
             prefix_length = len(line) - len(stripped_line)
-            prefix = line[:prefix_length].expandtabs()
+            prefix = line[:prefix_length].expandtabs(4)
             lines.append(prefix + stripped_line)
     if s.endswith("\n"):
         lines.append("")
@@ -317,8 +319,8 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
         groups = m.groupdict()
         back_slashes = groups["backslashes"]
 
-        if len(back_slashes) % 2 == 0:
-            return back_slashes + groups["body"]
+        if groups["body"] is None or len(back_slashes) % 2 == 0:
+            return m.group(0)
 
         if groups["u"]:
             # \u

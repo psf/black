@@ -105,13 +105,6 @@ class FakeContext(click.Context):
         self.obj: dict[str, Any] = {"root": PROJECT_ROOT}
 
 
-class FakeParameter(click.Parameter):
-    """A fake click Parameter for when calling functions that need it."""
-
-    def __init__(self) -> None:
-        pass
-
-
 class BlackRunner(_CliRunner):
     """Make sure STDOUT and STDERR are kept separate when testing Black via its CLI."""
 
@@ -239,6 +232,23 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertIn("\033[32m", actual)
         self.assertIn("\033[31m", actual)
         self.assertIn("\033[0m", actual)
+
+    def test_piping_diff_with_color_respects_no_color(self) -> None:
+        source, _ = read_data("cases", "expression.py")
+        args = [
+            "-",
+            "--fast",
+            f"--line-length={black.DEFAULT_LINE_LENGTH}",
+            "--diff",
+            "--color",
+            f"--config={EMPTY_CONFIG}",
+        ]
+        with patch.dict(os.environ, {"NO_COLOR": "1"}):
+            result = BlackRunner().invoke(
+                black.main, args, input=BytesIO(source.encode("utf-8"))
+            )
+        actual = result.output
+        self.assertNotIn("\033[", actual)
 
     def test_pep_572_version_detection(self) -> None:
         source, _ = read_data("cases", "pep_572")
@@ -794,6 +804,13 @@ class BlackTestCase(BlackBaseTestCase):
                 "2 files would be reformatted, 3 files would be left unchanged, 2"
                 " files would fail to reformat.",
             )
+
+    def test_report_respects_no_color(self) -> None:
+        report = Report()
+        report.done(Path("f1"), black.Changed.YES)
+        with patch.dict(os.environ, {"NO_COLOR": "1"}):
+            output = str(report)
+        self.assertEqual(output, unstyle(output))
 
     def test_lib2to3_parse(self) -> None:
         with self.assertRaises(black.InvalidInput):
@@ -1389,7 +1406,9 @@ class BlackTestCase(BlackBaseTestCase):
                     )
                 except io.UnsupportedOperation:
                     pass  # StringIO does not support detach
-                assert output.getvalue() == expected
+                assert (
+                    output.getvalue() == expected
+                ), f"incorrect formatting of {repr(content)}"
 
     def test_cli_unstable(self) -> None:
         self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
@@ -1645,7 +1664,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
         fake_ctx = FakeContext()
-        black.read_pyproject_toml(fake_ctx, FakeParameter(), str(test_toml_file))
+        black.read_pyproject_toml(fake_ctx, None, str(test_toml_file))
         config = fake_ctx.default_map
         self.assertEqual(config["verbose"], "1")
         self.assertEqual(config["check"], "no")
@@ -1677,7 +1696,7 @@ class BlackTestCase(BlackBaseTestCase):
             fake_ctx.params["stdin_filename"] = str(src_python)
 
             with change_directory(root):
-                black.read_pyproject_toml(fake_ctx, FakeParameter(), None)
+                black.read_pyproject_toml(fake_ctx, None, None)
 
             config = fake_ctx.default_map
             self.assertEqual(config["verbose"], "1")
@@ -2095,7 +2114,7 @@ class BlackTestCase(BlackBaseTestCase):
         payload = "\t" * 10_000
         assert lines_with_leading_tabs_expanded(payload) == [payload]
 
-        tab = " " * 8
+        tab = " " * 4
         assert lines_with_leading_tabs_expanded("\tx") == [f"{tab}x"]
         assert lines_with_leading_tabs_expanded("\t\tx") == [f"{tab}{tab}x"]
         assert lines_with_leading_tabs_expanded("\tx\n  y") == [f"{tab}x", "  y"]

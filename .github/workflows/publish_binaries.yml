@@ -3,6 +3,11 @@ name: publish binaries
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: string
 
 permissions: {}
 
@@ -42,7 +47,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up latest Python
+      - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.14"
@@ -60,5 +65,7 @@ jobs:
           ./dist/${{ matrix.asset_name }} src --verbose
 
       - run: gh release upload "$tag" dist/${{ matrix.asset_name }}
+        shell: bash
         env:
-          tag: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+          tag: ${{ inputs.tag || github.event.release.tag_name }}
