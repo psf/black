@@ -67,7 +67,7 @@ requests (for example from forks), prefer setting `with.version` explicitly.
 ```yaml
 - uses: actions/setup-python@v6
   with:
-    python-version: "3.14"
+    python-version: "3.15"
 - uses: psf/black@stable
   with:
     options: "--check --verbose"
