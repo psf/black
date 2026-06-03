@@ -206,10 +206,16 @@ def target_version_option_callback(
 def _target_versions_exceed_runtime(
     target_versions: set[TargetVersion],
 ) -> bool:
+    """Check if ALL target versions exceed the runtime Python version.
+
+    If any target version is at or below the runtime version, the AST
+    safety check can succeed for that version's features, so the warning
+    would be spurious.
+    """
     if not target_versions:
         return False
-    max_target_minor = max(tv.value for tv in target_versions)
-    return max_target_minor > sys.version_info[1]
+    min_target_minor = min(tv.value for tv in target_versions)
+    return min_target_minor > sys.version_info[1]
 
 
 def _version_mismatch_message(target_versions: set[TargetVersion]) -> str:
