@@ -208,8 +208,7 @@ def _target_versions_exceed_runtime(
 ) -> bool:
     if not target_versions:
         return False
-    max_target_minor = max(tv.value for tv in target_versions)
-    return max_target_minor > sys.version_info[1]
+    return all(tv.value > sys.version_info[1] for tv in target_versions)
 
 
 def _version_mismatch_message(target_versions: set[TargetVersion]) -> str:
