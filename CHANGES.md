@@ -56,6 +56,8 @@
 - Improve performance on strings containing many consecutive backslashes (#5163)
 - Improve performance when merging implicitly concatenated f-strings whose expressions
   contain long string literals (#5165)
+- Improve performance on files with many `# fmt: skip`/`# fmt: off` comments by no
+  longer re-walking the whole tree from the root for every directive (#5169)
 
 ### Output
 
