@@ -681,6 +681,13 @@ class LineGenerator(Visitor[Line]):
 
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
+        self.visit_yield_expr = partial(
+            v,
+            keywords=Ø,
+            parens=(
+                {"yield"} if Preview.parenthesize_tuple_in_yield in self.mode else Ø
+            ),
+        )
         self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
         self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
         self.visit_async_funcdef = self.visit_async_stmt
@@ -1642,6 +1649,18 @@ def normalize_invisible_parens(
                     wrap_in_parentheses(node, child, visible=False)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node, mode=mode, features=features)
+            elif (
+                isinstance(child, Node)
+                and node.type == syms.yield_expr
+                and child.type == syms.yield_arg
+                and Preview.parenthesize_tuple_in_yield in mode
+            ):
+                if (
+                    len(child.children) == 1
+                    and child.children[0].type != syms.atom
+                    and is_one_tuple(child.children[0])
+                ):
+                    wrap_in_parentheses(node, child, visible=True)
             elif child.type == syms.atom and not (
                 "in" in parens_after
                 and len(child.children) == 3
@@ -1933,6 +1952,8 @@ def maybe_make_parens_invisible_in_atom(
             syms.expr_stmt,
             syms.assert_stmt,
             syms.return_stmt,
+            syms.yield_arg,
+            syms.yield_expr,
             syms.except_clause,
             syms.funcdef,
             syms.with_stmt,
