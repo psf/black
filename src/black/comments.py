@@ -813,6 +813,27 @@ def _generate_ignored_nodes_from_fmt_skip(
                 if header_nodes:
                     ignored_nodes = header_nodes + ignored_nodes
 
+        # If the nodes captured for the comment's physical line leave a bracket
+        # open, the `# fmt: skip` sits inside a multi-line bracketed statement
+        # (e.g. on the `from x import (` line). Skipping only that line would
+        # reformat the rest of the statement, so preserve the whole enclosing
+        # statement instead.
+        bracket_depth = 0
+        for node in ignored_nodes:
+            for ignored_leaf in node.leaves():
+                if ignored_leaf.type in OPENING_BRACKETS:
+                    bracket_depth += 1
+                elif ignored_leaf.type in CLOSING_BRACKETS:
+                    bracket_depth -= 1
+        if bracket_depth > 0:
+            statement: LN = leaf
+            while statement.parent is not None and statement.parent.type not in (
+                syms.file_input,
+                syms.suite,
+            ):
+                statement = statement.parent
+            ignored_nodes = [statement]
+
         leaf_is_ignored = any(
             ignored is leaf
             or (
