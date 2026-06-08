@@ -3291,9 +3291,12 @@ class TestASTSafety(BlackBaseTestCase):
         runtime_target = f"py3{current_minor}"
         code = "x = 1\n"
         args = [
-            "--target-version", runtime_target,
-            "--target-version", higher_target,
-            "--code", code,
+            "--target-version",
+            runtime_target,
+            "--target-version",
+            higher_target,
+            "--code",
+            code,
         ]
         result = BlackRunner().invoke(black.main, args)
         stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
