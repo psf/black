@@ -31,6 +31,9 @@ Currently, the following features are included in the preview style:
 - `pyi_blank_line_before_decorated_class`: In `.pyi` stub files, enforce a blank line
   before a decorated class definition when it follows a function definition.
   ([see below](labels/pyi-blank-line-before-decorated-class))
+- `pyi_blank_line_after_function_docstring`: In `.pyi` stub files, enforce a blank line
+  after a function or method body that consists of a docstring.
+  ([see below](labels/pyi-blank-line-after-function-docstring))
 - `hug_comparator`: Don't break a comparator (`not in`, `==`, `is`, ...) away from its
   left operand when the right operand is a bracketed expression that has to break
   anyway; let the bracket explode instead. ([see below](labels/hug-comparator))
@@ -232,6 +235,42 @@ classes are handled:
   @decorator
   class Spam: ...
 ```
+
+(labels/pyi-blank-line-after-function-docstring)=
+
+### Blank line after function docstrings in stub files
+
+In `.pyi` stub files, functions and methods sometimes use a docstring as their whole
+body. Black already separated these definitions from a following function definition,
+but did not consistently do the same before a following comment, conditional block,
+variable annotation, or other statement:
+
+```python
+# Before
+
+class Example:
+    def method(self) -> None:
+        """Documentation."""
+    # comment for the next member
+    attr: int
+```
+
+With this feature enabled, the docstring-only function body is consistently separated
+from the next comment or statement:
+
+```python
+# After (with --preview)
+
+class Example:
+    def method(self) -> None:
+        """Documentation."""
+
+    # comment for the next member
+    attr: int
+```
+
+Black still keeps same-name decorated functions, such as `@overload` groups and property
+setters, together without inserting blank lines between them.
 
 (labels/hug-comparator)=
 

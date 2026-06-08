@@ -193,9 +193,14 @@ def normalize_fmt_off(
     node: Node, mode: Mode, lines: Collection[tuple[int, int]]
 ) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
-    try_again = True
-    while try_again:
-        try_again = convert_one_fmt_off_pair(node, mode, lines)
+    # Walk the leaves once and resume scanning from the last converted position
+    # instead of restarting from the root for every pair. Converting a pair only
+    # mutates the tree at or after the converted leaf, so earlier leaves never
+    # need to be revisited.
+    leaves = list(node.leaves())
+    i = 0
+    while i < len(leaves):
+        i = convert_one_fmt_off_pair(node, leaves, i, mode, lines)
 
 
 def _should_process_fmt_comment(
@@ -332,13 +337,25 @@ def _handle_comment_only_fmt_block(
 
 
 def convert_one_fmt_off_pair(
-    node: Node, mode: Mode, lines: Collection[tuple[int, int]]
-) -> bool:
+    node: Node,
+    leaves: list[Leaf],
+    start: int,
+    mode: Mode,
+    lines: Collection[tuple[int, int]],
+) -> int:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
-    Returns True if a pair was converted.
+    Scans `leaves` starting at `start`. Returns the index to resume scanning from:
+    the index of the leaf that was just converted (so further directives on the same
+    leaf are reconsidered), or ``len(leaves)`` when no further pair is found.
     """
-    for leaf in node.leaves():
+    for idx in range(start, len(leaves)):
+        leaf = leaves[idx]
+        # A previous conversion may have detached this leaf from the tree (e.g. it
+        # was absorbed into a fmt: off block); such leaves are already handled.
+        if not _is_attached(leaf, node):
+            continue
+
         # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on/skip processing
         # to avoid reprocessing them in subsequent iterations
         if leaf.type == STANDALONE_COMMENT and hasattr(
@@ -368,7 +385,7 @@ def convert_one_fmt_off_pair(
                 if _handle_comment_only_fmt_block(
                     leaf, comment, previous_consumed, mode
                 ):
-                    return True
+                    return idx
                 continue
 
             # Need actual nodes to process
@@ -385,8 +402,18 @@ def convert_one_fmt_off_pair(
                 lines,
                 leaf,
             )
-            return True
+            return idx
 
+    return len(leaves)
+
+
+def _is_attached(leaf: Leaf, root: Node) -> bool:
+    """Return whether `leaf` is still reachable from `root` through its parents."""
+    current: LN | None = leaf
+    while current is not None:
+        if current is root:
+            return True
+        current = current.parent
     return False
 
 

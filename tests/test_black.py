@@ -3283,6 +3283,25 @@ class TestASTSafety(BlackBaseTestCase):
         stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
         assert "Warning:" not in stderr
 
+    def test_mixed_target_versions_with_runtime_no_warning(self) -> None:
+        """Regression test for #5164: no spurious warning when target includes
+        the runtime version alongside higher versions."""
+        current_minor = sys.version_info[1]
+        higher_target = f"py3{current_minor + 1}"
+        runtime_target = f"py3{current_minor}"
+        code = "x = 1\n"
+        args = [
+            "--target-version",
+            runtime_target,
+            "--target-version",
+            higher_target,
+            "--code",
+            code,
+        ]
+        result = BlackRunner().invoke(black.main, args)
+        stderr = result.stderr_bytes.decode() if result.stderr_bytes else ""
+        assert "Warning:" not in stderr
+
     @pytest.mark.incompatible_with_mypyc
     def test_target_version_exceeds_runtime_clear_error_message(self) -> None:
         max_target = max(TargetVersion, key=lambda tv: tv.value)
