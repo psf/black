@@ -21,6 +21,9 @@
   lengths (#5147)
 - Fix multiline docstring indentation when leading tabs are used inside indented
   docstrings (#5148)
+- Respect `# fmt: skip` on a line that opens a bracket (e.g. `from x import (  # fmt: skip`)
+  when a standalone comment is among the bracket's contents: the whole statement is now
+  preserved instead of being reformatted (and previously crashing) (#5161)
 
 ### Preview style
 
