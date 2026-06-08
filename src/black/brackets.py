@@ -1,6 +1,6 @@
 """Builds on top of nodes.py to track brackets."""
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Final, Union
 
@@ -352,17 +352,43 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
         return 0
 
     bt = BracketTracker()
-    for c in node.children[1:-1]:
-        if isinstance(c, Leaf):
-            bt.mark(c)
-        else:
-            for leaf in c.leaves():
-                bt.mark(leaf)
+    for leaf in _top_level_leaves(node.children[1:-1]):
+        bt.mark(leaf)
     try:
         return bt.max_delimiter_priority()
 
     except ValueError:
         return 0
+
+
+def _top_level_leaves(children: Iterable[LN]) -> Iterator[Leaf]:
+    """Yield the leaves that can be top-level (depth 0) delimiters of an atom.
+
+    Anything inside a nested bracket pair is at depth >= 1 and therefore cannot
+    be a top-level delimiter, so only the pair's brackets are kept (to balance
+    the depth tracker) and its interior is skipped. This keeps the scan
+    proportional to the atom's own length instead of re-walking every descendant
+    on every call, which matters for deeply nested expressions like
+    ``((((...))))``.
+    """
+    for child in children:
+        if isinstance(child, Leaf):
+            yield child
+            continue
+        if not child.children:
+            continue
+        first = child.children[0]
+        last = child.children[-1]
+        if (
+            isinstance(first, Leaf)
+            and isinstance(last, Leaf)
+            and first.type in OPENING_BRACKETS
+            and last.type in CLOSING_BRACKETS
+        ):
+            yield first
+            yield last
+        else:
+            yield from _top_level_leaves(child.children)
 
 
 def get_leaves_inside_matching_brackets(leaves: Sequence[Leaf]) -> set[LeafID]:
