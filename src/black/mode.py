@@ -259,6 +259,7 @@ class Preview(Enum):
     fix_if_guard_explosion_in_case_statement = auto()
     pyi_overload_group_blank_lines = auto()
     pyi_blank_line_before_decorated_class = auto()
+    pyi_blank_line_after_function_docstring = auto()
     hug_comparator = auto()
 
 
