@@ -63,6 +63,9 @@
   contain long string literals (#5165)
 - Improve performance on files with many `# fmt: skip`/`# fmt: off` comments by no
   longer re-walking the whole tree from the root for every directive (#5169)
+- Improve performance on deeply nested parenthesised expressions by no longer
+  re-scanning the whole atom for every nesting level in
+  `max_delimiter_priority_in_atom` (#5171)
 
 ### Output
 
