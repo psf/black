@@ -13,7 +13,9 @@ from black.ranges import adjusted_lines, parse_line_ranges, sanitized_lines
         (["1-3", "5-7"], [(1, 3), (5, 7)]),
     ],
 )
-def test_parse_line_ranges_valid(lines_str, expected):
+def test_parse_line_ranges_valid(
+    lines_str: list[str], expected: list[tuple[int, int]]
+) -> None:
     assert parse_line_ranges(lines_str) == expected
 
 
@@ -26,7 +28,7 @@ def test_parse_line_ranges_valid(lines_str, expected):
         ["5-0"],
     ],
 )
-def test_parse_line_ranges_invalid(lines_str):
+def test_parse_line_ranges_invalid(lines_str: list[str]) -> None:
     with pytest.raises(ValueError, match="Incorrect --line-ranges"):
         parse_line_ranges(lines_str)
 
