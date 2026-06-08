@@ -44,6 +44,7 @@
   different working directories in the same process. The CWD fallback (used when no
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
   directory gets the correct `pyproject.toml` (#5152)
+- Add validation for --line-ranges values (#5107)
 
 ### Packaging
 

@@ -36,6 +36,16 @@ def parse_line_ranges(line_ranges: Sequence[str]) -> list[tuple[int, int]]:
                 f" {lines_str!r}"
             ) from None
         else:
+            if start < 1 or end < 1:
+                raise ValueError(
+                    "Incorrect --line-ranges value, "
+                    f"expect positive integers, found {lines_str!r}"
+                )
+            if start > end:
+                raise ValueError(
+                    "Incorrect --line-ranges value, expect START <= END, "
+                    f"found {lines_str!r}"
+                )
             lines.append((start, end))
     return lines
 
