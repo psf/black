@@ -6,6 +6,8 @@
      Please include the PR number in the changelog entry, not the issue number -->
 
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
+- No spurious target version warning when runtime version is included in a
+  --target-version flag (#5167)
 
 ### Highlights
 
