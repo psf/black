@@ -70,6 +70,8 @@
 - Improve performance on deeply nested parenthesised expressions by no longer
   re-scanning the whole atom for every nesting level in `max_delimiter_priority_in_atom`
   (#5171)
+- Improve performance when merging long runs of implicitly concatenated strings by no
+  longer re-escaping the whole accumulated string on every merge step (#5173)
 
 ### Output
 
