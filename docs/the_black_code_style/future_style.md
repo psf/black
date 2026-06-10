@@ -268,8 +268,8 @@ dictionary_of_arrays["long_key_name_for_the_example"][
 ] = 10 - 5
 ```
 
-Assignments whose target fits on one line are not affected: wrapping the right-hand
-side in parentheses remains the preferred style there.
+Assignments whose target fits on one line are not affected: wrapping the right-hand side
+in parentheses remains the preferred style there.
 
 (labels/pyi-blank-line-after-function-docstring)=
 
