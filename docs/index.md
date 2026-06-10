@@ -56,7 +56,7 @@ Twisted and CPython:
 
 > _At least the name is good._
 
-**Kenneth Reitz**, creator of [requests](http://python-requests.org/) and
+**Kenneth Reitz**, creator of [requests](https://python-requests.org/) and
 [pipenv](https://docs.pipenv.org/):
 
 > _This vastly improves the formatting of our code. Thanks a ton!_

@@ -43,9 +43,8 @@ def _cached_resolve(path: Path) -> Path:
     return path.resolve()
 
 
-@lru_cache
 def find_project_root(
-    srcs: Sequence[str], stdin_filename: str | None = None
+    srcs: Sequence[str | Path], stdin_filename: str | None = None
 ) -> tuple[Path, str]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
@@ -64,10 +63,20 @@ def find_project_root(
     """
     if stdin_filename is not None:
         srcs = tuple(stdin_filename if s == "-" else s for s in srcs)
-    if not srcs:
-        srcs = [str(_cached_resolve(Path.cwd()))]
 
-    path_srcs = [_cached_resolve(Path(Path.cwd(), src)) for src in srcs]
+    if not srcs:
+        resolved_srcs: tuple[str, ...] = (str(_cached_resolve(Path.cwd())),)
+    else:
+        resolved_srcs = tuple(
+            str(_cached_resolve(Path(Path.cwd(), src))) for src in srcs
+        )
+
+    return _find_project_root_cached(resolved_srcs)
+
+
+@lru_cache
+def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path, str]:
+    path_srcs = [Path(src) for src in srcs]
 
     # A list of lists of parents for each 'src'. 'src' is included as a
     # "parent" of itself if it is a directory

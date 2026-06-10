@@ -12,6 +12,7 @@ from typing import Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
+    COMPARATOR_PRIORITY,
     DOT_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
@@ -80,6 +81,7 @@ from black.strings import (
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
+    str_width,
 )
 from black.trans import (
     CannotTransform,
@@ -770,7 +772,9 @@ def transform_line(
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
                 # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], mode=mode):
+                if is_line_short_enough(lines[0], mode=mode) or (
+                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+                ):
                     yield from lines
                     return
 
@@ -829,7 +833,13 @@ def transform_line(
             break
 
     else:
-        yield line
+        # A leftover standalone comment would render inline and break the
+        # second pass with a parse error (#4296). Force a split so the
+        # output is at least valid Python.
+        if line.contains_standalone_comments():
+            yield from _force_standalone_comment_split(line)
+        else:
+            yield line
 
 
 def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
@@ -1102,6 +1112,11 @@ def _maybe_split_omitting_optional_parens(
                     and rhs.opening_bracket.parent
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
+                )
+                and not (
+                    rhs.opening_bracket.parent
+                    and rhs.opening_bracket.parent.parent
+                    and rhs.opening_bracket.parent.parent.type == syms.case_block
                 )
             ):
                 raise CannotSplit(
@@ -1377,6 +1392,35 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
 MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
 
 
+def _can_defer_lone_comparator_to_rhs(line: Line, mode: Mode) -> bool:
+    """Return True if the lone comparator on `line` can defer to right_hand_split.
+
+    Caller has already established exactly one delimiter at
+    `COMPARATOR_PRIORITY`. We defer only when:
+
+    - the LHS up to the comparator has no opening brackets, so the existing
+      "break before the comparator" wouldn't produce a balanced two-sided
+      split anyway, and
+    - `right_hand_split` would produce a head that fits in the line length,
+      so we don't strand `if t` on its own line just to push it back onto an
+      overflowing single line when the RHS bracket can't be exploded
+      usefully (e.g. an empty `decode()` paren).
+    """
+    past_comparator = False
+    for leaf in line.leaves:
+        if leaf.type in OPENING_BRACKETS and not past_comparator:
+            return False
+        if not past_comparator and (
+            line.bracket_tracker.delimiters.get(id(leaf)) == COMPARATOR_PRIORITY
+        ):
+            past_comparator = True
+    try:
+        rhs = _first_right_hand_split(line)
+    except CannotSplit:
+        return False
+    return is_line_short_enough(rhs.head, mode=mode)
+
+
 @dont_increase_indentation
 def delimiter_split(
     line: Line, features: Collection[Feature], mode: Mode
@@ -1401,6 +1445,14 @@ def delimiter_split(
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+
+    if (
+        Preview.hug_comparator in mode
+        and delimiter_priority == COMPARATOR_PRIORITY
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and _can_defer_lone_comparator_to_rhs(line, mode)
+    ):
+        raise CannotSplit("Bracketed RHS will explode via right_hand_split")
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
@@ -1498,6 +1550,24 @@ def standalone_comment_split(
         for comment_after in line.comments_after(leaf):
             yield from append_to_line(comment_after)
 
+    if current_line:
+        yield current_line
+
+
+def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
+    """Last-resort split at every standalone-comment boundary."""
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
+    for leaf in line.leaves:
+        if current_line.leaves and (
+            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+        ):
+            yield current_line
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
+        current_line.append(leaf, preformatted=True)
     if current_line:
         yield current_line
 
@@ -1625,6 +1695,11 @@ def normalize_invisible_parens(
                 # A special patch for "case case:" scenario, the second occurrence
                 # of case will be not parsed as a Python keyword.
                 break
+
+            elif isinstance(child, Node) and child.type == syms.guard:
+                # Guard nodes handle their own inner wrapping. Wrapping the guard
+                # itself can produce invalid output when the case pattern splits.
+                pass
 
             elif not is_multiline_string(child):
                 if (
@@ -2031,6 +2106,37 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
+def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
+    """Return True if `line` only exceeds `mode.line_length` because of an inline
+    comment attached to a subscript opening bracket (`[`).
+
+    This is the shape produced by the original of the issue #4733 reproducer:
+    a comment inside the annotation's subscript brackets renders at the end of
+    the head line after Black splits the statement, pushing it past the limit.
+    Taking the FORCE_OPTIONAL_PARENTHESES "second opinion" in that case wraps
+    the annotation in extra parens and migrates the comment outside the
+    subscript, which then oscillates on the next formatter pass.
+    """
+    if not line.leaves:
+        return False
+    # The over-length must be caused entirely by a trailing comment.
+    indent = "    " * line.depth
+    leaves_iter = iter(line.leaves)
+    first = next(leaves_iter)
+    text_without_comments = f"{first.prefix}{indent}{first.value}"
+    text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
+    if str_width(text_without_comments) > mode.line_length:
+        return False
+    # And the comment must be attached to a subscript opening bracket.
+    for leaf_id, comments in line.comments.items():
+        if not comments:
+            continue
+        leaf = next((lf for lf in line.leaves if id(lf) == leaf_id), None)
+        if leaf is None or leaf.type != token.LSQB:
+            return False
+    return True
+
+
 def run_transformer(
     line: Line,
     transform: Transformer,
@@ -2058,6 +2164,12 @@ def run_transformer(
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()
         or is_line_short_enough(result[0], mode=mode)
+        # result[0] only exceeds the length because of a comment attached to a
+        # subscript opening bracket.  Taking the FORCE_OPTIONAL_PARENTHESES
+        # "second opinion" wraps the annotation in extra invisible parens and
+        # migrates the comment outside the subscript, which then oscillates with
+        # a deeper-bracket split on the next formatter pass (issue #4733).
+        or _over_length_only_due_to_subscript_comment(result[0], mode)
         # If any leaves have no parents (which _can_ occur since
         # `transform(line)` potentially destroys the line's underlying node
         # structure), then we can't proceed. Doing so would cause the below

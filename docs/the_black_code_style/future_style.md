@@ -32,8 +32,15 @@ Currently, the following features are included in the preview style:
   before a decorated class definition when it follows a function definition.
   ([see below](labels/pyi-blank-line-before-decorated-class))
 - `fix_unnecessary_parens_in_indexed_assignment`: Remove unnecessary parentheses around
-  the right-hand side of indexed assignments (e.g. `x[key] = expr`) when the expression
-  is short enough. ([see below](labels/fix-unnecessary-parens-indexed-assignment))
+  the right-hand side of indexed assignments (e.g. `x[key] = expr`) when the subscripted
+  target is too long to fit on one line and the expression fits on the tail line.
+  ([see below](labels/fix-unnecessary-parens-indexed-assignment))
+- `pyi_blank_line_after_function_docstring`: In `.pyi` stub files, enforce a blank line
+  after a function or method body that consists of a docstring.
+  ([see below](labels/pyi-blank-line-after-function-docstring))
+- `hug_comparator`: Don't break a comparator (`not in`, `==`, `is`, ...) away from its
+  left operand when the right operand is a bracketed expression that has to break
+  anyway; let the bracket explode instead. ([see below](labels/hug-comparator))
 
 (labels/wrap-comprehension-in)=
 
@@ -237,10 +244,11 @@ classes are handled:
 
 ### Unnecessary parentheses in indexed assignments
 
-When an assignment target contains brackets (e.g. indexed access like `x[key] = expr`),
-previously, Black would incorrectly wrap the right-hand side expression in unnecessary
-parentheses when the line was too long. With this feature enabled, Black removes the
-unnecessary parentheses when the RHS expression fits on the tail line.
+When an assignment target ends with a subscript (e.g. `x[key] = expr`) and is too long
+to fit on one line, Black has to split at the subscript's brackets. Previously it would
+additionally wrap the right-hand side expression in parentheses, even when the
+expression fits on the closing line. With this feature enabled, Black omits those
+unnecessary parentheses.
 
 For example:
 
@@ -258,6 +266,128 @@ will be formatted to:
 dictionary_of_arrays["long_key_name_for_the_example"][
     very_long_index_name, index_zero
 ] = 10 - 5
+```
+
+Assignments whose target fits on one line are not affected: wrapping the right-hand
+side in parentheses remains the preferred style there.
+
+(labels/pyi-blank-line-after-function-docstring)=
+
+### Blank line after function docstrings in stub files
+
+In `.pyi` stub files, functions and methods sometimes use a docstring as their whole
+body. Black already separated these definitions from a following function definition,
+but did not consistently do the same before a following comment, conditional block,
+variable annotation, or other statement:
+
+```python
+# Before
+
+class Example:
+    def method(self) -> None:
+        """Documentation."""
+    # comment for the next member
+    attr: int
+```
+
+With this feature enabled, the docstring-only function body is consistently separated
+from the next comment or statement:
+
+```python
+# After (with --preview)
+
+class Example:
+    def method(self) -> None:
+        """Documentation."""
+
+    # comment for the next member
+    attr: int
+```
+
+Black still keeps same-name decorated functions, such as `@overload` groups and property
+setters, together without inserting blank lines between them.
+
+(labels/hug-comparator)=
+
+### Keep comparators next to their left operand
+
+When a comparator (`not in`, `==`, `is`, ...) sits inside another bracketed construct
+and its right operand is a bracketed expression that has to break (either via a magic
+trailing comma or because the line is too long), Black used to split the line right
+before the comparator. The left operand ended up alone on its own line, visually
+disconnected from the operator and the operand that explains it:
+
+```python
+# Before
+
+x = [
+    t
+    for t in y
+    if t
+    not in {
+        LongNameOne,
+        LongNameTwo,
+        LongNameThree,
+    }
+]
+```
+
+With this feature enabled, Black skips that comparator split and lets the right-hand
+bracket explode instead, which it would have done anyway:
+
+```python
+# After (with --preview)
+
+x = [
+    t
+    for t in y
+    if t not in {
+        LongNameOne,
+        LongNameTwo,
+        LongNameThree,
+    }
+]
+```
+
+The fix is not limited to comprehensions. The same shape appears inside `if`/`elif`
+chains, `assert` statements, and parenthesized expressions, and gets the same treatment:
+
+```python
+# Before
+
+if (
+    is_scalar(value)
+    and self.dtype
+    in (np.dtype("float64"), np.dtype("float32"), np.dtype("object"))
+    and (limit is not None or inplace)
+):
+    ...
+
+assert (
+    bool
+    is _AnnotationExtractor(attr.fields(C).x.converter.__call__).get_return_type()
+)
+```
+
+```python
+# After (with --preview)
+
+if (
+    is_scalar(value)
+    and self.dtype in (
+        np.dtype("float64"),
+        np.dtype("float32"),
+        np.dtype("object"),
+    )
+    and (limit is not None or inplace)
+):
+    ...
+
+assert (
+    bool is _AnnotationExtractor(
+        attr.fields(C).x.converter.__call__
+    ).get_return_type()
+)
 ```
 
 ## Unstable style

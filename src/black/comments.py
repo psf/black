@@ -7,6 +7,7 @@ from typing import Final, Union
 from black.mode import Mode
 from black.nodes import (
     CLOSING_BRACKETS,
+    OPENING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
     WHITESPACE,
@@ -192,9 +193,14 @@ def normalize_fmt_off(
     node: Node, mode: Mode, lines: Collection[tuple[int, int]]
 ) -> None:
     """Convert content between `# fmt: off`/`# fmt: on` into standalone comments."""
-    try_again = True
-    while try_again:
-        try_again = convert_one_fmt_off_pair(node, mode, lines)
+    # Walk the leaves once and resume scanning from the last converted position
+    # instead of restarting from the root for every pair. Converting a pair only
+    # mutates the tree at or after the converted leaf, so earlier leaves never
+    # need to be revisited.
+    leaves = list(node.leaves())
+    i = 0
+    while i < len(leaves):
+        i = convert_one_fmt_off_pair(node, leaves, i, mode, lines)
 
 
 def _should_process_fmt_comment(
@@ -331,13 +337,25 @@ def _handle_comment_only_fmt_block(
 
 
 def convert_one_fmt_off_pair(
-    node: Node, mode: Mode, lines: Collection[tuple[int, int]]
-) -> bool:
+    node: Node,
+    leaves: list[Leaf],
+    start: int,
+    mode: Mode,
+    lines: Collection[tuple[int, int]],
+) -> int:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
-    Returns True if a pair was converted.
+    Scans `leaves` starting at `start`. Returns the index to resume scanning from:
+    the index of the leaf that was just converted (so further directives on the same
+    leaf are reconsidered), or ``len(leaves)`` when no further pair is found.
     """
-    for leaf in node.leaves():
+    for idx in range(start, len(leaves)):
+        leaf = leaves[idx]
+        # A previous conversion may have detached this leaf from the tree (e.g. it
+        # was absorbed into a fmt: off block); such leaves are already handled.
+        if not _is_attached(leaf, node):
+            continue
+
         # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on/skip processing
         # to avoid reprocessing them in subsequent iterations
         if leaf.type == STANDALONE_COMMENT and hasattr(
@@ -367,7 +385,7 @@ def convert_one_fmt_off_pair(
                 if _handle_comment_only_fmt_block(
                     leaf, comment, previous_consumed, mode
                 ):
-                    return True
+                    return idx
                 continue
 
             # Need actual nodes to process
@@ -384,8 +402,18 @@ def convert_one_fmt_off_pair(
                 lines,
                 leaf,
             )
-            return True
+            return idx
 
+    return len(leaves)
+
+
+def _is_attached(leaf: Leaf, root: Node) -> bool:
+    """Return whether `leaf` is still reachable from `root` through its parents."""
+    current: LN | None = leaf
+    while current is not None:
+        if current is root:
+            return True
+        current = current.parent
     return False
 
 
@@ -448,6 +476,14 @@ def _handle_regular_fmt_block(
 
     hidden_value = "".join(parts)
     comment_lineno = leaf.lineno - comment.newlines
+    leaf_is_ignored = any(
+        ignored is leaf
+        or (
+            isinstance(ignored, Node)
+            and any(child is leaf for child in ignored.leaves())
+        )
+        for ignored in ignored_nodes
+    )
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
@@ -461,7 +497,7 @@ def _handle_regular_fmt_block(
         standalone_comment_prefix += fmt_off_prefix
         hidden_value = comment.value + "\n" + hidden_value
 
-    if is_fmt_skip:
+    if is_fmt_skip and not leaf_is_ignored:
         hidden_value += comment.leading_whitespace + comment.value
 
     if hidden_value.endswith("\n"):
@@ -630,6 +666,17 @@ def _get_compound_statement_header(
     return header_leaves
 
 
+def _find_closest_previous_sibling(node: LN) -> LN | None:
+    """Find the closest previous sibling by walking up the ancestor chain."""
+    current: LN | None = node
+    while current is not None:
+        prev_sibling = current.prev_sibling
+        if prev_sibling is not None:
+            return prev_sibling
+        current = current.parent
+    return None
+
+
 def _generate_ignored_nodes_from_fmt_skip(
     leaf: Leaf, comment: ProtoComment, mode: Mode
 ) -> Iterator[LN]:
@@ -643,12 +690,33 @@ def _generate_ignored_nodes_from_fmt_skip(
     if not comments or comment.value != comments[0].value:
         return
 
-    if not prev_sibling and parent:
+    if prev_sibling is None and parent is not None:
         prev_sibling = parent.prev_sibling
 
-    if prev_sibling is not None:
-        leaf.prefix = leaf.prefix[comment.consumed :]
+    if prev_sibling is None and comment.type == token.COMMENT:
+        prev_sibling = _find_closest_previous_sibling(leaf)
 
+    if parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE:
+        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
+        # statements. The ignored nodes should be previous siblings of the
+        # parent suite node. Do this before the generic "same physical line"
+        # logic so multiline headers are preserved as a whole.
+        leaf.prefix = ""
+        parent_sibling = parent.prev_sibling
+        while parent_sibling is not None and parent_sibling.type != syms.suite:
+            ignored_nodes.insert(0, parent_sibling)
+            parent_sibling = parent_sibling.prev_sibling
+        # Special case for `async_stmt` where the ASYNC token is on the
+        # grandparent node.
+        grandparent = parent.parent
+        if (
+            grandparent is not None
+            and grandparent.prev_sibling is not None
+            and grandparent.prev_sibling.type == token.ASYNC
+        ):
+            ignored_nodes.insert(0, grandparent.prev_sibling)
+        yield from iter(ignored_nodes)
+    elif prev_sibling is not None:
         # Generates the nodes to be ignored by `fmt: skip`.
 
         # Nodes to ignore are the ones on the same line as the
@@ -669,6 +737,14 @@ def _generate_ignored_nodes_from_fmt_skip(
         # or NEWLINE leaves.
 
         current_node = prev_sibling
+        if (
+            isinstance(current_node, Leaf)
+            and current_node.type in OPENING_BRACKETS
+            and current_node.parent
+            and current_node.parent.type == syms.atom
+        ):
+            current_node = current_node.parent
+
         ignored_nodes = [current_node]
         if current_node.prev_sibling is None and current_node.parent is not None:
             current_node = current_node.parent
@@ -705,7 +781,10 @@ def _generate_ignored_nodes_from_fmt_skip(
                 current_node = current_node.parent
 
             if current_node.type in (token.NEWLINE, token.INDENT):
-                current_node.prefix = ""
+                if not list_comments(
+                    current_node.prefix, is_endmarker=False, mode=mode
+                ):
+                    current_node.prefix = ""
                 break
 
             if current_node.type == token.DEDENT:
@@ -734,28 +813,39 @@ def _generate_ignored_nodes_from_fmt_skip(
                 if header_nodes:
                     ignored_nodes = header_nodes + ignored_nodes
 
+        # If the nodes captured for the comment's physical line leave a bracket
+        # open, the `# fmt: skip` sits inside a multi-line bracketed statement
+        # (e.g. on the `from x import (` line). Skipping only that line would
+        # reformat the rest of the statement, so preserve the whole enclosing
+        # statement instead.
+        bracket_depth = 0
+        for node in ignored_nodes:
+            for ignored_leaf in node.leaves():
+                if ignored_leaf.type in OPENING_BRACKETS:
+                    bracket_depth += 1
+                elif ignored_leaf.type in CLOSING_BRACKETS:
+                    bracket_depth -= 1
+        if bracket_depth > 0:
+            statement: LN = leaf
+            while statement.parent is not None and statement.parent.type not in (
+                syms.file_input,
+                syms.suite,
+            ):
+                statement = statement.parent
+            ignored_nodes = [statement]
+
+        leaf_is_ignored = any(
+            ignored is leaf
+            or (
+                isinstance(ignored, Node)
+                and any(child is leaf for child in ignored.leaves())
+            )
+            for ignored in ignored_nodes
+        )
+        if not leaf_is_ignored:
+            leaf.prefix = leaf.prefix[comment.consumed :]
+
         yield from ignored_nodes
-    elif (
-        parent is not None and parent.type == syms.suite and leaf.type == token.NEWLINE
-    ):
-        # The `# fmt: skip` is on the colon line of the if/while/def/class/...
-        # statements. The ignored nodes should be previous siblings of the
-        # parent suite node.
-        leaf.prefix = ""
-        parent_sibling = parent.prev_sibling
-        while parent_sibling is not None and parent_sibling.type != syms.suite:
-            ignored_nodes.insert(0, parent_sibling)
-            parent_sibling = parent_sibling.prev_sibling
-        # Special case for `async_stmt` where the ASYNC token is on the
-        # grandparent node.
-        grandparent = parent.parent
-        if (
-            grandparent is not None
-            and grandparent.prev_sibling is not None
-            and grandparent.prev_sibling.type == token.ASYNC
-        ):
-            ignored_nodes.insert(0, grandparent.prev_sibling)
-        yield from iter(ignored_nodes)
 
 
 def is_fmt_on(container: LN, mode: Mode) -> bool:

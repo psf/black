@@ -6,9 +6,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from click import style
-
-from black.output import err, out
+from black.output import err, out, style_output
 
 
 class Changed(Enum):
@@ -94,14 +92,18 @@ class Report:
         if self.change_count:
             s = "s" if self.change_count > 1 else ""
             report.append(
-                style(f"{self.change_count} file{s} ", bold=True, fg="blue")
-                + style(f"{reformatted}", bold=True)
+                style_output(f"{self.change_count} file{s} ", bold=True, fg="blue")
+                + style_output(f"{reformatted}", bold=True)
             )
 
         if self.same_count:
             s = "s" if self.same_count > 1 else ""
-            report.append(style(f"{self.same_count} file{s} ", fg="blue") + unchanged)
+            report.append(
+                style_output(f"{self.same_count} file{s} ", fg="blue") + unchanged
+            )
         if self.failure_count:
             s = "s" if self.failure_count > 1 else ""
-            report.append(style(f"{self.failure_count} file{s} {failed}", fg="red"))
+            report.append(
+                style_output(f"{self.failure_count} file{s} {failed}", fg="red")
+            )
         return ", ".join(report) + "."

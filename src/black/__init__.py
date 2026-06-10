@@ -66,6 +66,7 @@ from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import (  # noqa F401
     ASTSafetyError,
     InvalidInput,
+    SourceASTParseError,
     lib2to3_parse,
     parse_ast,
     stringify_ast,
@@ -113,7 +114,7 @@ FileMode = Mode
 
 
 def read_pyproject_toml(
-    ctx: click.Context, param: click.Parameter, value: str | None
+    ctx: click.Context, param: click.Parameter | None, value: str | None
 ) -> str | None:
     """Inject Black configuration from "pyproject.toml" into defaults in `ctx`.
 
@@ -205,10 +206,16 @@ def target_version_option_callback(
 def _target_versions_exceed_runtime(
     target_versions: set[TargetVersion],
 ) -> bool:
+    """Check if ALL target versions exceed the runtime Python version.
+
+    If any target version is at or below the runtime version, the AST
+    safety check can succeed for that version's features, so the warning
+    would be spurious.
+    """
     if not target_versions:
         return False
-    max_target_minor = max(tv.value for tv in target_versions)
-    return max_target_minor > sys.version_info[1]
+    min_target_minor = min(tv.value for tv in target_versions)
+    return min_target_minor > sys.version_info[1]
 
 
 def _version_mismatch_message(target_versions: set[TargetVersion]) -> str:
@@ -1086,6 +1093,8 @@ def check_stability_and_equivalence(
     """
     try:
         assert_equivalent(src_contents, dst_contents)
+    except SourceASTParseError:
+        raise
     except ASTSafetyError:
         if _target_versions_exceed_runtime(mode.target_versions):
             raise ASTSafetyError(
@@ -1632,7 +1641,7 @@ def assert_equivalent(src: str, dst: str) -> None:
     try:
         src_ast = parse_ast(src)
     except Exception as exc:
-        raise ASTSafetyError(
+        raise SourceASTParseError(
             "cannot use --safe with this file; failed to parse source file AST: "
             f"{exc}\n"
             "This could be caused by running Black with an older Python version "

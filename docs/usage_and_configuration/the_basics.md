@@ -280,8 +280,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 26.3.1 (compiled: yes)
-$ black --required-version 26.3.1 -c "format = 'this'"
+black, 26.5.1 (compiled: yes)
+$ black --required-version 26.5.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -388,7 +388,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 26.3.1
+black, 26.5.1
 ```
 
 #### `--config`
@@ -475,10 +475,9 @@ code in compliance with many other _Black_ formatted projects.
 
 ### What on Earth is a `pyproject.toml` file?
 
-[PEP 518](https://www.python.org/dev/peps/pep-0518/) defines `pyproject.toml` as a
-configuration file to store build system requirements for Python projects. With the help
-of tools like [Poetry](https://python-poetry.org/),
-[Flit](https://flit.readthedocs.io/en/latest/), or
+[PEP 518](https://peps.python.org/pep-0518/) defines `pyproject.toml` as a configuration
+file to store build system requirements for Python projects. With the help of tools like
+[Poetry](https://python-poetry.org/), [Flit](https://flit.readthedocs.io/en/latest/), or
 [Hatch](https://hatch.pypa.io/latest/) it can fully replace the need for `setup.py` and
 `setup.cfg` files.
 
