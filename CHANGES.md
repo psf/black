@@ -32,6 +32,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix unnecessary parentheses around short RHS expressions in indexed assignments like
+  `x[key] = expr` (#5095)
 - Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
   the right-hand side is a bracketed expression. Black now lets the bracket explode
   instead. This fixes the awkward break that was showing up in comprehension `if`
