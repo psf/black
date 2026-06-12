@@ -41,6 +41,9 @@
   parenthesized expressions (#5135)
 - In `.pyi` stub files, enforce a blank line after a function or method that has a
   docstring-only body when another comment or statement follows it (#5158)
+- Keep the parentheses around a lambda used as the iterable of a comprehension (e.g.
+  `[x for x in (lambda: 0) if x]`). They were previously stripped by
+  `wrap_comprehension_in`, which produced invalid code and crashed Black (#5176)
 
 ### Configuration
 

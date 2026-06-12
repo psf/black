@@ -1647,7 +1647,7 @@ def normalize_invisible_parens(
                 and len(child.children) == 3
                 and is_lpar_token(child.children[0])
                 and is_rpar_token(child.children[-1])
-                and child.children[1].type == syms.test
+                and child.children[1].type in {syms.test, syms.lambdef}
             ):
                 if maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
