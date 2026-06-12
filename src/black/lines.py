@@ -981,7 +981,8 @@ class EmptyLineTracker:
             # Consume the first leaf's extra newlines.
             first_leaf = current_line.leaves[0]
             before = first_leaf.prefix.count("\n")
-            before = min(before, max_allowed)
+            if not current_line.is_fmt_pass_converted():
+                before = min(before, max_allowed)
             first_leaf.prefix = ""
         else:
             before = 0

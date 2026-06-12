@@ -55,9 +55,12 @@ class ProtoComment:
     consumed: int  # how many characters of the original leaf's prefix did we consume
     form_feed: bool  # is there a form feed before the comment
     leading_whitespace: str  # leading whitespace before the comment, if any
+    original_value: str  # original comment text, before normalization
 
 
-def generate_comments(leaf: LN, mode: Mode) -> Iterator[Leaf]:
+def generate_comments(
+    leaf: LN, mode: Mode, *, preserve_comment_formatting: bool = False
+) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
     Comments in lib2to3 are shoved into the whitespace prefix.  This happens
@@ -82,7 +85,10 @@ def generate_comments(leaf: LN, mode: Mode) -> Iterator[Leaf]:
     ):
         total_consumed = pc.consumed
         prefix = make_simple_prefix(pc.newlines, pc.form_feed)
-        yield Leaf(pc.type, pc.value, prefix=prefix)
+        value = pc.value
+        if preserve_comment_formatting:
+            value = pc.leading_whitespace + pc.original_value
+        yield Leaf(pc.type, value, prefix=prefix)
     normalize_trailing_prefix(leaf, total_consumed)
 
 
@@ -127,6 +133,7 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
                 consumed=consumed,
                 form_feed=form_feed,
                 leading_whitespace=whitespace,
+                original_value=line.rstrip(),
             )
         )
         form_feed = False

@@ -381,6 +381,8 @@ class Leaf(Base):
     # code, and `fmt_pass_converted_first_leaf` points to the first Leaf in the
     # converted code.
     fmt_pass_converted_first_leaf: Optional["Leaf"] = None
+    # True when this Leaf is converted from unchanged code for --line-ranges.
+    line_ranges_converted: bool = False
 
     def __init__(
         self,
@@ -391,6 +393,7 @@ class Leaf(Base):
         fixers_applied: list[Any] = [],
         opening_bracket: Optional["Leaf"] = None,
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
+        line_ranges_converted: bool = False,
     ) -> None:
         """
         Initializer.
@@ -410,6 +413,7 @@ class Leaf(Base):
         self.children = []
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
+        self.line_ranges_converted = line_ranges_converted
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""

@@ -148,7 +148,20 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node, mode=self.mode):
+            preserve_comment_formatting = (
+                node.type == STANDALONE_COMMENT
+                and node.fmt_pass_converted_first_leaf is not None
+                and node.line_ranges_converted
+            )
+            for comment in generate_comments(
+                node,
+                mode=self.mode,
+                preserve_comment_formatting=preserve_comment_formatting,
+            ):
+                if preserve_comment_formatting:
+                    indent = "    " * self.current_line.depth
+                    if indent and comment.value.startswith(indent):
+                        comment.value = comment.value[len(indent) :]
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)

@@ -27,6 +27,8 @@
   `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
   contents: the whole statement is now preserved instead of being reformatted (and
   previously crashing) (#5161)
+- Preserve comments and blank lines outside requested ranges when formatting with
+  `--line-ranges` (#5175)
 
 ### Preview style
 
