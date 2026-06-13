@@ -74,6 +74,9 @@
   (#5171)
 - Improve performance when merging long runs of implicitly concatenated strings by no
   longer re-escaping the whole accumulated string on every merge step (#5173)
+- Improve performance on code whose formatting rewrites large nodes (such as `--preview`
+  string processing) by maintaining the `blib2to3` sibling-node maps incrementally rather
+  than rebuilding them from scratch after every tree mutation (#5178)
 
 ### Output
 
