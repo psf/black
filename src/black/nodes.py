@@ -684,11 +684,24 @@ def is_one_sequence_between(
         return False
 
     depth = closing.bracket_depth + 1
-    for _opening_index, leaf in enumerate(leaves):
-        if leaf is opening:
+    # Locate `opening` by scanning inward from both ends at once. Callers pass the
+    # whole line's leaf list and this runs once per bracket, so a plain forward scan
+    # from the start costs O(index) and turns quadratic on a long line; meeting in
+    # the middle bounds each lookup to the nearer end.
+    _opening_index = -1
+    left = 0
+    right = len(leaves) - 1
+    while left <= right:
+        if leaves[left] is opening:
+            _opening_index = left
             break
+        if leaves[right] is opening:
+            _opening_index = right
+            break
+        left += 1
+        right -= 1
 
-    else:
+    if _opening_index == -1:
         return False
 
     commas = 0

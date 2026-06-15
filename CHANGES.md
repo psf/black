@@ -74,6 +74,8 @@
   (#5171)
 - Improve performance when merging long runs of implicitly concatenated strings by no
   longer re-escaping the whole accumulated string on every merge step (#5173)
+- Improve performance on long calls and collections by no longer scanning the whole line
+  to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
 
 ### Output
 
