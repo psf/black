@@ -73,15 +73,14 @@
   re-scanning the whole atom for every nesting level in `max_delimiter_priority_in_atom`
   (#5171)
 - Improve performance when merging long runs of implicitly concatenated strings by no
-  longer re-escaping the whole accumulated string on every merge step (#5173)
-<<<<<<< sibling-maps-incremental
+  longer re-escaping the whole accumulated string on every merge step (#5173) <<<<<<<
+  sibling-maps-incremental
 - Improve performance on code whose formatting rewrites large nodes (such as `--preview`
   string processing) by maintaining the `blib2to3` sibling-node maps incrementally
-  rather than rebuilding them from scratch after every tree mutation (#5178)
-=======
+  rather than rebuilding them from scratch after every tree mutation (#5178) =======
 - Improve performance on long calls and collections by no longer scanning the whole line
   to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
->>>>>>> main
+  > > > > > > > main
 
 ### Output
 
