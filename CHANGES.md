@@ -27,11 +27,17 @@
   lengths (#5147)
 - Fix multiline docstring indentation when leading tabs are used inside indented
   docstrings (#5148)
+- Respect `# fmt: skip` on a line that opens a bracket (e.g.
+  `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
+  contents: the whole statement is now preserved instead of being reformatted (and
+  previously crashing) (#5161)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix unnecessary parentheses around short RHS expressions in indexed assignments like
+  `x[key] = expr` (#5095)
 - Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
   the right-hand side is a bracketed expression. Black now lets the bracket explode
   instead. This fixes the awkward break that was showing up in comprehension `if`
@@ -67,6 +73,13 @@
   contain long string literals (#5165)
 - Improve performance on files with many `# fmt: skip`/`# fmt: off` comments by no
   longer re-walking the whole tree from the root for every directive (#5169)
+- Improve performance on deeply nested parenthesised expressions by no longer
+  re-scanning the whole atom for every nesting level in `max_delimiter_priority_in_atom`
+  (#5171)
+- Improve performance when merging long runs of implicitly concatenated strings by no
+  longer re-escaping the whole accumulated string on every merge step (#5173)
+- Improve performance on long calls and collections by no longer scanning the whole line
+  to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
 
 ### Output
 

@@ -688,7 +688,6 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         #   NS: naked string
         #   SS: next string
         #   NSS: naked next string
-        S = ""
         NS = ""
         num_of_strings = 0
         next_str_idx = string_idx
@@ -709,14 +708,20 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             has_prefix = bool(next_prefix)
             prefix_tracker.append(has_prefix)
 
-            S = prefix + QUOTE + NS + NSS + BREAK_MARK + QUOTE
-            NS = make_naked(S, prefix)
+            # Each NSS is already naked (prefix and quotes stripped, inner quotes
+            # escaped, f-string expression quotes toggled), and the parts are
+            # separated by BREAK_MARK which contains no quote or backslash, so the
+            # naked group is just their concatenation. Re-running make_naked over the
+            # whole accumulated string on every iteration rescans all previously
+            # merged substrings, which is quadratic in the size of the group.
+            NS = NS + NSS + BREAK_MARK
 
             next_str_idx += 1
 
         # Take a note on the index of the non-STRING leaf.
         non_string_idx = next_str_idx
 
+        S = prefix + QUOTE + NS + QUOTE
         S_leaf = Leaf(token.STRING, S)
         if self.normalize_strings:
             S_leaf.value = normalize_string_quotes(S_leaf.value)

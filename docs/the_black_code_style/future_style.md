@@ -31,6 +31,10 @@ Currently, the following features are included in the preview style:
 - `pyi_blank_line_before_decorated_class`: In `.pyi` stub files, enforce a blank line
   before a decorated class definition when it follows a function definition.
   ([see below](labels/pyi-blank-line-before-decorated-class))
+- `fix_unnecessary_parens_in_indexed_assignment`: Remove unnecessary parentheses around
+  the right-hand side of indexed assignments (e.g. `x[key] = expr`) when the subscripted
+  target is too long to fit on one line and the expression fits on the tail line.
+  ([see below](labels/fix-unnecessary-parens-indexed-assignment))
 - `pyi_blank_line_after_function_docstring`: In `.pyi` stub files, enforce a blank line
   after a function or method body that consists of a docstring.
   ([see below](labels/pyi-blank-line-after-function-docstring))
@@ -235,6 +239,37 @@ classes are handled:
   @decorator
   class Spam: ...
 ```
+
+(labels/fix-unnecessary-parens-indexed-assignment)=
+
+### Unnecessary parentheses in indexed assignments
+
+When an assignment target ends with a subscript (e.g. `x[key] = expr`) and is too long
+to fit on one line, Black has to split at the subscript's brackets. Previously it would
+additionally wrap the right-hand side expression in parentheses, even when the
+expression fits on the closing line. With this feature enabled, Black omits those
+unnecessary parentheses.
+
+For example:
+
+```python
+# Before
+dictionary_of_arrays["long_key_name_for_the_example"][
+    very_long_index_name, index_zero
+] = (10 - 5)
+```
+
+will be formatted to:
+
+```python
+# After (with --preview)
+dictionary_of_arrays["long_key_name_for_the_example"][
+    very_long_index_name, index_zero
+] = 10 - 5
+```
+
+Assignments whose target fits on one line are not affected: wrapping the right-hand side
+in parentheses remains the preferred style there.
 
 (labels/pyi-blank-line-after-function-docstring)=
 

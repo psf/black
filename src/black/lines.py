@@ -1414,9 +1414,29 @@ def can_be_split(line: Line) -> bool:
     return True
 
 
+def _is_annotated_assignment(head: Line) -> bool:
+    """Does `head` (an assignment's leaves up to the `=`) contain an annotation?
+
+    Detects a `:` at the top bracket level, as in `x: dict[str, int] = ...`.
+    Colons nested inside brackets (e.g. slices like `x[a:b]`) don't count.
+    """
+    depth = 0
+    for leaf in head.leaves:
+        if not leaf.value:
+            continue
+        if leaf.type in OPENING_BRACKETS:
+            depth += 1
+        elif leaf.type in CLOSING_BRACKETS:
+            depth -= 1
+        elif leaf.type == token.COLON and depth == 0:
+            return True
+    return False
+
+
 def can_omit_invisible_parens(
     rhs: RHSResult,
     line_length: int,
+    mode: Mode,
 ) -> bool:
     """Does `rhs.body` have a shape safe to reformat without optional parens around it?
 
@@ -1479,6 +1499,37 @@ def can_omit_invisible_parens(
             and leaf.value
         ):
             closing_bracket = leaf
+
+    # For assignments to a subscripted target whose head is too long to fit
+    # (e.g. `x[long_key][another_long_key] = expr`), the target must be split
+    # at its subscript brackets no matter what, so optional parens around a
+    # RHS that fits on the resulting tail line (`] = expr`) are unnecessary.
+    # When the head fits on one line, paren-wrapping the RHS remains the
+    # preferred style and this check must not fire. It must also come before
+    # the delimiter_count > 1 early return below, which would otherwise
+    # reject bodies with multiple delimiters such as `10 - 5`.
+    if (
+        Preview.fix_unnecessary_parens_in_indexed_assignment in mode
+        and len(rhs.head.leaves) >= 3
+        and rhs.head.leaves[-2].type == token.EQUAL
+        # The target must actually end with a subscript: a visible `]`
+        # immediately before the `=`. Invisible parens (e.g. around tuple
+        # targets like `(x,) = ...`) have an empty value and don't count.
+        and rhs.head.leaves[-3].type == token.RSQB
+        and rhs.head.leaves[-3].value
+        # In annotated assignments (`x: dict[str, int] = ...`) the `]` before
+        # the `=` belongs to the annotation; splitting on the annotation's
+        # brackets would be wrong, so leave the optional parens alone.
+        and not _is_annotated_assignment(rhs.head)
+        # The head must be too long to fit, forcing the subscript split.
+        and not is_line_short_enough(rhs.head, mode=mode)
+    ):
+        # 4 extra characters for the `] = ` prefix on the tail line.
+        tail_line_length = 4 * line.depth + 4
+        for _index, _leaf, leaf_length in line.enumerate_with_length():
+            tail_line_length += leaf_length
+        if tail_line_length <= line_length:
+            return True
 
     bt = line.bracket_tracker
     if not bt.delimiters:
