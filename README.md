@@ -228,5 +228,5 @@ and more generally to follow the guidelines articulated in the
 At the same time, humor is encouraged. In fact, basic familiarity with Monty Python's
 Flying Circus is expected. We are not savages.
 
-And if you _really_ need to slap somebody, do it with a fish while dancing.
-< test pr for analysis -->
+And if you _really_ need to slap somebody, do it with a fish while dancing. < test pr
+for analysis -->
