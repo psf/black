@@ -85,6 +85,9 @@
   rather than rebuilding them from scratch after every tree mutation (#5178)
 - Improve performance on long calls and collections by no longer scanning the whole line
   to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
+- Improve performance when splitting long string literals (preview string processing) by
+  no longer re-scanning the whole string for `\N{...}` named escapes on every substring
+  (#5183)
 
 ### Output
 
