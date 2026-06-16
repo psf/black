@@ -2,7 +2,9 @@ name: publish binaries
 
 on:
   release:
-    types: [published]
+    # Upload assets while the release is still a draft so publishing can make the
+    # release immutable without blocking follow-up asset uploads.
+    types: [created]
   workflow_dispatch:
     inputs:
       tag:
@@ -64,7 +66,7 @@ jobs:
           ./dist/${{ matrix.asset_name }} --version
           ./dist/${{ matrix.asset_name }} src --verbose
 
-      - run: gh release upload "$tag" dist/${{ matrix.asset_name }}
+      - run: gh release upload "$tag" dist/${{ matrix.asset_name }} --clobber
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}

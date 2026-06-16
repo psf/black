@@ -68,8 +68,12 @@ To cut a release:
       default title is the last commit's title
    1. Copy and paste the _raw changelog Markdown_ for the current release into the
       description box
-1. Publish the GitHub Release, triggering [release automation](#release-workflows) that
-   will handle the rest
+1. **Save the release as a draft** (do not publish yet). This triggers the
+   [publish binaries](#publish-binaries) workflow, which uploads standalone executables
+   to the release while it can still be modified.
+1. Once the publish binaries workflow completes, **publish** the draft release. This
+   triggers the remaining [release automation](#release-workflows) (PyPI, Docker, and
+   post-release jobs).
 1. Once CI is done add + PR a new empty template for the next release to CHANGES.md
    _(Template is able to be copy pasted from release.py should we fail)_
    1. `python3 scripts/release.py --add-changes-template|-a [--debug]`
@@ -98,7 +102,17 @@ All of _Black_'s release automation uses [GitHub Actions]. All workflows are the
 configured using YAML files in the `.github/workflows` directory of the _Black_
 repository.
 
-They are triggered by the publication of a [GitHub Release].
+Most workflows are triggered by the publication of a [GitHub Release]. The
+[publish binaries](#publish-binaries) workflow is an exception: it runs when a release
+draft is created so assets can be attached before the release becomes immutable.
+
+### Immutable releases
+
+We recommend enabling [immutable releases] in the repository settings under **Settings →
+Releases → Enable release immutability**. Immutable releases lock release assets and tags
+after publication, which improves supply chain security for users downloading standalone
+executables from GitHub. Enabling immutability requires the draft-then-publish release
+flow documented above.
 
 Below are descriptions of our release workflows.
 
@@ -136,7 +150,8 @@ allows people to download the executable for their platform and run _Black_ with
 [Python runtime](https://wiki.python.org/moin/PythonImplementations) installed.
 
 The created binaries are stored on the associated GitHub Release for download over _IPv4
-only_ (GitHub still does not have IPv6 access 😢).
+only_ (GitHub still does not have IPv6 access 😢). This workflow runs when a release
+draft is created so binaries are attached before the release is published.
 
 ### docker
 
@@ -170,6 +185,8 @@ re-cut.
 [gh-4563]: https://github.com/psf/black/pull/4563
 [github actions]: https://github.com/features/actions
 [github release]: https://github.com/psf/black/releases
+[immutable releases]:
+  https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases
 [hatch]: https://hatch.pypa.io/latest/
 [mypyc]: https://mypyc.readthedocs.io/
 [new-release]: https://github.com/psf/black/releases/new
