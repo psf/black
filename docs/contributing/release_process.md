@@ -109,10 +109,10 @@ draft is created so assets can be attached before the release becomes immutable.
 ### Immutable releases
 
 We recommend enabling [immutable releases] in the repository settings under **Settings →
-Releases → Enable release immutability**. Immutable releases lock release assets and tags
-after publication, which improves supply chain security for users downloading standalone
-executables from GitHub. Enabling immutability requires the draft-then-publish release
-flow documented above.
+Releases → Enable release immutability**. Immutable releases lock release assets and
+tags after publication, which improves supply chain security for users downloading
+standalone executables from GitHub. Enabling immutability requires the
+draft-then-publish release flow documented above.
 
 Below are descriptions of our release workflows.
 
