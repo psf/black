@@ -85,6 +85,9 @@
   rather than rebuilding them from scratch after every tree mutation (#5178)
 - Improve performance on long calls and collections by no longer scanning the whole line
   to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
+- Improve performance on files with many soft-keyword constructs (such as `match`/`case`
+  blocks) by discarding spent token-lookahead ranges in the parser instead of
+  re-scanning all of them for every token (#5186)
 
 ### Output
 
