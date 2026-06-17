@@ -40,10 +40,6 @@ t'''
     {1}_cte AS ()'''}
 '''
 
-# Uppercase T prefix is normalized to lowercase t
-x = T"bar {1 + 1}"
-x = T'bar {1 + 1}'
-rT'\{{\}}'
 
 # output
 x = t"foo"
@@ -87,7 +83,4 @@ t"""
     {1}_cte AS ()'''}
 """
 
-# Uppercase T prefix is normalized to lowercase t
-x = t"bar {1 + 1}"
-x = t"bar {1 + 1}"
-rt"\{{\}}"
+

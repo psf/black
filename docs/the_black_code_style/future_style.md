@@ -43,6 +43,8 @@ Currently, the following features are included in the preview style:
   anyway; let the bracket explode instead. ([see below](labels/hug-comparator))
 - `parenthesize_tuple_in_yield`: Add parentheses around tuple expressions in `yield`
   statements.
+- `normalize_tstring_prefix`: Normalize the uppercase `T` prefix of t-strings to lowercase
+  (e.g. `T"..."` becomes `t"..."`).
 
 (labels/wrap-comprehension-in)=
 
