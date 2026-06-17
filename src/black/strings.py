@@ -8,7 +8,6 @@ from functools import lru_cache
 from re import Match, Pattern
 from typing import TYPE_CHECKING, Final
 
-
 from black._width_table import WIDTH_TABLE
 from blib2to3.pytree import Leaf
 
