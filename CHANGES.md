@@ -29,7 +29,7 @@
   previously crashing) (#5161)
 - Fix `normalize_string_prefix` not lowercasing the uppercase `T` prefix of
   t-strings (e.g. `T"..."` was left unchanged instead of being normalized to
-  `t"..."`) (#XXXX)
+  `t"..."`) (#5185)
 
 ### Preview style
 
