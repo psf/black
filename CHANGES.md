@@ -27,6 +27,9 @@
   `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
   contents: the whole statement is now preserved instead of being reformatted (and
   previously crashing) (#5161)
+- Fix `normalize_string_prefix` not lowercasing the uppercase `T` prefix of
+  t-strings (e.g. `T"..."` was left unchanged instead of being normalized to
+  `t"..."`) (#XXXX)
 
 ### Preview style
 
