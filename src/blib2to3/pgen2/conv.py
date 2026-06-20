@@ -29,6 +29,7 @@ without having to invoke the Python pgen C program.
 """
 
 # Python imports
+import ast
 import re
 
 # Local imports
@@ -183,7 +184,7 @@ class Converter(grammar.Grammar):
             mo = re.match(r'\s+("(?:\\\d\d\d)*")},$', line)
             assert mo, (lineno, line)
             first = {}
-            rawbitset = eval(mo.group(1))
+            rawbitset = ast.literal_eval(mo.group(1))
             for i, c in enumerate(rawbitset):
                 byte = ord(c)
                 for j in range(8):
@@ -209,7 +210,7 @@ class Converter(grammar.Grammar):
             if y == "0":
                 y = None
             else:
-                y = eval(y)
+                y = ast.literal_eval(y)
             labels.append((x, y))
         lineno, line = lineno + 1, next(f)
         assert line == "};\n", (lineno, line)
