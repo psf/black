@@ -407,6 +407,12 @@ class LineGenerator(Visitor[Line]):
             and contains_fmt_directive(lines[-1], FMT_ON)
         )
         if is_fmt_off_block:
+            is_after_invisible_lpar = (
+                leaf.fmt_pass_converted_first_leaf is None
+                and len(self.current_line.leaves) == 1
+                and self.current_line.leaves[0].type == token.LPAR
+                and not self.current_line.leaves[0].value
+            )
             # This is a fmt:off/on block from normalize_fmt_off - we still need
             # to process any prefix comments (like markdown comments) but append
             # the fmt block itself directly to preserve its formatting
@@ -425,7 +431,7 @@ class LineGenerator(Visitor[Line]):
                 leaf.prefix = ""
 
             self.current_line.append(leaf)
-            if not any_open_brackets:
+            if not any_open_brackets or is_after_invisible_lpar:
                 yield from self.line()
         else:
             # Normal standalone comment - process through visit_default

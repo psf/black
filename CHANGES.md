@@ -19,6 +19,8 @@
 
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a
+  `with` statement after another standalone comment (#5189)
 - Fix a crash when splitting `case case if ...` match patterns at very small line
   lengths (#5147)
 - Fix multiline docstring indentation when leading tabs are used inside indented
