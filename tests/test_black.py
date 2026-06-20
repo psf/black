@@ -1675,6 +1675,26 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    def test_read_pyproject_toml_rejects_non_string_regex_configs(self) -> None:
+        for config_key, option_name in [
+            ("include", "include"),
+            ("force-exclude", "force-exclude"),
+        ]:
+            with self.subTest(config_key=config_key):
+                with TemporaryDirectory() as workspace:
+                    config = Path(workspace) / "pyproject.toml"
+                    config.write_text(
+                        f'[tool.black]\n{config_key} = ["not", "a", "regex"]\n',
+                        encoding="utf-8",
+                    )
+
+                    fake_ctx = FakeContext()
+                    with pytest.raises(click.BadOptionUsage) as exc_info:
+                        black.read_pyproject_toml(fake_ctx, None, str(config))
+
+                    assert exc_info.value.option_name == option_name
+                    assert "must be a string" in exc_info.value.message
+
     def test_read_pyproject_toml_from_stdin(self) -> None:
         with TemporaryDirectory() as workspace:
             root = Path(workspace)
