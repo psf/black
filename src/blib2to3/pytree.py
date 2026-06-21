@@ -130,22 +130,21 @@ class Base:
         assert new is not None
         if not isinstance(new, list):
             new = [new]
-        l_children = []
-        found = False
-        for ch in self.parent.children:
+        parent = self.parent
+        for i, ch in enumerate(parent.children):
             if ch is self:
-                assert not found, (self.parent.children, self, new)
-                if new is not None:
-                    l_children.extend(new)
-                found = True
-            else:
-                l_children.append(ch)
-        assert found, (self.children, self, new)
-        self.parent.children = l_children
-        self.parent.changed()
-        self.parent.invalidate_sibling_maps()
+                break
+        else:
+            raise AssertionError((parent.children, self, new))
+        # Splice the new children in place of `self` and keep the cached sibling
+        # maps valid without rebuilding them, which would be O(len(children)) per
+        # call and quadratic when many children are replaced while siblings are
+        # read in between (e.g. merging implicitly concatenated strings).
+        parent._replace_child_in_sibling_maps(self, new)
+        parent.children[i : i + 1] = new
+        parent.changed()
         for x in new:
-            x.parent = self.parent
+            x.parent = parent
         self.parent = None
 
     def get_lineno(self) -> int | None:
@@ -405,6 +404,26 @@ class Node(Base):
         next_map[id(before)] = child
         if after is not None:
             prev_map[id(after)] = child
+
+    def _replace_child_in_sibling_maps(self, old: NL, new_children: list[NL]) -> None:
+        """Swap ``old`` for ``new_children`` at the same position in the maps."""
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        if id(old) not in prev_map:
+            self.invalidate_sibling_maps()
+            return
+        before = prev_map.pop(id(old))
+        after = next_map.pop(id(old))
+        previous = before
+        for child in new_children:
+            prev_map[id(child)] = previous
+            next_map[id(previous)] = child
+            previous = child
+        next_map[id(previous)] = after
+        if after is not None:
+            prev_map[id(after)] = previous
 
     def update_sibling_maps(self) -> None:
         _prev: dict[int, NL | None] = {}
