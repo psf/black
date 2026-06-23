@@ -173,6 +173,7 @@ def normalize_string_quotes(s: str) -> str:
 
     Adds or removes backslashes as appropriate.
     """
+    return s  # tweak: keep strings as written
     value = s.lstrip(STRING_PREFIX_CHARS)
     if value[:3] == '"""':
         return s
