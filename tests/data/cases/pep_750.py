@@ -40,7 +40,6 @@ t'''
     {1}_cte AS ()'''}
 '''
 
-
 # output
 x = t"foo"
 x = t"foo {{ {2 + 2}bar {{ baz"
@@ -82,5 +81,3 @@ t"""
     WITH {f'''
     {1}_cte AS ()'''}
 """
-
-
