@@ -82,7 +82,16 @@ class TokenProxy:
         # If the current position is already compromised (looked up)
         # return the eaten token, if not just go further on the given
         # token producer.
-        for release_range in self._release_ranges:
+        # Ranges are appended in counter order and the counter only moves
+        # forward, so any range we've already advanced past can never match
+        # again. Drop that exhausted prefix; otherwise the scan below grows
+        # with the number of soft-keyword lookaheads and parsing a file full
+        # of them (e.g. many `match`/`case` blocks) becomes quadratic.
+        ranges = self._release_ranges
+        while ranges and ranges[0].end is not None and ranges[0].end <= self._counter:
+            ranges.pop(0)
+
+        for release_range in ranges:
             assert release_range.end is not None
 
             start, end = release_range.start, release_range.end
