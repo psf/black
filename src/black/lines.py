@@ -13,6 +13,7 @@ from black.nodes import (
     STANDALONE_COMMENT,
     TEST_DESCENDANTS,
     child_towards,
+    first_leaf,
     is_docstring,
     is_import,
     is_multiline_string,
@@ -20,6 +21,7 @@ from black.nodes import (
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
+    last_leaf,
     make_simple_prefix,
     replace_child,
     syms,
@@ -1320,6 +1322,10 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     # store the leaves that contain parts of the MLS
     multiline_string_contexts: list[LN] = []
 
+    # `id()`s of the leaves on this line, used to find which ancestors of the
+    # multiline string are rendered in full on this line (see below).
+    line_leaf_ids = {id(leaf) for leaf in line.leaves}
+
     max_level_to_update: int | float = math.inf  # track the depth of the MLS
     for i, leaf in enumerate(line.leaves):
         if max_level_to_update == math.inf:
@@ -1363,8 +1369,18 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
                 return False
             multiline_string = leaf
             ctx: LN = leaf
-            # fetch the leaf components of the MLS in the AST
-            while str(ctx) in line_str:
+            # fetch the leaf components of the MLS in the AST. An ancestor is
+            # part of the MLS context while it is rendered in full on this line,
+            # i.e. its first and last leaves both belong to the line (a line is
+            # a contiguous run of leaves). Walking the leaf ids instead of
+            # re-rendering `str(ctx)` and substring-searching `line_str` at every
+            # level keeps this linear; the old form was quadratic on lines with a
+            # large multiline-string-bearing collection (e.g. a dict literal with
+            # many triple-quoted values).
+            while (
+                id(first_leaf(ctx)) in line_leaf_ids
+                and id(last_leaf(ctx)) in line_leaf_ids
+            ):
                 multiline_string_contexts.append(ctx)
                 if ctx.parent is None:
                     break
