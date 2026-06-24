@@ -111,6 +111,12 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Allow grouping multiple cases in one fixture file under `tests/data/cases/` using
+  `[case <name>]` headers, inspired by mypy's test data format. Files without a header
+  continue to work unchanged. Failing cells report their file path, cell header line,
+  and `# output` marker line. Migrates `preview_long_strings.py` and
+  `preview_long_strings__regression.py` as the first consumers (#5149)
+
 ## Version 26.5.1
 
 ### Stable style
