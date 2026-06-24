@@ -263,7 +263,7 @@ class LineGenerator(Visitor[Line]):
                             remove_brackets_around_comma=False,
                         )
                     else:
-                        wrap_in_parentheses(node, child, visible=False)
+                        wrap_in_parentheses(node, child, visible=False, index=i)
         yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
@@ -312,9 +312,9 @@ class LineGenerator(Visitor[Line]):
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
         prev_type: int | None = None
-        for child in node.children:
+        for i, child in enumerate(node.children):
             if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
-                wrap_in_parentheses(node, child, visible=False)
+                wrap_in_parentheses(node, child, visible=False, index=i)
             prev_type = child.type
 
         if node.parent and node.parent.type in STATEMENT:
@@ -407,6 +407,12 @@ class LineGenerator(Visitor[Line]):
             and contains_fmt_directive(lines[-1], FMT_ON)
         )
         if is_fmt_off_block:
+            is_after_invisible_lpar = (
+                leaf.fmt_pass_converted_first_leaf is None
+                and len(self.current_line.leaves) == 1
+                and self.current_line.leaves[0].type == token.LPAR
+                and not self.current_line.leaves[0].value
+            )
             # This is a fmt:off/on block from normalize_fmt_off - we still need
             # to process any prefix comments (like markdown comments) but append
             # the fmt block itself directly to preserve its formatting
@@ -425,7 +431,7 @@ class LineGenerator(Visitor[Line]):
                 leaf.prefix = ""
 
             self.current_line.append(leaf)
-            if not any_open_brackets:
+            if not any_open_brackets or is_after_invisible_lpar:
                 yield from self.line()
         else:
             # Normal standalone comment - process through visit_default
