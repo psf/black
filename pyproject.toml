@@ -91,7 +91,7 @@ docs = [
     "myst-parser==5.0.0",
     "sphinx-copybutton==0.5.2",
     "sphinx==9.1.0",
-    "sphinxcontrib-programoutput==0.19",
+    "sphinxcontrib-programoutput==0.20",
 ]
 
 tox = ["tox>=4.22"]
