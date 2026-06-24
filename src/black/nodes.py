@@ -1000,22 +1000,40 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     ].lstrip().startswith("ignore")
 
 
-def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
+def wrap_in_parentheses(
+    parent: Node, child: LN, *, visible: bool = True, index: int | None = None
+) -> None:
     """Wrap `child` in parentheses.
 
     This replaces `child` with an atom holding the parentheses and the old
     child.  That requires moving the prefix.
 
     If `visible` is False, the leaves will be valueless (and thus invisible).
+
+    When the caller already knows `child`'s position in `parent.children` it
+    can pass `index` so the child is swapped in place. The default path locates
+    `child` with `Base.remove`, which scans and rewrites the whole child list;
+    that is O(len(parent.children)) per call and turns quadratic when a caller
+    wraps every child of a large node (e.g. each value of a big dict literal).
     """
     lpar = Leaf(token.LPAR, "(" if visible else "")
     rpar = Leaf(token.RPAR, ")" if visible else "")
     prefix = child.prefix
     child.prefix = ""
-    index = child.remove() or 0
-    new_child = Node(syms.atom, [lpar, child, rpar])
-    new_child.prefix = prefix
-    parent.insert_child(index, new_child)
+    if index is None:
+        index = child.remove() or 0
+        new_child = Node(syms.atom, [lpar, child, rpar])
+        new_child.prefix = prefix
+        parent.insert_child(index, new_child)
+    else:
+        # Detach the child pointer first so the atom can adopt it, then swap it
+        # in place. set_child resets the old child's parent, so reattach it to
+        # the new atom afterwards.
+        child.parent = None
+        new_child = Node(syms.atom, [lpar, child, rpar])
+        new_child.prefix = prefix
+        parent.set_child(index, new_child)
+        child.parent = new_child
 
 
 def unwrap_singleton_parenthesis(node: LN) -> LN | None:
