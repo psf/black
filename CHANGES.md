@@ -86,12 +86,11 @@
   string processing) by maintaining the `blib2to3` sibling-node maps incrementally
   rather than rebuilding them from scratch after every tree mutation (#5178)
 - Improve performance on long calls and collections by no longer scanning the whole line
-  to locate each bracket's opening pair in `is_one_sequence_between` (#5177) <<<<<<<
-  is-line-short-enough-quadratic
+  to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
 - Improve performance on lines holding a multiline string inside a large collection (for
   example a dict literal whose values are all triple-quoted strings) by locating the
   string's enclosing nodes via leaf membership instead of re-rendering each enclosing
-  node to a string in `is_line_short_enough` (#5188) =======
+  node to a string in `is_line_short_enough` (#5188)
 - Improve performance on files with many soft-keyword constructs (such as `match`/`case`
   blocks) by discarding spent token-lookahead ranges in the parser instead of
   re-scanning all of them for every token (#5186)
@@ -101,7 +100,6 @@
 - Improve performance on large dict literals and long semicolon-separated statements by
   wrapping a node's children in invisible parentheses in place instead of removing and
   re-inserting each one, which scanned the whole child list every time (#5184)
-  > > > > > > > main
 
 ### Output
 
