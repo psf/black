@@ -263,7 +263,7 @@ class LineGenerator(Visitor[Line]):
                             remove_brackets_around_comma=False,
                         )
                     else:
-                        wrap_in_parentheses(node, child, visible=False)
+                        wrap_in_parentheses(node, child, visible=False, index=i)
         yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
@@ -312,9 +312,9 @@ class LineGenerator(Visitor[Line]):
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
         prev_type: int | None = None
-        for child in node.children:
+        for i, child in enumerate(node.children):
             if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
-                wrap_in_parentheses(node, child, visible=False)
+                wrap_in_parentheses(node, child, visible=False, index=i)
             prev_type = child.type
 
         if node.parent and node.parent.type in STATEMENT:

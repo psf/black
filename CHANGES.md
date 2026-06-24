@@ -88,6 +88,9 @@
 - Improve performance when splitting long string literals (preview string processing) by
   no longer re-scanning the whole string for `\N{...}` named escapes on every substring
   (#5183)
+- Improve performance on large dict literals and long semicolon-separated statements by
+  wrapping a node's children in invisible parentheses in place instead of removing and
+  re-inserting each one, which scanned the whole child list every time (#5184)
 
 ### Output
 
