@@ -625,22 +625,28 @@ def _should_keep_compound_statement_inline(
     Returns True only for compound statements with semicolon-separated bodies,
     like: if True: print("a"); print("b")  # fmt: skip
     """
-    # Check if there are semicolons in the body
-    for leaf in body_node.leaves():
-        if leaf.type == token.SEMI:
-            # Verify it's a single-line body (one simple_stmt)
-            if body_node.type == syms.suite:
-                # After formatting: check suite has one simple_stmt child
-                simple_stmts = [
-                    child
-                    for child in body_node.children
-                    if child.type == syms.simple_stmt
-                ]
-                return len(simple_stmts) == 1 and simple_stmts[0] is simple_stmt_parent
-            else:
-                # Original form: body_node IS the simple_stmt
-                return body_node is simple_stmt_parent
-    return False
+    # Narrow down to the single simple_stmt that may carry the semicolons before
+    # scanning any leaves. A compound statement's suite holds one child per body
+    # statement, so walking the whole suite here is O(n) and, called once per
+    # `# fmt: skip` line in the block, makes the pass O(n^2).
+    if body_node.type == syms.suite:
+        # After formatting: the suite must hold exactly one simple_stmt and it
+        # must be the one carrying the directive. Stop at the second simple_stmt.
+        target: LN | None = None
+        for child in body_node.children:
+            if child.type == syms.simple_stmt:
+                if target is not None:
+                    return False
+                target = child
+        if target is None or target is not simple_stmt_parent:
+            return False
+    else:
+        # Original form: body_node IS the simple_stmt
+        if body_node is not simple_stmt_parent:
+            return False
+        target = body_node
+
+    return any(leaf.type == token.SEMI for leaf in target.leaves())
 
 
 def _get_compound_statement_header(

@@ -87,6 +87,9 @@
   rather than rebuilding them from scratch after every tree mutation (#5178)
 - Improve performance on long calls and collections by no longer scanning the whole line
   to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
+- Improve performance on functions and other blocks containing many `# fmt: skip`
+  comments by no longer scanning every leaf of the enclosing block for each directive
+  when checking for a semicolon-separated inline body (#5190)
 - Improve performance when merging large groups of implicitly concatenated strings by no
   longer rebuilding a node's children list and sibling maps from scratch on every
   `replace` call (#5194)
