@@ -300,9 +300,11 @@ def _handle_comment_only_fmt_block(
         # This preserves all comments and content before the fmt:off directive
         pre_fmt_off_consumed = all_comments[fmt_off_idx - 1].consumed
 
-    standalone_comment_prefix = (
-        original_prefix[:pre_fmt_off_consumed] + "\n" * comment.newlines
-    )
+    preceding_prefix = original_prefix[:pre_fmt_off_consumed]
+    if fmt_off_idx > 0:
+        preceding_prefix = preceding_prefix.lstrip("\r\n")
+
+    standalone_comment_prefix = preceding_prefix + "\n" * comment.newlines
 
     fmt_off_prefix = original_prefix.split(comment.value)[0]
     if "\n" in fmt_off_prefix:
