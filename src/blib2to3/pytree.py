@@ -174,7 +174,7 @@ class Base:
                 if node is self:
                     del self.parent.children[i]
                     self.parent.changed()
-                    self.parent.invalidate_sibling_maps()
+                    self.parent._remove_from_sibling_maps(self)
                     self.parent = None
                     return i
         return None
@@ -322,10 +322,11 @@ class Node(Base):
         child's parent attribute appropriately.
         """
         child.parent = self
-        self.children[i].parent = None
+        old = self.children[i]
+        old.parent = None
         self.children[i] = child
         self.changed()
-        self.invalidate_sibling_maps()
+        self._replace_in_sibling_maps(old, child)
 
     def insert_child(self, i: int, child: NL) -> None:
         """
@@ -335,7 +336,10 @@ class Node(Base):
         child.parent = self
         self.children.insert(i, child)
         self.changed()
-        self.invalidate_sibling_maps()
+        if 0 <= i < len(self.children) and self.children[i] is child:
+            self._insert_into_sibling_maps(i, child)
+        else:
+            self.invalidate_sibling_maps()
 
     def append_child(self, child: NL) -> None:
         """
@@ -345,11 +349,62 @@ class Node(Base):
         child.parent = self
         self.children.append(child)
         self.changed()
-        self.invalidate_sibling_maps()
+        self._insert_into_sibling_maps(len(self.children) - 1, child)
 
     def invalidate_sibling_maps(self) -> None:
         self.prev_sibling_map: dict[int, NL | None] | None = None
         self.next_sibling_map: dict[int, NL | None] | None = None
+
+    def _insert_into_sibling_maps(self, i: int, child: NL) -> None:
+        """Splice a newly inserted child into the cached sibling maps.
+
+        Keeps the maps valid without rebuilding them from scratch, which would
+        be O(len(children)) per call and quadratic when many children are
+        inserted while siblings are read in between (e.g. ``append_leaves``).
+        """
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        before = self.children[i - 1] if i > 0 else None
+        after = self.children[i + 1] if i + 1 < len(self.children) else None
+        prev_map[id(child)] = before
+        next_map[id(child)] = after
+        next_map[id(before)] = child
+        if after is not None:
+            prev_map[id(after)] = child
+
+    def _remove_from_sibling_maps(self, child: NL) -> None:
+        """Splice a removed child out of the cached sibling maps."""
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        if id(child) not in prev_map:
+            self.invalidate_sibling_maps()
+            return
+        before = prev_map.pop(id(child))
+        after = next_map.pop(id(child))
+        next_map[id(before)] = after
+        if after is not None:
+            prev_map[id(after)] = before
+
+    def _replace_in_sibling_maps(self, old: NL, child: NL) -> None:
+        """Swap ``old`` for ``child`` at the same position in the sibling maps."""
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        if id(old) not in prev_map:
+            self.invalidate_sibling_maps()
+            return
+        before = prev_map.pop(id(old))
+        after = next_map.pop(id(old))
+        prev_map[id(child)] = before
+        next_map[id(child)] = after
+        next_map[id(before)] = child
+        if after is not None:
+            prev_map[id(after)] = child
 
     def update_sibling_maps(self) -> None:
         _prev: dict[int, NL | None] = {}

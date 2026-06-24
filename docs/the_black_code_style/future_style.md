@@ -41,6 +41,8 @@ Currently, the following features are included in the preview style:
 - `hug_comparator`: Don't break a comparator (`not in`, `==`, `is`, ...) away from its
   left operand when the right operand is a bracketed expression that has to break
   anyway; let the bracket explode instead. ([see below](labels/hug-comparator))
+- `parenthesize_tuple_in_yield`: Add parentheses around tuple expressions in `yield`
+  statements.
 
 (labels/wrap-comprehension-in)=
 

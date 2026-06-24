@@ -33,6 +33,11 @@ lcomp3 = [
 # Don't remove parens around ternaries
 expected = [i for i in (a if b else c)]
 
+# Don't remove parens around lambdas; without them the trailing comprehension
+# clauses would be parsed as part of the lambda body, producing invalid code
+lambda_iter = [i for i in (lambda: 0) if i]
+lambda_iter_no_clause = [i for i in (lambda x: x)]
+
 # Nested arrays
 # First in will not be split because it would still be too long
 [[
@@ -113,6 +118,11 @@ lcomp3 = [
 
 # Don't remove parens around ternaries
 expected = [i for i in (a if b else c)]
+
+# Don't remove parens around lambdas; without them the trailing comprehension
+# clauses would be parsed as part of the lambda body, producing invalid code
+lambda_iter = [i for i in (lambda: 0) if i]
+lambda_iter_no_clause = [i for i in (lambda x: x)]
 
 # Nested arrays
 # First in will not be split because it would still be too long

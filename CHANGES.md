@@ -23,6 +23,8 @@
 
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`
+  statement after another standalone comment (#5189)
 - Fix a crash when splitting `case case if ...` match patterns at very small line
   lengths (#5147)
 - Fix multiline docstring indentation when leading tabs are used inside indented
@@ -38,6 +40,8 @@
 
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
   `x[key] = expr` (#5095)
+- Parenthesize tuple expressions in `yield` statements for consistency with function
+  calls and returns (#5170)
 - Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
   the right-hand side is a bracketed expression. Black now lets the bracket explode
   instead. This fixes the awkward break that was showing up in comprehension `if`
@@ -45,6 +49,9 @@
   parenthesized expressions (#5135)
 - In `.pyi` stub files, enforce a blank line after a function or method that has a
   docstring-only body when another comment or statement follows it (#5158)
+- Keep the parentheses around a lambda used as the iterable of a comprehension (e.g.
+  `[x for x in (lambda: 0) if x]`). They were previously stripped by
+  `wrap_comprehension_in`, which produced invalid code and crashed Black (#5176)
 
 ### Configuration
 
@@ -78,8 +85,18 @@
   (#5171)
 - Improve performance when merging long runs of implicitly concatenated strings by no
   longer re-escaping the whole accumulated string on every merge step (#5173)
+  sibling-maps-incremental
+- Improve performance on code whose formatting rewrites large nodes (such as `--preview`
+  string processing) by maintaining the `blib2to3` sibling-node maps incrementally
+  rather than rebuilding them from scratch after every tree mutation (#5178)
 - Improve performance on long calls and collections by no longer scanning the whole line
   to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
+- Improve performance when splitting long string literals (preview string processing) by
+  no longer re-scanning the whole string for `\N{...}` named escapes on every substring
+  (#5183)
+- Improve performance on large dict literals and long semicolon-separated statements by
+  wrapping a node's children in invisible parentheses in place instead of removing and
+  re-inserting each one, which scanned the whole child list every time (#5184)
 
 ### Output
 

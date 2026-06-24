@@ -91,7 +91,8 @@
           "fix_unnecessary_parens_in_indexed_assignment",
           "pyi_blank_line_before_decorated_class",
           "pyi_blank_line_after_function_docstring",
-          "hug_comparator"
+          "hug_comparator",
+          "parenthesize_tuple_in_yield"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
