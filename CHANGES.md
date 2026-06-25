@@ -57,6 +57,11 @@
   directory gets the correct `pyproject.toml` (#5152)
 - Add validation for --line-ranges values (#5107)
 
+### Caching
+
+- Ignore empty cache files like other malformed cache files instead of raising an
+  `EOFError` (#5192)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
