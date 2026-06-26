@@ -38,6 +38,12 @@ expected = [i for i in (a if b else c)]
 lambda_iter = [i for i in (lambda: 0) if i]
 lambda_iter_no_clause = [i for i in (lambda x: x)]
 
+# Redundant nested parens around a lambda or ternary must be preserved too;
+# stripping the inner pair as well would expose the bare expression and crash
+double_lambda_iter = [i for i in ((lambda: 0)) if i]
+double_lambda_no_clause = [i for i in ((lambda x: x))]
+double_ternary = [i for i in ((a if b else c))]
+
 # Nested arrays
 # First in will not be split because it would still be too long
 [[
@@ -123,6 +129,12 @@ expected = [i for i in (a if b else c)]
 # clauses would be parsed as part of the lambda body, producing invalid code
 lambda_iter = [i for i in (lambda: 0) if i]
 lambda_iter_no_clause = [i for i in (lambda x: x)]
+
+# Redundant nested parens around a lambda or ternary must be preserved too;
+# stripping the inner pair as well would expose the bare expression and crash
+double_lambda_iter = [i for i in ((lambda: 0)) if i]
+double_lambda_no_clause = [i for i in ((lambda x: x))]
+double_ternary = [i for i in ((a if b else c))]
 
 # Nested arrays
 # First in will not be split because it would still be too long
