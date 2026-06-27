@@ -2211,6 +2211,43 @@ class TestCaching:
         monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
         assert get_cache_dir().parent == workspace2
 
+    def test_get_cache_dir_override_takes_precedence(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        env_dir = tmp_path / "from-env"
+        cli_dir = tmp_path / "from-cli"
+
+        # An explicit override wins over BLACK_CACHE_DIR.
+        monkeypatch.setenv("BLACK_CACHE_DIR", str(env_dir))
+        assert get_cache_dir(override=cli_dir).parent == cli_dir
+
+        # Without an override we fall back to the env var.
+        assert get_cache_dir().parent == env_dir
+
+    def test_cache_dir_cli_argument(self, tmp_path: Path) -> None:
+        # The `cache_dir()` fixture patches black.cache.CACHE_DIR to `default_loc`
+        # (and restores it afterwards). Passing --cache-dir must take precedence over
+        # that already-established location, proving the option wins at runtime.
+        with cache_dir() as default_loc:
+            src = (tmp_path / "test.py").resolve()
+            src.write_text("print('hello')", encoding="utf-8")
+            cli_loc = tmp_path / "custom-cache"
+
+            invokeBlack([str(src), "--cache-dir", str(cli_loc)])
+
+            cache_file = (
+                cli_loc
+                / black.__version__
+                / f"cache.{DEFAULT_MODE.get_cache_key()}.pickle"
+            )
+            assert cache_file.exists()
+            # Nothing should have been written to the default cache location.
+            assert not (
+                default_loc / f"cache.{DEFAULT_MODE.get_cache_key()}.pickle"
+            ).exists()
+
     def test_cache_file_length(self) -> None:
         cases = [
             DEFAULT_MODE,

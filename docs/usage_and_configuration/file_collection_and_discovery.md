@@ -22,12 +22,22 @@ run. The file is non-portable. The standard location on common operating systems
 `file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
 as .pyi, and whether string normalization was omitted.
 
-To override the location of these files on all systems, set the environment variable
-`BLACK_CACHE_DIR` to the preferred location. Alternatively on macOS and Linux, set
-`XDG_CACHE_HOME` to your preferred location. For example, if you want to put the cache
-in the directory you're running _Black_ from, set `BLACK_CACHE_DIR=.cache/black`.
-_Black_ will then write the above files to `.cache/black`. Note that `BLACK_CACHE_DIR`
-will take precedence over `XDG_CACHE_HOME` if both are set.
+To override the location of these files on all systems, pass the `--cache-dir` option or
+set the environment variable `BLACK_CACHE_DIR` to the preferred location. Alternatively
+on macOS and Linux, set `XDG_CACHE_HOME` to your preferred location. For example, if you
+want to put the cache in the directory you're running _Black_ from, set
+`BLACK_CACHE_DIR=.cache/black`. _Black_ will then write the above files to
+`.cache/black`. When more than one of these is set, the highest-precedence option wins:
+`--cache-dir` takes precedence over `BLACK_CACHE_DIR`, which in turn takes precedence
+over `XDG_CACHE_HOME`.
+
+The `--cache-dir` option is useful when you cannot set an environment variable for the
+invocation, such as when running _Black_ as a [pre-commit](https://pre-commit.com/) hook
+in a monorepo and you want the cache written outside the project root:
+
+```console
+$ black --cache-dir build/black-cache .
+```
 
 ### Disabling the cache with --no-cache
 

@@ -237,6 +237,15 @@ nor write to the cache. This is helpful for reproducing formatting results from 
 run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
 every time.
 
+#### `--cache-dir`
+
+Set the directory where _Black_ reads and writes its cache. This can also be specified
+via the `BLACK_CACHE_DIR` environment variable; `--cache-dir` takes precedence over the
+environment variable. Defaults to the platform-specific user cache directory. This is
+useful when you cannot set an environment variable for the invocation, for example when
+running _Black_ as a pre-commit hook and you want the cache written outside the project
+root.
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
