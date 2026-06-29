@@ -6,7 +6,7 @@ formats:
 build:
   os: ubuntu-lts-latest
   tools:
-    python: "3.13"
+    python: "3.15"
   jobs:
     install:
       - pip install --upgrade pip

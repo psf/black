@@ -2,7 +2,7 @@ name: diff-shades
 
 on:
   push:
-    branches: [main]
+    branches: main
     paths:
       - src/**
       - pyproject.toml
@@ -44,8 +44,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades --group diff-shades-comment
 
       - name: Calculate run configuration & metadata
@@ -74,8 +74,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades
 
       - name: Configure git
@@ -130,8 +130,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades
 
       - name: Configure git
@@ -179,7 +179,7 @@ jobs:
 
   compare:
     name: compare / ${{ matrix.mode }}
-    needs: ["configure", "analysis-base", "analysis-target"]
+    needs: [configure, analysis-base, analysis-target]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     strategy:
@@ -199,8 +199,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades --group diff-shades-comment
 
       - name: Generate HTML diff report
