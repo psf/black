@@ -556,8 +556,8 @@ The following changes were not in any previous release:
 
 ### Preview style
 
-- Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
-  fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
+- Fix type annotation spacing between * and more complex type variable tuple (i.e.
+  `def fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
 
 ### Caching
 
