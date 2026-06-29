@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
+import hashlib
 import inspect
 import io
 import itertools
@@ -2243,6 +2244,13 @@ class TestCaching:
             assert "/" not in cache_file.name
             assert ".." not in cache_file.name
             assert "../../../tmp/pwned" not in mode.get_cache_key()
+
+    def test_hash_digest_matches_sha256(self, tmp_path: Path) -> None:
+        src = tmp_path / "large.py"
+        content = b"print('hello')\n" * 100_000 + b"print('done')\n"
+        src.write_bytes(content)
+
+        assert black.Cache.hash_digest(src) == hashlib.sha256(content).hexdigest()
 
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
