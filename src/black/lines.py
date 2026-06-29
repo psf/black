@@ -1283,9 +1283,32 @@ def append_leaves(
     Pre-conditions:
         set(@leaves) is a subset of set(@old_line.leaves).
     """
+    # @leaves is a slice of @old_line.leaves, so the leaves are in tree (DFS)
+    # order and the children replaced within any one parent are reached at
+    # strictly increasing positions. Remembering where the last child of each
+    # parent was found lets the lookup resume from there instead of rescanning the
+    # whole child list through Base.remove on every leaf, which is otherwise
+    # O(n^2) when a node has many children replaced (e.g. wrapping the operand
+    # tuple of "%s" % (a, b, c, ...) or copying a very long line for a second
+    # formatting pass).
+    search_start: dict[int, int] = {}
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
-        replace_child(old_leaf, new_leaf)
+        parent = old_leaf.parent
+        if parent is not None:
+            children = parent.children
+            index = search_start.get(id(parent), 0)
+            while index < len(children) and children[index] is not old_leaf:
+                index += 1
+            if index < len(children):
+                # set_child swaps the child in place (the old one keeps the same
+                # position), so the next sibling to replace is always further on.
+                parent.set_child(index, new_leaf)
+                search_start[id(parent)] = index + 1
+            else:
+                # The resume hint missed (unexpected ordering); fall back to the
+                # full scan so behaviour is unchanged.
+                replace_child(old_leaf, new_leaf)
         new_line.append(new_leaf, preformatted=preformatted)
 
         for comment_leaf in old_line.comments_after(old_leaf):

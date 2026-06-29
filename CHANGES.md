@@ -106,6 +106,10 @@
 - Improve performance on large dict literals and long semicolon-separated statements by
   wrapping a node's children in invisible parentheses in place instead of removing and
   re-inserting each one, which scanned the whole child list every time (#5184)
+- Improve performance when copying a long line's leaves into a new line (for example
+  `--preview` string processing of `"%s ..." % (a, b, c, ...)` or a string with a
+  backslash continuation) by resuming the child lookup in `append_leaves` instead of
+  rescanning each leaf's parent from the start (#5199)
 
 ### Output
 
