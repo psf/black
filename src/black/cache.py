@@ -16,6 +16,8 @@ from _black_version import version as __version__
 from black.mode import Mode
 from black.output import err
 
+_HASH_CHUNK_SIZE = 1024 * 1024
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -88,8 +90,11 @@ class Cache:
     def hash_digest(path: Path) -> str:
         """Return hash digest for path."""
 
-        data = path.read_bytes()
-        return hashlib.sha256(data).hexdigest()
+        hasher = hashlib.sha256()
+        with path.open("rb") as file:
+            while chunk := file.read(_HASH_CHUNK_SIZE):
+                hasher.update(chunk)
+        return hasher.hexdigest()
 
     @staticmethod
     def get_file_data(path: Path) -> FileData:
