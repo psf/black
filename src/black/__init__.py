@@ -26,8 +26,9 @@ from mypy_extensions import mypyc_attr
 from pathspec import GitIgnoreSpec
 from pathspec.patterns.gitignore import GitIgnorePatternError
 
+import black.cache
 from _black_version import version as __version__
-from black.cache import Cache
+from black.cache import Cache, get_cache_dir
 from black.comments import normalize_fmt_off
 from black.const import (
     DEFAULT_EXCLUDES,
@@ -540,6 +541,21 @@ def validate_regex(
         " included files."
     ),
 )
+@click.option(
+    "--cache-dir",
+    type=click.Path(
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        path_type=str,
+    ),
+    default=None,
+    help=(
+        "The directory where Black should read and write its cache. This takes"
+        " precedence over the BLACK_CACHE_DIR environment variable. Defaults to the"
+        " platform-specific user cache directory."
+    ),
+)
 @click.pass_context
 def main(
     ctx: click.Context,
@@ -572,6 +588,7 @@ def main(
     src: tuple[str, ...],
     config: str | None,
     no_cache: bool,
+    cache_dir: str | None,
 ) -> None:
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
@@ -696,6 +713,12 @@ def main(
         quiet = True
 
     report = Report(check=check, diff=diff, quiet=quiet, verbose=verbose)
+
+    if cache_dir is not None:
+        # Redirect the on-disk cache for this run. This takes precedence over the
+        # BLACK_CACHE_DIR environment variable. Reassigning the module-level constant
+        # is what the cache read/write helpers consult at runtime.
+        black.cache.CACHE_DIR = get_cache_dir(override=Path(cache_dir))
 
     if code is not None:
         reformat_code(

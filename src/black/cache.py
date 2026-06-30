@@ -8,7 +8,7 @@ import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from platformdirs import user_cache_dir
 
@@ -28,19 +28,24 @@ class FileData(NamedTuple):
     hash: str
 
 
-def get_cache_dir() -> Path:
+def get_cache_dir(override: Optional[Path] = None) -> Path:
     """Get the cache directory used by black.
 
-    Users can customize this directory on all systems using `BLACK_CACHE_DIR`
-    environment variable. By default, the cache directory is the user cache directory
-    under the black application.
+    The directory is resolved with the following precedence (highest first):
+
+    1. An explicit `override` (e.g. the `--cache-dir` command-line option).
+    2. The `BLACK_CACHE_DIR` environment variable.
+    3. The platform-specific user cache directory.
 
     This result is immediately set to a constant `black.cache.CACHE_DIR` as to avoid
     repeated calls.
     """
     # NOTE: Function mostly exists as a clean way to test getting the cache directory.
-    default_cache_dir = user_cache_dir("black")
-    cache_dir = Path(os.environ.get("BLACK_CACHE_DIR", default_cache_dir))
+    if override is not None:
+        cache_dir = override
+    else:
+        default_cache_dir = user_cache_dir("black")
+        cache_dir = Path(os.environ.get("BLACK_CACHE_DIR", default_cache_dir))
     cache_dir = cache_dir / __version__
     return cache_dir
 

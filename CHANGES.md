@@ -58,6 +58,8 @@
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
   directory gets the correct `pyproject.toml` (#5152)
 - Add validation for --line-ranges values (#5107)
+- Add a `--cache-dir` command-line option to set the cache directory, taking precedence
+  over the `BLACK_CACHE_DIR` environment variable (#5201)
 
 ### Packaging
 

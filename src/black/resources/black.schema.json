@@ -156,6 +156,10 @@
       "type": "boolean",
       "description": "Skip reading and writing the cache, forcing Black to reformat all included files.",
       "default": false
+    },
+    "cache-dir": {
+      "type": "string",
+      "description": "The directory where Black should read and write its cache. This takes precedence over the BLACK_CACHE_DIR environment variable. Defaults to the platform-specific user cache directory."
     }
   }
 }
