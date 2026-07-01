@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when a leaf's bracket metadata is read before bracket tracking has visited
+  it (#5215)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
 - Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`

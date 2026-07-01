@@ -6,6 +6,12 @@ from dataclasses import dataclass
 
 import black
 from blib2to3.pgen2 import token, tokenize
+from blib2to3.pytree import Leaf
+
+if sys.version_info >= (3, 11):
+    from typing import assert_type
+else:
+    from typing_extensions import assert_type
 
 
 @dataclass
@@ -28,6 +34,14 @@ def assert_tokenizes(text: str, tokens: list[Token]) -> None:
     """Assert that the tokenizer produces the expected tokens."""
     actual_tokens = get_tokens(text)
     assert actual_tokens == tokens
+
+
+def test_leaf_initializes_bracket_metadata() -> None:
+    leaf = Leaf(token.NAME, "name")
+
+    assert_type(leaf.bracket_depth, int)
+    assert leaf.bracket_depth == 0
+    assert leaf.opening_bracket is None
 
 
 def test_simple() -> None:
