@@ -1,8 +1,11 @@
 import io
 import json
+import os
 import platform
 import re
+import shutil
 import sys
+import tempfile
 import tokenize
 import traceback
 from collections.abc import (
@@ -998,8 +1001,27 @@ def format_file_in_place(
     dst_contents = header.decode(encoding) + dst_contents
 
     if write_back == WriteBack.YES:
-        with open(src, "w", encoding=encoding, newline=newline) as f:
-            f.write(dst_contents)
+        # Write to a temporary file in the same directory (so it's on the same
+        # filesystem) and atomically replace the target with it. This avoids
+        # leaving the file truncated or corrupted if writing fails partway
+        # through, e.g. because the disk is full (see issue #2479).
+        # If `src` is itself a symlink, write through to its resolved target
+        # instead of replacing the symlink with a regular file.
+        real_src = src.resolve() if src.is_symlink() else src
+        fd, tmp_file = tempfile.mkstemp(
+            dir=real_src.parent, prefix=f".{real_src.name}.", suffix=".tmp"
+        )
+        tmp_path = Path(tmp_file)
+        try:
+            with os.fdopen(fd, "w", encoding=encoding, newline=newline) as f:
+                f.write(dst_contents)
+                f.flush()
+                os.fsync(f.fileno())
+            shutil.copymode(real_src, tmp_path)
+            os.replace(tmp_path, real_src)
+        except BaseException:
+            tmp_path.unlink(missing_ok=True)
+            raise
     elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         now = datetime.now(timezone.utc)
         src_name = f"{src}\t{then}"
