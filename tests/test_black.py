@@ -1122,6 +1122,26 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(workspace)])
 
     @event_loop()
+    def test_invalid_black_num_workers(self) -> None:
+        for workers in ["abc", "0", "-1"]:
+            with (
+                cache_dir() as workspace,
+                patch.dict(os.environ, {"BLACK_NUM_WORKERS": workers}),
+            ):
+                for f in [
+                    (workspace / "one.py").resolve(),
+                    (workspace / "two.py").resolve(),
+                ]:
+                    f.write_text('print("hello")\n', encoding="utf-8")
+
+                result = BlackRunner().invoke(black.main, [str(workspace)])
+
+            assert result.exit_code == 2
+            assert result.exception is not None
+            assert "BLACK_NUM_WORKERS" in result.stderr
+            assert "Traceback" not in result.stderr
+
+    @event_loop()
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
