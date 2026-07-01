@@ -362,6 +362,7 @@ def _convert_node_to_standalone_comment(node: LN) -> None:
                 value,
                 prefix=prefix,
                 fmt_pass_converted_first_leaf=first,
+                line_ranges_converted=True,
             ),
         )
 
@@ -392,6 +393,7 @@ def _convert_nodes_to_standalone_comment(nodes: Sequence[LN], *, newline: Leaf) 
                 value,
                 prefix=prefix,
                 fmt_pass_converted_first_leaf=first,
+                line_ranges_converted=True,
             ),
         )
 
