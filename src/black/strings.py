@@ -6,10 +6,14 @@ import re
 import sys
 from functools import lru_cache
 from re import Match, Pattern
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from black._width_table import WIDTH_TABLE
 from blib2to3.pytree import Leaf
+
+if TYPE_CHECKING:
+    from black.mode import Mode
+
 
 STRING_PREFIX_CHARS: Final = "fturbFTURB"  # All possible string prefix characters.
 STRING_PREFIX_RE: Final = re.compile(
@@ -142,7 +146,7 @@ def assert_is_leaf_string(string: str) -> None:
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
 
 
-def normalize_string_prefix(s: str) -> str:
+def normalize_string_prefix(s: str, mode: "Mode | None" = None) -> str:
     """Make all string prefixes lowercase."""
     match = STRING_PREFIX_RE.match(s)
     assert match is not None, f"failed to match string {s!r}"
@@ -153,11 +157,19 @@ def normalize_string_prefix(s: str) -> str:
         .replace("U", "")
         .replace("u", "")
     )
+    if mode is None or _is_preview_tstring_normalization(mode):
+        new_prefix = new_prefix.replace("T", "t")
 
     # Python syntax guarantees max 2 prefixes and that one of them is "r"
     if len(new_prefix) == 2 and new_prefix[0].lower() != "r":
         new_prefix = new_prefix[::-1]
     return f"{new_prefix}{match.group(2)}"
+
+
+def _is_preview_tstring_normalization(mode: "Mode") -> bool:
+    from black.mode import Preview
+
+    return Preview.normalize_tstring_prefix in mode
 
 
 # Re(gex) does actually cache patterns internally but this still improves

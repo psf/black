@@ -34,6 +34,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Normalize the uppercase `T` prefix of t-strings to lowercase in preview style (e.g.
+  `T"..."` is now normalized to `t"..."`) (#5185)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
   `x[key] = expr` (#5095)
 - Parenthesize tuple expressions in `yield` statements for consistency with function
