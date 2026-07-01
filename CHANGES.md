@@ -110,6 +110,11 @@
   `--preview` string processing of `"%s ..." % (a, b, c, ...)` or a string with a
   backslash continuation) by resuming the child lookup in `append_leaves` instead of
   rescanning each leaf's parent from the start (#5199)
+- Improve performance of `--line-ranges` on files with many sibling blocks (a long
+  `if`/`elif` chain, a `match` with many cases, or many top-level definitions) by
+  splicing the unchanged blocks into each parent's child list in a single pass rather
+  than removing and re-inserting each one, which rescanned and shifted the whole child
+  list on every conversion (#5213)
 
 ### Output
 
