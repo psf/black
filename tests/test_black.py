@@ -215,7 +215,9 @@ class BlackTestCase(BlackBaseTestCase):
 
             self.assertTrue(ff(symlink, write_back=black.WriteBack.YES))
             self.assertTrue(symlink.is_symlink())
-            self.assertEqual(os.readlink(symlink), str(real_file))
+            # Compare resolved paths rather than the raw readlink() target, since
+            # Windows may normalize it to an extended-length \\?\ path.
+            self.assertEqual(symlink.resolve(), real_file.resolve())
             self.assertEqual(real_file.read_text(encoding="utf-8"), 'print("hello")\n')
 
     def test_piping(self) -> None:
