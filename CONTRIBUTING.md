@@ -7,7 +7,7 @@ specific, the [user documentation](https://black.readthedocs.io/en/latest/) is t
 place to look.
 
 For getting started on contributing, please read the
-[contributing documentation](https://black.readthedocs.org/en/latest/contributing/) for
+[contributing documentation](https://black.readthedocs.io/en/latest/contributing/) for
 all you need to know.
 
 Thank you, and we look forward to your contributions!
