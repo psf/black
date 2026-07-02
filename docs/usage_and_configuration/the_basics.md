@@ -498,7 +498,7 @@ and only if _Black_ doesn't find any configuration as mentioned above. Depending
 operating system, this configuration file should be stored as:
 
 - Windows: `~\.black`
-- Unix-like (Linux, MacOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
+- Unix-like (Linux, macOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
   `XDG_CONFIG_HOME` environment variable is not set)
 
 Note that these are paths to the TOML file itself (meaning that they shouldn't be named
@@ -597,7 +597,7 @@ file hierarchy.
 ## Next steps
 
 A good next step would be configuring auto-discovery so `black .` is all you need
-instead of laborously listing every file or directory. You can get started by heading
+instead of laboriously listing every file or directory. You can get started by heading
 over to [File collection and discovery](./file_collection_and_discovery.md).
 
 Another good choice would be setting up an
