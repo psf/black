@@ -34,6 +34,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split method chains consistently when a standalone comment appears between chained
+  calls (#5218)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
   `x[key] = expr` (#5095)
 - Parenthesize tuple expressions in `yield` statements for consistency with function
