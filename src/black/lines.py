@@ -13,6 +13,7 @@ from black.nodes import (
     STANDALONE_COMMENT,
     TEST_DESCENDANTS,
     child_towards,
+    first_leaf,
     is_docstring,
     is_import,
     is_multiline_string,
@@ -20,6 +21,7 @@ from black.nodes import (
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
+    last_leaf,
     make_simple_prefix,
     replace_child,
     syms,
@@ -1281,9 +1283,32 @@ def append_leaves(
     Pre-conditions:
         set(@leaves) is a subset of set(@old_line.leaves).
     """
+    # @leaves is a slice of @old_line.leaves, so the leaves are in tree (DFS)
+    # order and the children replaced within any one parent are reached at
+    # strictly increasing positions. Remembering where the last child of each
+    # parent was found lets the lookup resume from there instead of rescanning the
+    # whole child list through Base.remove on every leaf, which is otherwise
+    # O(n^2) when a node has many children replaced (e.g. wrapping the operand
+    # tuple of "%s" % (a, b, c, ...) or copying a very long line for a second
+    # formatting pass).
+    search_start: dict[int, int] = {}
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
-        replace_child(old_leaf, new_leaf)
+        parent = old_leaf.parent
+        if parent is not None:
+            children = parent.children
+            index = search_start.get(id(parent), 0)
+            while index < len(children) and children[index] is not old_leaf:
+                index += 1
+            if index < len(children):
+                # set_child swaps the child in place (the old one keeps the same
+                # position), so the next sibling to replace is always further on.
+                parent.set_child(index, new_leaf)
+                search_start[id(parent)] = index + 1
+            else:
+                # The resume hint missed (unexpected ordering); fall back to the
+                # full scan so behaviour is unchanged.
+                replace_child(old_leaf, new_leaf)
         new_line.append(new_leaf, preformatted=preformatted)
 
         for comment_leaf in old_line.comments_after(old_leaf):
@@ -1319,6 +1344,10 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     multiline_string: Leaf | None = None
     # store the leaves that contain parts of the MLS
     multiline_string_contexts: list[LN] = []
+
+    # `id()`s of the leaves on this line, used to find which ancestors of the
+    # multiline string are rendered in full on this line (see below).
+    line_leaf_ids = {id(leaf) for leaf in line.leaves}
 
     max_level_to_update: int | float = math.inf  # track the depth of the MLS
     for i, leaf in enumerate(line.leaves):
@@ -1363,8 +1392,18 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
                 return False
             multiline_string = leaf
             ctx: LN = leaf
-            # fetch the leaf components of the MLS in the AST
-            while str(ctx) in line_str:
+            # fetch the leaf components of the MLS in the AST. An ancestor is
+            # part of the MLS context while it is rendered in full on this line,
+            # i.e. its first and last leaves both belong to the line (a line is
+            # a contiguous run of leaves). Walking the leaf ids instead of
+            # re-rendering `str(ctx)` and substring-searching `line_str` at every
+            # level keeps this linear; the old form was quadratic on lines with a
+            # large multiline-string-bearing collection (e.g. a dict literal with
+            # many triple-quoted values).
+            while (
+                id(first_leaf(ctx)) in line_leaf_ids
+                and id(last_leaf(ctx)) in line_leaf_ids
+            ):
                 multiline_string_contexts.append(ctx)
                 if ctx.parent is None:
                     break
