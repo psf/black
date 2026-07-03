@@ -2293,6 +2293,13 @@ class TestCaching:
             cache = black.Cache.read(mode)
             assert not cache.is_changed(src)
 
+    def test_cache_empty_file(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir():
+            cache_file = get_cache_file(mode)
+            cache_file.touch()
+            assert black.Cache.read(mode).file_data == {}
+
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:

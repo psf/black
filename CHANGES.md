@@ -58,6 +58,8 @@
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
   directory gets the correct `pyproject.toml` (#5152)
 - Add validation for --line-ranges values (#5107)
+- Ignore empty cache files like other malformed cache files instead of raising an
+  `EOFError` (#5192)
 - Reject non-string `include` and `force-exclude` values in `pyproject.toml` (#5193)
 
 ### Packaging
