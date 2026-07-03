@@ -17,16 +17,17 @@ Compatible configuration files can be
 
 ### isort
 
-[isort](https://pypi.org/p/isort/) helps to sort and format imports in your Python code.
-_Black_ also formats imports, but in a different way from isort's defaults which leads
-to conflicting changes.
+[isort](https://isort.readthedocs.io/) helps to sort and format imports in your Python
+code. _Black_ also formats imports, but in a different way from isort's defaults which
+leads to conflicting changes.
 
 #### Profile
 
 Since version 5.0.0, isort supports
-[profiles](https://pycqa.github.io/isort/docs/configuration/profiles.html) to allow easy
-interoperability with common code styles. You can set the black profile in any of the
-[config files](https://pycqa.github.io/isort/docs/configuration/config_files.html)
+[profiles](https://isort.readthedocs.io/en/latest/configuration/profiles.html) to allow
+easy interoperability with common code styles. You can set the black profile in any of
+the
+[config files](https://isort.readthedocs.io/en/latest/configuration/config_files.html)
 supported by isort. Below, an example for `pyproject.toml`:
 
 ```toml
@@ -136,10 +137,10 @@ profile = black
 
 ### pycodestyle
 
-[pycodestyle](https://pycodestyle.pycqa.org/) is a code linter. It warns you of syntax
-errors, possible bugs, stylistic errors, etc. For the most part, pycodestyle follows
-[PEP 8](https://peps.python.org/pep-0008/) when warning about stylistic errors. There
-are a few deviations that cause incompatibilities with _Black_.
+[pycodestyle](https://pycodestyle.pycqa.org/en/stable/) is a code linter. It warns you
+of syntax errors, possible bugs, stylistic errors, etc. For the most part, pycodestyle
+follows [PEP 8](https://peps.python.org/pep-0008/) when warning about stylistic errors.
+There are a few deviations that cause incompatibilities with _Black_.
 
 #### Configuration
 
@@ -201,8 +202,8 @@ ignore = E203,E701
 
 ### Flake8
 
-[Flake8](https://pypi.org/p/flake8/) is a wrapper around multiple linters, including
-pycodestyle. As such, it has many of the same issues.
+[Flake8](https://flake8.pycqa.org/en/stable/) is a wrapper around multiple linters,
+including pycodestyle. As such, it has many of the same issues.
 
 #### Bugbear
 
@@ -251,9 +252,9 @@ extend-ignore = E203,E701
 
 ### Pylint
 
-[Pylint](https://pypi.org/p/pylint/) is also a code linter like Flake8. It has many of
-the same checks as Flake8 and more. It particularly has more formatting checks regarding
-style conventions like variable naming.
+[Pylint](https://pylint.readthedocs.io/) is also a code linter like Flake8. It has many
+of the same checks as Flake8 and more. It particularly has more formatting checks
+regarding style conventions like variable naming.
 
 #### Configuration
 

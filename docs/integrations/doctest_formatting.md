@@ -14,7 +14,7 @@ documentation files.
 
 ## blacken-docs
 
-[`blacken-docs`](https://pypi.org/project/blacken-docs/) is primarily used to apply
+[`blacken-docs`](https://github.com/adamchainz/blacken-docs) is primarily used to apply
 _Black_ formatting to code in documentation files (e.g. `.rst`, `.md`, `.tex`).
 
 `blacken-docs` supports the following:
@@ -68,9 +68,9 @@ _Black_ formatting to code in documentation files (e.g. `.rst`, `.md`, `.tex`).
 
 ## blackdoc
 
-[`blackdoc`](https://pypi.org/project/blackdoc/) is primarily used to apply _Black_
-formatting to doctests in Python files. It will not format any file contents that are
-otherwise covered by _Black_.
+[`blackdoc`](https://blackdoc.readthedocs.io/en/stable) is primarily used to apply
+_Black_ formatting to doctests in Python files. It will not format any file contents
+that are otherwise covered by _Black_.
 
 `blackdoc` supports the following:
 
