@@ -61,6 +61,8 @@
 - Ignore empty cache files like other malformed cache files instead of raising an
   `EOFError` (#5192)
 - Reject non-string `include` and `force-exclude` values in `pyproject.toml` (#5193)
+- Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors
+  instead of crashing (#5211)
 
 ### Packaging
 
