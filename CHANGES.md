@@ -120,6 +120,10 @@
   splicing the unchanged blocks into each parent's child list in a single pass rather
   than removing and re-inserting each one, which rescanned and shifted the whole child
   list on every conversion (#5213)
+- Improve performance of `--preview` string merging on lines such as
+  `"%s ..." % (a, b, c, ...)` by copying the leaves that surround the merged string in
+  one `append_leaves` call instead of one call per leaf, which rescanned the shared
+  parent's child list from the start every time (#5220)
 
 ### Output
 
