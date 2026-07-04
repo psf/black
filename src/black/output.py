@@ -89,8 +89,7 @@ def diff(a: str, b: str, a_name: str, b_name: str) -> str:
         if line[-1] == "\n":
             diff_lines.append(line)
         else:
-            diff_lines.append(line + "\n")
-            diff_lines.append("\\ No newline at end of file\n")
+            diff_lines.extend((line + "\n", "\\ No newline at end of file\n"))
     return "".join(diff_lines)
 
 
@@ -113,9 +112,7 @@ def color_diff(contents: str) -> str:
 
 
 def style_output(message: str, **styles: Any) -> str:
-    if not _color_enabled():
-        return message
-    return style(message, **styles)
+    return style(message, **styles) if _color_enabled() else message
 
 
 def _color_enabled() -> bool:

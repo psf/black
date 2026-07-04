@@ -37,8 +37,7 @@ class ParserGenerator:
 
     def make_grammar(self) -> PgenGrammar:
         c = PgenGrammar()
-        names = list(self.dfas.keys())
-        names.sort()
+        names = sorted(self.dfas.keys())
         names.remove(self.startsymbol)
         names.insert(0, self.startsymbol)
         for name in names:
@@ -49,9 +48,10 @@ class ParserGenerator:
             dfa = self.dfas[name]
             states = []
             for state in dfa:
-                arcs = []
-                for label, next in sorted(state.arcs.items()):
-                    arcs.append((self.make_label(c, label), dfa.index(next)))
+                arcs: list[tuple[int, int]] = [
+                    (self.make_label(c, label), dfa.index(next_))
+                    for label, next_ in sorted(state.arcs.items())
+                ]
                 if state.isfinal:
                     arcs.append((0, dfa.index(state)))
                 states.append(arcs)
@@ -122,8 +122,7 @@ class ParserGenerator:
                     return ilabel
 
     def addfirstsets(self) -> None:
-        names = list(self.dfas.keys())
-        names.sort()
+        names = sorted(self.dfas.keys())
         for name in names:
             if name not in self.first:
                 self.calcfirst(name)
@@ -145,7 +144,7 @@ class ParserGenerator:
                     self.calcfirst(label)
                     fset = self.first[label]
                     assert fset is not None
-                totalset.update(fset)
+                totalset |= fset
                 overlapcheck[label] = fset
             else:
                 totalset[label] = 1
@@ -375,10 +374,7 @@ class DFAState:
         # would invoke this method recursively, with cycles...
         if len(self.arcs) != len(other.arcs):
             return False
-        for label, next in self.arcs.items():
-            if next is not other.arcs.get(label):
-                return False
-        return True
+        return all(next_ is other.arcs.get(label) for label, next_ in self.arcs.items())
 
     __hash__: Any = None  # For Py3 compatibility.
 

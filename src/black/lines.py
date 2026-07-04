@@ -199,9 +199,7 @@ class Line:
         value = self.leaves[0].value
         if value.startswith(('"""', "'''")):
             return True
-        if value.startswith(("r'''", 'r"""', "R'''", 'R"""')):
-            return True
-        return False
+        return value.startswith(("r'''", 'r"""', "R'''", 'R"""'))
 
     @property
     def is_docstring(self) -> bool:
@@ -483,15 +481,14 @@ class Line:
             return "\n"
 
         indent = "    " * self.depth
-        leaves = iter(self.leaves)
-        first = next(leaves)
-        res = f"{first.prefix}{indent}{first.value}"
-        res += "".join(str(leaf) for leaf in leaves)
-        comments_iter = itertools.chain.from_iterable(self.comments.values())
-        comments = [str(comment) for comment in comments_iter]
-        res += "".join(comments)
+        first, *rest = self.leaves
 
-        return res + "\n"
+        rest_str = "".join(map(str, rest))
+        comments_str = "".join(
+            str(comment) for group in self.comments.values() for comment in group
+        )
+
+        return f"{first.prefix}{indent}{first.value}{rest_str}{comments_str}\n"
 
     def __bool__(self) -> bool:
         """Return True if the line has leaves or comments."""
@@ -1610,7 +1607,6 @@ def can_omit_invisible_parens(
         # a leading opening bracket and a trailing closing bracket.  If the
         # opening bracket doesn't match our rule, maybe the closing will.
 
-    penultimate = line.leaves[-2]
     last = line.leaves[-1]
 
     if (
@@ -1624,6 +1620,7 @@ def can_omit_invisible_parens(
             and last.parent.type != syms.trailer
         )
     ):
+        penultimate = line.leaves[-2]
         if penultimate.type in OPENING_BRACKETS:
             # Empty brackets don't help.
             return False

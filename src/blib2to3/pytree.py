@@ -613,14 +613,12 @@ class BasePattern(ABC):
         if self.type is not None and node.type != self.type:
             return False
         if self.content is not None:
-            r: _Results | None = None
-            if results is not None:
-                r = {}
+            r: _Results | None = {} if results is not None else None
             if not self._submatch(node, r):
                 return False
             if r:
                 assert results is not None
-                results.update(r)
+                results |= r
         if results is not None and self.name:
             results[self.name] = node
         return True
@@ -751,7 +749,7 @@ class NodePattern(BasePattern):
             for c, r in generate_matches(self.content, node.children):
                 if c == len(node.children):
                     if results is not None:
-                        results.update(r)
+                        results |= r
                     return True
             return False
         if len(self.content) != len(node.children):
@@ -858,7 +856,7 @@ class WildcardPattern(BasePattern):
         for c, r in self.generate_matches(nodes):
             if c == len(nodes):
                 if results is not None:
-                    results.update(r)
+                    results |= r
                     if self.name:
                         results[self.name] = list(nodes)
                 return True
@@ -931,9 +929,7 @@ class WildcardPattern(BasePattern):
                     for alt in self.content:
                         for c1, r1 in generate_matches(alt, nodes[c0:]):
                             if c1 > 0:
-                                r = {}
-                                r.update(r0)
-                                r.update(r1)
+                                r = r0 | r1
                                 yield c0 + c1, r
                                 new_results.append((c0 + c1, r))
             results = new_results
@@ -964,9 +960,7 @@ class WildcardPattern(BasePattern):
             for alt in self.content:
                 for c0, r0 in generate_matches(alt, nodes):
                     for c1, r1 in self._recursive_matches(nodes[c0:], count + 1):
-                        r = {}
-                        r.update(r0)
-                        r.update(r1)
+                        r = r0 | r1
                         yield c0 + c1, r
 
 
@@ -1030,7 +1024,5 @@ def generate_matches(
                 yield c0, r0
             else:
                 for c1, r1 in generate_matches(rest, nodes[c0:]):
-                    r = {}
-                    r.update(r0)
-                    r.update(r1)
+                    r = r0 | r1
                     yield c0 + c1, r

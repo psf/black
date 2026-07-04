@@ -460,9 +460,7 @@ class MagicFinder(ast.NodeVisitor):
             if node.value.func.attr == "getoutput":
                 src = f"!{args[0]}"
             elif node.value.func.attr == "run_line_magic":
-                src = f"%{args[0]}"
-                if args[1]:
-                    src += f" {args[1]}"
+                src = "%" + " ".join(filter(None, args))
             else:
                 raise AssertionError(
                     f"Unexpected IPython magic {node.value.func.attr!r} found. "
@@ -500,9 +498,7 @@ class MagicFinder(ast.NodeVisitor):
                 elif args[0] == "pinfo2":
                     src = f"??{args[1]}"
                 else:
-                    src = f"%{args[0]}"
-                    if args[1]:
-                        src += f" {args[1]}"
+                    src = "%" + " ".join(filter(None, args))
             elif node.value.func.attr == "system":
                 src = f"!{args[0]}"
             elif node.value.func.attr == "getoutput":
