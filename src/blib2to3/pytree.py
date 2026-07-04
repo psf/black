@@ -12,6 +12,7 @@ There's also a pattern matching implementation here.
 
 # mypy: allow-untyped-defs, allow-incomplete-defs
 
+from abc import ABC, abstractmethod
 from collections.abc import Iterable, Iterator
 from typing import Any, Optional, TypeVar, Union
 
@@ -39,7 +40,7 @@ def type_repr(type_num: int) -> str | int:
         # from .pgen2 import token // token.__dict__.items():
         for name in dir(pygram.python_symbols):
             val = getattr(pygram.python_symbols, name)
-            if type(val) == int:
+            if type(val) is int:
                 _type_reprs[val] = name
     return _type_reprs.setdefault(type_num, type_num)
 
@@ -51,7 +52,7 @@ Context = tuple[str, tuple[int, int]]
 RawNode = tuple[int, Optional[str], Optional[Context], Optional[list[NL]]]
 
 
-class Base:
+class Base(ABC):
     """
     Abstract base class for Node and Leaf.
 
@@ -61,16 +62,13 @@ class Base:
     A node may be a subnode of at most one parent.
     """
 
-    # Default values for instance variables
-    type: int  # int: token number (< 256) or symbol number (>= 256)
-    parent: Optional["Node"] = None  # Parent node pointer, or None
-    children: list[NL]  # List of subnodes
-    was_changed: bool = False
+    __slots__ = ("type", "parent", "children", "was_changed")
 
-    def __new__(cls, *args, **kwds):
-        """Constructor that prevents Base from being instantiated."""
-        assert cls is not Base, "Cannot instantiate Base"
-        return object.__new__(cls)
+    def __init__(self, type_id: int, children: Optional[list[NL]] = None):
+        self.type = type_id
+        self.children = children or []
+        self.parent: Optional["Node"] = None
+        self.was_changed: bool = False
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -83,9 +81,10 @@ class Base:
         return self._eq(other)
 
     @property
-    def prefix(self) -> str:
-        raise NotImplementedError
+    @abstractmethod
+    def prefix(self) -> str: ...
 
+    @abstractmethod
     def _eq(self: _P, other: _P) -> bool:
         """
         Compare two nodes for equality.
@@ -95,34 +94,33 @@ class Base:
         Nodes should be considered equal if they have the same structure,
         ignoring the prefix string and other context information.
         """
-        raise NotImplementedError
 
     def __deepcopy__(self: _P, memo: Any) -> _P:
         return self.clone()
 
+    @abstractmethod
     def clone(self: _P) -> _P:
         """
         Return a cloned (deep) copy of self.
 
         This must be implemented by the concrete subclass.
         """
-        raise NotImplementedError
 
+    @abstractmethod
     def post_order(self) -> Iterator[NL]:
         """
         Return a post-order iterator for the tree.
 
         This must be implemented by the concrete subclass.
         """
-        raise NotImplementedError
 
+    @abstractmethod
     def pre_order(self) -> Iterator[NL]:
         """
         Return a pre-order iterator for the tree.
 
         This must be implemented by the concrete subclass.
         """
-        raise NotImplementedError
 
     def replace(self, new: NL | list[NL]) -> None:
         """Replace this node with a new one in the parent."""
@@ -230,8 +228,7 @@ class Base:
 class Node(Base):
     """Concrete implementation for interior nodes."""
 
-    fixers_applied: list[Any] | None
-    used_names: set[str] | None
+    __slots__ = ("prev_sibling_map", "next_sibling_map")
 
     def __init__(
         self,
@@ -250,18 +247,14 @@ class Node(Base):
         As a side effect, the parent pointers of the children are updated.
         """
         assert type >= 256, type
-        self.type = type
-        self.children = list(children)
+
+        super().__init__(type, children)
         for ch in self.children:
             assert ch.parent is None, repr(ch)
             ch.parent = self
         self.invalidate_sibling_maps()
         if prefix is not None:
             self.prefix = prefix
-        if fixers_applied:
-            self.fixers_applied = fixers_applied[:]
-        else:
-            self.fixers_applied = None
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
@@ -286,7 +279,6 @@ class Node(Base):
         return Node(
             self.type,
             [ch.clone() for ch in self.children],
-            fixers_applied=self.fixers_applied,
         )
 
     def post_order(self) -> Iterator[NL]:
@@ -426,35 +418,31 @@ class Node(Base):
             prev_map[id(after)] = previous
 
     def update_sibling_maps(self) -> None:
-        _prev: dict[int, NL | None] = {}
-        _next: dict[int, NL | None] = {}
-        self.prev_sibling_map = _prev
-        self.next_sibling_map = _next
+        self.prev_sibling_map = {id(x): None for x in self.children}
+        self.next_sibling_map = self.prev_sibling_map.copy()
         previous: NL | None = None
+
         for current in self.children:
-            _prev[id(current)] = previous
-            _next[id(previous)] = current
+            self.prev_sibling_map[id(current)] = previous
+            self.next_sibling_map[id(previous)] = current
             previous = current
-        _next[id(current)] = None
+
+        if previous is not None:  # if self.children is empty!
+            self.next_sibling_map[id(previous)] = None
 
 
 class Leaf(Base):
     """Concrete implementation for leaf nodes."""
 
-    # Default values for instance variables
-    value: str
-    fixers_applied: list[Any]
-    bracket_depth: int
-    # Changed later in brackets.py
-    opening_bracket: Optional["Leaf"] = None
-    used_names: set[str] | None
-    _prefix = ""  # Whitespace and comments preceding this token in the input
-    lineno: int = 0  # Line where this token starts in the input
-    column: int = 0  # Column where this token starts in the input
-    # If not None, this Leaf is created by converting a block of fmt off/skip
-    # code, and `fmt_pass_converted_first_leaf` points to the first Leaf in the
-    # converted code.
-    fmt_pass_converted_first_leaf: Optional["Leaf"] = None
+    __slots__ = (
+        "_prefix",
+        "bracket_depth",
+        "column",
+        "fmt_pass_converted_first_leaf",
+        "lineno",
+        "opening_bracket",
+        "value",
+    )
 
     def __init__(
         self,
@@ -472,18 +460,24 @@ class Leaf(Base):
         Takes a type constant (a token number < 256), a string value, and an
         optional context keyword argument.
         """
-
         assert 0 <= type < 256, type
+        super().__init__(type)
+
+        self.value = value
+        self.opening_bracket = opening_bracket
+        self.bracket_depth: int = 0
+
+        # If not None, this Leaf is created by converting a block of fmt off/skip
+        # code, and `fmt_pass_converted_first_leaf` points to the first Leaf in the
+        # converted code.
+        self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
+
+        self._prefix = ""  # Whitespace and comments preceding this token in the input
+        self.lineno = 0  # Line where this token starts in the input
+        self.column = 0  # Column where this token starts in the input
         if context is not None:
             self._prefix, (self.lineno, self.column) = context
-        self.type = type
-        self.value = value
-        if prefix is not None:
-            self._prefix = prefix
-        self.fixers_applied: list[Any] | None = fixers_applied[:]
-        self.children = []
-        self.opening_bracket = opening_bracket
-        self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
+        self._prefix = prefix or self._prefix
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
@@ -514,7 +508,6 @@ class Leaf(Base):
             self.type,
             self.value,
             (self.prefix, (self.lineno, self.column)),
-            fixers_applied=self.fixers_applied,
         )
 
     def leaves(self) -> Iterator["Leaf"]:
@@ -564,7 +557,7 @@ def convert(gr: Grammar, raw_node: RawNode) -> NL:
 _Results = dict[str, NL]
 
 
-class BasePattern:
+class BasePattern(ABC):
     """
     A pattern is a tree matching pattern.
 
@@ -579,16 +572,14 @@ class BasePattern:
     - WildcardPattern matches a sequence of nodes of variable length.
     """
 
-    # Defaults for instance variables
-    type: int | None
-    type = None  # Node type (token if < 256, symbol if >= 256)
-    content: Any = None  # Optional content matching pattern
-    name: str | None = None  # Optional name used to store match in results dict
+    __slots__ = ("type", "content", "name")
 
-    def __new__(cls, *args, **kwds):
-        """Constructor that prevents BasePattern from being instantiated."""
-        assert cls is not BasePattern, "Cannot instantiate BasePattern"
-        return object.__new__(cls)
+    def __init__(
+        self, type_id: int | None = None, content: Any = None, name: str | None = None
+    ):
+        self.type = type_id  # Node type (token if < 256, symbol if >= 256)
+        self.content = content  # Optional content matching pattern
+        self.name = name  # Optional name used to store match in results dict
 
     def __repr__(self) -> str:
         assert self.type is not None
@@ -656,6 +647,8 @@ class BasePattern:
 
 
 class LeafPattern(BasePattern):
+    __slots__ = ()
+
     def __init__(
         self,
         type: int | None = None,
@@ -677,9 +670,7 @@ class LeafPattern(BasePattern):
             assert 0 <= type < 256, type
         if content is not None:
             assert isinstance(content, str), repr(content)
-        self.type = type
-        self.content = content
-        self.name = name
+        super().__init__(type, content=content, name=name)
 
     def match(self, node: NL, results=None) -> bool:
         """Override match() to insist on a leaf node."""
@@ -704,7 +695,7 @@ class LeafPattern(BasePattern):
 
 
 class NodePattern(BasePattern):
-    wildcards: bool = False
+    __slots__ = ("wildcards",)
 
     def __init__(
         self,
@@ -727,21 +718,21 @@ class NodePattern(BasePattern):
         If a name is given, the matching node is stored in the results
         dict under that key.
         """
+        self.wildcards: bool = False
         if type is not None:
             assert type >= 256, type
+        newcontent = None
         if content is not None:
             assert not isinstance(content, str), repr(content)
             newcontent = list(content)
             for i, item in enumerate(newcontent):
-                assert isinstance(item, BasePattern), (i, item)
+                assert isinstance(item, BasePattern), (i, item)  # type: ignore[unreachable]
                 # I don't even think this code is used anywhere, but it does cause
                 # unreachable errors from mypy. This function's signature does look
                 # odd though *shrug*.
                 if isinstance(item, WildcardPattern):  # type: ignore[unreachable]
-                    self.wildcards = True  # type: ignore[unreachable]
-        self.type = type
-        self.content = newcontent  # TODO: this is unbound when content is None
-        self.name = name
+                    self.wildcards = True
+        super().__init__(type, content=newcontent, name=name)
 
     def _submatch(self, node, results=None) -> bool:
         """
@@ -784,8 +775,7 @@ class WildcardPattern(BasePattern):
     except it always uses non-greedy matching.
     """
 
-    min: int
-    max: int
+    __slots__ = ("min", "max")
 
     def __init__(
         self,
@@ -817,19 +807,19 @@ class WildcardPattern(BasePattern):
             list of alternatives, e.g. (a b c | d e | f g h)*
         """
         assert 0 <= min <= max <= HUGE, (min, max)
+        wrapped_content = None
         if content is not None:
-            f = lambda s: tuple(s)
-            wrapped_content = tuple(map(f, content))  # Protect against alterations
+            wrapped_content = tuple(map(tuple, content))  # Protect against alterations
             # Check sanity of alternatives
             assert len(wrapped_content), repr(
                 wrapped_content
             )  # Can't have zero alternatives
             for alt in wrapped_content:
                 assert len(alt), repr(alt)  # Can have empty alternatives
-        self.content = wrapped_content
+
         self.min = min
         self.max = max
-        self.name = name
+        super().__init__(content=wrapped_content, name=name)
 
     def optimize(self) -> Any:
         """Optimize certain stacked wildcard patterns."""
@@ -981,6 +971,8 @@ class WildcardPattern(BasePattern):
 
 
 class NegatedPattern(BasePattern):
+    __slots__ = ()
+
     def __init__(self, content: BasePattern | None = None) -> None:
         """
         Initializer.
@@ -992,7 +984,7 @@ class NegatedPattern(BasePattern):
         """
         if content is not None:
             assert isinstance(content, BasePattern), repr(content)
-        self.content = content
+        super().__init__(content=content)
 
     def match(self, node, results=None) -> bool:
         # We never match a node in its entirety

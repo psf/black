@@ -422,6 +422,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         StringMerger provides custom split information to StringSplitter.
     """
 
+    __slots__ = ()
+
     def do_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 

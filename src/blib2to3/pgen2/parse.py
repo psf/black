@@ -157,6 +157,17 @@ class Parser:
 
     """
 
+    __slots__ = (
+        "convert",
+        "grammar",
+        "is_backtracking",
+        "last_token",
+        "proxy",
+        "rootnode",
+        "stack",
+        "used_names",
+    )
+
     def __init__(self, grammar: Grammar, convert: Convert | None = None) -> None:
         """Constructor.
 
@@ -392,4 +403,3 @@ class Parser:
                 node[-1].append(newnode)
             else:
                 self.rootnode = newnode
-                self.rootnode.used_names = self.used_names

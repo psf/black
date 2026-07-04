@@ -2,7 +2,7 @@ import re
 from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Final, Union
+from typing import Final
 
 from black.mode import Mode
 from black.nodes import (
@@ -22,7 +22,7 @@ from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
 # types
-LN = Union[Leaf, Node]
+LN = Leaf | Node
 
 FMT_OFF: Final = {"# fmt: off", "# fmt:off", "# yapf: disable"}
 FMT_SKIP: Final = {"# fmt: skip", "# fmt:skip"}
@@ -37,7 +37,7 @@ _COMMENT_PREFIX = "# "
 _COMMENT_LIST_SEPARATOR = ";"
 
 
-@dataclass
+@dataclass(slots=True, eq=False, repr=False)
 class ProtoComment:
     """Describes a piece of syntax that is a comment.
 
