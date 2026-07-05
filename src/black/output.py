@@ -112,7 +112,9 @@ def color_diff(contents: str) -> str:
 
 
 def style_output(message: str, **styles: Any) -> str:
-    return style(message, **styles) if _color_enabled() else message
+    if not _color_enabled():
+        return message
+    return style(message, **styles)
 
 
 def _color_enabled() -> bool:

@@ -156,7 +156,7 @@ class BracketTracker:
             return 0
 
         priority = priority or self.max_delimiter_priority()
-        return sum(p == priority for p in self.delimiters.values())
+        return sum(1 for p in self.delimiters.values() if p == priority)
 
     def maybe_increment_for_loop_variable(self, leaf: Leaf) -> bool:
         """In a for loop, or comprehension, the variables are often unpacks.

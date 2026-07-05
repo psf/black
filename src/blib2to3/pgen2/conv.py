@@ -168,7 +168,7 @@ class Converter(grammar.Grammar):
         mo = re.match(r"static dfa dfas\[(\d+)\] = {$", line)
         assert mo, (lineno, line)
         ndfas = int(mo.group(1))
-        for _ in range(ndfas):
+        for i in range(ndfas):
             lineno, line = lineno + 1, next(f)
             mo = re.match(r'\s+{(\d+), "(\w+)", (\d+), (\d+), states_(\d+),$', line)
             assert mo, (lineno, line)

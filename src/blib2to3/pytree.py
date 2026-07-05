@@ -65,9 +65,9 @@ class Base(ABC):
     __slots__ = ("type", "parent", "children", "was_changed")
 
     def __init__(self, type_id: int, children: Optional[list[NL]] = None):
-        self.type = type_id
-        self.children = children or []
-        self.parent: Optional["Node"] = None
+        self.type = type_id  # int: token number (< 256) or symbol number (>= 256)
+        self.children = children or []  # List of subnodes
+        self.parent: Optional["Node"] = None  # Parent node pointer, or None
         self.was_changed: bool = False
 
     def __eq__(self, other: Any) -> bool:
@@ -618,7 +618,7 @@ class BasePattern(ABC):
                 return False
             if r:
                 assert results is not None
-                results |= r
+                results.update(r)
         if results is not None and self.name:
             results[self.name] = node
         return True
@@ -749,7 +749,7 @@ class NodePattern(BasePattern):
             for c, r in generate_matches(self.content, node.children):
                 if c == len(node.children):
                     if results is not None:
-                        results |= r
+                        results.update(r)
                     return True
             return False
         if len(self.content) != len(node.children):
@@ -856,7 +856,7 @@ class WildcardPattern(BasePattern):
         for c, r in self.generate_matches(nodes):
             if c == len(nodes):
                 if results is not None:
-                    results |= r
+                    results.update(r)
                     if self.name:
                         results[self.name] = list(nodes)
                 return True

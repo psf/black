@@ -2,13 +2,13 @@
 # Licensed to PSF under a Contributor Agreement.
 
 import os
-from collections.abc import Iterator
-from typing import IO, Any, NoReturn
+from collections.abc import Iterator, Sequence
+from typing import IO, Any, NoReturn, Union
 
 from blib2to3.pgen2 import grammar, token, tokenize
 from blib2to3.pgen2.tokenize import TokenInfo
 
-Path = str | os.PathLike[str]
+Path = Union[str, "os.PathLike[str]"]
 
 
 class PgenGrammar(grammar.Grammar):
@@ -144,7 +144,7 @@ class ParserGenerator:
                     self.calcfirst(label)
                     fset = self.first[label]
                     assert fset is not None
-                totalset |= fset
+                totalset.update(fset)
                 overlapcheck[label] = fset
             else:
                 totalset[label] = 1
@@ -374,7 +374,10 @@ class DFAState:
         # would invoke this method recursively, with cycles...
         if len(self.arcs) != len(other.arcs):
             return False
-        return all(next_ is other.arcs.get(label) for label, next_ in self.arcs.items())
+        for label, next in self.arcs.items():
+            if next is not other.arcs.get(label):
+                return False
+        return True
 
     __hash__: Any = None  # For Py3 compatibility.
 

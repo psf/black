@@ -197,9 +197,7 @@ class Line:
         if not self or self.leaves[0].type != token.STRING:
             return False
         value = self.leaves[0].value
-        if value.startswith(('"""', "'''")):
-            return True
-        return value.startswith(("r'''", 'r"""', "R'''", 'R"""'))
+        return value.startswith(('"""', "'''", "r'''", 'r"""', "R'''", 'R"""'))
 
     @property
     def is_docstring(self) -> bool:
@@ -481,9 +479,9 @@ class Line:
             return "\n"
 
         indent = "    " * self.depth
-        first, *rest = self.leaves
+        first = self.leaves[0]
 
-        rest_str = "".join(map(str, rest))
+        rest_str = "".join(map(str, self.leaves[1:]))
         comments_str = "".join(
             str(comment) for group in self.comments.values() for comment in group
         )
@@ -1607,6 +1605,7 @@ def can_omit_invisible_parens(
         # a leading opening bracket and a trailing closing bracket.  If the
         # opening bracket doesn't match our rule, maybe the closing will.
 
+    penultimate = line.leaves[-2]
     last = line.leaves[-1]
 
     if (
@@ -1620,7 +1619,6 @@ def can_omit_invisible_parens(
             and last.parent.type != syms.trailer
         )
     ):
-        penultimate = line.leaves[-2]
         if penultimate.type in OPENING_BRACKETS:
             # Empty brackets don't help.
             return False

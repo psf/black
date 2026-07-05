@@ -120,6 +120,7 @@
   splicing the unchanged blocks into each parent's child list in a single pass rather
   than removing and re-inserting each one, which rescanned and shifted the whole child
   list on every conversion (#5213)
+- Reduce memory requirement for Node and Leaf class (#5222)
 
 ### Output
 

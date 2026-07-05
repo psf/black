@@ -360,7 +360,7 @@ class CustomSplitMapMixin:
             A unique identifier that is used internally to map @string to a
             group of custom splits.
         """
-        return id(string), string
+        return (id(string), string)
 
     def add_custom_splits(
         self, string: str, custom_splits: Iterable[CustomSplit]
@@ -1018,11 +1018,13 @@ class StringParenStripper(StringTransformer):
             string_parser = StringParser()
             rpar_idx = string_parser.parse(LL, string_idx)
 
-            # Should not strip parentheses which have comments attached
-            # to them.
-            should_transform = not any(
-                line.comments_after(leaf) for leaf in (LL[string_idx - 1], LL[rpar_idx])
-            )
+            should_transform = True
+            for leaf in (LL[string_idx - 1], LL[rpar_idx]):
+                if line.comments_after(leaf):
+                    # Should not strip parentheses which have comments attached
+                    # to them.
+                    should_transform = False
+                    break
             if should_transform:
                 string_and_rpar_indices.extend((string_idx, rpar_idx))
 
@@ -1358,7 +1360,7 @@ def iter_fexpr_spans(s: str) -> Iterator[tuple[int, int]]:
             j = stack.pop()
             # we've made it back out of the expression! yield the span
             if not stack:
-                yield j, i + 1
+                yield (j, i + 1)
             i += 1
             continue
 
