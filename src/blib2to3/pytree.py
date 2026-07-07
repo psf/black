@@ -483,6 +483,7 @@ class Leaf(Base):
         self.fixers_applied: list[Any] | None = fixers_applied[:]
         self.children = []
         self.opening_bracket = opening_bracket
+        self.bracket_depth = 0
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
 
     def __repr__(self) -> str:
