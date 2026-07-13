@@ -140,7 +140,7 @@ class BracketTracker:
         return bool(self.bracket_match)
 
     def max_delimiter_priority(self, exclude: Iterable[LeafID] = ()) -> Priority:
-        """Return the highest priority of a delimiter found on the line.
+        """Return the lowest priority of a delimiter found on the line.
 
         Values are consistent with what `is_split_*_delimiter()` return.
         Raises ValueError on no delimiters.
