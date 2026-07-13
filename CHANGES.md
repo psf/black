@@ -69,7 +69,7 @@
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
 - Reduce the size of Linux standalone binaries by stripping debug symbols during the
-  PyInstaller release build (#5233)
+  PyInstaller release build (#5223)
 
 ### Parser
 
