@@ -48,9 +48,10 @@
 - Keep the parentheses around a lambda used as the iterable of a comprehension (e.g.
   `[x for x in (lambda: 0) if x]`). They were previously stripped by
   `wrap_comprehension_in`, which produced invalid code and crashed Black (#5176)
-- Keep redundant nested parentheses around a lambda or conditional expression used as a
-  comprehension's iterable (e.g. `[x for x in ((lambda: 0))]`). The inner pair was still
-  being stripped, leaving the bare expression and crashing Black (#5200)
+- Collapse redundant nested parentheses around a lambda or conditional expression used
+  as a comprehension's iterable down to a single pair (e.g. `[x for x in ((lambda: 0))]`
+  becomes `[x for x in (lambda: 0)]`). Previously the inner pair was stripped too,
+  leaving the bare expression and crashing Black (#5200)
 
 ### Configuration
 
