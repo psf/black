@@ -68,6 +68,9 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
+- Reduce the size of Linux standalone binaries by stripping debug symbols during the
+  PyInstaller release build (#5223)
+
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
@@ -121,6 +124,10 @@
   than removing and re-inserting each one, which rescanned and shifted the whole child
   list on every conversion (#5213)
 - Reduce memory requirement for Node and Leaf class (#5222)
+- Improve performance on files with many `# fmt: off`/`# fmt: on` blocks by resuming the
+  search for each converted block within its parent's child list from the previous
+  conversion's position instead of rescanning the whole list from the start on every
+  node removal (#5232)
 
 ### Output
 

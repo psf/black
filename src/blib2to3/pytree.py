@@ -161,15 +161,25 @@ class Base(ABC):
             self.parent.changed()
         self.was_changed = True
 
-    def remove(self) -> int | None:
+    def remove(self, search_start: int = 0) -> int | None:
         """
         Remove the node from the tree. Returns the position of the node in its
         parent's children before it was removed.
+
+        ``search_start`` hints where to begin looking in the parent's children.
+        A caller that removes many siblings of the same parent in left-to-right
+        order can pass the last returned position to avoid rescanning the whole
+        list from index 0 every time, which is quadratic over the parent. The
+        entire list is still searched (starting at the hint and wrapping around),
+        so an inaccurate hint only costs a little extra scanning.
         """
         if self.parent:
-            for i, node in enumerate(self.parent.children):
-                if node is self:
-                    del self.parent.children[i]
+            children = self.parent.children
+            count = len(children)
+            for offset in range(count):
+                i = (search_start + offset) % count
+                if children[i] is self:
+                    del children[i]
                     self.parent.changed()
                     self.parent._remove_from_sibling_maps(self)
                     self.parent = None
