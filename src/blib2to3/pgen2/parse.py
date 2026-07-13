@@ -32,7 +32,7 @@ DFAS = tuple[DFA, dict[int, int]]
 
 def lam_sub(grammar: Grammar, node: RawNode) -> NL:
     assert node[3] is not None
-    return Node(type=node[0], children=node[3], context=node[2])
+    return Node(type=node[0], children=node[3])
 
 
 # A placeholder node, used when parser is backtracking.

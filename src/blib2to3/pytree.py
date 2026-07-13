@@ -234,9 +234,7 @@ class Node(Base):
         self,
         type: int,
         children: list[NL],
-        context: Any | None = None,
         prefix: str | None = None,
-        fixers_applied: list[Any] | None = None,
     ) -> None:
         """
         Initializer.
@@ -450,7 +448,6 @@ class Leaf(Base):
         value: str,
         context: Context | None = None,
         prefix: str | None = None,
-        fixers_applied: list[Any] = [],
         opening_bracket: Optional["Leaf"] = None,
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
     ) -> None:
@@ -549,7 +546,7 @@ def convert(gr: Grammar, raw_node: RawNode) -> NL:
         assert children is not None
         if len(children) == 1:
             return children[0]
-        return Node(type, children, context=context)
+        return Node(type, children)
     else:
         return Leaf(type, value or "", context=context)
 
