@@ -3,6 +3,7 @@ import math
 from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import NamedTuple, Optional, TypeVar, Union, cast
+
 # test comment for Fossilize AI PR Guardian testing
 from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
 from black.mode import Mode, Preview
