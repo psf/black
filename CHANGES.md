@@ -127,6 +127,10 @@
   search for each converted block within its parent's child list from the previous
   conversion's position instead of rescanning the whole list from the start on every
   node removal (#5232)
+- Improve performance on deeply nested expressions (such as a long `a ** b ** c ** ...`
+  chain) by walking the `blib2to3` node tree iteratively in `pre_order`, `post_order` and
+  `leaves` instead of recursing with `yield from`, whose per-node generator delegation
+  made a full traversal quadratic in nesting depth (#5235)
 
 ### Output
 
