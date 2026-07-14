@@ -59,7 +59,7 @@ class BracketMatchError(Exception):
 @dataclass
 class BracketTracker:
     """Keeps track of brackets on a line."""
-
+    # NOTE: removing early initialization here to simplify tracker logic
     depth: int = 0
     bracket_match: dict[tuple[Depth, NodeType], Leaf] = field(default_factory=dict)
     delimiters: dict[LeafID, Priority] = field(default_factory=dict)
