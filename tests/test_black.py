@@ -7,6 +7,7 @@ import itertools
 import logging
 import multiprocessing
 import os
+import pickle
 import re
 import sys
 import textwrap
@@ -131,6 +132,40 @@ def invokeBlack(
         f"exception: {result.exception}"
     )
     assert result.exit_code == exit_code, msg
+
+
+def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
+    source = tmp_path / "invalid.py"
+    source.write_text("return if you can\n", encoding="utf8")
+
+    result = BlackRunner().invoke(
+        black.main, ["--config", str(THIS_DIR / "empty.toml"), str(source)]
+    )
+
+    assert result.exit_code == 123
+    assert (
+        f"error: cannot parse: {source}:1:7\n"
+        "    return if you can\n"
+        "          ^\n"
+        "ParseError: bad input\n"
+        in result.stderr
+    )
+
+    second_source = tmp_path / "also_invalid.py"
+    second_source.write_text("print(\n", encoding="utf8")
+    result = BlackRunner().invoke(
+        black.main,
+        [
+            "--config",
+            str(THIS_DIR / "empty.toml"),
+            str(source),
+            str(second_source),
+        ],
+    )
+
+    assert result.exit_code == 123
+    assert f"error: cannot parse: {source}:1:7\n" in result.stderr
+    assert f"error: cannot parse: {second_source}:1:6\n" in result.stderr
 
 
 class BlackTestCase(BlackBaseTestCase):
@@ -813,8 +848,16 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(output, unstyle(output))
 
     def test_lib2to3_parse(self) -> None:
-        with self.assertRaises(black.InvalidInput):
+        with self.assertRaises(black.InvalidInput) as exc_info:
             black.lib2to3_parse("invalid syntax")
+        error = exc_info.exception
+        restored_error = pickle.loads(pickle.dumps(error))
+        self.assertEqual((error.lineno, error.column), (1, 8))
+        self.assertEqual(str(restored_error), str(error))
+        self.assertEqual(
+            (error.lineno, error.column),
+            (restored_error.lineno, restored_error.column),
+        )
 
         straddling = "x + y"
         black.lib2to3_parse(straddling)

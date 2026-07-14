@@ -7,6 +7,7 @@ from enum import Enum
 from pathlib import Path
 
 from black.output import err, out, style_output
+from black.parsing import InvalidInput
 
 
 class Changed(Enum):
@@ -47,9 +48,19 @@ class Report:
                 out(msg, bold=False)
             self.same_count += 1
 
-    def failed(self, src: Path, message: str) -> None:
+    def failed(self, src: Path, message: str | BaseException) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
-        err(f"error: cannot format {src}: {message}")
+        if (
+            isinstance(message, InvalidInput)
+            and message.lineno is not None
+            and message.column is not None
+            and message.context
+        ):
+            context = message.context[0].lower() + message.context[1:]
+            details = f"\n{message.details}" if message.details else ""
+            err(f"error: {context}: {src}:{message.lineno}:{message.column}{details}")
+        else:
+            err(f"error: cannot format {src}: {message}")
         self.failure_count += 1
 
     def path_ignored(self, path: Path, message: str) -> None:
