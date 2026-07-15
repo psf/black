@@ -128,9 +128,9 @@
   conversion's position instead of rescanning the whole list from the start on every
   node removal (#5232)
 - Improve performance on lists and subscripts holding one large expression that contains
-  no comparison or arithmetic sub-node (for example a long run of implicitly concatenated
-  strings inside `[]`) by caching the `is_complex_subscript` subtree walk per node instead
-  of re-walking the whole bracketed expression for every leaf (#5239)
+  no comparison or arithmetic sub-node (for example a long run of implicitly
+  concatenated strings inside `[]`) by caching the `is_complex_subscript` subtree walk
+  per node instead of re-walking the whole bracketed expression for every leaf (#5239)
 
 ### Output
 
