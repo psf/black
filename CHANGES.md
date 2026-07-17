@@ -17,6 +17,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unstable formatting when an inline comment sits on optional parentheses
+  (for example a parenthesized assert message or assignment RHS). Black no longer
+  omits those parentheses in a way that re-parents the comment and changes the
+  split on a second pass (#3701, #3706, #4384)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
 - Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`

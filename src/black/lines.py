@@ -1485,6 +1485,15 @@ def can_omit_invisible_parens(
     """
     line = rhs.body
 
+    # Don't omit optional parens when the opening paren carries an inline comment.
+    # Omitting them re-parents the comment onto a different leaf after the next
+    # parse, which can make the RHS splitter choose a different shape on each
+    # pass (unstable formatting / "different code on the second pass"). See
+    # issues #3701, #3706, and #4384.
+    if rhs.opening_bracket.type == token.LPAR and not rhs.opening_bracket.value:
+        if rhs.head.comments.get(id(rhs.opening_bracket)):
+            return False
+
     # We can't omit parens if doing so would result in a type: ignore comment
     # sharing a line with other comments, as that breaks type: ignore parsing.
     # Check if the opening bracket (last leaf of head) has comments that would merge
