@@ -40,18 +40,22 @@ jobs:
           pip-version: "26.1"
 
       - name: Install dependencies
-        run: python -m pip install --group coverage
+        run: python -m pip install --group coverage --group release
 
       - name: Print Python Version
+        shell: bash
         run: python --version --version && which python
 
       - name: Print Pip Version
+        shell: bash
         run: pip --version && which pip
 
       - name: Print Git Version
+        shell: bash
         run: git --version && which git
 
       - name: Run unit tests via coverage + print report
+        shell: bash
         run: |
           coverage run scripts/release_tests.py
           coverage report --show-missing
