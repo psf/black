@@ -39,14 +39,14 @@ jobs:
         run: |
           {
             cibuildwheel --print-build-identifiers --platform linux \
-            | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})' \
-            && cibuildwheel --print-build-identifiers --platform macos \
-            | pyp 'json.dumps({"only": x, "os": "macos-latest"})' \
-            && cibuildwheel --print-build-identifiers --platform windows \
-            | pyp 'json.dumps({"only": x, "os": "windows-latest"})' \
-            && cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
-            | pyp 'json.dumps({"only": x, "os": "windows-11-arm"})'
-          } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
+              | jq -Rn '[{"only": inputs, "os": "ubuntu-latest"}]'
+            cibuildwheel --print-build-identifiers --platform macos \
+              | jq -Rn '[{"only": inputs, "os": "macos-latest"}]'
+            cibuildwheel --print-build-identifiers --platform windows \
+              | jq -Rn '[{"only": inputs, "os": "windows-latest"}]'
+            cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
+              | jq -Rn '[{"only": inputs, "os": "windows-11-arm"}]'
+          } | jq -cs 'add' > /tmp/matrix
         env:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64 arm64
@@ -57,9 +57,11 @@ jobs:
           github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           {
-            CIBW_BUILD="cp310-*" cibuildwheel --print-build-identifiers --platform linux | pyp 'json.dumps({"only": x, "os": "ubuntu-latest"})'
-            CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows | pyp 'json.dumps({"only": x, "os": "windows-latest"})'
-          } | pyp 'json.dumps(list(map(json.loads, lines)))' > /tmp/matrix
+            CIBW_BUILD="cp310-*" cibuildwheel --print-build-identifiers --platform linux \
+              | jq -Rn '[{"only": inputs, "os": "ubuntu-latest"}]'
+            CIBW_BUILD="cp315-*" cibuildwheel --print-build-identifiers --platform windows \
+              | jq -Rn '[{"only": inputs, "os": "windows-latest"}]'
+          } | jq -cs 'add' > /tmp/matrix
         env:
           CIBW_ARCHS_LINUX: x86_64
 
