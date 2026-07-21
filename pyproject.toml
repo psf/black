@@ -103,6 +103,7 @@ diff-shades = [
     "diff-shades @ https://github.com/ichard26/diff-shades/archive/stable.zip",
 ]
 diff-shades-comment = ["click>=8.1.7", "packaging>=22.0", "urllib3"]
+release = ["packaging>=22.0"]
 
 width-table = ["wcwidth==0.2.14"]
 

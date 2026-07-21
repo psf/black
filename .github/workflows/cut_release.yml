@@ -1,0 +1,214 @@
+name: cut release
+
+on:
+  pull_request:
+    branches: main
+    types: closed
+    paths: docs/integrations/source_version_control.md
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release:
+    if:
+      github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged &&
+      github.event.pull_request.head.repo.full_name == 'psf/black' &&
+      startsWith(github.head_ref, 'ci/prepare-release/'))
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    permissions:
+      contents: write # Needed to create release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.15"
+          pip-version: "26.1"
+          pip-install: --group release
+
+      - name: Get version
+        id: version
+        run: |
+          version=$(echo "$HEAD" | cut -d'/' -f3)
+          if [ "$REF" == "refs/heads/main" ]; then
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$(python scripts/release.py prerelease $version)" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          HEAD: ${{ github.head_ref || github.ref_name }}
+          REF: ${{ github.ref }}
+
+      - name: Delete previous release if exists
+        run: gh release delete "$VERSION" --yes || true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Get changelog
+        id: changelog
+        run: python scripts/release.py changes >> /tmp/changes
+
+      - name: Create draft release
+        run:
+          gh release create "$VERSION" --target "$REF" -d -t "$VERSION" -F /tmp/changes
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REF: ${{ github.ref }}
+          VERSION: ${{ steps.version.outputs.version }}
+
+  new-changelog:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: release
+    permissions:
+      contents: write # Needed to push to new branch
+      pull-requests: write # Needed to create PR
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true # Needed for git-auto-commit-action
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.15"
+          pip-version: "26.1"
+          pip-install: --group release
+
+      - name: Add new changelog
+        run: python scripts/release.py add
+
+      - name: Commit new changelog
+        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+        with:
+          commit_message: Add new changelog
+          branch: ci/new-changelog
+          create_branch: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+
+      - name: Create PR
+        run: |
+          gh pr create \
+            -t "Add new changelog" -b "" \
+            -l "ci: skip news" -l "C: maintenance" \
+            -a "$USER"
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          USER: ${{ github.triggering_actor }}
+
+  binaries:
+    name: build-binaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            pathsep: ";"
+            asset_name: black_windows.exe
+            strip: false
+          - os: windows-11-arm
+            pathsep: ";"
+            asset_name: black_windows-arm.exe
+            strip: false
+          - os: ubuntu-latest
+            pathsep: ":"
+            asset_name: black_linux
+            strip: true
+          - os: ubuntu-24.04-arm
+            pathsep: ":"
+            asset_name: black_linux-arm
+            strip: true
+          - os: macos-latest
+            pathsep: ":"
+            asset_name: black_macos
+            strip: false
+    permissions:
+      contents: write # Needed to upload to release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.15"
+          pip-version: "26.1"
+          pip-install: .[colorama] --group pyinstaller
+
+      - name: Create version file
+        shell: bash
+        run: echo "version = \"$VERSION\"" > src/_black_version.py
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+
+      - name: Build executable with PyInstaller
+        shell: bash
+        run:
+          python -m PyInstaller --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3'
+          -F ${{ matrix.strip && '--strip' || '' }} --name ${{ matrix.asset_name }}
+          src/black/__main__.py
+
+      - name: Quickly test executable
+        shell: bash
+        run: |
+          ./dist/${{ matrix.asset_name }} --version
+          [[ $(./dist/${{ matrix.asset_name }} --version) != *" $VERSION "* ]] && exit 1
+          ./dist/${{ matrix.asset_name }} src --check --verbose
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+
+      - name: Upload assets
+        shell: bash
+        run: gh release upload "$VERSION" dist/${{ matrix.asset_name }} --clobber
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+
+  update-stable:
+    runs-on: ubuntu-latest
+    needs: [release, binaries]
+    permissions:
+      contents: write # Needed to publish release & push to stable
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: true # needed for `git push` below
+
+      - name: Publish release
+        run: |
+          gh release edit "$VERSION" --draft=false \
+          ${{ case(github.ref == 'refs/heads/main', '', '--prerelease') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }} # no fallback, error if CI won't trigger
+          VERSION: ${{ needs.release.outputs.version }}
+
+      - name: Update stable branch to release tag & push
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git checkout stable
+          git fetch
+          git reset --hard "$VERSION"
+          git push
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
