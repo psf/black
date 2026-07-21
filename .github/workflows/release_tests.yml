@@ -41,7 +41,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-          pip-version: "25.3"
+          pip-version: "26.1"
           pip-install: --group coverage
 
       - name: Print Python Version

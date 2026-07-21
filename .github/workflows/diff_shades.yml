@@ -44,8 +44,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades --group diff-shades-comment
 
       - name: Calculate run configuration & metadata
@@ -74,8 +74,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades
 
       - name: Configure git
@@ -130,8 +130,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades
 
       - name: Configure git
@@ -199,8 +199,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          pip-version: "26.1"
           pip-install: --group diff-shades --group diff-shades-comment
 
       - name: Generate HTML diff report
