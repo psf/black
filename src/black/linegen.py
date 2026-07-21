@@ -479,7 +479,7 @@ class LineGenerator(Visitor[Line]):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
-                docstring = normalize_string_prefix(leaf.value)
+                docstring = normalize_string_prefix(leaf.value, self.mode)
                 # We handle string normalization at the end of this method, but since
                 # what we do right now acts differently depending on quote style (ex.
                 # see padding logic below), there's a possibility for unstable
@@ -556,7 +556,7 @@ class LineGenerator(Visitor[Line]):
                 leaf.value = prefix + quote + docstring + quote
 
         if self.mode.string_normalization and leaf.type == token.STRING:
-            leaf.value = normalize_string_prefix(leaf.value)
+            leaf.value = normalize_string_prefix(leaf.value, self.mode)
             leaf.value = normalize_string_quotes(leaf.value)
         yield from self.visit_default(leaf)
 
