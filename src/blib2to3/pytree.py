@@ -217,8 +217,16 @@ class Base:
         return self.parent.prev_sibling_map[id(self)]
 
     def leaves(self) -> Iterator["Leaf"]:
-        for child in self.children:
-            yield from child.leaves()
+        # Walk iteratively rather than recursing with `yield from`, whose per-node
+        # generator delegation is O(depth) and makes a full traversal quadratic on
+        # deeply nested trees (e.g. a long `a ** b ** c ** ...` chain).
+        stack: list[NL] = list(reversed(self.children))
+        while stack:
+            node = stack.pop()
+            if isinstance(node, Leaf):
+                yield node
+            else:
+                stack.extend(reversed(node.children))
 
     def depth(self) -> int:
         if self.parent is None:
@@ -301,15 +309,26 @@ class Node(Base):
 
     def post_order(self) -> Iterator[NL]:
         """Return a post-order iterator for the tree."""
-        for child in self.children:
-            yield from child.post_order()
-        yield self
+        # Walk iteratively rather than recursing with `yield from`. The recursive
+        # form resumes one delegating generator per level on every step, so a full
+        # traversal costs O(depth) per node and is quadratic on deeply nested trees.
+        stack: list[tuple[NL, bool]] = [(self, False)]
+        while stack:
+            node, expanded = stack.pop()
+            if expanded:
+                yield node
+            else:
+                stack.append((node, True))
+                stack.extend((child, False) for child in reversed(node.children))
 
     def pre_order(self) -> Iterator[NL]:
         """Return a pre-order iterator for the tree."""
-        yield self
-        for child in self.children:
-            yield from child.pre_order()
+        # See `post_order` for why this is iterative instead of recursive.
+        stack: list[NL] = [self]
+        while stack:
+            node = stack.pop()
+            yield node
+            stack.extend(reversed(node.children))
 
     @property
     def prefix(self) -> str:
