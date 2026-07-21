@@ -127,6 +127,10 @@
   search for each converted block within its parent's child list from the previous
   conversion's position instead of rescanning the whole list from the start on every
   node removal (#5232)
+- Improve performance on lists and subscripts holding one large expression that contains
+  no comparison or arithmetic sub-node (for example a long run of implicitly
+  concatenated strings inside `[]`) by caching the `is_complex_subscript` subtree walk
+  per node instead of re-walking the whole bracketed expression for every leaf (#5239)
 - Improve performance on deeply nested expressions (such as a long `a ** b ** c ** ...`
   chain) by walking the `blib2to3` node tree iteratively in `pre_order`, `post_order`
   and `leaves` instead of recursing with `yield from`, whose per-node generator
