@@ -1567,6 +1567,27 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         yield current_line
 
 
+def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:
+    """Whether `node` is an atom wrapping a lambda or conditional expression,
+    looking through any redundant nested parentheses.
+
+    As a comprehension's iterable, such an expression must keep at least one pair
+    of parentheses: without them the trailing `for`/`if` clauses would be parsed
+    as part of the lambda body (or break the ternary), producing invalid code.
+    """
+    while (
+        node.type == syms.atom
+        and len(node.children) == 3
+        and is_lpar_token(node.children[0])
+        and is_rpar_token(node.children[-1])
+    ):
+        middle = node.children[1]
+        if middle.type in {syms.test, syms.lambdef}:
+            return True
+        node = middle
+    return False
+
+
 def normalize_invisible_parens(
     node: Node, parens_after: set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
@@ -1667,14 +1688,22 @@ def normalize_invisible_parens(
                     and is_one_tuple(child.children[0])
                 ):
                     wrap_in_parentheses(node, child, visible=True)
-            elif child.type == syms.atom and not (
-                "in" in parens_after
-                and len(child.children) == 3
-                and is_lpar_token(child.children[0])
-                and is_rpar_token(child.children[-1])
-                and child.children[1].type in {syms.test, syms.lambdef}
-            ):
-                if maybe_make_parens_invisible_in_atom(
+            elif child.type == syms.atom:
+                if "in" in parens_after and _is_parenthesized_lambda_or_ternary(child):
+                    # A lambda or conditional expression used as a comprehension's
+                    # iterable must keep at least one pair of parentheses, otherwise
+                    # the trailing `for`/`if` clauses get absorbed into it and the
+                    # code becomes invalid. Any extra nested pairs are redundant, so
+                    # collapse them while keeping exactly one visible pair.
+                    maybe_make_parens_invisible_in_atom(
+                        child, parent=node, mode=mode, features=features
+                    )
+                    opening = child.children[0]
+                    closing = child.children[-1]
+                    if is_lpar_token(opening) and is_rpar_token(closing):
+                        opening.value = "("
+                        closing.value = ")"
+                elif maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
                 ):
                     wrap_in_parentheses(node, child, visible=False)
