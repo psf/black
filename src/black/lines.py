@@ -18,6 +18,7 @@ from black.nodes import (
     is_import,
     is_multiline_string,
     is_one_sequence_between,
+    is_one_tuple,
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
@@ -91,7 +92,16 @@ class Line:
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
-            elif self.has_magic_trailing_comma(leaf):
+            elif self.has_magic_trailing_comma(leaf) and not (
+                # A one-element tuple's trailing comma is syntactically required,
+                # not magic, so it must never be removed. This is normally caught
+                # by has_magic_trailing_comma, but that check misses the tuple
+                # when its opening bracket was split onto an earlier line (for
+                # example by a standalone comment inside the tuple), so verify
+                # against the tree here before dropping the comma.
+                leaf.parent is not None
+                and is_one_tuple(leaf.parent)
+            ):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
             self.leaves.append(leaf)

@@ -17,6 +17,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix dropping the required trailing comma from a single-element tuple used as a lambda
+  parameter default under `--skip-magic-trailing-comma` when a standalone comment forces
+  the tuple across multiple lines; removing the comma turned the tuple into a bare
+  expression and failed Black's AST safety check (#5246)
 - Fix unstable formatting when an inline comment sits on optional parentheses (for
   example a parenthesized assert message or assignment RHS) (#5241)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
