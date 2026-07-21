@@ -1438,6 +1438,10 @@ def delimiter_split(
     if (
         delimiter_priority == DOT_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and not (
+            Preview.split_method_chain_on_standalone_comment in mode
+            and line.contains_standalone_comments()
+        )
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 

@@ -263,6 +263,7 @@ class Preview(Enum):
     pyi_blank_line_after_function_docstring = auto()
     hug_comparator = auto()
     parenthesize_tuple_in_yield = auto()
+    split_method_chain_on_standalone_comment = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
