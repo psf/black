@@ -1140,6 +1140,17 @@ class EmptyLineTracker:
             )
 
         if (
+            Preview.fmt_off_class_blank_lines in self.mode
+            and self.previous_line.is_import
+            and self.previous_line.depth == 0
+            and current_line.depth == 0
+            and current_line.is_fmt_pass_converted(
+                first_leaf_matches=lambda leaf: leaf.value == "class"
+            )
+        ):
+            return 2, 0
+
+        if (
             self.previous_line.is_import
             and self.previous_line.depth == 0
             and current_line.depth == 0

@@ -43,6 +43,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
+  after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
   `x[key] = expr` (#5095)
 - Parenthesize tuple expressions in `yield` statements for consistency with function
