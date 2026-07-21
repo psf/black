@@ -16,6 +16,17 @@ set_of_types = {tuple[int,],}
 # Except single element tuples
 small_tuple = (1,)
 
+# Also keep the comma when a standalone comment splits the opening paren of a
+# single-element tuple used as a lambda parameter default onto a previous line.
+foo(lambda x=(
+    # comment
+    1,
+): x)
+[lambda x=(
+    # comment
+    1,
+): x]
+
 # Trailing commas in multiple chained non-nested parens.
 zero(
     one,
@@ -64,6 +75,19 @@ set_of_types = {tuple[int,]}
 
 # Except single element tuples
 small_tuple = (1,)
+
+# Also keep the comma when a standalone comment splits the opening paren of a
+# single-element tuple used as a lambda parameter default onto a previous line.
+foo(
+    lambda x=(
+    # comment
+    1,): x
+)
+[
+    lambda x=(
+    # comment
+    1,): x
+]
 
 # Trailing commas in multiple chained non-nested parens.
 zero(one).two(three).four(five)
