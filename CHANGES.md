@@ -19,6 +19,9 @@
 
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Respect the magic trailing comma in a PEP 695 type parameter list containing a
+  `*TypeVarTuple` or `**ParamSpec`, which previously collapsed back onto one line
+  (#5244)
 - Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`
   statement after another standalone comment (#5189)
 - Fix a crash when splitting `case case if ...` match patterns at very small line
