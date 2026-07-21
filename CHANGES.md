@@ -127,6 +127,9 @@
   search for each converted block within its parent's child list from the previous
   conversion's position instead of rescanning the whole list from the start on every
   node removal (#5232)
+- Improve performance on deeply nested bracketed expressions by collecting each leaf
+  once in `get_leaves_inside_matching_brackets` instead of re-adding the whole span of
+  enclosed leaves for every surrounding bracket pair (#5242)
 - Improve performance on lists and subscripts holding one large expression that contains
   no comparison or arithmetic sub-node (for example a long run of implicitly
   concatenated strings inside `[]`) by caching the `is_complex_subscript` subtree walk
