@@ -170,6 +170,56 @@ class BlackTestCase(BlackBaseTestCase):
                 os.unlink(tmp_file)
             self.assertFormatEqual(expected, actual)
 
+    def test_ff_preserves_file_on_write_failure(self) -> None:
+        # Regression test for #2479: if writing the reformatted contents fails
+        # partway through (e.g. because the disk is full), the original file
+        # must be left untouched instead of being truncated or corrupted.
+        source = "print('hello')\n"
+        with TemporaryDirectory() as workspace:
+            tmp_file = Path(workspace) / "source.py"
+            tmp_file.write_text(source, encoding="utf-8")
+            with patch(
+                "black.os.fsync", side_effect=OSError("No space left on device")
+            ):
+                with self.assertRaises(OSError):
+                    ff(tmp_file, write_back=black.WriteBack.YES)
+            self.assertEqual(tmp_file.read_text(encoding="utf-8"), source)
+            # No leftover temporary file should remain in the directory.
+            leftover = [p for p in Path(workspace).iterdir() if p != tmp_file]
+            self.assertEqual(leftover, [])
+
+    def test_ff_preserves_permissions(self) -> None:
+        if system() == "Windows":
+            return
+
+        with TemporaryDirectory() as workspace:
+            tmp_file = Path(workspace) / "source.py"
+            tmp_file.write_text("print('hello' )\n", encoding="utf-8")
+            tmp_file.chmod(0o640)
+            self.assertTrue(ff(tmp_file, write_back=black.WriteBack.YES))
+            self.assertEqual(tmp_file.stat().st_mode & 0o777, 0o640)
+
+    def test_ff_writes_through_symlink(self) -> None:
+        # Regression test: formatting a file via a symlinked path must write
+        # through to the real target, not replace the symlink with a regular
+        # file (which atomic replace-by-rename would otherwise do).
+        with TemporaryDirectory() as workspace:
+            workspace_path = Path(workspace)
+            real_file = workspace_path / "real.py"
+            real_file.write_text("print('hello' )\n", encoding="utf-8")
+            symlink = workspace_path / "link.py"
+            try:
+                symlink.symlink_to(real_file)
+            except (OSError, NotImplementedError) as e:
+                self.skipTest(f"Can't create symlinks: {e}")
+
+            self.assertTrue(ff(symlink, write_back=black.WriteBack.YES))
+            self.assertTrue(symlink.is_symlink())
+            # Compare resolved paths rather than the raw readlink() target, since
+            # Windows may normalize it to an extended-length \\?\ path.
+            self.assertEqual(symlink.resolve(), real_file.resolve())
+            self.assertEqual(real_file.read_text(encoding="utf-8"), 'print("hello")\n')
+
     def test_piping(self) -> None:
         _, source, expected = read_data_from_file(
             PROJECT_ROOT / "src/black/__init__.py"
