@@ -408,7 +408,7 @@ recommended code style for those files is more terse than PEP 8:
   are very small.
 
 _Black_ enforces the above rules. There are additional guidelines for formatting `.pyi`
-file that are not enforced yet but might be in a future version of the formatter:
+files that are not enforced yet but might be in a future version of the formatter:
 
 - prefer `...` over `pass`;
 - avoid using string literals in type annotations, stub files support forward references
