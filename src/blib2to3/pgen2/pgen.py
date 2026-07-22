@@ -3,7 +3,12 @@
 
 import os
 from collections.abc import Iterator, Sequence
-from typing import IO, Any, NoReturn, Union
+from typing import IO, Any, Union
+
+try:
+    from typing import NoReturn
+except ImportError:
+    from typing_extensions import NoReturn
 
 from blib2to3.pgen2 import grammar, token, tokenize
 from blib2to3.pgen2.tokenize import TokenInfo
