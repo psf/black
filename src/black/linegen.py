@@ -779,6 +779,20 @@ def transform_line(
             content), meaning the trailers get glued together to split on another
             bracket pair instead.
             """
+            preferred_omit = _conditional_expression_trailers_to_omit(line, mode)
+            if preferred_omit:
+                lines = list(
+                    right_hand_split(
+                        line,
+                        mode,
+                        {*features, Feature.FORCE_OPTIONAL_PARENTHESES},
+                        omit=preferred_omit,
+                    )
+                )
+                if is_line_short_enough(lines[0], mode=mode):
+                    yield from lines
+                    return
+
             for omit in generate_trailers_to_omit(line, mode.line_length):
                 lines = list(right_hand_split(line, mode, features, omit=omit))
                 # Note: this check is only able to figure out if the first line of the
@@ -2142,6 +2156,50 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
             if leaf.value:
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
+
+
+def _conditional_expression_trailers_to_omit(line: Line, mode: Mode) -> set[LeafID]:
+    """Return trailers to omit so a boolean condition's outer parens split first."""
+    if (
+        Preview.parenthesize_whole_conditional_expression not in mode
+        or not line.leaves
+        or line.leaves[0].value not in {"if", "elif", "while"}
+    ):
+        return set()
+
+    opening_index = next(
+        (
+            index
+            for index, leaf in enumerate(line.leaves[1:], 1)
+            if leaf.type == token.LPAR and not leaf.value
+        ),
+        None,
+    )
+    if opening_index is None:
+        return set()
+
+    opening = line.leaves[opening_index]
+    closing_index = next(
+        (
+            index
+            for index, leaf in enumerate(
+                line.leaves[opening_index + 1 :], opening_index + 1
+            )
+            if leaf.type == token.RPAR and leaf.opening_bracket is opening
+        ),
+        None,
+    )
+    if closing_index is None or not any(
+        leaf.value in {"and", "or"} and leaf.bracket_depth == opening.bracket_depth + 1
+        for leaf in line.leaves[opening_index + 1 : closing_index]
+    ):
+        return set()
+
+    return {
+        id(leaf)
+        for leaf in line.leaves[opening_index + 1 : closing_index]
+        if leaf.type in CLOSING_BRACKETS
+    }
 
 
 def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:

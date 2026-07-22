@@ -45,6 +45,9 @@ Currently, the following features are included in the preview style:
   statements.
 - `fmt_off_class_blank_lines`: Preserve two blank lines before a top-level class whose
   definition starts inside a `# fmt: off` block after an import.
+- `parenthesize_whole_conditional_expression`: Prefer parenthesizing and splitting a
+  whole boolean condition in an `if`, `elif`, or `while` statement instead of splitting
+  a function call within it.
 
 (labels/wrap-comprehension-in)=
 
