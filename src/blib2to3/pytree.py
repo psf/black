@@ -511,6 +511,7 @@ class Leaf(Base):
             self._prefix = prefix
         self.fixers_applied: list[Any] | None = fixers_applied[:]
         self.children = []
+        self.bracket_depth = 0
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
 
