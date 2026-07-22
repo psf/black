@@ -25,6 +25,31 @@ class InvalidInput(ValueError):
     context: str | None = None
     details: str | None = None
 
+    def __init__(
+        self,
+        message: str,
+        lineno: int | None = None,
+        column: int | None = None,
+        context: str | None = None,
+        details: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.lineno = lineno
+        self.column = column
+        self.context = context
+        self.details = details
+
+    def __reduce__(
+        self,
+    ) -> tuple[
+        type["InvalidInput"],
+        tuple[str, int | None, int | None, str | None, str | None],
+    ]:
+        return (
+            InvalidInput,
+            (str(self), self.lineno, self.column, self.context, self.details),
+        )
+
     @classmethod
     def from_syntax_error(
         cls,
@@ -35,12 +60,7 @@ class InvalidInput(ValueError):
         details: str,
     ) -> "InvalidInput":
         """Create an error with source details for user-facing reports."""
-        error = cls(message)
-        error.lineno = lineno
-        error.column = column
-        error.context = context
-        error.details = details
-        return error
+        return cls(message, lineno, column, context, details)
 
 
 def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
