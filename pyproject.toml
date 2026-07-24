@@ -76,7 +76,7 @@ jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 
 [dependency-groups]
 hatch = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs", "virtualenv<21.0.0"]
-cibw = ["cibuildwheel==3.4.0", "pypyp"]
+cibw = ["cibuildwheel==4.1.0", "pypyp"]
 pyinstaller = ["pyinstaller"]
 
 dev = [{ include-group = "cov-tests" }, { include-group = "tox" }, "pre-commit"]
@@ -88,7 +88,7 @@ cov-tests = [
 docs = [
     "docutils==0.22.4",
     "furo==2025.12.19",
-    "myst-parser==5.0.0",
+    "myst-parser==5.1.0",
     "sphinx-copybutton==0.5.2",
     "sphinx==9.1.0",
     "sphinxcontrib-programoutput==0.20",

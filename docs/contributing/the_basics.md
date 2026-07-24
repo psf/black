@@ -103,16 +103,10 @@ you have a line in the following format added below the appropriate header:
 - `Black` is now more awesome (#X)
 ```
 
-<!---
-The Next PR Number link uses HTML because of a bug in MyST-Parser that double-escapes the ampersand, causing the query parameters to not be processed.
-MyST-Parser issue: https://github.com/executablebooks/MyST-Parser/issues/760
-MyST-Parser stalled fix PR: https://github.com/executablebooks/MyST-Parser/pull/929
--->
-
 Note that X should be your PR number, not issue number! To workout X, please use
-<a href="https://ichard26.github.io/next-pr-number/?owner=psf&name=black">Next PR
-Number</a>. This is not perfect but saves a lot of release overhead as now the releaser
-does not need to go back and workout what to add to the `CHANGES.md` for each release.
+[Next PR Number](https://ichard26.github.io/next-pr-number/?owner=psf&name=black). This
+is not perfect but saves a lot of release overhead as now the releaser does not need to
+go back and workout what to add to the `CHANGES.md` for each release.
 
 ### Style Changes
 
