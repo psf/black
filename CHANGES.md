@@ -158,6 +158,8 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Report parser failures using editor-friendly `path:line:column` locations (#5237)
+
 ### _Blackd_
 
 <!-- Changes to blackd -->
