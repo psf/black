@@ -12,7 +12,7 @@ Path = Union[str, "os.PathLike[str]"]
 
 
 class PgenGrammar(grammar.Grammar):
-    pass
+    __slots__ = ()
 
 
 class ParserGenerator:
@@ -37,8 +37,7 @@ class ParserGenerator:
 
     def make_grammar(self) -> PgenGrammar:
         c = PgenGrammar()
-        names = list(self.dfas.keys())
-        names.sort()
+        names = sorted(self.dfas.keys())
         names.remove(self.startsymbol)
         names.insert(0, self.startsymbol)
         for name in names:
@@ -49,9 +48,10 @@ class ParserGenerator:
             dfa = self.dfas[name]
             states = []
             for state in dfa:
-                arcs = []
-                for label, next in sorted(state.arcs.items()):
-                    arcs.append((self.make_label(c, label), dfa.index(next)))
+                arcs: list[tuple[int, int]] = [
+                    (self.make_label(c, label), dfa.index(next_))
+                    for label, next_ in sorted(state.arcs.items())
+                ]
                 if state.isfinal:
                     arcs.append((0, dfa.index(state)))
                 states.append(arcs)
@@ -122,8 +122,7 @@ class ParserGenerator:
                     return ilabel
 
     def addfirstsets(self) -> None:
-        names = list(self.dfas.keys())
-        names.sort()
+        names = sorted(self.dfas.keys())
         for name in names:
             if name not in self.first:
                 self.calcfirst(name)

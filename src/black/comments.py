@@ -37,7 +37,7 @@ _COMMENT_PREFIX = "# "
 _COMMENT_LIST_SEPARATOR = ";"
 
 
-@dataclass
+@dataclass(slots=True, eq=False, repr=False)
 class ProtoComment:
     """Describes a piece of syntax that is a comment.
 

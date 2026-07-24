@@ -56,7 +56,7 @@ class BracketMatchError(Exception):
     """Raised when an opening bracket is unable to be matched to a closing bracket."""
 
 
-@dataclass
+@dataclass(slots=True, eq=False)
 class BracketTracker:
     """Keeps track of brackets on a line."""
 

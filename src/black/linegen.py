@@ -1054,13 +1054,12 @@ def _first_right_hand_split(
                     len(str(leaf))
                     for leaf in hugged_opening_leaves + hugged_closing_leaves
                 )
-                if is_line_short_enough(
+
+                # Do not hug if it fits on a single line.
+                should_hug = not is_line_short_enough(
                     inner_body, mode=replace(line.mode, line_length=line_length)
-                ):
-                    # Do not hug if it fits on a single line.
-                    should_hug = False
-                else:
-                    should_hug = True
+                )
+
             if should_hug:
                 body_leaves = inner_body_leaves
                 head_leaves.extend(hugged_opening_leaves)

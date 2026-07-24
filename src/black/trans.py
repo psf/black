@@ -422,6 +422,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         StringMerger provides custom split information to StringSplitter.
     """
 
+    __slots__ = ()
+
     def do_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
@@ -1397,11 +1399,13 @@ def _toggle_fexpr_quotes(fstring: str, old_quote: str) -> str:
     escaping, once Black figures out how to parse the new grammar.
     """
     new_quote = "'" if old_quote == '"' else '"'
-    parts = []
+    parts: list[str] = []
     previous_index = 0
     for start, end in iter_fexpr_spans(fstring):
-        parts.append(fstring[previous_index:start])
-        parts.append(fstring[start:end].replace(old_quote, new_quote))
+        parts.extend((
+            fstring[previous_index:start],
+            fstring[start:end].replace(old_quote, new_quote),
+        ))
         previous_index = end
     parts.append(fstring[previous_index:])
     return "".join(parts)
@@ -2257,10 +2261,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         insert_str_child = insert_str_child_factory(LL[string_idx])
 
         comma_idx = -1
-        ends_with_comma = False
-        if LL[comma_idx].type == token.COMMA:
-            ends_with_comma = True
-
+        ends_with_comma = LL[comma_idx].type == token.COMMA
         leaves_to_steal_comments_from = [LL[string_idx]]
         if ends_with_comma:
             leaves_to_steal_comments_from.append(LL[comma_idx])

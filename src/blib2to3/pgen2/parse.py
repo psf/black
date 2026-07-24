@@ -32,7 +32,7 @@ DFAS = tuple[DFA, dict[int, int]]
 
 def lam_sub(grammar: Grammar, node: RawNode) -> NL:
     assert node[3] is not None
-    return Node(type=node[0], children=node[3], context=node[2])
+    return Node(type=node[0], children=node[3])
 
 
 # A placeholder node, used when parser is backtracking.
@@ -156,6 +156,17 @@ class Parser:
     reinitialized by calling setup()).
 
     """
+
+    __slots__ = (
+        "convert",
+        "grammar",
+        "is_backtracking",
+        "last_token",
+        "proxy",
+        "rootnode",
+        "stack",
+        "used_names",
+    )
 
     def __init__(self, grammar: Grammar, convert: Convert | None = None) -> None:
         """Constructor.
@@ -392,4 +403,3 @@ class Parser:
                 node[-1].append(newnode)
             else:
                 self.rootnode = newnode
-                self.rootnode.used_names = self.used_names
