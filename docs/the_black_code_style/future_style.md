@@ -72,6 +72,31 @@ any additional pair:
 
 # After (with --preview)
 [(item for item in items), fallback]
+
+- `symmetric_list_concatenation`: Keep optional parentheses around long concatenations
+  of two list displays so that each operand is formatted on its own line.
+
+(labels/symmetric-list-concatenation)=
+
+### Symmetric list concatenation
+
+When a concatenation of two list displays is too long for one line, Black keeps optional
+parentheses around the expression so that the two operands can be split symmetrically.
+
+```python
+# Before
+names = ["Alice", "Bob", "Charlie", "Diana", "Edward"] + [
+    "Fiona",
+    "George",
+    "Harriet",
+    "Isabelle",
+]
+
+# After (with --preview)
+names = (
+    ["Alice", "Bob", "Charlie", "Diana", "Edward"]
+    + ["Fiona", "George", "Harriet", "Isabelle"]
+)
 ```
 
 (labels/wrap-comprehension-in)=
