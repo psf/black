@@ -62,11 +62,14 @@ from pytokens import TokenType
 
 from . import token as _token
 
-__all__ = [x for x in dir(_token) if x[0] != "_"] + [
-    "tokenize",
-    "generate_tokens",
-    "untokenize",
-]
+__all__ = (
+    [x for x in dir(_token) if x[0] != "_"]
+    + [
+        "tokenize",
+        "generate_tokens",
+        "untokenize",
+    ]
+)
 del _token
 
 Coord = tuple[int, int]
