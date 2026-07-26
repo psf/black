@@ -168,6 +168,21 @@ def _cached_compile(pattern: str) -> Pattern[str]:
     return re.compile(pattern)
 
 
+def _ends_with_unescaped_quote(body: str) -> bool:
+    """Does `body` end in a `"` that is not already backslash-escaped?
+
+    A backslash only escapes the quote when it is not itself escaped, so the run
+    of backslashes in front of the quote has to be of even length for the quote
+    to still need escaping.
+    """
+    if body[-1:] != '"':
+        return False
+
+    preceding = body[:-1]
+    backslashes = len(preceding) - len(preceding.rstrip("\\"))
+    return backslashes % 2 == 0
+
+
 def normalize_string_quotes(s: str) -> str:
     """Prefer double quotes but only if it doesn't cause more escaping.
 
@@ -227,7 +242,7 @@ def normalize_string_quotes(s: str) -> str:
                 # Do not introduce backslashes in interpolated expressions
                 return s
 
-    if new_quote == '"""' and new_body[-1:] == '"':
+    if new_quote == '"""' and _ends_with_unescaped_quote(new_body):
         # edge case:
         new_body = new_body[:-1] + '\\"'
     orig_escape_count = body.count("\\")
@@ -286,7 +301,7 @@ def normalize_fstring_quotes(
         new_segment = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_segment)
         new_segments.append(new_segment)
 
-    if new_quote == '"""' and new_segments[-1].endswith('"'):
+    if new_quote == '"""' and _ends_with_unescaped_quote(new_segments[-1]):
         # edge case:
         new_segments[-1] = new_segments[-1][:-1] + '\\"'
 
