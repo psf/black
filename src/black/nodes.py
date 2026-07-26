@@ -986,11 +986,11 @@ def is_type_comment_string(value: str, mode: Mode) -> bool:
 
 
 def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
-    """Return True if the given leaf is a type comment with ignore annotation."""
+    """Return True if the given leaf has a type or Ruff ignore annotation."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(
-        v, mode
+    return t in {token.COMMENT, STANDALONE_COMMENT} and (
+        is_type_ignore_comment_string(v, mode) or is_ruff_ignore_comment_string(v)
     )
 
 
@@ -1000,6 +1000,10 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     return is_type_comment_string(value, mode) and value.split(":", 1)[
         1
     ].lstrip().startswith("ignore")
+
+
+def is_ruff_ignore_comment_string(value: str) -> bool:
+    return value.startswith("#") and value[1:].lstrip().startswith("ruff:ignore")
 
 
 def wrap_in_parentheses(

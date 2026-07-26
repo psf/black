@@ -1,4 +1,11 @@
+from black.comments import contains_pragma_comment
 from black.trans import iter_fexpr_spans
+from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf
+
+
+def test_contains_pragma_comment_for_ruff_ignore() -> None:
+    assert contains_pragma_comment([Leaf(token.COMMENT, "# ruff:ignore[bweh]")])
 
 
 def test_fexpr_spans() -> None:

@@ -13,6 +13,7 @@ from black.nodes import (
     WHITESPACE,
     container_of,
     first_leaf_of,
+    is_ruff_ignore_comment_string,
     is_type_comment_string,
     make_simple_prefix,
     preceding_leaf,
@@ -904,10 +905,12 @@ def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
     Returns:
         True iff one of the comments in @comment_list is a pragma used by one
         of the more common static analysis tools for python (e.g. mypy, flake8,
-        pylint).
+    pylint).
     """
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+        if comment.value.startswith(
+            ("# type:", "# noqa", "# pylint:")
+        ) or is_ruff_ignore_comment_string(comment.value):
             return True
 
     return False
