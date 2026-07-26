@@ -17,6 +17,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Preserve physical lines ending in canonical Ruff ignore comments such as
+  `# ruff:ignore[...]`, matching existing pragma handling (#5261)
 - Fix dropping the required trailing comma from a single-element tuple used as a lambda
   parameter default under `--skip-magic-trailing-comma` when a standalone comment forces
   the tuple across multiple lines; removing the comma turned the tuple into a bare
