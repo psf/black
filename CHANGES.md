@@ -17,6 +17,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unparseable output for a triple-quoted string whose body ends in an already
+  escaped double quote (for example `'''\'''\"'''`). Switching to `"""` escaped the
+  backslash instead of the quote, leaving the closing quotes bare, so Black failed on
+  its own output (#5262)
 - Fix dropping the required trailing comma from a single-element tuple used as a lambda
   parameter default under `--skip-magic-trailing-comma` when a standalone comment forces
   the tuple across multiple lines; removing the comma turned the tuple into a bare
