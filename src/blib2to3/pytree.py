@@ -486,6 +486,8 @@ class Leaf(Base):
     fmt_pass_converted_first_leaf: Optional["Leaf"] = None
     # True when this Leaf is converted from unchanged code for --line-ranges.
     line_ranges_converted: bool = False
+    line_ranges_first_lineno: int = 0
+    line_ranges_selected: Optional[set[int]] = None
 
     def __init__(
         self,
@@ -497,6 +499,8 @@ class Leaf(Base):
         opening_bracket: Optional["Leaf"] = None,
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
         line_ranges_converted: bool = False,
+        line_ranges_first_lineno: int = 0,
+        line_ranges_selected: Optional[set[int]] = None,
     ) -> None:
         """
         Initializer.
@@ -517,6 +521,8 @@ class Leaf(Base):
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
         self.line_ranges_converted = line_ranges_converted
+        self.line_ranges_first_lineno = line_ranges_first_lineno
+        self.line_ranges_selected = line_ranges_selected
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""

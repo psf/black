@@ -157,6 +157,8 @@ class LineGenerator(Visitor[Line]):
                 node,
                 mode=self.mode,
                 preserve_comment_formatting=preserve_comment_formatting,
+                line_ranges_first_lineno=node.line_ranges_first_lineno,
+                line_ranges_selected=node.line_ranges_selected,
             ):
                 if preserve_comment_formatting:
                     indent = "    " * self.current_line.depth
