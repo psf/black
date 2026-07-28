@@ -1520,11 +1520,12 @@ def _is_annotated_assignment(head: Line) -> bool:
     return False
 
 
-def _is_symmetric_list_concatenation(line: Line) -> bool:
-    """Is `line` exactly two list displays joined by a top-level `+`?"""
+def _is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
+    """Is `line` exactly two single-line lists joined by a top-level `+`?"""
     if len(line.bracket_tracker.delimiters) != 1:
         return False
 
+    # Delimiters is keyed by leaf ID, not line position.
     delimiter_id = next(iter(line.bracket_tracker.delimiters))
     try:
         left_closing_index = next(
@@ -1545,7 +1546,7 @@ def _is_symmetric_list_concatenation(line: Line) -> bool:
     right_opening = line.leaves[delimiter_index + 1]
     last = line.leaves[-1]
 
-    return (
+    if not (
         delimiter.type == token.PLUS
         and first.type == token.LSQB
         and left_closing.type == token.RSQB
@@ -1553,6 +1554,34 @@ def _is_symmetric_list_concatenation(line: Line) -> bool:
         and right_opening.type == token.LSQB
         and last.type == token.RSQB
         and last.opening_bracket is right_opening
+    ):
+        return False
+
+    # Keep the existing asymmetric split when either list is already forced to
+    # split by a magic trailing comma.
+    if line.mode.magic_trailing_comma and (
+        line.leaves[left_closing_index - 1].type == token.COMMA
+        or line.leaves[-2].type == token.COMMA
+    ):
+        return False
+
+    def rendered_width(start: int, end: int) -> int | None:
+        leaves = line.leaves[start:end]
+        rendered = "    " * line.depth
+        for index, leaf in enumerate(leaves):
+            rendered += leaf.value if index == 0 else str(leaf)
+            rendered += "".join(str(comment) for comment in line.comments_after(leaf))
+        if "\n" in rendered:
+            return None
+        return str_width(rendered)
+
+    left_width = rendered_width(0, delimiter_index)
+    right_width = rendered_width(delimiter_index, len(line.leaves))
+    return (
+        left_width is not None
+        and right_width is not None
+        and left_width <= line_length
+        and right_width <= line_length
     )
 
 
@@ -1684,7 +1713,7 @@ def can_omit_invisible_parens(
         if (
             Preview.symmetric_list_concatenation in mode
             and not is_line_short_enough(line, mode=mode)
-            and _is_symmetric_list_concatenation(line)
+            and _is_symmetric_list_concatenation(line, line_length)
         ):
             # Retaining the optional parentheses lets the delimiter splitter put
             # each list operand on its own line instead of exploding just one list.
