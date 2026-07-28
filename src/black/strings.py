@@ -227,7 +227,7 @@ def normalize_string_quotes(s: str) -> str:
         new_body = sub_twice(escaped_orig_quote, rf"\1\2{orig_quote}", new_body)
         new_body = sub_twice(unescaped_new_quote, rf"\1\\{new_quote}", new_body)
 
-    if "f" in prefix.casefold():
+    if "f" in prefix.casefold() or "t" in prefix.casefold():
         matches = re.findall(
             r"""
             (?:(?<!\{)|^)\{  # start of the string or a non-{ followed by a single {
