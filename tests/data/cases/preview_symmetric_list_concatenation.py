@@ -25,6 +25,21 @@ mixed_right = list_with_a_very_long_name + ["first_long_value", "second_long_val
 # Short concatenations stay on one line.
 small = [1, 2] + [3, 4]
 
+# Lists that already require bracket splitting keep the existing formatting.
+long_left = ["first_value_with_an_extremely_long_name", "second_value_with_an_extremely_long_name", "third"] + ["short"]
+long_right = ["short"] + ["first_value_with_an_extremely_long_name", "second_value_with_an_extremely_long_name", "third"]
+both_long = ["first_value_with_an_extremely_long_name", "second_value_with_an_extremely_long_name", "third"] + ["fourth_value_with_an_extremely_long_name", "fifth_value_with_an_extremely_long_name", "sixth"]
+
+# Magic trailing commas also keep the existing formatting.
+magic_left = [
+    "first_long_value",
+    "second_long_value",
+] + ["third_long_value", "fourth_long_value"]
+magic_right = ["first_long_value", "second_long_value"] + [
+    "third_long_value",
+    "fourth_long_value",
+]
+
 # output
 
 # Regression test for https://github.com/psf/black/issues/260.
@@ -73,3 +88,34 @@ mixed_right = list_with_a_very_long_name + [
 
 # Short concatenations stay on one line.
 small = [1, 2] + [3, 4]
+
+# Lists that already require bracket splitting keep the existing formatting.
+long_left = [
+    "first_value_with_an_extremely_long_name",
+    "second_value_with_an_extremely_long_name",
+    "third",
+] + ["short"]
+long_right = ["short"] + [
+    "first_value_with_an_extremely_long_name",
+    "second_value_with_an_extremely_long_name",
+    "third",
+]
+both_long = [
+    "first_value_with_an_extremely_long_name",
+    "second_value_with_an_extremely_long_name",
+    "third",
+] + [
+    "fourth_value_with_an_extremely_long_name",
+    "fifth_value_with_an_extremely_long_name",
+    "sixth",
+]
+
+# Magic trailing commas also keep the existing formatting.
+magic_left = [
+    "first_long_value",
+    "second_long_value",
+] + ["third_long_value", "fourth_long_value"]
+magic_right = ["first_long_value", "second_long_value"] + [
+    "third_long_value",
+    "fourth_long_value",
+]
