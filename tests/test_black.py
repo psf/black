@@ -1700,12 +1700,8 @@ class BlackTestCase(BlackBaseTestCase):
         # ``>3.7`` (without a patch component) must behave like ``>=3.7`` and
         # keep py37, matching the equivalent ``>3.7.0`` / ``>=3.7`` forms.
         self.assertEqual(
-            black.files.infer_target_version(
-                {"project": {"requires-python": ">3.7"}}
-            ),
-            black.files.infer_target_version(
-                {"project": {"requires-python": ">=3.7"}}
-            ),
+            black.files.infer_target_version({"project": {"requires-python": ">3.7"}}),
+            black.files.infer_target_version({"project": {"requires-python": ">=3.7"}}),
         )
 
     def test_read_pyproject_toml(self) -> None:
