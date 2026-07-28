@@ -276,7 +276,7 @@ class LineGenerator(Visitor[Line]):
                             remove_brackets_around_comma=False,
                         )
                     else:
-                        wrap_in_parentheses(node, child, visible=False)
+                        wrap_in_parentheses(node, child, visible=False, index=i)
         yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
@@ -325,9 +325,9 @@ class LineGenerator(Visitor[Line]):
     def visit_simple_stmt(self, node: Node) -> Iterator[Line]:
         """Visit a statement without nested statements."""
         prev_type: int | None = None
-        for child in node.children:
+        for i, child in enumerate(node.children):
             if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
-                wrap_in_parentheses(node, child, visible=False)
+                wrap_in_parentheses(node, child, visible=False, index=i)
             prev_type = child.type
 
         if node.parent and node.parent.type in STATEMENT:
@@ -420,6 +420,12 @@ class LineGenerator(Visitor[Line]):
             and contains_fmt_directive(lines[-1], FMT_ON)
         )
         if is_fmt_off_block:
+            is_after_invisible_lpar = (
+                leaf.fmt_pass_converted_first_leaf is None
+                and len(self.current_line.leaves) == 1
+                and self.current_line.leaves[0].type == token.LPAR
+                and not self.current_line.leaves[0].value
+            )
             # This is a fmt:off/on block from normalize_fmt_off - we still need
             # to process any prefix comments (like markdown comments) but append
             # the fmt block itself directly to preserve its formatting
@@ -438,7 +444,7 @@ class LineGenerator(Visitor[Line]):
                 leaf.prefix = ""
 
             self.current_line.append(leaf)
-            if not any_open_brackets:
+            if not any_open_brackets or is_after_invisible_lpar:
                 yield from self.line()
         else:
             # Normal standalone comment - process through visit_default
@@ -622,7 +628,7 @@ class LineGenerator(Visitor[Line]):
         if "\\" in string_leaf.value and any(
             "\\" in str(child)
             for child in node.children
-            if child.type == syms.fstring_replacement_field
+            if child.type == syms.tstring_replacement_field
         ):
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
@@ -694,6 +700,13 @@ class LineGenerator(Visitor[Line]):
 
         self.visit_expr_stmt = partial(v, keywords=Ø, parens=ASSIGNMENTS)
         self.visit_return_stmt = partial(v, keywords={"return"}, parens={"return"})
+        self.visit_yield_expr = partial(
+            v,
+            keywords=Ø,
+            parens=(
+                {"yield"} if Preview.parenthesize_tuple_in_yield in self.mode else Ø
+            ),
+        )
         self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
         self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
         self.visit_async_funcdef = self.visit_async_stmt
@@ -1567,6 +1580,27 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         yield current_line
 
 
+def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:
+    """Whether `node` is an atom wrapping a lambda or conditional expression,
+    looking through any redundant nested parentheses.
+
+    As a comprehension's iterable, such an expression must keep at least one pair
+    of parentheses: without them the trailing `for`/`if` clauses would be parsed
+    as part of the lambda body (or break the ternary), producing invalid code.
+    """
+    while (
+        node.type == syms.atom
+        and len(node.children) == 3
+        and is_lpar_token(node.children[0])
+        and is_rpar_token(node.children[-1])
+    ):
+        middle = node.children[1]
+        if middle.type in {syms.test, syms.lambdef}:
+            return True
+        node = middle
+    return False
+
+
 def normalize_invisible_parens(
     node: Node, parens_after: set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
@@ -1655,14 +1689,34 @@ def normalize_invisible_parens(
                     wrap_in_parentheses(node, child, visible=False)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node, mode=mode, features=features)
-            elif child.type == syms.atom and not (
-                "in" in parens_after
-                and len(child.children) == 3
-                and is_lpar_token(child.children[0])
-                and is_rpar_token(child.children[-1])
-                and child.children[1].type == syms.test
+            elif (
+                isinstance(child, Node)
+                and node.type == syms.yield_expr
+                and child.type == syms.yield_arg
+                and Preview.parenthesize_tuple_in_yield in mode
             ):
-                if maybe_make_parens_invisible_in_atom(
+                if (
+                    len(child.children) == 1
+                    and child.children[0].type != syms.atom
+                    and is_one_tuple(child.children[0])
+                ):
+                    wrap_in_parentheses(node, child, visible=True)
+            elif child.type == syms.atom:
+                if "in" in parens_after and _is_parenthesized_lambda_or_ternary(child):
+                    # A lambda or conditional expression used as a comprehension's
+                    # iterable must keep at least one pair of parentheses, otherwise
+                    # the trailing `for`/`if` clauses get absorbed into it and the
+                    # code becomes invalid. Any extra nested pairs are redundant, so
+                    # collapse them while keeping exactly one visible pair.
+                    maybe_make_parens_invisible_in_atom(
+                        child, parent=node, mode=mode, features=features
+                    )
+                    opening = child.children[0]
+                    closing = child.children[-1]
+                    if is_lpar_token(opening) and is_rpar_token(closing):
+                        opening.value = "("
+                        closing.value = ")"
+                elif maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
                 ):
                     wrap_in_parentheses(node, child, visible=False)
@@ -1946,6 +2000,8 @@ def maybe_make_parens_invisible_in_atom(
             syms.expr_stmt,
             syms.assert_stmt,
             syms.return_stmt,
+            syms.yield_arg,
+            syms.yield_expr,
             syms.except_clause,
             syms.funcdef,
             syms.with_stmt,

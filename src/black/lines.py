@@ -13,13 +13,16 @@ from black.nodes import (
     STANDALONE_COMMENT,
     TEST_DESCENDANTS,
     child_towards,
+    first_leaf,
     is_docstring,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
+    is_one_tuple,
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
+    last_leaf,
     make_simple_prefix,
     replace_child,
     syms,
@@ -49,6 +52,9 @@ class Line:
     inside_brackets: bool = False
     should_split_rhs: bool = False
     magic_trailing_comma: Leaf | None = None
+    _complex_subscript_cache: dict[LeafID, bool] = field(
+        default_factory=dict, repr=False
+    )
 
     def append(
         self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
@@ -86,7 +92,16 @@ class Line:
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
-            elif self.has_magic_trailing_comma(leaf):
+            elif self.has_magic_trailing_comma(leaf) and not (
+                # A one-element tuple's trailing comma is syntactically required,
+                # not magic, so it must never be removed. This is normally caught
+                # by has_magic_trailing_comma, but that check misses the tuple
+                # when its opening bracket was split onto an earlier line (for
+                # example by a standalone comment inside the tuple), so verify
+                # against the tree here before dropping the comma.
+                leaf.parent is not None
+                and is_one_tuple(leaf.parent)
+            ):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
             self.leaves.append(leaf)
@@ -441,9 +456,22 @@ class Line:
             if subscript_start.type == syms.subscriptlist:
                 subscript_start = child_towards(subscript_start, leaf)
 
-        return subscript_start is not None and any(
-            n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
-        )
+        if subscript_start is None:
+            return False
+
+        # The pre_order walk only depends on subscript_start, which is stable
+        # while a line is built, so cache it per node. Without this, appending
+        # every leaf of a large bracketed expression that holds no TEST_DESCENDANTS
+        # node (e.g. a long run of implicitly concatenated strings) re-walks the
+        # whole subtree each time, which is quadratic.
+        key = id(subscript_start)
+        cached = self._complex_subscript_cache.get(key)
+        if cached is None:
+            cached = any(
+                n.type in TEST_DESCENDANTS for n in subscript_start.pre_order()
+            )
+            self._complex_subscript_cache[key] = cached
+        return cached
 
     def enumerate_with_length(
         self, is_reversed: bool = False
@@ -1113,6 +1141,17 @@ class EmptyLineTracker:
             )
 
         if (
+            Preview.fmt_off_class_blank_lines in self.mode
+            and self.previous_line.is_import
+            and self.previous_line.depth == 0
+            and current_line.depth == 0
+            and current_line.is_fmt_pass_converted(
+                first_leaf_matches=lambda leaf: leaf.value == "class"
+            )
+        ):
+            return 2, 0
+
+        if (
             self.previous_line.is_import
             and self.previous_line.depth == 0
             and current_line.depth == 0
@@ -1282,9 +1321,32 @@ def append_leaves(
     Pre-conditions:
         set(@leaves) is a subset of set(@old_line.leaves).
     """
+    # @leaves is a slice of @old_line.leaves, so the leaves are in tree (DFS)
+    # order and the children replaced within any one parent are reached at
+    # strictly increasing positions. Remembering where the last child of each
+    # parent was found lets the lookup resume from there instead of rescanning the
+    # whole child list through Base.remove on every leaf, which is otherwise
+    # O(n^2) when a node has many children replaced (e.g. wrapping the operand
+    # tuple of "%s" % (a, b, c, ...) or copying a very long line for a second
+    # formatting pass).
+    search_start: dict[int, int] = {}
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
-        replace_child(old_leaf, new_leaf)
+        parent = old_leaf.parent
+        if parent is not None:
+            children = parent.children
+            index = search_start.get(id(parent), 0)
+            while index < len(children) and children[index] is not old_leaf:
+                index += 1
+            if index < len(children):
+                # set_child swaps the child in place (the old one keeps the same
+                # position), so the next sibling to replace is always further on.
+                parent.set_child(index, new_leaf)
+                search_start[id(parent)] = index + 1
+            else:
+                # The resume hint missed (unexpected ordering); fall back to the
+                # full scan so behaviour is unchanged.
+                replace_child(old_leaf, new_leaf)
         new_line.append(new_leaf, preformatted=preformatted)
 
         for comment_leaf in old_line.comments_after(old_leaf):
@@ -1320,6 +1382,10 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     multiline_string: Leaf | None = None
     # store the leaves that contain parts of the MLS
     multiline_string_contexts: list[LN] = []
+
+    # `id()`s of the leaves on this line, used to find which ancestors of the
+    # multiline string are rendered in full on this line (see below).
+    line_leaf_ids = {id(leaf) for leaf in line.leaves}
 
     max_level_to_update: int | float = math.inf  # track the depth of the MLS
     for i, leaf in enumerate(line.leaves):
@@ -1364,8 +1430,18 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
                 return False
             multiline_string = leaf
             ctx: LN = leaf
-            # fetch the leaf components of the MLS in the AST
-            while str(ctx) in line_str:
+            # fetch the leaf components of the MLS in the AST. An ancestor is
+            # part of the MLS context while it is rendered in full on this line,
+            # i.e. its first and last leaves both belong to the line (a line is
+            # a contiguous run of leaves). Walking the leaf ids instead of
+            # re-rendering `str(ctx)` and substring-searching `line_str` at every
+            # level keeps this linear; the old form was quadratic on lines with a
+            # large multiline-string-bearing collection (e.g. a dict literal with
+            # many triple-quoted values).
+            while (
+                id(first_leaf(ctx)) in line_leaf_ids
+                and id(last_leaf(ctx)) in line_leaf_ids
+            ):
                 multiline_string_contexts.append(ctx)
                 if ctx.parent is None:
                     break
@@ -1446,6 +1522,15 @@ def can_omit_invisible_parens(
     are too long.
     """
     line = rhs.body
+
+    # Don't omit optional parens when the opening paren carries an inline comment.
+    # Omitting them re-parents the comment onto a different leaf after the next
+    # parse, which can make the RHS splitter choose a different shape on each
+    # pass (unstable formatting / "different code on the second pass"). See
+    # issues #3701, #3706, and #4384.
+    if rhs.opening_bracket.type == token.LPAR and not rhs.opening_bracket.value:
+        if rhs.head.comments.get(id(rhs.opening_bracket)):
+            return False
 
     # We can't omit parens if doing so would result in a type: ignore comment
     # sharing a line with other comments, as that breaks type: ignore parsing.

@@ -23,32 +23,37 @@ jobs:
             pathsep: ";"
             asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
+            strip: false
           - os: windows-11-arm
             pathsep: ";"
             asset_name: black_windows-arm.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
+            strip: false
           - os: ubuntu-latest
             pathsep: ":"
             asset_name: black_linux
             executable_mime: "application/x-executable"
+            strip: true
           - os: ubuntu-24.04-arm
             pathsep: ":"
             asset_name: black_linux-arm
             executable_mime: "application/x-executable"
+            strip: true
           - os: macos-latest
             pathsep: ":"
             asset_name: black_macos
             executable_mime: "application/x-mach-binary"
+            strip: false
     permissions:
       contents: write # Needed to upload to release
 
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.14"
           pip-version: "25.3"
@@ -56,8 +61,9 @@ jobs:
 
       - name: Build executable with PyInstaller
         run:
-          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data
-          'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+          python -m PyInstaller -F ${{ matrix.strip && '--strip' || '' }} --name ${{
+          matrix.asset_name }} --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3'
+          src/black/__main__.py
 
       - name: Quickly test executable
         run: |

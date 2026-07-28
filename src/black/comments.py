@@ -205,9 +205,14 @@ def normalize_fmt_off(
     # mutates the tree at or after the converted leaf, so earlier leaves never
     # need to be revisited.
     leaves = list(node.leaves())
+    # Per-parent hint of where the previous conversion removed a child, so the
+    # left-to-right removals below don't rescan each parent's children list from
+    # index 0 every time (quadratic when a file has many `# fmt: off` blocks
+    # sharing one parent).
+    search_hints: dict[int, int] = {}
     i = 0
     while i < len(leaves):
-        i = convert_one_fmt_off_pair(node, leaves, i, mode, lines)
+        i = convert_one_fmt_off_pair(node, leaves, i, mode, lines, search_hints)
 
 
 def _should_process_fmt_comment(
@@ -307,9 +312,11 @@ def _handle_comment_only_fmt_block(
         # This preserves all comments and content before the fmt:off directive
         pre_fmt_off_consumed = all_comments[fmt_off_idx - 1].consumed
 
-    standalone_comment_prefix = (
-        original_prefix[:pre_fmt_off_consumed] + "\n" * comment.newlines
-    )
+    preceding_prefix = original_prefix[:pre_fmt_off_consumed]
+    if fmt_off_idx > 0:
+        preceding_prefix = preceding_prefix.lstrip("\r\n")
+
+    standalone_comment_prefix = preceding_prefix + "\n" * comment.newlines
 
     fmt_off_prefix = original_prefix.split(comment.value)[0]
     if "\n" in fmt_off_prefix:
@@ -349,6 +356,7 @@ def convert_one_fmt_off_pair(
     start: int,
     mode: Mode,
     lines: Collection[tuple[int, int]],
+    search_hints: dict[int, int] | None = None,
 ) -> int:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
@@ -408,6 +416,7 @@ def convert_one_fmt_off_pair(
                 is_fmt_skip,
                 lines,
                 leaf,
+                search_hints,
             )
             return idx
 
@@ -431,6 +440,7 @@ def _handle_regular_fmt_block(
     is_fmt_skip: bool,
     lines: Collection[tuple[int, int]],
     leaf: Leaf,
+    search_hints: dict[int, int] | None = None,
 ) -> None:
     """Handle fmt blocks with actual AST nodes."""
     first = ignored_nodes[0]  # Can be a container node with the `leaf`.
@@ -514,7 +524,19 @@ def _handle_regular_fmt_block(
 
     first_idx: int | None = None
     for ignored in ignored_nodes:
-        index = ignored.remove()
+        ignored_parent = ignored.parent
+        hint = (
+            search_hints.get(id(ignored_parent), 0)
+            if search_hints is not None and ignored_parent is not None
+            else 0
+        )
+        index = ignored.remove(hint)
+        if (
+            index is not None
+            and search_hints is not None
+            and ignored_parent is not None
+        ):
+            search_hints[id(ignored_parent)] = index
         if first_idx is None:
             first_idx = index
 
@@ -630,22 +652,28 @@ def _should_keep_compound_statement_inline(
     Returns True only for compound statements with semicolon-separated bodies,
     like: if True: print("a"); print("b")  # fmt: skip
     """
-    # Check if there are semicolons in the body
-    for leaf in body_node.leaves():
-        if leaf.type == token.SEMI:
-            # Verify it's a single-line body (one simple_stmt)
-            if body_node.type == syms.suite:
-                # After formatting: check suite has one simple_stmt child
-                simple_stmts = [
-                    child
-                    for child in body_node.children
-                    if child.type == syms.simple_stmt
-                ]
-                return len(simple_stmts) == 1 and simple_stmts[0] is simple_stmt_parent
-            else:
-                # Original form: body_node IS the simple_stmt
-                return body_node is simple_stmt_parent
-    return False
+    # Narrow down to the single simple_stmt that may carry the semicolons before
+    # scanning any leaves. A compound statement's suite holds one child per body
+    # statement, so walking the whole suite here is O(n) and, called once per
+    # `# fmt: skip` line in the block, makes the pass O(n^2).
+    if body_node.type == syms.suite:
+        # After formatting: the suite must hold exactly one simple_stmt and it
+        # must be the one carrying the directive. Stop at the second simple_stmt.
+        target: LN | None = None
+        for child in body_node.children:
+            if child.type == syms.simple_stmt:
+                if target is not None:
+                    return False
+                target = child
+        if target is None or target is not simple_stmt_parent:
+            return False
+    else:
+        # Original form: body_node IS the simple_stmt
+        if body_node is not simple_stmt_parent:
+            return False
+        target = body_node
+
+    return any(leaf.type == token.SEMI for leaf in target.leaves())
 
 
 def _get_compound_statement_header(

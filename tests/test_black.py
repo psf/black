@@ -1122,6 +1122,26 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(workspace)])
 
     @event_loop()
+    def test_invalid_black_num_workers(self) -> None:
+        for workers in ["abc", "0", "-1"]:
+            with (
+                cache_dir() as workspace,
+                patch.dict(os.environ, {"BLACK_NUM_WORKERS": workers}),
+            ):
+                for f in [
+                    (workspace / "one.py").resolve(),
+                    (workspace / "two.py").resolve(),
+                ]:
+                    f.write_text('print("hello")\n', encoding="utf-8")
+
+                result = BlackRunner().invoke(black.main, [str(workspace)])
+
+            assert result.exit_code == 2
+            assert result.exception is not None
+            assert "BLACK_NUM_WORKERS" in result.stderr
+            assert "Traceback" not in result.stderr
+
+    @event_loop()
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
             # Files which will be reformatted.
@@ -1674,6 +1694,43 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_read_pyproject_toml_rejects_non_string_regex_configs(self) -> None:
+        for config_key, option_name in [
+            ("include", "include"),
+            ("force-exclude", "force-exclude"),
+        ]:
+            with self.subTest(config_key=config_key):
+                with TemporaryDirectory() as workspace:
+                    config = Path(workspace) / "pyproject.toml"
+                    config.write_text(
+                        f'[tool.black]\n{config_key} = ["not", "a", "regex"]\n',
+                        encoding="utf-8",
+                    )
+
+                    fake_ctx = FakeContext()
+                    with pytest.raises(click.BadOptionUsage) as exc_info:
+                        black.read_pyproject_toml(fake_ctx, None, str(config))
+
+                    assert exc_info.value.option_name == option_name
+                    assert "must be a string" in exc_info.value.message
+
+    def test_cli_rejects_non_string_pyproject_regex_configs(self) -> None:
+        for config_key in ["include", "force-exclude"]:
+            with self.subTest(config_key=config_key):
+                with TemporaryDirectory() as workspace:
+                    config = Path(workspace) / "pyproject.toml"
+                    config.write_text(
+                        f'[tool.black]\n{config_key} = ["not", "a", "regex"]\n',
+                        encoding="utf-8",
+                    )
+
+                    result = BlackRunner().invoke(
+                        black.main, ["--config", str(config), "--code", "print(1)"]
+                    )
+
+                    assert result.exit_code == 2
+                    assert f"Config key {config_key} must be a string" in result.stderr
 
     def test_read_pyproject_toml_from_stdin(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -2255,6 +2312,13 @@ class TestCaching:
             invokeBlack([str(src)])
             cache = black.Cache.read(mode)
             assert not cache.is_changed(src)
+
+    def test_cache_empty_file(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir():
+            cache_file = get_cache_file(mode)
+            cache_file.touch()
+            assert black.Cache.read(mode).file_data == {}
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE

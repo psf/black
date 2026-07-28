@@ -1607,6 +1607,11 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         # can't fit onto the line currently being constructed.
         rest_value = LL[string_idx].value
 
+        # Each substring is a suffix of this value (plus the prefix and quote),
+        # so a missing "\N" here means no substring can hold a named escape and
+        # the per-substring scan for them can be skipped entirely.
+        has_named_escape = "\\N" in rest_value
+
         def more_splits_should_be_made() -> bool:
             """
             Returns:
@@ -1630,7 +1635,9 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                     count_chars_in_width(rest_value, max_break_width)
                     - string_op_leaves_length
                 )
-                maybe_break_idx = self._get_break_idx(rest_value, max_bidx)
+                maybe_break_idx = self._get_break_idx(
+                    rest_value, max_bidx, has_named_escape
+                )
                 if maybe_break_idx is None:
                     # If we are unable to algorithmically determine a good split
                     # and this string has custom splits registered to it, we
@@ -1789,18 +1796,23 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             return
         yield from iter_fexpr_spans(string)
 
-    def _get_illegal_split_indices(self, string: str) -> set[Index]:
+    def _get_illegal_split_indices(
+        self, string: str, has_named_escape: bool = True
+    ) -> set[Index]:
         illegal_indices: set[Index] = set()
-        iterators = [
-            self._iter_fexpr_slices(string),
-            self._iter_nameescape_slices(string),
-        ]
+        iterators = [self._iter_fexpr_slices(string)]
+        # Scanning for \N{...} ranges walks the whole string, so skip it when the
+        # caller already knows the string cannot contain a named escape.
+        if has_named_escape:
+            iterators.append(self._iter_nameescape_slices(string))
         for it in iterators:
             for begin, end in it:
                 illegal_indices.update(range(begin, end))
         return illegal_indices
 
-    def _get_break_idx(self, string: str, max_break_idx: int) -> int | None:
+    def _get_break_idx(
+        self, string: str, max_break_idx: int, has_named_escape: bool = True
+    ) -> int | None:
         """
         This method contains the algorithm that StringSplitter uses to
         determine which character to split each string at.
@@ -1812,6 +1824,8 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             doesn't we will try to find the closest index BELOW @max_break_idx
             that does. If that fails, we will expand our search by also
             considering all valid indices ABOVE @max_break_idx.
+            @has_named_escape: Whether the original string can contain a named
+            escape. False lets us skip the per-substring scan for them.
 
         Pre-Conditions:
             * assert_is_leaf_string(@string)
@@ -1829,7 +1843,9 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         assert is_valid_index(max_break_idx)
         assert_is_leaf_string(string)
 
-        _illegal_split_indices = self._get_illegal_split_indices(string)
+        _illegal_split_indices = self._get_illegal_split_indices(
+            string, has_named_escape
+        )
 
         def breaks_unsplittable_expression(i: Index) -> bool:
             """
@@ -1855,8 +1871,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 j -= 1
 
             is_big_enough = (
-                len(string[i:]) >= self.MIN_SUBSTR_SIZE
-                and len(string[:i]) >= self.MIN_SUBSTR_SIZE
+                len(string) - i >= self.MIN_SUBSTR_SIZE and i >= self.MIN_SUBSTR_SIZE
             )
             return (
                 (is_space or is_split_safe)

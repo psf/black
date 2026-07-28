@@ -17,8 +17,27 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unparseable output for a t-string whose replacement field contains a quote (for
+  example `t'\'{a["b"]}\''`). The guards that keep quote normalisation away from the
+  inside of an f-string replacement field were never reached for t-strings, so the
+  nested quotes were escaped and Black failed on its own output (#5265)
+- Fix unparseable output for a triple-quoted string whose body ends in an already
+  escaped double quote (for example `'''\'''\"'''`). Switching to `"""` escaped the
+  backslash instead of the quote, leaving the closing quotes bare, so Black failed on
+  its own output (#5262)
+- Fix dropping the required trailing comma from a single-element tuple used as a lambda
+  parameter default under `--skip-magic-trailing-comma` when a standalone comment forces
+  the tuple across multiple lines; removing the comma turned the tuple into a bare
+  expression and failed Black's AST safety check (#5246)
+- Fix unstable formatting when an inline comment sits on optional parentheses (for
+  example a parenthesized assert message or assignment RHS) (#5241)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Respect the magic trailing comma in a PEP 695 type parameter list containing a
+  `*TypeVarTuple` or `**ParamSpec`, which previously collapsed back onto one line
+  (#5244)
+- Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`
+  statement after another standalone comment (#5189)
 - Fix a crash when splitting `case case if ...` match patterns at very small line
   lengths (#5147)
 - Fix multiline docstring indentation when leading tabs are used inside indented
@@ -34,8 +53,12 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
+  after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
   `x[key] = expr` (#5095)
+- Parenthesize tuple expressions in `yield` statements for consistency with function
+  calls and returns (#5170)
 - Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
   the right-hand side is a bracketed expression. Black now lets the bracket explode
   instead. This fixes the awkward break that was showing up in comprehension `if`
@@ -43,6 +66,13 @@
   parenthesized expressions (#5135)
 - In `.pyi` stub files, enforce a blank line after a function or method that has a
   docstring-only body when another comment or statement follows it (#5158)
+- Keep the parentheses around a lambda used as the iterable of a comprehension (e.g.
+  `[x for x in (lambda: 0) if x]`). They were previously stripped by
+  `wrap_comprehension_in`, which produced invalid code and crashed Black (#5176)
+- Collapse redundant nested parentheses around a lambda or conditional expression used
+  as a comprehension's iterable down to a single pair (e.g. `[x for x in ((lambda: 0))]`
+  becomes `[x for x in (lambda: 0)]`). Previously the inner pair was stripped too,
+  leaving the bare expression and crashing Black (#5200)
 
 ### Configuration
 
@@ -53,10 +83,19 @@
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
   directory gets the correct `pyproject.toml` (#5152)
 - Add validation for --line-ranges values (#5107)
+- Ignore empty cache files like other malformed cache files instead of raising an
+  `EOFError` (#5192)
+- Reject non-string `include` and `force-exclude` values in `pyproject.toml` (#5193)
+- Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors instead
+  of crashing (#5211)
+- Ignore permission errors when reading cache (#5258)
 
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
+
+- Reduce the size of Linux standalone binaries by stripping debug symbols during the
+  PyInstaller release build (#5223)
 
 ### Parser
 
@@ -76,6 +115,55 @@
   (#5171)
 - Improve performance when merging long runs of implicitly concatenated strings by no
   longer re-escaping the whole accumulated string on every merge step (#5173)
+  sibling-maps-incremental
+- Improve performance on code whose formatting rewrites large nodes (such as `--preview`
+  string processing) by maintaining the `blib2to3` sibling-node maps incrementally
+  rather than rebuilding them from scratch after every tree mutation (#5178)
+- Improve performance on long calls and collections by no longer scanning the whole line
+  to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
+- Improve performance on functions and other blocks containing many `# fmt: skip`
+  comments by no longer scanning every leaf of the enclosing block for each directive
+  when checking for a semicolon-separated inline body (#5190)
+- Improve performance when merging large groups of implicitly concatenated strings by no
+  longer rebuilding a node's children list and sibling maps from scratch on every
+  `replace` call (#5194)
+- Improve performance on lines holding a multiline string inside a large collection (for
+  example a dict literal whose values are all triple-quoted strings) by locating the
+  string's enclosing nodes via leaf membership instead of re-rendering each enclosing
+  node to a string in `is_line_short_enough` (#5188)
+- Improve performance on files with many soft-keyword constructs (such as `match`/`case`
+  blocks) by discarding spent token-lookahead ranges in the parser instead of
+  re-scanning all of them for every token (#5186)
+- Improve performance when splitting long string literals (preview string processing) by
+  no longer re-scanning the whole string for `\N{...}` named escapes on every substring
+  (#5183)
+- Improve performance on large dict literals and long semicolon-separated statements by
+  wrapping a node's children in invisible parentheses in place instead of removing and
+  re-inserting each one, which scanned the whole child list every time (#5184)
+- Improve performance when copying a long line's leaves into a new line (for example
+  `--preview` string processing of `"%s ..." % (a, b, c, ...)` or a string with a
+  backslash continuation) by resuming the child lookup in `append_leaves` instead of
+  rescanning each leaf's parent from the start (#5199)
+- Improve performance of `--line-ranges` on files with many sibling blocks (a long
+  `if`/`elif` chain, a `match` with many cases, or many top-level definitions) by
+  splicing the unchanged blocks into each parent's child list in a single pass rather
+  than removing and re-inserting each one, which rescanned and shifted the whole child
+  list on every conversion (#5213)
+- Improve performance on files with many `# fmt: off`/`# fmt: on` blocks by resuming the
+  search for each converted block within its parent's child list from the previous
+  conversion's position instead of rescanning the whole list from the start on every
+  node removal (#5232)
+- Improve performance on deeply nested bracketed expressions by collecting each leaf
+  once in `get_leaves_inside_matching_brackets` instead of re-adding the whole span of
+  enclosed leaves for every surrounding bracket pair (#5242)
+- Improve performance on lists and subscripts holding one large expression that contains
+  no comparison or arithmetic sub-node (for example a long run of implicitly
+  concatenated strings inside `[]`) by caching the `is_complex_subscript` subtree walk
+  per node instead of re-walking the whole bracketed expression for every leaf (#5239)
+- Improve performance on deeply nested expressions (such as a long `a ** b ** c ** ...`
+  chain) by walking the `blib2to3` node tree iteratively in `pre_order`, `post_order`
+  and `leaves` instead of recursing with `yield from`, whose per-node generator
+  delegation made a full traversal quadratic in nesting depth (#5235)
 
 ### Output
 
@@ -522,8 +610,8 @@ The following changes were not in any previous release:
 
 ### Preview style
 
-- Fix type annotation spacing between * and more complex type variable tuple (i.e. `def
-  fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
+- Fix type annotation spacing between * and more complex type variable tuple (i.e.
+  `def fn(*args: *tuple[*Ts, T]) -> None: pass`) (#4440)
 
 ### Caching
 

@@ -477,8 +477,8 @@ code in compliance with many other _Black_ formatted projects.
 
 [PEP 518](https://peps.python.org/pep-0518/) defines `pyproject.toml` as a configuration
 file to store build system requirements for Python projects. With the help of tools like
-[Poetry](https://python-poetry.org/), [Flit](https://flit.readthedocs.io/en/latest/), or
-[Hatch](https://hatch.pypa.io/latest/) it can fully replace the need for `setup.py` and
+[Poetry](https://python-poetry.org/), [Flit](https://flit.pypa.io/), or
+[Hatch](https://hatch.pypa.io/) it can fully replace the need for `setup.py` and
 `setup.cfg` files.
 
 ### Where _Black_ looks for the file
@@ -498,7 +498,7 @@ and only if _Black_ doesn't find any configuration as mentioned above. Depending
 operating system, this configuration file should be stored as:
 
 - Windows: `~\.black`
-- Unix-like (Linux, MacOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
+- Unix-like (Linux, macOS, etc.): `$XDG_CONFIG_HOME/black` (`~/.config/black` if the
   `XDG_CONFIG_HOME` environment variable is not set)
 
 Note that these are paths to the TOML file itself (meaning that they shouldn't be named
@@ -517,10 +517,9 @@ Please note `blackd` will not use `pyproject.toml` configuration.
 
 ### Configuration format
 
-As the file extension suggests, `pyproject.toml` is a
-[TOML](https://github.com/toml-lang/toml) file. It contains separate sections for
-different tools. _Black_ is using the `[tool.black]` section. The option keys are the
-same as long names of options on the command line.
+As the file extension suggests, `pyproject.toml` is a [TOML](https://toml.io) file. It
+contains separate sections for different tools. _Black_ is using the `[tool.black]`
+section. The option keys are the same as long names of options on the command line.
 
 Most command-line options can be configured in `[tool.black]` by using their long name
 without the leading `--` (for example, `--line-length` becomes `line-length`). Options
@@ -597,7 +596,7 @@ file hierarchy.
 ## Next steps
 
 A good next step would be configuring auto-discovery so `black .` is all you need
-instead of laborously listing every file or directory. You can get started by heading
+instead of laboriously listing every file or directory. You can get started by heading
 over to [File collection and discovery](./file_collection_and_discovery.md).
 
 Another good choice would be setting up an

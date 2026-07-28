@@ -157,10 +157,20 @@ def read_pyproject_toml(
     if exclude is not None and not isinstance(exclude, str):
         raise click.BadOptionUsage("exclude", "Config key exclude must be a string")
 
+    include = config.get("include")
+    if include is not None and not isinstance(include, str):
+        raise click.BadOptionUsage("include", "Config key include must be a string")
+
     extend_exclude = config.get("extend_exclude")
     if extend_exclude is not None and not isinstance(extend_exclude, str):
         raise click.BadOptionUsage(
             "extend-exclude", "Config key extend-exclude must be a string"
+        )
+
+    force_exclude = config.get("force_exclude")
+    if force_exclude is not None and not isinstance(force_exclude, str):
+        raise click.BadOptionUsage(
+            "force-exclude", "Config key force-exclude must be a string"
         )
 
     line_ranges = config.get("line_ranges")
@@ -1174,7 +1184,7 @@ def validate_metadata(nb: MutableMapping[str, Any]) -> None:
     """If notebook is marked as non-Python, don't format it.
 
     All notebook metadata fields are optional, see
-    https://nbformat.readthedocs.io/en/latest/format_description.html. So
+    https://nbformat.readthedocs.io/en/stable/format_description.html. So
     if a notebook has empty metadata, we will try to parse it anyway.
     """
     language = nb.get("metadata", {}).get("language_info", {}).get("name", None)

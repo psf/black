@@ -73,6 +73,8 @@ VARARGS_PARENTS: Final = {
     syms.trailer,  # single argument to call
     syms.typedargslist,
     syms.varargslist,  # lambdas
+    syms.typevartuple,  # star in a PEP 695 type parameter list
+    syms.paramspec,  # double star in a PEP 695 type parameter list
 }
 UNPACKING_PARENTS: Final = {
     syms.atom,  # single element of a list or set literal
@@ -684,11 +686,24 @@ def is_one_sequence_between(
         return False
 
     depth = closing.bracket_depth + 1
-    for _opening_index, leaf in enumerate(leaves):
-        if leaf is opening:
+    # Locate `opening` by scanning inward from both ends at once. Callers pass the
+    # whole line's leaf list and this runs once per bracket, so a plain forward scan
+    # from the start costs O(index) and turns quadratic on a long line; meeting in
+    # the middle bounds each lookup to the nearer end.
+    _opening_index = -1
+    left = 0
+    right = len(leaves) - 1
+    while left <= right:
+        if leaves[left] is opening:
+            _opening_index = left
             break
+        if leaves[right] is opening:
+            _opening_index = right
+            break
+        left += 1
+        right -= 1
 
-    else:
+    if _opening_index == -1:
         return False
 
     commas = 0
@@ -987,22 +1002,40 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     ].lstrip().startswith("ignore")
 
 
-def wrap_in_parentheses(parent: Node, child: LN, *, visible: bool = True) -> None:
+def wrap_in_parentheses(
+    parent: Node, child: LN, *, visible: bool = True, index: int | None = None
+) -> None:
     """Wrap `child` in parentheses.
 
     This replaces `child` with an atom holding the parentheses and the old
     child.  That requires moving the prefix.
 
     If `visible` is False, the leaves will be valueless (and thus invisible).
+
+    When the caller already knows `child`'s position in `parent.children` it
+    can pass `index` so the child is swapped in place. The default path locates
+    `child` with `Base.remove`, which scans and rewrites the whole child list;
+    that is O(len(parent.children)) per call and turns quadratic when a caller
+    wraps every child of a large node (e.g. each value of a big dict literal).
     """
     lpar = Leaf(token.LPAR, "(" if visible else "")
     rpar = Leaf(token.RPAR, ")" if visible else "")
     prefix = child.prefix
     child.prefix = ""
-    index = child.remove() or 0
-    new_child = Node(syms.atom, [lpar, child, rpar])
-    new_child.prefix = prefix
-    parent.insert_child(index, new_child)
+    if index is None:
+        index = child.remove() or 0
+        new_child = Node(syms.atom, [lpar, child, rpar])
+        new_child.prefix = prefix
+        parent.insert_child(index, new_child)
+    else:
+        # Detach the child pointer first so the atom can adopt it, then swap it
+        # in place. set_child resets the old child's parent, so reattach it to
+        # the new atom afterwards.
+        child.parent = None
+        new_child = Node(syms.atom, [lpar, child, rpar])
+        new_child.prefix = prefix
+        parent.set_child(index, new_child)
+        child.parent = new_child
 
 
 def unwrap_singleton_parenthesis(node: LN) -> LN | None:

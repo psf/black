@@ -130,22 +130,21 @@ class Base:
         assert new is not None
         if not isinstance(new, list):
             new = [new]
-        l_children = []
-        found = False
-        for ch in self.parent.children:
+        parent = self.parent
+        for i, ch in enumerate(parent.children):
             if ch is self:
-                assert not found, (self.parent.children, self, new)
-                if new is not None:
-                    l_children.extend(new)
-                found = True
-            else:
-                l_children.append(ch)
-        assert found, (self.children, self, new)
-        self.parent.children = l_children
-        self.parent.changed()
-        self.parent.invalidate_sibling_maps()
+                break
+        else:
+            raise AssertionError((parent.children, self, new))
+        # Splice the new children in place of `self` and keep the cached sibling
+        # maps valid without rebuilding them, which would be O(len(children)) per
+        # call and quadratic when many children are replaced while siblings are
+        # read in between (e.g. merging implicitly concatenated strings).
+        parent._replace_child_in_sibling_maps(self, new)
+        parent.children[i : i + 1] = new
+        parent.changed()
         for x in new:
-            x.parent = self.parent
+            x.parent = parent
         self.parent = None
 
     def get_lineno(self) -> int | None:
@@ -164,17 +163,27 @@ class Base:
             self.parent.changed()
         self.was_changed = True
 
-    def remove(self) -> int | None:
+    def remove(self, search_start: int = 0) -> int | None:
         """
         Remove the node from the tree. Returns the position of the node in its
         parent's children before it was removed.
+
+        ``search_start`` hints where to begin looking in the parent's children.
+        A caller that removes many siblings of the same parent in left-to-right
+        order can pass the last returned position to avoid rescanning the whole
+        list from index 0 every time, which is quadratic over the parent. The
+        entire list is still searched (starting at the hint and wrapping around),
+        so an inaccurate hint only costs a little extra scanning.
         """
         if self.parent:
-            for i, node in enumerate(self.parent.children):
-                if node is self:
-                    del self.parent.children[i]
+            children = self.parent.children
+            count = len(children)
+            for offset in range(count):
+                i = (search_start + offset) % count
+                if children[i] is self:
+                    del children[i]
                     self.parent.changed()
-                    self.parent.invalidate_sibling_maps()
+                    self.parent._remove_from_sibling_maps(self)
                     self.parent = None
                     return i
         return None
@@ -208,8 +217,16 @@ class Base:
         return self.parent.prev_sibling_map[id(self)]
 
     def leaves(self) -> Iterator["Leaf"]:
-        for child in self.children:
-            yield from child.leaves()
+        # Walk iteratively rather than recursing with `yield from`, whose per-node
+        # generator delegation is O(depth) and makes a full traversal quadratic on
+        # deeply nested trees (e.g. a long `a ** b ** c ** ...` chain).
+        stack: list[NL] = list(reversed(self.children))
+        while stack:
+            node = stack.pop()
+            if isinstance(node, Leaf):
+                yield node
+            else:
+                stack.extend(reversed(node.children))
 
     def depth(self) -> int:
         if self.parent is None:
@@ -292,15 +309,26 @@ class Node(Base):
 
     def post_order(self) -> Iterator[NL]:
         """Return a post-order iterator for the tree."""
-        for child in self.children:
-            yield from child.post_order()
-        yield self
+        # Walk iteratively rather than recursing with `yield from`. The recursive
+        # form resumes one delegating generator per level on every step, so a full
+        # traversal costs O(depth) per node and is quadratic on deeply nested trees.
+        stack: list[tuple[NL, bool]] = [(self, False)]
+        while stack:
+            node, expanded = stack.pop()
+            if expanded:
+                yield node
+            else:
+                stack.append((node, True))
+                stack.extend((child, False) for child in reversed(node.children))
 
     def pre_order(self) -> Iterator[NL]:
         """Return a pre-order iterator for the tree."""
-        yield self
-        for child in self.children:
-            yield from child.pre_order()
+        # See `post_order` for why this is iterative instead of recursive.
+        stack: list[NL] = [self]
+        while stack:
+            node = stack.pop()
+            yield node
+            stack.extend(reversed(node.children))
 
     @property
     def prefix(self) -> str:
@@ -322,10 +350,11 @@ class Node(Base):
         child's parent attribute appropriately.
         """
         child.parent = self
-        self.children[i].parent = None
+        old = self.children[i]
+        old.parent = None
         self.children[i] = child
         self.changed()
-        self.invalidate_sibling_maps()
+        self._replace_in_sibling_maps(old, child)
 
     def insert_child(self, i: int, child: NL) -> None:
         """
@@ -335,7 +364,10 @@ class Node(Base):
         child.parent = self
         self.children.insert(i, child)
         self.changed()
-        self.invalidate_sibling_maps()
+        if 0 <= i < len(self.children) and self.children[i] is child:
+            self._insert_into_sibling_maps(i, child)
+        else:
+            self.invalidate_sibling_maps()
 
     def append_child(self, child: NL) -> None:
         """
@@ -345,11 +377,82 @@ class Node(Base):
         child.parent = self
         self.children.append(child)
         self.changed()
-        self.invalidate_sibling_maps()
+        self._insert_into_sibling_maps(len(self.children) - 1, child)
 
     def invalidate_sibling_maps(self) -> None:
         self.prev_sibling_map: dict[int, NL | None] | None = None
         self.next_sibling_map: dict[int, NL | None] | None = None
+
+    def _insert_into_sibling_maps(self, i: int, child: NL) -> None:
+        """Splice a newly inserted child into the cached sibling maps.
+
+        Keeps the maps valid without rebuilding them from scratch, which would
+        be O(len(children)) per call and quadratic when many children are
+        inserted while siblings are read in between (e.g. ``append_leaves``).
+        """
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        before = self.children[i - 1] if i > 0 else None
+        after = self.children[i + 1] if i + 1 < len(self.children) else None
+        prev_map[id(child)] = before
+        next_map[id(child)] = after
+        next_map[id(before)] = child
+        if after is not None:
+            prev_map[id(after)] = child
+
+    def _remove_from_sibling_maps(self, child: NL) -> None:
+        """Splice a removed child out of the cached sibling maps."""
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        if id(child) not in prev_map:
+            self.invalidate_sibling_maps()
+            return
+        before = prev_map.pop(id(child))
+        after = next_map.pop(id(child))
+        next_map[id(before)] = after
+        if after is not None:
+            prev_map[id(after)] = before
+
+    def _replace_in_sibling_maps(self, old: NL, child: NL) -> None:
+        """Swap ``old`` for ``child`` at the same position in the sibling maps."""
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        if id(old) not in prev_map:
+            self.invalidate_sibling_maps()
+            return
+        before = prev_map.pop(id(old))
+        after = next_map.pop(id(old))
+        prev_map[id(child)] = before
+        next_map[id(child)] = after
+        next_map[id(before)] = child
+        if after is not None:
+            prev_map[id(after)] = child
+
+    def _replace_child_in_sibling_maps(self, old: NL, new_children: list[NL]) -> None:
+        """Swap ``old`` for ``new_children`` at the same position in the maps."""
+        prev_map = self.prev_sibling_map
+        next_map = self.next_sibling_map
+        if prev_map is None or next_map is None:
+            return
+        if id(old) not in prev_map:
+            self.invalidate_sibling_maps()
+            return
+        before = prev_map.pop(id(old))
+        after = next_map.pop(id(old))
+        previous = before
+        for child in new_children:
+            prev_map[id(child)] = previous
+            next_map[id(previous)] = child
+            previous = child
+        next_map[id(previous)] = after
+        if after is not None:
+            prev_map[id(after)] = previous
 
     def update_sibling_maps(self) -> None:
         _prev: dict[int, NL | None] = {}
