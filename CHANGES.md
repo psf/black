@@ -38,6 +38,10 @@
   (#5244)
 - Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`
   statement after another standalone comment (#5189)
+- Fix target version inference from ``requires-python`` for strict-greater specifiers
+  such as ``>3.7``: per PEP 440 this is equivalent to ``>3.7.0`` and must include
+  ``py37`` (e.g. ``>3.7,<3.10`` now yields py37, py38 and py39 instead of only py38
+  and py39) (#3581)
 - Fix a crash when splitting `case case if ...` match patterns at very small line
   lengths (#5147)
 - Fix multiline docstring indentation when leading tabs are used inside indented
