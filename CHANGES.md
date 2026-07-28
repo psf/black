@@ -17,6 +17,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unparseable output for a t-string whose replacement field contains a quote (for
+  example `t'\'{a["b"]}\''`). The guards that keep quote normalisation away from the
+  inside of an f-string replacement field were never reached for t-strings, so the
+  nested quotes were escaped and Black failed on its own output (#5265)
 - Fix unparseable output for a triple-quoted string whose body ends in an already
   escaped double quote (for example `'''\'''\"'''`). Switching to `"""` escaped the
   backslash instead of the quote, leaving the closing quotes bare, so Black failed on
