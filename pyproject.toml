@@ -143,7 +143,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc>=0.16.0", "mypy==1.20.2"]
+dependencies = ["hatch-mypyc>=0.16.0", "mypy==2.3.0"]
 require-runtime-dependencies = true
 exclude = [
     # There's no good reason for blackd to be compiled.
@@ -227,8 +227,6 @@ branch = true
 python_version = "3.10"
 mypy_path = "src"
 strict = true
-strict_bytes = true
-local_partial_types = true
 # Unreachable blocks have been an issue when compiling mypyc, let's try to avoid 'em in the first place.
 warn_unreachable = true
 implicit_reexport = true
