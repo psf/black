@@ -230,11 +230,14 @@ def is_split_after_delimiter(leaf: Leaf) -> Priority:
         parent = leaf.parent
         if parent is not None and parent.type == syms.exprlist:
             grandparent = parent.parent
-            if grandparent is not None and grandparent.type in {
-                syms.comp_for,
-                syms.old_comp_for,
-                syms.for_stmt,
-            }:
+            if (
+                grandparent is not None
+                and grandparent.type in {
+                    syms.comp_for,
+                    syms.old_comp_for,
+                    syms.for_stmt,
+                }
+            ):
                 return 0
         return COMMA_PRIORITY
 

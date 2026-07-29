@@ -131,8 +131,9 @@ class LineGenerator(Visitor[Line]):
             self.current_line.depth += indent
             return  # Line is empty, don't emit. Creating a new one unnecessary.
 
-        if len(self.current_line.leaves) == 1 and is_async_stmt_or_funcdef(
-            self.current_line.leaves[0]
+        if (
+            len(self.current_line.leaves) == 1
+            and is_async_stmt_or_funcdef(self.current_line.leaves[0])
         ):
             # Special case for async def/for/with statements. `visit_async_stmt`
             # adds an `ASYNC` leaf then visits the child def/for/with statement
@@ -418,10 +419,13 @@ class LineGenerator(Visitor[Line]):
             # the fmt block itself directly to preserve its formatting
 
             # Only process prefix comments if there actually is a prefix with comments
-            if leaf.prefix and any(
-                line.strip().startswith("#")
-                and not contains_fmt_directive(line.strip())
-                for line in leaf.prefix.split("\n")
+            if (
+                leaf.prefix
+                and any(
+                    line.strip().startswith("#")
+                    and not contains_fmt_directive(line.strip())
+                    for line in leaf.prefix.split("\n")
+                )
             ):
                 for comment in generate_comments(leaf, mode=self.mode):
                     yield from self.line()
@@ -465,8 +469,11 @@ class LineGenerator(Visitor[Line]):
 
         def foo(a: (int), b: (float) = 7): ...
         """
-        if len(node.children) == 3 and maybe_make_parens_invisible_in_atom(
-            node.children[2], parent=node, mode=self.mode, features=self.features
+        if (
+            len(node.children) == 3
+            and maybe_make_parens_invisible_in_atom(
+                node.children[2], parent=node, mode=self.mode, features=self.features
+            )
         ):
             wrap_in_parentheses(node, node.children[2], visible=False)
 
@@ -569,8 +576,9 @@ class LineGenerator(Visitor[Line]):
         if len(node.children) == 3:
             first = node.children[0]
             last = node.children[-1]
-            if (first.type == token.LSQB and last.type == token.RSQB) or (
-                first.type == token.LBRACE and last.type == token.RBRACE
+            if (
+                (first.type == token.LSQB and last.type == token.RSQB)
+                or (first.type == token.LBRACE and last.type == token.RBRACE)
             ):
                 # Lists or sets of one item
                 maybe_make_parens_invisible_in_atom(
@@ -592,10 +600,13 @@ class LineGenerator(Visitor[Line]):
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
-        if "\\" in string_leaf.value and any(
-            "\\" in str(child)
-            for child in node.children
-            if child.type == syms.fstring_replacement_field
+        if (
+            "\\" in string_leaf.value
+            and any(
+                "\\" in str(child)
+                for child in node.children
+                if child.type == syms.fstring_replacement_field
+            )
         ):
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
@@ -612,10 +623,13 @@ class LineGenerator(Visitor[Line]):
         # currently we don't want to format and split t-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
-        if "\\" in string_leaf.value and any(
-            "\\" in str(child)
-            for child in node.children
-            if child.type == syms.tstring_replacement_field
+        if (
+            "\\" in string_leaf.value
+            and any(
+                "\\" in str(child)
+                for child in node.children
+                if child.type == syms.tstring_replacement_field
+            )
         ):
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
@@ -799,8 +813,12 @@ def transform_line(
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
                 # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], mode=mode) or (
-                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+                if (
+                    is_line_short_enough(lines[0], mode=mode)
+                    or (
+                        omit
+                        and _over_length_only_due_to_subscript_comment(lines[0], mode)
+                    )
                 ):
                     yield from lines
                     return
@@ -947,8 +965,9 @@ def left_hand_split(
                 current_leaves = tail_leaves if body_leaves else head_leaves
             current_leaves.append(leaf)
             if current_leaves is head_leaves:
-                if leaf.type == leaf_type and (
-                    not (leaf_type == token.LPAR and depth > 0)
+                if (
+                    leaf.type == leaf_type
+                    and (not (leaf_type == token.LPAR and depth > 0))
                 ):
                     matching_bracket = leaf
                     current_leaves = body_leaves
@@ -1347,8 +1366,9 @@ def bracket_split_build_line(
         )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if component is _BracketSplitComponent.body and should_split_line(
-        result, opening_bracket
+    if (
+        component is _BracketSplitComponent.body
+        and should_split_line(result, opening_bracket)
     ):
         result.should_split_rhs = True
     return result
@@ -1419,8 +1439,9 @@ def _can_defer_lone_comparator_to_rhs(line: Line, mode: Mode) -> bool:
     for leaf in line.leaves:
         if leaf.type in OPENING_BRACKETS and not past_comparator:
             return False
-        if not past_comparator and (
-            line.bracket_tracker.delimiters.get(id(leaf)) == COMPARATOR_PRIORITY
+        if (
+            not past_comparator
+            and (line.bracket_tracker.delimiters.get(id(leaf)) == COMPARATOR_PRIORITY)
         ):
             past_comparator = True
     try:
@@ -1569,8 +1590,9 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
     )
     for leaf in line.leaves:
-        if current_line.leaves and (
-            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+        if (
+            current_line.leaves
+            and (leaf.type == STANDALONE_COMMENT or current_line.is_comment)
         ):
             yield current_line
             current_line = Line(
@@ -1811,12 +1833,15 @@ def remove_await_parens(node: Node, mode: Mode, features: Collection[Feature]) -
             opening_bracket = cast(Leaf, node.children[1].children[0])
             closing_bracket = cast(Leaf, node.children[1].children[-1])
             bracket_contents = node.children[1].children[1]
-            if isinstance(bracket_contents, Node) and (
-                bracket_contents.type != syms.power
-                or bracket_contents.children[0].type == token.AWAIT
-                or any(
-                    isinstance(child, Leaf) and child.type == token.DOUBLESTAR
-                    for child in bracket_contents.children
+            if (
+                isinstance(bracket_contents, Node)
+                and (
+                    bracket_contents.type != syms.power
+                    or bracket_contents.children[0].type == token.AWAIT
+                    or any(
+                        isinstance(child, Leaf) and child.type == token.DOUBLESTAR
+                        for child in bracket_contents.children
+                    )
                 )
             ):
                 ensure_visible(opening_bracket)
@@ -1900,8 +1925,9 @@ def remove_with_parens(
         for child in node.children:
             if isinstance(child, Node):
                 remove_with_parens(child, node, mode=mode, features=features)
-    elif node.type == syms.asexpr_test and not any(
-        leaf.type == token.COLONEQUAL for leaf in node.leaves()
+    elif (
+        node.type == syms.asexpr_test
+        and not any(leaf.type == token.COLONEQUAL for leaf in node.leaves())
     ):
         if maybe_make_parens_invisible_in_atom(
             node.children[0],
@@ -2189,9 +2215,13 @@ def _conditional_expression_trailers_to_omit(line: Line, mode: Mode) -> set[Leaf
         ),
         None,
     )
-    if closing_index is None or not any(
-        leaf.value in {"and", "or"} and leaf.bracket_depth == opening.bracket_depth + 1
-        for leaf in line.leaves[opening_index + 1 : closing_index]
+    if (
+        closing_index is None
+        or not any(
+            leaf.value in {"and", "or"}
+            and leaf.bracket_depth == opening.bracket_depth + 1
+            for leaf in line.leaves[opening_index + 1 : closing_index]
+        )
     ):
         return set()
 

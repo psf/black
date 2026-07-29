@@ -92,15 +92,18 @@ class Line:
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
-            elif self.has_magic_trailing_comma(leaf) and not (
-                # A one-element tuple's trailing comma is syntactically required,
-                # not magic, so it must never be removed. This is normally caught
-                # by has_magic_trailing_comma, but that check misses the tuple
-                # when its opening bracket was split onto an earlier line (for
-                # example by a standalone comment inside the tuple), so verify
-                # against the tree here before dropping the comma.
-                leaf.parent is not None
-                and is_one_tuple(leaf.parent)
+            elif (
+                self.has_magic_trailing_comma(leaf)
+                and not (
+                    # A one-element tuple's trailing comma is syntactically required,
+                    # not magic, so it must never be removed. This is normally caught
+                    # by has_magic_trailing_comma, but that check misses the tuple
+                    # when its opening bracket was split onto an earlier line (for
+                    # example by a standalone comment inside the tuple), so verify
+                    # against the tree here before dropping the comma.
+                    leaf.parent is not None
+                    and is_one_tuple(leaf.parent)
+                )
             ):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
@@ -281,8 +284,9 @@ class Line:
         try:
             last_leaf = self.leaves[-1]
             ignored_ids.add(id(last_leaf))
-            if last_leaf.type == token.COMMA or (
-                last_leaf.type == token.RPAR and not last_leaf.value
+            if (
+                last_leaf.type == token.COMMA
+                or (last_leaf.type == token.RPAR and not last_leaf.value)
             ):
                 # When trailing commas or optional parens are inserted by Black for
                 # consistency, comments after the previous last element are not moved
@@ -302,9 +306,12 @@ class Line:
         for leaf_id, comments in self.comments.items():
             for comment in comments:
                 if is_type_comment(comment, mode=self.mode):
-                    if comment_seen or (
-                        not is_type_ignore_comment(comment, mode=self.mode)
-                        and leaf_id not in ignored_ids
+                    if (
+                        comment_seen
+                        or (
+                            not is_type_ignore_comment(comment, mode=self.mode)
+                            and leaf_id not in ignored_ids
+                        )
                     ):
                         return True
 
@@ -385,8 +392,11 @@ class Line:
         if self.is_import:
             return True
 
-        if closing.opening_bracket is not None and not is_one_sequence_between(
-            closing.opening_bracket, closing, self.leaves
+        if (
+            closing.opening_bracket is not None
+            and not is_one_sequence_between(
+                closing.opening_bracket, closing, self.leaves
+            )
         ):
             return True
 
@@ -848,8 +858,9 @@ class EmptyLineTracker:
 
         # Check if the if_stmt's next sibling is a same-name decorated function.
         adjacent = EmptyLineTracker._find_adjacent_decorated(if_stmt)
-        if adjacent is not None and EmptyLineTracker._decorated_node_has_func_named(
-            adjacent, func_name
+        if (
+            adjacent is not None
+            and EmptyLineTracker._decorated_node_has_func_named(adjacent, func_name)
         ):
             return True
 
@@ -923,11 +934,14 @@ class EmptyLineTracker:
 
         # Maintain the semantic_leading_comment state.
         if current_line.is_comment:
-            if self.previous_line is None or (
-                not self.previous_line.is_decorator
-                # `or before` means this comment already has an empty line before
-                and (not self.previous_line.is_comment or before)
-                and (self.semantic_leading_comment is None or before)
+            if (
+                self.previous_line is None
+                or (
+                    not self.previous_line.is_decorator
+                    # `or before` means this comment already has an empty line before
+                    and (not self.previous_line.is_comment or before)
+                    and (self.semantic_leading_comment is None or before)
+                )
             ):
                 self.semantic_leading_comment = block
         # `or before` means this decorator already has an empty line before
@@ -1056,9 +1070,12 @@ class EmptyLineTracker:
                 ):
                     if self._is_in_current_group(current_line):
                         before = 0
-                    elif current_line.opens_block and (
-                        self._get_block_first_decorated_funcname(current_line)
-                        == self._pyi_previous_decorated_func.name
+                    elif (
+                        current_line.opens_block
+                        and (
+                            self._get_block_first_decorated_funcname(current_line)
+                            == self._pyi_previous_decorated_func.name
+                        )
                     ):
                         before = 0
                     else:
@@ -1183,8 +1200,9 @@ class EmptyLineTracker:
                 return 0, 1
             return 0, 0
 
-        if self.previous_line.depth < current_line.depth and (
-            self.previous_line.is_class or self.previous_line.is_def
+        if (
+            self.previous_line.depth < current_line.depth
+            and (self.previous_line.is_class or self.previous_line.is_def)
         ):
             if self.mode.is_pyi:
                 return 0, 0
@@ -1254,8 +1272,9 @@ class EmptyLineTracker:
             ):
                 newlines = 1
             elif (
-                current_line.is_def or current_line.is_decorator
-            ) and not self.previous_line.is_def:
+                (current_line.is_def or current_line.is_decorator)
+                and not self.previous_line.is_def
+            ):
                 if (
                     overload_groups
                     and current_line.is_decorator
@@ -1410,17 +1429,24 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
             # directly after MLS/MLS-containing expression
             ignore_ctxs: list[LN | None] = [None]
             ignore_ctxs += multiline_string_contexts
-            if (line.inside_brackets or leaf.bracket_depth > 0) and (
-                i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs
+            if (
+                (line.inside_brackets or leaf.bracket_depth > 0)
+                and (i != len(line.leaves) - 1 or leaf.prev_sibling not in ignore_ctxs)
             ):
                 commas[leaf.bracket_depth] += 1
         if max_level_to_update != math.inf:
             max_level_to_update = min(max_level_to_update, leaf.bracket_depth)
 
         if is_multiline_string(leaf):
-            if leaf.parent and (
-                leaf.parent.type == syms.test
-                or (leaf.parent.parent and leaf.parent.parent.type == syms.dictsetmaker)
+            if (
+                leaf.parent
+                and (
+                    leaf.parent.type == syms.test
+                    or (
+                        leaf.parent.parent
+                        and leaf.parent.parent.type == syms.dictsetmaker
+                    )
+                )
             ):
                 # Keep ternary and dictionary values parenthesized
                 return False
@@ -1564,8 +1590,9 @@ def can_omit_invisible_parens(
 
             # Preserve parens if we have both type: ignore and other comments that
             # could end up on the same line
-            if (has_type_ignore_in_head and has_other_comment_in_body) or (
-                has_other_comment_in_head and has_type_ignore_in_body
+            if (
+                (has_type_ignore_in_head and has_other_comment_in_body)
+                or (has_other_comment_in_head and has_type_ignore_in_body)
             ):
                 return False
 

@@ -198,16 +198,22 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if t == token.COLON and p.type not in {
-        syms.subscript,
-        syms.subscriptlist,
-        syms.sliceop,
-    }:
+    if (
+        t == token.COLON
+        and p.type not in {
+            syms.subscript,
+            syms.subscriptlist,
+            syms.sliceop,
+        }
+    ):
         return NO
 
-    if t == token.LBRACE and p.type in (
-        syms.fstring_replacement_field,
-        syms.tstring_replacement_field,
+    if (
+        t == token.LBRACE
+        and p.type in (
+            syms.fstring_replacement_field,
+            syms.tstring_replacement_field,
+        )
     ):
         return NO
 
@@ -387,10 +393,13 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if prevp.type == token.COLON and prevp_parent.type in {
-                syms.subscript,
-                syms.sliceop,
-            }:
+            if (
+                prevp.type == token.COLON
+                and prevp_parent.type in {
+                    syms.subscript,
+                    syms.sliceop,
+                }
+            ):
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -715,10 +724,13 @@ def is_one_sequence_between(
         bracket_depth = leaf.bracket_depth
         if bracket_depth == depth and leaf.type == token.COMMA:
             commas += 1
-            if leaf.parent and leaf.parent.type in {
-                syms.arglist,
-                syms.typedargslist,
-            }:
+            if (
+                leaf.parent
+                and leaf.parent.type in {
+                    syms.arglist,
+                    syms.typedargslist,
+                }
+            ):
                 commas += 1
                 break
 
