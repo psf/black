@@ -16,10 +16,9 @@ __author__ = "Guido van Rossum <guido@python.org>"
 __all__ = ["Driver", "load_grammar"]
 
 # Python imports
-import io
 import logging
 import os
-import pkgutil
+import pickle
 import sys
 from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
@@ -257,19 +256,32 @@ def load_grammar(
     """Load the grammar (maybe from a pickle)."""
     if logger is None:
         logger = logging.getLogger(__name__)
+
     gp = _generate_pickle_name(gt) if gp is None else gp
-    if force or not _newer(gp, gt):
-        g: grammar.Grammar = pgen.generate_grammar(gt)
-        if save:
-            try:
-                g.dump(gp)
-            except OSError:
-                # Ignore error, caching is not vital.
-                pass
-    else:
-        g = grammar.Grammar()
-        g.load(gp)
-    return g
+
+    if not force and _newer(gp, gt):
+        try:
+            g_unpickled = grammar.Grammar()
+            g_unpickled.load(gp)
+            return g_unpickled
+        except (
+            pickle.UnpicklingError,
+            EOFError,
+            ValueError,
+            IndexError,
+            PermissionError,
+        ):
+            # Ignore error and continue on to generate a new grammar
+            pass
+
+    g_generated: grammar.Grammar = pgen.generate_grammar(gt)
+    if save:
+        try:
+            g_generated.dump(gp)
+        except OSError:
+            # Ignore error, caching is not vital.
+            pass
+    return g_generated
 
 
 def _newer(a: str, b: str) -> bool:
@@ -282,27 +294,14 @@ def _newer(a: str, b: str) -> bool:
 
 
 def load_packaged_grammar(
-    package: str, grammar_source: str, cache_dir: Path | None = None
+    grammar_source: str, cache_dir: Path | None = None
 ) -> grammar.Grammar:
-    """Normally, loads a pickled grammar by doing
-        pkgutil.get_data(package, pickled_grammar)
-    where *pickled_grammar* is computed from *grammar_source* by adding the
-    Python version and using a ``.pickle`` extension.
-
-    However, if *grammar_source* is an extant file, load_grammar(grammar_source)
-    is called instead. This facilitates using a packaged grammar file when needed
-    but preserves load_grammar's automatic regeneration behavior when possible.
-
+    """Loads a grammar by doing `load_grammar(grammar_source)`.
+    This facilitates using a packaged grammar file when needed but preserves
+    load_grammar's automatic regeneration behavior when possible.
     """
-    if os.path.isfile(grammar_source):
-        gp = _generate_pickle_name(grammar_source, cache_dir) if cache_dir else None
-        return load_grammar(grammar_source, gp=gp)
-    pickled_name = _generate_pickle_name(os.path.basename(grammar_source), cache_dir)
-    data = pkgutil.get_data(package, pickled_name)
-    assert data is not None
-    g = grammar.Grammar()
-    g.loads(data)
-    return g
+    gp = _generate_pickle_name(grammar_source, cache_dir) if cache_dir else None
+    return load_grammar(grammar_source, gp=gp)
 
 
 def main(*args: str) -> bool:

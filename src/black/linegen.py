@@ -615,7 +615,7 @@ class LineGenerator(Visitor[Line]):
         if "\\" in string_leaf.value and any(
             "\\" in str(child)
             for child in node.children
-            if child.type == syms.fstring_replacement_field
+            if child.type == syms.tstring_replacement_field
         ):
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
