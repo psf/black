@@ -59,6 +59,13 @@ To read the version from the `pyproject.toml` file instead, set `use_pyproject` 
 `project.optional-dependencies` table. Note that this requires Python >= 3.11, so using
 the setup-python action may be required, for example:
 
+```{note}
+This action only reads version specifiers from standard `pyproject.toml` locations.
+Poetry-specific dependency tables such as `tool.poetry.dependencies` are not parsed.
+If you manage `black` with Poetry, set `tool.black.required-version` or use the
+`version` input.
+```
+
 **Security note:** `use_pyproject` only accepts standard version specifiers for `black`
 (for example `==`, `~=`, `>=` and ranges like `>=25,<26`). Direct references such as
 `black @ https://...` are not supported. If your workflow runs on untrusted pull

@@ -73,6 +73,8 @@ VARARGS_PARENTS: Final = {
     syms.trailer,  # single argument to call
     syms.typedargslist,
     syms.varargslist,  # lambdas
+    syms.typevartuple,  # star in a PEP 695 type parameter list
+    syms.paramspec,  # double star in a PEP 695 type parameter list
 }
 UNPACKING_PARENTS: Final = {
     syms.atom,  # single element of a list or set literal

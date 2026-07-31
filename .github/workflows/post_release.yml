@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout stable branch
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: stable
           fetch-depth: 0
@@ -35,7 +35,7 @@ jobs:
       contents: write # Needed to push to new branch
       pull-requests: write # Needed to create PR
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-tags: true
@@ -49,7 +49,7 @@ jobs:
 
       - run: python scripts/release.py -a
 
-      - uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+      - uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
         with:
           commit_message: Add new changelog
           branch: ci/new-changelog

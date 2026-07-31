@@ -92,7 +92,8 @@
           "pyi_blank_line_before_decorated_class",
           "pyi_blank_line_after_function_docstring",
           "hug_comparator",
-          "parenthesize_tuple_in_yield"
+          "parenthesize_tuple_in_yield",
+          "fmt_off_class_blank_lines"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."

@@ -198,9 +198,14 @@ def normalize_fmt_off(
     # mutates the tree at or after the converted leaf, so earlier leaves never
     # need to be revisited.
     leaves = list(node.leaves())
+    # Per-parent hint of where the previous conversion removed a child, so the
+    # left-to-right removals below don't rescan each parent's children list from
+    # index 0 every time (quadratic when a file has many `# fmt: off` blocks
+    # sharing one parent).
+    search_hints: dict[int, int] = {}
     i = 0
     while i < len(leaves):
-        i = convert_one_fmt_off_pair(node, leaves, i, mode, lines)
+        i = convert_one_fmt_off_pair(node, leaves, i, mode, lines, search_hints)
 
 
 def _should_process_fmt_comment(
@@ -344,6 +349,7 @@ def convert_one_fmt_off_pair(
     start: int,
     mode: Mode,
     lines: Collection[tuple[int, int]],
+    search_hints: dict[int, int] | None = None,
 ) -> int:
     """Convert content of a single `# fmt: off`/`# fmt: on` into a standalone comment.
 
@@ -403,6 +409,7 @@ def convert_one_fmt_off_pair(
                 is_fmt_skip,
                 lines,
                 leaf,
+                search_hints,
             )
             return idx
 
@@ -426,6 +433,7 @@ def _handle_regular_fmt_block(
     is_fmt_skip: bool,
     lines: Collection[tuple[int, int]],
     leaf: Leaf,
+    search_hints: dict[int, int] | None = None,
 ) -> None:
     """Handle fmt blocks with actual AST nodes."""
     first = ignored_nodes[0]  # Can be a container node with the `leaf`.
@@ -509,7 +517,19 @@ def _handle_regular_fmt_block(
 
     first_idx: int | None = None
     for ignored in ignored_nodes:
-        index = ignored.remove()
+        ignored_parent = ignored.parent
+        hint = (
+            search_hints.get(id(ignored_parent), 0)
+            if search_hints is not None and ignored_parent is not None
+            else 0
+        )
+        index = ignored.remove(hint)
+        if (
+            index is not None
+            and search_hints is not None
+            and ignored_parent is not None
+        ):
+            search_hints[id(ignored_parent)] = index
         if first_idx is None:
             first_idx = index
 

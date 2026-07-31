@@ -13,6 +13,12 @@ def it_gets_worse[WhatIsTheLongestTypeVarNameYouCanThinkOfEnoughToMakeBlackSplit
 
 def magic[Trailing, Comma,](): pass
 
+def magic_starred[T, *Ts, **P,](): pass
+
+class MagicStarred[T, *Ts, **P,]: pass
+
+type MagicStarredAlias[T, *Ts, **P,] = int
+
 def weird_syntax[T: lambda: 42, U: a or b](): pass
 
 def name_3[name_0: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa if aaaaaaaaaaa else name_3](): pass
@@ -60,6 +66,29 @@ def magic[
     Comma,
 ]():
     pass
+
+
+def magic_starred[
+    T,
+    *Ts,
+    **P,
+]():
+    pass
+
+
+class MagicStarred[
+    T,
+    *Ts,
+    **P,
+]:
+    pass
+
+
+type MagicStarredAlias[
+    T,
+    *Ts,
+    **P,
+] = int
 
 
 def weird_syntax[T: lambda: 42, U: a or b]():

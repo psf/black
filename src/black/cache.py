@@ -79,7 +79,13 @@ class Cache:
             try:
                 data: dict[str, tuple[float, int, str]] = pickle.load(fobj)
                 file_data = {k: FileData(*v) for k, v in data.items()}
-            except (pickle.UnpicklingError, EOFError, ValueError, IndexError):
+            except (
+                pickle.UnpicklingError,
+                EOFError,
+                ValueError,
+                IndexError,
+                PermissionError,
+            ):
                 return cls(mode, cache_file)
 
         return cls(mode, cache_file, file_data)
