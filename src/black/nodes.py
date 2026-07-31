@@ -1002,6 +1002,21 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     ].lstrip().startswith("ignore")
 
 
+def is_ruff_ignore_comment(leaf: Leaf) -> bool:
+    """Return True if the given leaf is a line-scoped Ruff ignore comment."""
+    if leaf.type not in {token.COMMENT, STANDALONE_COMMENT}:
+        return False
+
+    value = leaf.value
+    if not value.startswith("#"):
+        return False
+
+    directive = value[1:].lstrip()
+    return directive.startswith("ruff:") and directive.split(":", 1)[
+        1
+    ].lstrip().startswith("ignore")
+
+
 def wrap_in_parentheses(
     parent: Node, child: LN, *, visible: bool = True, index: int | None = None
 ) -> None:
