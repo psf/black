@@ -141,8 +141,6 @@ ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
     token.BANG,
 }
 
-RARROW = 55
-
 
 @mypyc_attr(allow_interpreted_subclasses=True)
 class Visitor(Generic[T]):
