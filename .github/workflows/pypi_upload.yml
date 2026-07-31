@@ -27,6 +27,7 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.15"
+          allow-prereleases: true
           pip-version: "26.1"
           pip-install: --group cibw
 
@@ -80,6 +81,7 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.15"
+          allow-prereleases: true
           pip-version: "26.1"
           pip-install: --group cibw
 
@@ -106,11 +108,14 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.15"
+          allow-prereleases: true
           pip-version: "26.1"
           pip-install: --group hatch
 
       - name: Build wheel and source distributions
         run: python -m hatch build
+        env:
+          VIRTUALENV_PIP: "26.1"
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
