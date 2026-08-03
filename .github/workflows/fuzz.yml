@@ -18,9 +18,6 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  PIP_UPLOADED_PRIOR_TO: P2D
-
 jobs:
   fuzz:
     runs-on: ubuntu-latest
