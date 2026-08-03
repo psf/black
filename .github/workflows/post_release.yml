@@ -6,6 +6,9 @@ on:
 
 permissions: {}
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 jobs:
   update-stable:
     runs-on: ubuntu-latest

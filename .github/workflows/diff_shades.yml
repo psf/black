@@ -24,6 +24,7 @@ concurrency:
 
 env:
   HATCH_BUILD_HOOKS_ENABLE: "1"
+  PIP_UPLOADED_PRIOR_TO: P2D
   # Clang is less picky with the C code it's given than gcc (and may generate faster
   # binaries too).
   CC: clang-18

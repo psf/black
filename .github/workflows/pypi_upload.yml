@@ -10,6 +10,7 @@ on:
 permissions: {}
 
 env:
+  PIP_UPLOADED_PRIOR_TO: P2D
   PROJECT: https://pypi.org/p/black
 
 jobs:

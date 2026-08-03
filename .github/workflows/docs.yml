@@ -10,6 +10,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 jobs:
   docs:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run

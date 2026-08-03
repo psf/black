@@ -7,6 +7,9 @@ on:
 
 permissions: {}
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 jobs:
   comment:
     runs-on: ubuntu-latest

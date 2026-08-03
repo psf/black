@@ -4,6 +4,9 @@ on: [push, pull_request]
 
 permissions: {}
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 jobs:
   lint:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
