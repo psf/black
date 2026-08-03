@@ -17,6 +17,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Stop treating a t-string in docstring position as a docstring (for example
+  `t"  spam  "` as the first statement of a module, class or function). t-strings
+  evaluate to `Template`, never `str`, so stripping and reindenting one changed the
+  value of the template and tripped Black's AST safety check (#5287)
 - Preserve line-scoped `ruff:ignore` pragmas instead of moving them into nested
   expressions when splitting long lines (#5276)
 - Fix unparseable output for a t-string whose replacement field contains a quote (for

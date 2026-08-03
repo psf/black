@@ -579,7 +579,9 @@ def is_docstring(node: NL) -> bool:
             return False
 
         prefix = get_string_prefix(node.value)
-        if set(prefix).intersection("bBfF"):
+        # Bytes, f-strings and t-strings never evaluate to str, so they are not
+        # docstrings even in docstring position.
+        if set(prefix).intersection("bBfFtT"):
             return False
 
     if (
