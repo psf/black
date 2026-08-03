@@ -113,8 +113,6 @@ jobs:
 
       - name: Build wheel and source distributions
         run: python -m hatch build
-        env:
-          VIRTUALENV_PIP: "26.1"
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
