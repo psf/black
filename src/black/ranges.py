@@ -525,7 +525,7 @@ def _get_line_range(node_or_nodes: LN | list[LN]) -> set[int]:
                 return set()
 
 
-@dataclass
+@dataclass(slots=True, eq=False, repr=False)
 class _LinesMapping:
     """1-based lines mapping from original source to modified source.
 

@@ -36,7 +36,7 @@ from . import grammar, parse, pgen, token, tokenize
 Path = Union[str, "os.PathLike[str]"]
 
 
-@dataclass
+@dataclass(slots=True, eq=False, repr=False)
 class ReleaseRange:
     start: int
     end: int | None = None
@@ -48,6 +48,8 @@ class ReleaseRange:
 
 
 class TokenProxy:
+    __slots__ = ("_tokens", "_counter", "_release_ranges", "logger")
+
     def __init__(self, generator: Any) -> None:
         self._tokens = generator
         self._counter = 0

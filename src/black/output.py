@@ -89,8 +89,7 @@ def diff(a: str, b: str, a_name: str, b_name: str) -> str:
         if line[-1] == "\n":
             diff_lines.append(line)
         else:
-            diff_lines.append(line + "\n")
-            diff_lines.append("\\ No newline at end of file\n")
+            diff_lines.extend((line + "\n", "\\ No newline at end of file\n"))
     return "".join(diff_lines)
 
 
