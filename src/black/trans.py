@@ -579,8 +579,18 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         new_line = line.clone()
         previous_merged_string_idx = -1
         previous_merged_num_of_strings = -1
+        # Leaves outside any merged string group are copied in runs rather than
+        # one at a time. append_leaves resumes the search for each leaf's
+        # position from where the previous sibling of the same parent was found,
+        # so copying a run of leaves that share a parent (the operand tuple of
+        # "%s ..." % (a, b, c, ...)) stays linear; a fresh call per leaf restarts
+        # that search from the front every time and is quadratic in the operands.
+        pending: list[Leaf] = []
         for i, leaf in enumerate(LL):
             if i in merged_string_idx_dict:
+                if pending:
+                    append_leaves(new_line, line, pending)
+                    pending = []
                 previous_merged_string_idx = i
                 previous_merged_num_of_strings, string_leaf = merged_string_idx_dict[i]
                 new_line.append(string_leaf)
@@ -594,7 +604,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                     new_line.append(comment_leaf, preformatted=True)
                 continue
 
-            append_leaves(new_line, line, [leaf])
+            pending.append(leaf)
+
+        if pending:
+            append_leaves(new_line, line, pending)
 
         return Ok(new_line)
 

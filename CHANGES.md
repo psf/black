@@ -166,6 +166,10 @@
   chain) by walking the `blib2to3` node tree iteratively in `pre_order`, `post_order`
   and `leaves` instead of recursing with `yield from`, whose per-node generator
   delegation made a full traversal quadratic in nesting depth (#5235)
+- Improve performance of `--preview` string merging on lines such as
+  `"%s ..." % (a, b, c, ...)` by copying the leaves that surround the merged string in
+  one `append_leaves` call instead of one call per leaf, which rescanned the shared
+  parent's child list from the start every time (#5220)
 
 ### Output
 
