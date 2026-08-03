@@ -59,6 +59,17 @@ To read the version from the `pyproject.toml` file instead, set `use_pyproject` 
 `project.optional-dependencies` table. Note that this requires Python >= 3.11, so using
 the setup-python action may be required, for example:
 
+```yaml
+- uses: actions/setup-python@v6
+  with:
+    python-version: "3.11"
+- uses: psf/black@stable
+  with:
+    options: "--check --verbose"
+    src: "./src"
+    use_pyproject: true
+```
+
 ```{note}
 This action only reads version specifiers from standard `pyproject.toml` locations.
 Poetry-specific dependency tables such as `tool.poetry.dependencies` are not parsed.
@@ -67,22 +78,10 @@ If you manage `black` with Poetry, set `tool.black.required-version` or use the
 ```
 
 **Security note:** `use_pyproject` only accepts standard version specifiers for `black`
-(for example `==`, `~=`, `>=` and ranges like `>=25,<26`). Direct references such as
-`black @ https://...` are not supported. If your workflow runs on untrusted pull
+(for example `==`, `~=`, `>=` and ranges like `>=25,<26`). Only versions available from
+PyPI are supported, so no commit SHAs or branch names. Direct references such as
+`black @ https://...` are also not supported. If your workflow runs on untrusted pull
 requests (for example from forks), prefer setting `with.version` explicitly.
-
-```yaml
-- uses: actions/setup-python@v6
-  with:
-    python-version: "3.13"
-- uses: psf/black@stable
-  with:
-    options: "--check --verbose"
-    src: "./src"
-    use_pyproject: true
-```
-
-Only versions available from PyPI are supported, so no commit SHAs or branch names.
 
 ### Jupyter Notebooks
 
