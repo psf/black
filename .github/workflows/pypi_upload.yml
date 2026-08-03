@@ -115,8 +115,16 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --group hatch
 
+      - name: Calculate PIP_UPLOADED_PRIOR_TO
+        # virtualenv 20.39 uses pip 26.0 - manually calculate this until we bump virtualenv/hatch
+        id: uploaded_prior_to
+        run:
+          echo "date=$(date -u -d "2 days ago" +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
       - name: Build wheel and source distributions
         run: python -m hatch build
+        env:
+          PIP_UPLOADED_PRIOR_TO: ${{ steps.uploaded_prior_to.outputs.date }}
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
