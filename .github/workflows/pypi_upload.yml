@@ -29,7 +29,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - name: Install dependencies
         run: python -m pip install --group cibw
@@ -85,7 +84,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - name: Install dependencies
         run: python -m pip install --group cibw
@@ -113,7 +111,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - name: Install dependencies
         run: python -m pip install --group hatch

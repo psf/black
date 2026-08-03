@@ -46,7 +46,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - run: python scripts/release.py -a
 

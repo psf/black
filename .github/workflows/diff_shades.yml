@@ -47,7 +47,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - name: Install dependencies
         run: python -m pip install --group diff-shades --group diff-shades-comment
@@ -80,7 +79,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - name: Install dependencies
         run: python -m pip install --group diff-shades
@@ -139,7 +137,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - name: Install dependencies
         run: python -m pip install --group diff-shades
@@ -211,7 +208,6 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-          pip-version: "26.1"
 
       - name: Install dependencies
         run: python -m pip install --group diff-shades --group diff-shades-comment
