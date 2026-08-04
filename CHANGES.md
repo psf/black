@@ -35,6 +35,9 @@
   expression and failed Black's AST safety check (#5246)
 - Fix unstable formatting when an inline comment sits on optional parentheses (for
   example a parenthesized assert message or assignment RHS) (#5241)
+- Fix `--skip-magic-trailing-comma` dropping the trailing comma of a one-element
+  subscript (`a[x,]`) when the line is long enough to be split and contains a power
+  operator (#5272)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
 - Respect the magic trailing comma in a PEP 695 type parameter list containing a
