@@ -1998,7 +1998,6 @@ def maybe_make_parens_invisible_in_atom(
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
-            syms.for_stmt,
         ]:
             return False
 
