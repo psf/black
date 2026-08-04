@@ -210,18 +210,6 @@ global setting, follow these steps:
 
 ### Official plugin
 
-For insert-mode indentation that follows the same hanging-bracket style as _Black_, you
-can also use the
-[`vim-python-pep8-indent`](https://github.com/Vimjas/vim-python-pep8-indent) plugin. It
-provides Vim's `indentexpr`; _Black_ remains responsible for formatting the file. For
-example, with Vundle:
-
-```vim
-Plugin 'Vimjas/vim-python-pep8-indent'
-```
-
-Commands and shortcuts:
-
 - `:Black` to format the entire file (ranges not supported);
   - you can optionally pass `target_version=<version>` with the same values as in the
     command line.
@@ -501,3 +489,15 @@ hook global WinSetOption filetype=python %{
 ## Thonny
 
 Use [Thonny-black-formatter](https://github.com/ettore-galli/thonny-black-formatter).
+
+## Vim indentation plugin
+
+For insert-mode indentation that follows the same hanging-bracket style as _Black_,
+you can also use the
+[`vim-python-pep8-indent`](https://github.com/Vimjas/vim-python-pep8-indent) plugin.
+It provides Vim's `indentexpr`; _Black_ remains responsible for formatting the file.
+For example, with Vundle:
+
+```vim
+Plugin 'Vimjas/vim-python-pep8-indent'
+```
