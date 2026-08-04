@@ -9,6 +9,9 @@ on:
 
 permissions: {}
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 jobs:
   zizmor:
     name: zizmor
