@@ -990,31 +990,48 @@ def _first_right_hand_split(
     _maybe_split_omitting_optional_parens to get an opinion whether to prefer
     splitting on the right side of an assignment statement.
     """
-    tail_leaves: list[Leaf] = []
-    body_leaves: list[Leaf] = []
-    head_leaves: list[Leaf] = []
-    current_leaves = tail_leaves
     opening_bracket: Leaf | None = None
     closing_bracket: Leaf | None = None
-    for leaf in reversed(line.leaves):
-        if current_leaves is body_leaves:
-            if leaf is opening_bracket:
-                current_leaves = head_leaves if body_leaves else tail_leaves
-        current_leaves.append(leaf)
-        if current_leaves is tail_leaves:
-            if leaf.type in CLOSING_BRACKETS and id(leaf) not in omit:
-                opening_bracket = leaf.opening_bracket
-                closing_bracket = leaf
-                current_leaves = body_leaves
+    if line._simple_subscript_widths is not None:
+        closing_index = next(
+            (
+                index
+                for index in range(len(line.leaves) - 1, 1, -1)
+                if line.leaves[index].type == token.RSQB
+                and id(line.leaves[index]) not in omit
+            ),
+            None,
+        )
+        if closing_index is not None:
+            opening_index = closing_index - 2
+            opening_bracket = line.leaves[opening_index]
+            closing_bracket = line.leaves[closing_index]
+            head_leaves = line.leaves[: opening_index + 1]
+            body_leaves = line.leaves[opening_index + 1 : closing_index]
+            tail_leaves = line.leaves[closing_index:]
+    if opening_bracket is None or closing_bracket is None:
+        tail_leaves = []
+        body_leaves = []
+        head_leaves = []
+        current_leaves = tail_leaves
+        for leaf in reversed(line.leaves):
+            if current_leaves is body_leaves:
+                if leaf is opening_bracket:
+                    current_leaves = head_leaves if body_leaves else tail_leaves
+            current_leaves.append(leaf)
+            if current_leaves is tail_leaves:
+                if leaf.type in CLOSING_BRACKETS and id(leaf) not in omit:
+                    opening_bracket = leaf.opening_bracket
+                    closing_bracket = leaf
+                    current_leaves = body_leaves
+        tail_leaves.reverse()
+        body_leaves.reverse()
+        head_leaves.reverse()
     if not (opening_bracket and closing_bracket and head_leaves):
         # If there is no opening or closing_bracket that means the split failed and
         # all content is in the tail.  Otherwise, if `head_leaves` are empty, it means
         # the matching `opening_bracket` wasn't available on `line` anymore.
         raise CannotSplit("No brackets found")
-
-    tail_leaves.reverse()
-    body_leaves.reverse()
-    head_leaves.reverse()
 
     body: Line | None = None
     if (
@@ -1349,6 +1366,37 @@ def bracket_split_build_line(
 
     leaves_to_track: set[LeafID] = set()
     if component is _BracketSplitComponent.head:
+        if original._simple_subscript_widths is not None:
+            previous = next(
+                (leaf for leaf in reversed(leaves) if leaf.type == token.RSQB),
+                None,
+            )
+            if previous is not None:
+                result.leaves.extend(leaves)
+                result._simple_subscript_widths = original._simple_subscript_widths
+                result.bracket_tracker.previous = previous
+                return result
+        tracked_leaves = _simple_subscript_chain_leaves(leaves, original)
+        if tracked_leaves is not None:
+            result.leaves.extend(leaves)
+            for index in range(0, len(tracked_leaves), 3):
+                opening_bracket = tracked_leaves[index]
+                body_leaf = tracked_leaves[index + 1]
+                closing_bracket = tracked_leaves[index + 2]
+                opening_bracket.bracket_depth = 0
+                body_leaf.bracket_depth = 1
+                closing_bracket.bracket_depth = 0
+            result.bracket_tracker.previous = tracked_leaves[-1]
+            widths: list[int] = []
+            width = 4 * result.depth
+            for leaf in leaves:
+                if not leaf.prefix.isascii() or not leaf.value.isascii():
+                    break
+                width += len(leaf.prefix) + len(leaf.value)
+                widths.append(width)
+            else:
+                result._simple_subscript_widths = widths
+            return result
         leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
@@ -1364,6 +1412,45 @@ def bracket_split_build_line(
     ):
         result.should_split_rhs = True
     return result
+
+
+def _simple_subscript_chain_leaves(
+    leaves: list[Leaf], original: Line
+) -> list[Leaf] | None:
+    """Return complete single-token subscript trailers, or None for other brackets."""
+    if original.comments:
+        return None
+
+    tracked_leaves: list[Leaf] = []
+    invisible_opening_seen = False
+    index = 0
+    while index < len(leaves):
+        leaf = leaves[index]
+        if (
+            leaf.type == token.LSQB
+            and index + 2 < len(leaves)
+            and leaves[index + 1].type in {token.NAME, token.NUMBER, token.STRING}
+            and leaves[index + 2].type == token.RSQB
+            and leaves[index + 2].opening_bracket is leaf
+            and leaf.parent is not None
+            and leaf.parent.type == syms.trailer
+        ):
+            tracked_leaves.extend(leaves[index : index + 3])
+            index += 3
+            continue
+        if leaf.type in BRACKETS:
+            if (
+                not leaf.value
+                and leaf.type == token.LPAR
+                and not invisible_opening_seen
+            ):
+                invisible_opening_seen = True
+            # The final opening bracket belongs to the split being built, not to a
+            # complete trailer that needs tracking.
+            elif index != len(leaves) - 1 or leaf.type != token.LSQB:
+                return None
+        index += 1
+    return tracked_leaves or None
 
 
 def dont_increase_indentation(split_func: Transformer) -> Transformer:
@@ -2180,7 +2267,7 @@ def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
     the annotation in extra parens and migrates the comment outside the
     subscript, which then oscillates on the next formatter pass.
     """
-    if not line.leaves:
+    if not line.leaves or not line.comments:
         return False
     # The over-length must be caused entirely by a trailing comment.
     indent = "    " * line.depth

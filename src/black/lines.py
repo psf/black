@@ -55,6 +55,7 @@ class Line:
     _complex_subscript_cache: dict[LeafID, bool] = field(
         default_factory=dict, repr=False
     )
+    _simple_subscript_widths: list[int] | None = field(default=None, repr=False)
 
     def append(
         self, leaf: Leaf, preformatted: bool = False, track_bracket: bool = False
@@ -1358,6 +1359,8 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
     if it should be inlined or split up.
     Uses the provided `line_str` rendering, if any, otherwise computes a new one.
     """
+    if not line_str and line._simple_subscript_widths is not None:
+        return line._simple_subscript_widths[len(line.leaves) - 1] <= mode.line_length
     if not line_str:
         line_str = line_to_string(line)
 
