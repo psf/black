@@ -8,6 +8,10 @@
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
   --target-version flag (#5167)
+- Fix in-place formatting truncating or corrupting the source file if writing the
+  reformatted contents fails partway through, e.g. because the disk is full. Black now
+  writes to a temporary file in the same directory and atomically replaces the original
+  once the write has fully succeeded (#5207)
 
 ### Highlights
 
