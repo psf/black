@@ -359,7 +359,7 @@ For insert-mode indentation that follows the same hanging-bracket style as _Blac
 can also use the
 [`vim-python-pep8-indent`](https://github.com/Vimjas/vim-python-pep8-indent) plugin. It
 provides Vim's `indentexpr`; _Black_ remains responsible for formatting the file. For
-example, with [vim-plug](https://junegunn.github.io/vim-plug/):
+example, with vim-plug:
 
 ```vim
 Plug 'Vimjas/vim-python-pep8-indent'
