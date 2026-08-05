@@ -36,6 +36,11 @@ class Foo:
             return number + 1
 
 
+def function_with_docstring():
+    """Function doc."""
+    return "Hi There!"
+
+
 try:
     for i in range(10):
         while condition:
