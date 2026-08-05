@@ -210,6 +210,8 @@ global setting, follow these steps:
 
 ### Official plugin
 
+Commands and shortcuts:
+
 - `:Black` to format the entire file (ranges not supported);
   - you can optionally pass `target_version=<version>` with the same values as in the
     command line.
