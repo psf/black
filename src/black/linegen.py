@@ -4,7 +4,7 @@ Generating lines of code.
 
 import re
 import sys
-from collections.abc import Collection, Iterator
+from collections.abc import Collection, Iterable, Iterator
 from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
@@ -67,6 +67,7 @@ from black.nodes import (
     is_tuple,
     is_tuple_containing_star,
     is_tuple_containing_walrus,
+    is_type_ignore_comment,
     is_type_ignore_comment_string,
     is_vararg,
     is_walrus_assignment,
@@ -1062,6 +1063,17 @@ def _first_right_hand_split(
                     should_hug = False
                 else:
                     should_hug = True
+            if should_hug and (
+                _hugging_merges_type_ignores(line, head_leaves, hugged_opening_leaves)
+                or _hugging_merges_type_ignores(
+                    line, hugged_closing_leaves, tail_leaves
+                )
+            ):
+                # Hugging joins these leaves onto one physical line, and their
+                # trailing comments come along. `type: ignore` is recorded per
+                # line by the AST, so two of them landing on the same line would
+                # drop one and make the output non-equivalent.
+                should_hug = False
             if should_hug:
                 body_leaves = inner_body_leaves
                 head_leaves.extend(hugged_opening_leaves)
@@ -1290,6 +1302,19 @@ def _ensure_trailing_comma(
     ):
         return False
     return True
+
+
+def _hugging_merges_type_ignores(line: Line, *leaf_groups: Iterable[Leaf]) -> bool:
+    """Return True if hugging these groups would put two `type: ignore`s on a line."""
+    seen = 0
+    for leaves in leaf_groups:
+        for leaf in leaves:
+            for comment in line.comments_after(leaf):
+                if is_type_ignore_comment(comment, mode=line.mode):
+                    seen += 1
+                    if seen > 1:
+                        return True
+    return False
 
 
 def bracket_split_build_line(

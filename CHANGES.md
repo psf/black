@@ -78,6 +78,9 @@
   as a comprehension's iterable down to a single pair (e.g. `[x for x in ((lambda: 0))]`
   becomes `[x for x in (lambda: 0)]`). Previously the inner pair was stripped too,
   leaving the bare expression and crashing Black (#5200)
+- Don't hug brackets when doing so would join two `type: ignore` comments onto one line.
+  The AST records `type: ignore` per line, so merging them dropped a `TypeIgnore` entry
+  and Black failed its own equivalence check (#5271)
 
 ### Configuration
 
