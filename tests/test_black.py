@@ -1650,10 +1650,15 @@ class BlackTestCase(BlackBaseTestCase):
                 ],
             ),
             ("<3.6", [TargetVersion.PY33, TargetVersion.PY34, TargetVersion.PY35]),
-            (">3.7,<3.10", [TargetVersion.PY38, TargetVersion.PY39]),
+            # Per PEP 440, `>3.7` is equivalent to `>3.7.0`, so `py37` is included.
+            (
+                ">3.7,<3.10",
+                [TargetVersion.PY37, TargetVersion.PY38, TargetVersion.PY39],
+            ),
             (
                 ">3.7,!=3.8,!=3.9",
                 [
+                    TargetVersion.PY37,
                     TargetVersion.PY310,
                     TargetVersion.PY311,
                     TargetVersion.PY312,
@@ -1718,11 +1723,29 @@ class BlackTestCase(BlackBaseTestCase):
             ("3.2", None),
             ("2.7.18", None),
             ("==2.7", None),
-            (">3.10,<3.11", None),
+            (">3.10,<3.11", [TargetVersion.PY310]),
         ]:
             test_toml = {"project": {"requires-python": version}}
             result = black.files.infer_target_version(test_toml)
             self.assertEqual(result, expected)
+
+    def test_infer_target_version_pep440_greater_than(self) -> None:
+        # Regression test for https://github.com/psf/black/issues/3581
+        # Per PEP 440, ``>3.7`` is equivalent to ``>3.7.0``, so any ``3.7.x``
+        # (e.g. ``3.7.0``) is included. ``>3.7,<3.10`` must therefore yield
+        # py37, py38 and py39 -- not just py38 and py39.
+        self.assertEqual(
+            black.files.infer_target_version(
+                {"project": {"requires-python": ">3.7,<3.10"}}
+            ),
+            [TargetVersion.PY37, TargetVersion.PY38, TargetVersion.PY39],
+        )
+        # ``>3.7`` (without a patch component) must behave like ``>=3.7`` and
+        # keep py37, matching the equivalent ``>3.7.0`` / ``>=3.7`` forms.
+        self.assertEqual(
+            black.files.infer_target_version({"project": {"requires-python": ">3.7"}}),
+            black.files.infer_target_version({"project": {"requires-python": ">=3.7"}}),
+        )
 
     def test_read_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
