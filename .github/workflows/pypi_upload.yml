@@ -59,7 +59,7 @@ jobs:
           {
             CIBW_BUILD="cp310-*" cibuildwheel --print-build-identifiers --platform linux \
               | jq -Rn '[{"only": inputs, "os": "ubuntu-latest"}]'
-            CIBW_BUILD="cp315-*" cibuildwheel --print-build-identifiers --platform windows \
+            CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows \
               | jq -Rn '[{"only": inputs, "os": "windows-latest"}]'
           } | jq -cs 'add' > /tmp/matrix
         env:
