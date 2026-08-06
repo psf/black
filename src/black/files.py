@@ -354,8 +354,9 @@ def gen_python_files(
         root_relative_path = child.relative_to(root).as_posix()
 
         # First ignore files matching .gitignore, if passed
-        if gitignore_dict and _path_is_ignored(
-            root_relative_path, root, gitignore_dict
+        if (
+            gitignore_dict
+            and _path_is_ignored(root_relative_path, root, gitignore_dict)
         ):
             report.path_ignored(child, "matches a .gitignore file content")
             continue
@@ -406,8 +407,9 @@ def gen_python_files(
             )
 
         elif child.is_file():
-            if child.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
-                warn=verbose or not quiet
+            if (
+                child.suffix == ".ipynb"
+                and not jupyter_dependencies_are_installed(warn=verbose or not quiet)
             ):
                 continue
             include_match = include.search(root_relative_path) if include else True

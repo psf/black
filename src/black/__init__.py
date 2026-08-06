@@ -832,8 +832,9 @@ def get_sources(
             if is_stdin:
                 path = Path(f"{STDIN_PLACEHOLDER}{path}")
 
-            if path.suffix == ".ipynb" and not jupyter_dependencies_are_installed(
-                warn=verbose or not quiet
+            if (
+                path.suffix == ".ipynb"
+                and not jupyter_dependencies_are_installed(warn=verbose or not quiet)
             ):
                 continue
 
@@ -946,19 +947,28 @@ def reformat_one(
                 changed = Changed.YES
         else:
             cache = None if no_cache else Cache.read(mode)
-            if cache is not None and write_back not in (
-                WriteBack.DIFF,
-                WriteBack.COLOR_DIFF,
+            if (
+                cache is not None
+                and write_back not in (
+                    WriteBack.DIFF,
+                    WriteBack.COLOR_DIFF,
+                )
             ):
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
-            if changed is not Changed.CACHED and format_file_in_place(
-                src, fast=fast, write_back=write_back, mode=mode, lines=lines
+            if (
+                changed is not Changed.CACHED
+                and format_file_in_place(
+                    src, fast=fast, write_back=write_back, mode=mode, lines=lines
+                )
             ):
                 changed = Changed.YES
-            if cache is not None and (
-                (write_back is WriteBack.YES and changed is not Changed.CACHED)
-                or (write_back is WriteBack.CHECK and changed is Changed.NO)
+            if (
+                cache is not None
+                and (
+                    (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
+                )
             ):
                 cache.write([src])
         report.done(src, changed)
@@ -1424,11 +1434,14 @@ def get_features_used(
                 features.add(Feature.NUMERIC_UNDERSCORES)
 
         elif n.type == token.SLASH:
-            if n.parent and n.parent.type in {
-                syms.typedargslist,
-                syms.arglist,
-                syms.varargslist,
-            }:
+            if (
+                n.parent
+                and n.parent.type in {
+                    syms.typedargslist,
+                    syms.arglist,
+                    syms.varargslist,
+                }
+            ):
                 features.add(Feature.POS_ONLY_ARGUMENTS)
 
         elif n.type == token.COLONEQUAL:
@@ -1438,8 +1451,9 @@ def get_features_used(
             features.add(Feature.LAZY_IMPORTS)
 
         elif n.type == syms.decorator:
-            if len(n.children) > 1 and not is_simple_decorator_expression(
-                n.children[1]
+            if (
+                len(n.children) > 1
+                and not is_simple_decorator_expression(n.children[1])
             ):
                 features.add(Feature.RELAXED_DECORATORS)
 
@@ -1497,8 +1511,9 @@ def get_features_used(
         elif n.type == syms.match_stmt:
             features.add(Feature.PATTERN_MATCHING)
 
-        elif n.type in {syms.subscriptlist, syms.trailer} and any(
-            child.type == syms.star_expr for child in n.children
+        elif (
+            n.type in {syms.subscriptlist, syms.trailer}
+            and any(child.type == syms.star_expr for child in n.children)
         ):
             features.add(Feature.VARIADIC_GENERICS)
 
@@ -1538,9 +1553,12 @@ def get_features_used(
             )
 
             # If there's no 'as' clause and the except expression is a testlist.
-            if not has_as_clause and (
-                (is_star_except and n.children[2].type == syms.testlist)
-                or (not is_star_except and n.children[1].type == syms.testlist)
+            if (
+                not has_as_clause
+                and (
+                    (is_star_except and n.children[2].type == syms.testlist)
+                    or (not is_star_except and n.children[1].type == syms.testlist)
+                )
             ):
                 features.add(Feature.UNPARENTHESIZED_EXCEPT_TYPES)
 
