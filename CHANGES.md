@@ -194,6 +194,9 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
+  insert-mode indentation (#5288)
+
 ## Version 26.5.1
 
 ### Stable style
