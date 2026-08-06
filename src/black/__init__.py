@@ -1267,7 +1267,36 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
-        return _format_str_once(dst_contents, mode=mode, lines=lines)
+        dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
+    if lines:
+        dst_contents = _restore_unselected_trailing_blank_lines(
+            src_contents, dst_contents, lines
+        )
+    return dst_contents
+
+
+def _restore_unselected_trailing_blank_lines(
+    src_contents: str,
+    dst_contents: str,
+    lines: Collection[tuple[int, int]],
+) -> str:
+    """Restore trailing whitespace-only lines outside requested line ranges."""
+    src_lines = src_contents.splitlines(keepends=True)
+    dst_lines = dst_contents.splitlines(keepends=True)
+    if len(dst_lines) >= len(src_lines):
+        return dst_contents
+
+    selected: set[int] = set()
+    for start, end in lines:
+        selected.update(range(start, end + 1))
+
+    suffix = src_lines[len(dst_lines) :]
+    first_suffix_line = len(dst_lines) + 1
+    if all(
+        not line.strip() and line_number not in selected
+        for line_number, line in enumerate(suffix, start=first_suffix_line)
+    ):
+        return dst_contents + "".join(suffix)
     return dst_contents
 
 
