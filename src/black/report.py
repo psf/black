@@ -48,7 +48,7 @@ class Report:
                 out(msg, bold=False)
             self.same_count += 1
 
-    def failed(self, src: Path, message: str | BaseException) -> None:
+    def failed(self, src: Path, message: BaseException) -> None:
         """Increment the counter for failed reformatting. Write out a message."""
         if (
             isinstance(message, InvalidInput)
@@ -56,9 +56,11 @@ class Report:
             and message.column is not None
             and message.context
         ):
-            context = message.context[0].lower() + message.context[1:]
-            details = f"\n{message.details}" if message.details else ""
-            err(f"error: {context}: {src}:{message.lineno}:{message.column}{details}")
+            details = message.details or ""
+            err(
+                f"error: {message.context}: {src}:{message.lineno}:"
+                f"{message.column}{details}"
+            )
         else:
             err(f"error: cannot format {src}: {message}")
         self.failure_count += 1

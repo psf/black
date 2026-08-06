@@ -585,7 +585,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -605,7 +605,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -682,7 +682,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -701,7 +701,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -778,7 +778,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -798,7 +798,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -1087,7 +1087,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(
             str(e.exception),
-            "Cannot parse: 1:7\n"
+            "cannot parse: 1:7\n"
             "    return if you can\n"
             "          ^\n"
             "ParseError: bad input",
@@ -2111,7 +2111,7 @@ class BlackTestCase(BlackBaseTestCase):
 
         exc_info.match(
             re.escape(
-                "Cannot parse: 1:6\n"
+                "cannot parse: 1:6\n"
                 "    print(\n"
                 "         ^\n"
                 "TokenError: Unexpected EOF in multi-line statement"

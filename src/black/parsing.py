@@ -33,34 +33,14 @@ class InvalidInput(ValueError):
         context: str | None = None,
         details: str | None = None,
     ) -> None:
-        super().__init__(message)
+        super().__init__(message, lineno, column, context, details)
         self.lineno = lineno
         self.column = column
         self.context = context
         self.details = details
 
-    def __reduce__(
-        self,
-    ) -> tuple[
-        type["InvalidInput"],
-        tuple[str, int | None, int | None, str | None, str | None],
-    ]:
-        return (
-            InvalidInput,
-            (str(self), self.lineno, self.column, self.context, self.details),
-        )
-
-    @classmethod
-    def from_syntax_error(
-        cls,
-        message: str,
-        lineno: int,
-        column: int,
-        context: str,
-        details: str,
-    ) -> "InvalidInput":
-        """Create an error with source details for user-facing reports."""
-        return cls(message, lineno, column, context, details)
+    def __str__(self) -> str:
+        return str(self.args[0])
 
 
 def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
@@ -122,13 +102,16 @@ def lib2to3_parse(
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            context = f"Cannot parse{tv_str}"
-            details = (
-                f"    {faulty_line}\n    {' ' * (column - 1)}^\nParseError: {pe.msg}"
-            )
-            error_msg = f"{context}: {lineno}:{column}\n{details}"
+            context = f"cannot parse{tv_str}"
+            details = "\n".join((
+                "",
+                f"    {faulty_line}",
+                f"    {' ' * (column - 1)}^",
+                f"ParseError: {pe.msg}",
+            ))
+            error_msg = f"{context}: {lineno}:{column}{details}"
 
-            errors[grammar.version] = InvalidInput.from_syntax_error(
+            errors[grammar.version] = InvalidInput(
                 error_msg, lineno, column, context, details
             )
 
@@ -139,14 +122,15 @@ def lib2to3_parse(
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            context = f"Cannot parse{tv_str}"
+            context = f"cannot parse{tv_str}"
             details = (
+                "\n"
                 f"    {faulty_line}\n"
                 f"    {' ' * (column - 1)}^\n"
                 f"TokenError: {te.args[0]}"
             )
-            error_msg = f"{context}: {lineno}:{column}\n{details}"
-            errors[grammar.version] = InvalidInput.from_syntax_error(
+            error_msg = f"{context}: {lineno}:{column}{details}"
+            errors[grammar.version] = InvalidInput(
                 error_msg, lineno, column, context, details
             )
 

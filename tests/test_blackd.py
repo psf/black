@@ -56,8 +56,8 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 400)
         content = await response.text()
         self.assertTrue(
-            content.startswith("Cannot parse"),
-            msg=f"Expected error to start with 'Cannot parse', got {repr(content)}",
+            content.startswith("cannot parse"),
+            msg=f"Expected error to start with 'cannot parse', got {repr(content)}",
         )
 
     async def test_blackd_unsupported_version(self) -> None:
