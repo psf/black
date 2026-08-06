@@ -901,7 +901,7 @@ def reformat_code(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(path, str(exc))
+        report.failed(path, exc)
 
 
 # diff-shades depends on being to monkeypatch this function to operate. I know it's
@@ -965,7 +965,7 @@ def reformat_one(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(src, str(exc))
+        report.failed(src, exc)
 
 
 def format_file_in_place(

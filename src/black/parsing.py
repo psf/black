@@ -20,6 +20,28 @@ from blib2to3.pytree import Leaf, Node
 class InvalidInput(ValueError):
     """Raised when input source code fails all parse attempts."""
 
+    lineno: int | None = None
+    column: int | None = None
+    context: str | None = None
+    details: str | None = None
+
+    def __init__(
+        self,
+        message: str,
+        lineno: int | None = None,
+        column: int | None = None,
+        context: str | None = None,
+        details: str | None = None,
+    ) -> None:
+        super().__init__(message, lineno, column, context, details)
+        self.lineno = lineno
+        self.column = column
+        self.context = context
+        self.details = details
+
+    def __str__(self) -> str:
+        return str(self.args[0])
+
 
 def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
     if not target_versions:
@@ -80,14 +102,17 @@ def lib2to3_parse(
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            error_msg = (
-                f"Cannot parse{tv_str}: {lineno}:{column}\n"
-                f"    {faulty_line}\n"
-                f"    {' ' * (column - 1)}^\n"
-                f"ParseError: {pe.msg}"
+            context = f"cannot parse{tv_str}"
+            details = "\n".join((
+                "",
+                f"    {faulty_line}",
+                f"    {' ' * (column - 1)}^",
+                f"ParseError: {pe.msg}",
+            ))
+            error_msg = f"{context}: {lineno}:{column}{details}"
+            errors[grammar.version] = InvalidInput(
+                error_msg, lineno, column, context, details
             )
-
-            errors[grammar.version] = InvalidInput(error_msg)
 
         except TokenError as te:
             lineno, column = te.args[1]
@@ -96,13 +121,17 @@ def lib2to3_parse(
                 faulty_line = lines[lineno - 1]
             except IndexError:
                 faulty_line = "<line number missing in source>"
-            error_msg = (
-                f"Cannot parse{tv_str}: {lineno}:{column}\n"
-                f"    {faulty_line}\n"
-                f"    {' ' * (column - 1)}^\n"
-                f"TokenError: {te.args[0]}"
+            context = f"cannot parse{tv_str}"
+            details = "\n".join((
+                "",
+                f"    {faulty_line}",
+                f"    {' ' * (column - 1)}^",
+                f"TokenError: {te.args[0]}",
+            ))
+            error_msg = f"{context}: {lineno}:{column}{details}"
+            errors[grammar.version] = InvalidInput(
+                error_msg, lineno, column, context, details
             )
-            errors[grammar.version] = InvalidInput(error_msg)
 
     else:
         # Choose the latest version when raising the actual parsing error.
