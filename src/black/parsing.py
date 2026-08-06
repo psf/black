@@ -110,7 +110,6 @@ def lib2to3_parse(
                 f"ParseError: {pe.msg}",
             ))
             error_msg = f"{context}: {lineno}:{column}{details}"
-
             errors[grammar.version] = InvalidInput(
                 error_msg, lineno, column, context, details
             )
@@ -123,12 +122,12 @@ def lib2to3_parse(
             except IndexError:
                 faulty_line = "<line number missing in source>"
             context = f"cannot parse{tv_str}"
-            details = (
-                "\n"
-                f"    {faulty_line}\n"
-                f"    {' ' * (column - 1)}^\n"
-                f"TokenError: {te.args[0]}"
-            )
+            details = "\n".join((
+                "",
+                f"    {faulty_line}",
+                f"    {' ' * (column - 1)}^",
+                f"TokenError: {te.args[0]}",
+            ))
             error_msg = f"{context}: {lineno}:{column}{details}"
             errors[grammar.version] = InvalidInput(
                 error_msg, lineno, column, context, details
