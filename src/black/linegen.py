@@ -812,6 +812,7 @@ def transform_line(
                     string_paren_strip,
                     string_split,
                     delimiter_split,
+                    type_ignore_comment_split,
                     standalone_comment_split,
                     string_paren_wrap,
                     rhs,
@@ -826,7 +827,12 @@ def transform_line(
                 ]
         else:
             if line.inside_brackets:
-                transformers = [delimiter_split, standalone_comment_split, rhs]
+                transformers = [
+                    delimiter_split,
+                    type_ignore_comment_split,
+                    standalone_comment_split,
+                    rhs,
+                ]
             else:
                 transformers = [rhs]
 
@@ -1570,6 +1576,34 @@ def standalone_comment_split(
 
         for comment_after in line.comments_after(leaf):
             yield from append_to_line(comment_after)
+
+    if current_line:
+        yield current_line
+
+
+@dont_increase_indentation
+def type_ignore_comment_split(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
+    """Keep multiple type ignores on their original physical lines."""
+    if not line.contains_multiple_type_ignores_at_current_depth() or not any(
+        leaf.type == token.DOT for leaf in line.leaves
+    ):
+        raise CannotSplit("Line does not have multiple type ignore comments")
+
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
+    for leaf in line.leaves:
+        current_line.append(leaf, preformatted=True)
+        comments = line.comments_after(leaf)
+        for comment in comments:
+            current_line.append(comment, preformatted=True)
+        if any(is_type_ignore_comment(comment, mode=mode) for comment in comments):
+            yield current_line
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
 
     if current_line:
         yield current_line
