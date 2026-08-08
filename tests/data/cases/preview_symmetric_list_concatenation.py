@@ -12,7 +12,16 @@ commented = (
     + ["fourth_long_value", "fifth_long_value", "sixth_long_value"]
 )
 
-# A body that fits inside optional parentheses keeps the existing bracket split.
+commented_left = (
+    ["first_value", "second_value", "third_value"]  # abc
+    + ["fourth_value", "fifth_value", "sixth_value"]
+)
+commented_right = (
+    ["first_value", "second_value", "third_value"]
+    + ["fourth_value", "fifth_value", "sixth_value"]  # abc
+)
+
+# Split symmetrically even when the RHS alone fits inside optional parentheses.
 values = [first_value, second_value, third_value] + [fourth_value, fifth_value, sixth_value]
 
 # Chained concatenations already use the normal delimiter split.
@@ -60,12 +69,20 @@ commented = (
     + ["fourth_long_value", "fifth_long_value", "sixth_long_value"]
 )
 
-# A body that fits inside optional parentheses keeps the existing bracket split.
-values = [first_value, second_value, third_value] + [
-    fourth_value,
-    fifth_value,
-    sixth_value,
-]
+commented_left = (
+    ["first_value", "second_value", "third_value"]  # abc
+    + ["fourth_value", "fifth_value", "sixth_value"]
+)
+commented_right = (
+    ["first_value", "second_value", "third_value"]
+    + ["fourth_value", "fifth_value", "sixth_value"]  # abc
+)
+
+# Split symmetrically even when the RHS alone fits inside optional parentheses.
+values = (
+    [first_value, second_value, third_value]
+    + [fourth_value, fifth_value, sixth_value]
+)
 
 # Chained concatenations already use the normal delimiter split.
 chained = (
