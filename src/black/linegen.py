@@ -31,8 +31,8 @@ from black.lines import (
     append_leaves,
     can_be_split,
     can_omit_invisible_parens,
-    is_symmetric_list_concatenation,
     is_line_short_enough,
+    is_symmetric_list_concatenation,
     line_to_string,
 )
 from black.mode import Feature, Mode, Preview
