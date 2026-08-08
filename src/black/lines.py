@@ -1509,7 +1509,7 @@ def _is_annotated_assignment(head: Line) -> bool:
     return False
 
 
-def _is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
+def is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
     """Is `line` exactly two single-line lists joined by a top-level `+`?"""
     if len(line.bracket_tracker.delimiters) != 1:
         return False
@@ -1526,7 +1526,7 @@ def _is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
     # Math operators are split *before* the delimiter, so BracketTracker keys
     # them by the preceding leaf.
     delimiter_index = left_closing_index + 1
-    if delimiter_index == len(line.leaves) - 1:
+    if delimiter_index >= len(line.leaves) - 1:
         return False
 
     first = line.leaves[0]
@@ -1557,9 +1557,9 @@ def _is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
     def rendered_width(start: int, end: int) -> int | None:
         leaves = line.leaves[start:end]
         rendered = "    " * line.depth
+        # End-of-line comments do not determine whether the operand itself fits.
         for index, leaf in enumerate(leaves):
             rendered += leaf.value if index == 0 else str(leaf)
-            rendered += "".join(str(comment) for comment in line.comments_after(leaf))
         if "\n" in rendered:
             return None
         return str_width(rendered)
@@ -1701,8 +1701,7 @@ def can_omit_invisible_parens(
             return False
         if (
             Preview.symmetric_list_concatenation in mode
-            and not is_line_short_enough(line, mode=mode)
-            and _is_symmetric_list_concatenation(line, line_length)
+            and is_symmetric_list_concatenation(line, line_length)
         ):
             # Retaining the optional parentheses lets the delimiter splitter put
             # each list operand on its own line instead of exploding just one list.
