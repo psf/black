@@ -20,6 +20,10 @@ following areas:
 - {doc}`Source version control <./source_version_control>`
 - {doc}`Doctest formatting <./doctest_formatting>`
 
+_Black_ is also bundled in [MegaLinter](https://megalinter.io/), an open-source linters
+aggregator for CI, which runs _Black_ out of the box; see its
+[_Black_ page](https://megalinter.io/latest/descriptors/python_black/) for details.
+
 Editors and tools not listed will require external contributions.
 
 Patches welcome! ✨ 🍰 ✨
