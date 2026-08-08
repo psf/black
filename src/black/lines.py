@@ -1509,6 +1509,71 @@ def _is_annotated_assignment(head: Line) -> bool:
     return False
 
 
+def is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
+    """Is `line` exactly two single-line lists joined by a top-level `+`?"""
+    if len(line.bracket_tracker.delimiters) != 1:
+        return False
+
+    # Delimiters is keyed by leaf ID, not line position.
+    delimiter_id = next(iter(line.bracket_tracker.delimiters))
+    try:
+        left_closing_index = next(
+            index for index, leaf in enumerate(line.leaves) if id(leaf) == delimiter_id
+        )
+    except StopIteration:
+        return False
+
+    # Math operators are split *before* the delimiter, so BracketTracker keys
+    # them by the preceding leaf.
+    delimiter_index = left_closing_index + 1
+    if delimiter_index >= len(line.leaves) - 1:
+        return False
+
+    first = line.leaves[0]
+    left_closing = line.leaves[left_closing_index]
+    delimiter = line.leaves[delimiter_index]
+    right_opening = line.leaves[delimiter_index + 1]
+    last = line.leaves[-1]
+
+    if not (
+        delimiter.type == token.PLUS
+        and first.type == token.LSQB
+        and left_closing.type == token.RSQB
+        and left_closing.opening_bracket is first
+        and right_opening.type == token.LSQB
+        and last.type == token.RSQB
+        and last.opening_bracket is right_opening
+    ):
+        return False
+
+    # Keep the existing asymmetric split when either list is already forced to
+    # split by a magic trailing comma.
+    if line.mode.magic_trailing_comma and (
+        line.leaves[left_closing_index - 1].type == token.COMMA
+        or line.leaves[-2].type == token.COMMA
+    ):
+        return False
+
+    def rendered_width(start: int, end: int) -> int | None:
+        leaves = line.leaves[start:end]
+        rendered = "    " * line.depth
+        # End-of-line comments do not determine whether the operand itself fits.
+        for index, leaf in enumerate(leaves):
+            rendered += leaf.value if index == 0 else str(leaf)
+        if "\n" in rendered:
+            return None
+        return str_width(rendered)
+
+    left_width = rendered_width(0, delimiter_index)
+    right_width = rendered_width(delimiter_index, len(line.leaves))
+    return (
+        left_width is not None
+        and right_width is not None
+        and left_width <= line_length
+        and right_width <= line_length
+    )
+
+
 def can_omit_invisible_parens(
     rhs: RHSResult,
     line_length: int,
@@ -1633,6 +1698,13 @@ def can_omit_invisible_parens(
             # better. In this case, `rhs.body` is the context managers part of
             # the with statement. `rhs.head` is the `with (` part on the previous
             # line.
+            return False
+        if (
+            Preview.symmetric_list_concatenation in mode
+            and is_symmetric_list_concatenation(line, line_length)
+        ):
+            # Retaining the optional parentheses lets the delimiter splitter put
+            # each list operand on its own line instead of exploding just one list.
             return False
         # Otherwise it may also read better, but we don't do it today and requires
         # careful considerations for all possible cases. See

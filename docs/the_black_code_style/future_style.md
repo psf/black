@@ -45,6 +45,34 @@ Currently, the following features are included in the preview style:
   statements.
 - `fmt_off_class_blank_lines`: Preserve two blank lines before a top-level class whose
   definition starts inside a `# fmt: off` block after an import.
+- `symmetric_list_concatenation`: Keep optional parentheses around long concatenations
+  of two list displays when both operands fit on their own delimiter-split line.
+
+(labels/symmetric-list-concatenation)=
+
+### Symmetric list concatenation
+
+When a concatenation of two list displays is too long for one line and both operands fit
+on their own delimiter-split line, Black keeps optional parentheses around the
+expression so that the operands can be split symmetrically. If either list needs an
+internal split, including when an active magic trailing comma forces it onto multiple
+lines, Black retains the existing formatting.
+
+```python
+# Before
+names = ["Alice", "Bob", "Charlie", "Diana", "Edward"] + [
+    "Fiona",
+    "George",
+    "Harriet",
+    "Isabelle",
+]
+
+# After (with --preview)
+names = (
+    ["Alice", "Bob", "Charlie", "Diana", "Edward"]
+    + ["Fiona", "George", "Harriet", "Isabelle"]
+)
+```
 
 (labels/wrap-comprehension-in)=
 

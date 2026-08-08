@@ -58,6 +58,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Format long concatenations of two lists symmetrically when both operands fit on their
+  own delimiter-split line (#5259)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like

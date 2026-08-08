@@ -264,6 +264,7 @@ class Preview(Enum):
     hug_comparator = auto()
     parenthesize_tuple_in_yield = auto()
     fmt_off_class_blank_lines = auto()
+    symmetric_list_concatenation = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
