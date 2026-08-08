@@ -198,6 +198,8 @@
 
 - Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
   insert-mode indentation (#5288)
+- Mention MegaLinter, a CI linters aggregator bundling _Black_, on the integrations
+  page (#5299)
 
 ## Version 26.5.1
 
