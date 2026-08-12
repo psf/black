@@ -669,6 +669,23 @@ def _should_keep_compound_statement_inline(
     return any(leaf.type == token.SEMI for leaf in target.leaves())
 
 
+def _collect_header_leaves(node: LN, body_node: Node) -> tuple[list[LN], bool]:
+    """Collect header leaves before body_node. Returns (leaves, found_body)."""
+    if node is body_node:
+        return [], True
+    if isinstance(node, Leaf):
+        if node.type not in (token.NEWLINE, token.INDENT):
+            return [node], False
+        return [], False
+    res: list[LN] = []
+    for child in node.children:
+        child_leaves, found = _collect_header_leaves(child, body_node)
+        res.extend(child_leaves)
+        if found:
+            return res, True
+    return res, False
+
+
 def _get_compound_statement_header(
     body_node: Node, simple_stmt_parent: Node
 ) -> list[LN]:
@@ -681,17 +698,14 @@ def _get_compound_statement_header(
     if compound_stmt is None or compound_stmt.type not in _COMPOUND_STATEMENTS:
         return []
 
-    # Collect all header leaves before the body
-    header_leaves: list[LN] = []
-    for child in compound_stmt.children:
-        if child is body_node:
-            break
-        if isinstance(child, Leaf):
-            if child.type not in (token.NEWLINE, token.INDENT):
-                header_leaves.append(child)
-        else:
-            header_leaves.extend(child.leaves())
-    return header_leaves
+    if (
+        compound_stmt.parent is not None
+        and compound_stmt.parent.type in {syms.async_stmt, syms.async_funcdef}
+    ):
+        compound_stmt = compound_stmt.parent
+
+    leaves, _ = _collect_header_leaves(compound_stmt, body_node)
+    return leaves
 
 
 def _find_closest_previous_sibling(node: LN) -> LN | None:

@@ -6,8 +6,16 @@ while True: print("loop"); break  # fmt: skip
 for x in [1, 2]: print(x); print("done")  # fmt: skip
 def f(x: int): return x # fmt: skip
 
+
 j =     1 # fmt: skip
 while j < 10: j += 1  # fmt: skip
+with give_me_context(): pass  # fmt: skip
+with give_me_context() as ctx: print("a"); print("b")  # fmt: skip
+
+
+async def f():
+    async with give_me_async_context() as ctx: print("a"); print("b")  # fmt: skip
+
 
 b = [c for c in "A very long string that would normally generate some kind of collapse, since it is this long"] # fmt: skip
 
