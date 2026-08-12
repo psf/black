@@ -781,6 +781,11 @@ def transform_line(
             content), meaning the trailers get glued together to split on another
             bracket pair instead.
             """
+            fast_omit = _fast_subscript_split_omit(line, mode.line_length)
+            if fast_omit is not None:
+                yield from right_hand_split(line, mode, features, omit=fast_omit)
+                return
+
             for omit in generate_trailers_to_omit(line, mode.line_length):
                 lines = list(right_hand_split(line, mode, features, omit=omit))
                 # Note: this check is only able to figure out if the first line of the
@@ -2167,6 +2172,80 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
             if leaf.value:
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
+
+
+def _fast_subscript_split_omit(line: Line, line_length: int) -> set[LeafID] | None:
+    """Find the right-hand split for a flat chain of subscript trailers.
+
+    A chain such as ``value[0][1][2]`` has no delimiter for ``delimiter_split``.
+    The regular RHS path therefore retries ``_first_right_hand_split`` once for
+    each trailing subscript before finding a head that fits. Restrict this fast
+    path to the simple, side-effect-free shape where candidate heads can be
+    measured from the already-formatted leaves.
+    """
+    if (
+        line.inside_brackets
+        or line.comments
+        or line.magic_trailing_comma is not None
+        or line.bracket_tracker.delimiters
+    ):
+        return None
+
+    pairs: list[tuple[Leaf, Leaf]] = []
+    leaf_indices: dict[int, int] = {}
+    bracket_depth: int | None = None
+    for index, leaf in enumerate(line.leaves):
+        leaf_indices[id(leaf)] = index
+        if leaf.type in BRACKETS:
+            if not leaf.value:
+                continue
+            if bracket_depth is None:
+                bracket_depth = leaf.bracket_depth
+            if leaf.bracket_depth != bracket_depth or leaf.type not in {
+                token.LSQB,
+                token.RSQB,
+            }:
+                return None
+            if leaf.type == token.RSQB:
+                if (
+                    leaf.opening_bracket is None
+                    or id(leaf.opening_bracket) not in leaf_indices
+                ):
+                    return None
+                pairs.append((leaf.opening_bracket, leaf))
+            if "\n" in leaf.value or "\n" in leaf.prefix:
+                return None
+
+    if not pairs:
+        return None
+
+    pairs.sort(key=lambda pair: leaf_indices[id(pair[0])])
+    for previous, current in zip(pairs, pairs[1:], strict=False):
+        if leaf_indices[id(current[0])] != leaf_indices[id(previous[1])] + 1:
+            return None
+
+    head_widths: dict[int, int] = {}
+    width = 4 * line.depth
+    opening_ids = {id(opening) for opening, _ in pairs}
+    for leaf in line.leaves:
+        width += str_width(leaf.prefix) + str_width(leaf.value)
+        if id(leaf) in opening_ids:
+            head_widths[id(leaf)] = width
+
+    candidate_omits = [
+        set(omit) for omit in generate_trailers_to_omit(line, line_length)
+    ]
+    for omit in candidate_omits:
+        for index in range(len(pairs) - 1, -1, -1):
+            opening, closing = pairs[index]
+            if id(closing) not in omit:
+                if head_widths[id(opening)] <= line_length:
+                    return omit
+                break
+
+    # No generated candidate can fit its head. This is the same best-effort
+    # fallback used by _rhs, but avoids rebuilding all of the rejected splits.
+    return set()
 
 
 def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
