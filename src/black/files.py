@@ -313,8 +313,45 @@ def _path_is_ignored(
                 relative_path = relative_path + "/"
         except ValueError:
             break
-        if pattern.match_file(relative_path):
-            return True
+        check = pattern.check_file(relative_path)
+        if check.index is None:
+            # No pattern in this .gitignore file matched; keep looking in
+            # more specific .gitignore files.
+            continue
+        if not check.include:
+            # The last matching pattern is a negation, so this path is
+            # explicitly re-included by this .gitignore file.
+            continue
+        if relative_path.endswith("/"):
+            # GitIgnoreSpec gives matches on file patterns precedence over
+            # matches on directory-only patterns regardless of their order in
+            # the .gitignore file, while Git lets the last matching pattern
+            # decide. Apply last-match-wins over all later patterns: the final
+            # pattern matching this directory decides (e.g. "!*/" re-includes
+            # it, but a later "node_modules/" re-ignores it again).
+            # Only patterns Git itself would match against the directory
+            # proper may decide: pathspec's directory-only regexes also match
+            # everything below the directory (a trailing-slash pattern is
+            # normalized to "pattern/**", so e.g. "!/keep/" matches
+            # "keep/sub/"), while Git matches a trailing-slash pattern only
+            # against the named directory and never against its descendants.
+            # A match only counts when it extends to the end of the relative
+            # path, i.e. the pattern matched this directory itself.
+            later_include: bool | None = None
+            for later in pattern.patterns[check.index + 1 :]:
+                if later.include is None or later.regex is None:
+                    continue
+                if any(
+                    match.end() == len(relative_path)
+                    for match in later.regex.finditer(relative_path)
+                ):
+                    later_include = later.include
+            if later_include is False:
+                # The last matching later pattern is a negation, so Git would
+                # not ignore this directory; keep looking in more specific
+                # .gitignore files.
+                continue
+        return True
     return False
 
 

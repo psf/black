@@ -8,6 +8,9 @@
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
   --target-version flag (#5167)
+- Fix negated `.gitignore` patterns with a trailing slash (e.g. `!*/`) not re-including
+  directories matched by an earlier pattern (e.g. `*`), which made Black skip files that
+  Git tracks (#5306)
 
 ### Highlights
 
