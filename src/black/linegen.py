@@ -377,6 +377,23 @@ class LineGenerator(Visitor[Line]):
             ):
                 wrap_in_parentheses(node, leaf)
 
+        if Preview.remove_redundant_generator_parentheses in self.mode:
+            for child in node.children:
+                if (
+                    child.type == syms.trailer
+                    and len(child.children) == 3
+                    and is_lpar_token(child.children[0])
+                    and is_generator(child.children[1])
+                    and is_rpar_token(child.children[2])
+                ):
+                    maybe_make_parens_invisible_in_atom(
+                        child.children[1],
+                        parent=child,
+                        mode=self.mode,
+                        features=self.features,
+                        remove_generator_parens=True,
+                    )
+
         remove_await_parens(node, mode=self.mode, features=self.features)
 
         yield from self.visit_default(node)
@@ -1959,6 +1976,7 @@ def maybe_make_parens_invisible_in_atom(
     features: Collection[Feature],
     remove_brackets_around_comma: bool = False,
     allow_star_expr: bool = False,
+    remove_generator_parens: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
@@ -1966,6 +1984,7 @@ def maybe_make_parens_invisible_in_atom(
 
     Returns whether the node should itself be wrapped in invisible parentheses.
     """
+    can_remove_generator_parens = remove_generator_parens and is_generator(node)
     if (
         node.type not in (syms.atom, syms.expr)
         or is_empty_tuple(node)
@@ -1983,6 +2002,7 @@ def maybe_make_parens_invisible_in_atom(
             # and option to skip this check for `for` and `with` statements.
             not remove_brackets_around_comma
             and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+            and not can_remove_generator_parens
             # Remove parentheses around multiple exception types in except and
             # except* without as. See PEP 758 for details.
             and not (
@@ -2003,7 +2023,7 @@ def maybe_make_parens_invisible_in_atom(
         )
         or is_tuple_containing_walrus(node)
         or (not allow_star_expr and is_tuple_containing_star(node))
-        or is_generator(node)
+        or (not can_remove_generator_parens and is_generator(node))
     ):
         return False
 
