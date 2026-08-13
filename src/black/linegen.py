@@ -585,6 +585,17 @@ class LineGenerator(Visitor[Line]):
 
     def visit_atom(self, node: Node) -> Iterator[Line]:
         """Visit any atom"""
+        if (
+            Preview.remove_redundant_generator_parentheses in self.mode
+            and _has_redundant_generator_parentheses(node)
+        ):
+            maybe_make_parens_invisible_in_atom(
+                node,
+                parent=node.parent or node,
+                mode=self.mode,
+                features=self.features,
+            )
+
         if len(node.children) == 3:
             first = node.children[0]
             last = node.children[-1]
@@ -1629,6 +1640,20 @@ def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:
             return True
         node = middle
     return False
+
+
+def _has_redundant_generator_parentheses(node: LN) -> bool:
+    """Whether `node` adds parentheses around a parenthesized generator."""
+    if (
+        node.type != syms.atom
+        or len(node.children) != 3
+        or not is_lpar_token(node.children[0])
+        or not is_rpar_token(node.children[-1])
+    ):
+        return False
+
+    middle = node.children[1]
+    return is_generator(middle) or _has_redundant_generator_parentheses(middle)
 
 
 def normalize_invisible_parens(

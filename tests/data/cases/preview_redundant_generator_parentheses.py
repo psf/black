@@ -4,6 +4,17 @@ any((x for x in items))
 service.consume((item for group in groups for item in group if item))
 factory((item for item in iterable))()
 
+((item.is_valid() for item in items))
+(((item.is_valid() for item in items)),)
+[((item.is_valid() for item in items)), ""]
+{"foo": ((item.is_valid() for item in items))}
+outer(inner(((item.is_valid() for item in items))))
+((result := transform(item) for item in items))
+((item async for item in stream()))
+next(((item for item in items)), None)
+consume(generator=((item for item in items)))
+consume(*((item for item in items)))
+
 any((
     this_very_long_method_name(obj) or another_long_method_name(obj)
     for obj in this_iterable
@@ -27,6 +38,17 @@ consume(generator=(item for item in iterable))
 any(x for x in items)
 service.consume(item for group in groups for item in group if item)
 factory(item for item in iterable)()
+
+(item.is_valid() for item in items)
+((item.is_valid() for item in items),)
+[(item.is_valid() for item in items), ""]
+{"foo": (item.is_valid() for item in items)}
+outer(inner(item.is_valid() for item in items))
+(result := transform(item) for item in items)
+(item async for item in stream())
+next((item for item in items), None)
+consume(generator=(item for item in items))
+consume(*(item for item in items))
 
 any(
     this_very_long_method_name(obj) or another_long_method_name(obj)
