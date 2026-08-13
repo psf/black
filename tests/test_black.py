@@ -7,6 +7,7 @@ import itertools
 import logging
 import multiprocessing
 import os
+import pickle
 import re
 import sys
 import textwrap
@@ -131,6 +132,40 @@ def invokeBlack(
         f"exception: {result.exception}"
     )
     assert result.exit_code == exit_code, msg
+
+
+def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
+    source = tmp_path / "invalid.py"
+    source.write_text("return if you can\n", encoding="utf8")
+
+    result = BlackRunner().invoke(
+        black.main, ["--config", str(THIS_DIR / "empty.toml"), str(source)]
+    )
+
+    assert result.exit_code == 123
+    assert (
+        f"error: cannot parse: {source}:1:7\n"
+        "    return if you can\n"
+        "          ^\n"
+        "ParseError: bad input\n"
+        in result.stderr
+    )
+
+    second_source = tmp_path / "also_invalid.py"
+    second_source.write_text("print(\n", encoding="utf8")
+    result = BlackRunner().invoke(
+        black.main,
+        [
+            "--config",
+            str(THIS_DIR / "empty.toml"),
+            str(source),
+            str(second_source),
+        ],
+    )
+
+    assert result.exit_code == 123
+    assert f"error: cannot parse: {source}:1:7\n" in result.stderr
+    assert f"error: cannot parse: {second_source}:1:6\n" in result.stderr
 
 
 class BlackTestCase(BlackBaseTestCase):
@@ -550,7 +585,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -570,7 +605,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -647,7 +682,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -666,7 +701,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -743,7 +778,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -763,7 +798,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -813,8 +848,16 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(output, unstyle(output))
 
     def test_lib2to3_parse(self) -> None:
-        with self.assertRaises(black.InvalidInput):
+        with self.assertRaises(black.InvalidInput) as exc_info:
             black.lib2to3_parse("invalid syntax")
+        error = exc_info.exception
+        restored_error = pickle.loads(pickle.dumps(error))
+        self.assertEqual((error.lineno, error.column), (1, 8))
+        self.assertEqual(str(restored_error), str(error))
+        self.assertEqual(
+            (error.lineno, error.column),
+            (restored_error.lineno, restored_error.column),
+        )
 
         straddling = "x + y"
         black.lib2to3_parse(straddling)
@@ -1044,7 +1087,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(
             str(e.exception),
-            "Cannot parse: 1:7\n"
+            "cannot parse: 1:7\n"
             "    return if you can\n"
             "          ^\n"
             "ParseError: bad input",
@@ -1120,6 +1163,26 @@ class BlackTestCase(BlackBaseTestCase):
             ]:
                 f.write_text('print("hello")\n', encoding="utf-8")
             self.invokeBlack([str(workspace)])
+
+    @event_loop()
+    def test_invalid_black_num_workers(self) -> None:
+        for workers in ["abc", "0", "-1"]:
+            with (
+                cache_dir() as workspace,
+                patch.dict(os.environ, {"BLACK_NUM_WORKERS": workers}),
+            ):
+                for f in [
+                    (workspace / "one.py").resolve(),
+                    (workspace / "two.py").resolve(),
+                ]:
+                    f.write_text('print("hello")\n', encoding="utf-8")
+
+                result = BlackRunner().invoke(black.main, [str(workspace)])
+
+            assert result.exit_code == 2
+            assert result.exception is not None
+            assert "BLACK_NUM_WORKERS" in result.stderr
+            assert "Traceback" not in result.stderr
 
     @event_loop()
     def test_check_diff_use_together(self) -> None:
@@ -1675,6 +1738,43 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    def test_read_pyproject_toml_rejects_non_string_regex_configs(self) -> None:
+        for config_key, option_name in [
+            ("include", "include"),
+            ("force-exclude", "force-exclude"),
+        ]:
+            with self.subTest(config_key=config_key):
+                with TemporaryDirectory() as workspace:
+                    config = Path(workspace) / "pyproject.toml"
+                    config.write_text(
+                        f'[tool.black]\n{config_key} = ["not", "a", "regex"]\n',
+                        encoding="utf-8",
+                    )
+
+                    fake_ctx = FakeContext()
+                    with pytest.raises(click.BadOptionUsage) as exc_info:
+                        black.read_pyproject_toml(fake_ctx, None, str(config))
+
+                    assert exc_info.value.option_name == option_name
+                    assert "must be a string" in exc_info.value.message
+
+    def test_cli_rejects_non_string_pyproject_regex_configs(self) -> None:
+        for config_key in ["include", "force-exclude"]:
+            with self.subTest(config_key=config_key):
+                with TemporaryDirectory() as workspace:
+                    config = Path(workspace) / "pyproject.toml"
+                    config.write_text(
+                        f'[tool.black]\n{config_key} = ["not", "a", "regex"]\n',
+                        encoding="utf-8",
+                    )
+
+                    result = BlackRunner().invoke(
+                        black.main, ["--config", str(config), "--code", "print(1)"]
+                    )
+
+                    assert result.exit_code == 2
+                    assert f"Config key {config_key} must be a string" in result.stderr
+
     def test_read_pyproject_toml_from_stdin(self) -> None:
         with TemporaryDirectory() as workspace:
             root = Path(workspace)
@@ -2011,7 +2111,7 @@ class BlackTestCase(BlackBaseTestCase):
 
         exc_info.match(
             re.escape(
-                "Cannot parse: 1:6\n"
+                "cannot parse: 1:6\n"
                 "    print(\n"
                 "         ^\n"
                 "TokenError: Unexpected EOF in multi-line statement"
@@ -2255,6 +2355,13 @@ class TestCaching:
             invokeBlack([str(src)])
             cache = black.Cache.read(mode)
             assert not cache.is_changed(src)
+
+    def test_cache_empty_file(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir():
+            cache_file = get_cache_file(mode)
+            cache_file.touch()
+            assert black.Cache.read(mode).file_data == {}
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE

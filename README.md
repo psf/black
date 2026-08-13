@@ -6,7 +6,7 @@
 <a href="https://github.com/psf/black/actions"><img alt="Actions Status" src="https://github.com/psf/black/workflows/Test/badge.svg"></a>
 <a href="https://black.readthedocs.io/en/stable/?badge=stable"><img alt="Documentation Status" src="https://readthedocs.org/projects/black/badge/?version=stable"></a>
 <a href="https://coveralls.io/github/psf/black?branch=main"><img alt="Coverage Status" src="https://coveralls.io/repos/github/psf/black/badge.svg?branch=main"></a>
-<a href="https://github.com/psf/black/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
+<a href="https://github.com/psf/black/blob/main/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/latest/_static/license.svg"></a>
 <a href="https://pypi.org/project/black/"><img alt="PyPI" src="https://img.shields.io/pypi/v/black"></a>
 <a href="https://pypi.org/project/black"><img alt="Supported Python Versions" src="https://img.shields.io/pypi/pyversions/black?color=brightgreen"></a>
 <a href="https://pepy.tech/project/black"><img alt="Downloads" src="https://static.pepy.tech/badge/black"></a>
@@ -145,7 +145,7 @@ Are we missing anyone? Let us know.
 
 ## Testimonials
 
-**Mike Bayer**, [author of `SQLAlchemy`](https://www.sqlalchemy.org/):
+**Mike Bayer**, creator of [`SQLAlchemy`](https://www.sqlalchemy.org/):
 
 > I can't think of any single tool in my entire programming career that has given me a
 > bigger productivity increase by its introduction. I can now do refactorings in about
@@ -153,11 +153,11 @@ Are we missing anyone? Let us know.
 > code to format itself.
 
 **Dusty Phillips**,
-[writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
+[writer](https://www.amazon.com/stores/Dusty-Phillips/author/B00HSYG5BO):
 
 > _Black_ is opinionated so you don't have to be.
 
-**Hynek Schlawack**, [creator of `attrs`](https://www.attrs.org/), core developer of
+**Hynek Schlawack**, creator of [`attrs`](https://www.attrs.org/), core developer of
 Twisted and CPython:
 
 > An auto-formatter that doesn't suck is all I want for Xmas!
@@ -166,8 +166,8 @@ Twisted and CPython:
 
 > At least the name is good.
 
-**Kenneth Reitz**, creator of [`requests`](https://requests.readthedocs.io/en/latest/)
-and [`pipenv`](https://readthedocs.org/projects/pipenv/):
+**Kenneth Reitz**, creator of [`requests`](https://requests.readthedocs.io/en/stable/)
+and [pipenv](https://pipenv.pypa.io/en/stable/):
 
 > This vastly improves the formatting of our code. Thanks a ton!
 

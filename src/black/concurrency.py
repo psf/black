@@ -18,6 +18,7 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 
+import click
 from mypy_extensions import mypyc_attr
 
 from black import WriteBack, format_file_in_place
@@ -89,8 +90,22 @@ def reformat_many(
     """Reformat multiple files using a ProcessPoolExecutor."""
 
     if workers is None:
-        workers = int(os.environ.get("BLACK_NUM_WORKERS", 0))
-        workers = workers or os.cpu_count() or 1
+        workers_value = os.environ.get("BLACK_NUM_WORKERS")
+        if workers_value is not None:
+            try:
+                workers = int(workers_value)
+            except ValueError:
+                raise click.BadParameter(
+                    f"{workers_value!r} is not a valid integer",
+                    param_hint="BLACK_NUM_WORKERS",
+                ) from None
+            if workers < 1:
+                raise click.BadParameter(
+                    f"{workers_value!r} is not in the range x>=1",
+                    param_hint="BLACK_NUM_WORKERS",
+                )
+        else:
+            workers = os.cpu_count() or 1
     if sys.platform == "win32":
         # Work around https://bugs.python.org/issue26903
         workers = min(workers, 60)
@@ -202,7 +217,7 @@ async def schedule_formatting(
                 elif exc := task.exception():
                     if report.verbose:
                         traceback.print_exception(type(exc), exc, exc.__traceback__)
-                    report.failed(src, str(exc))
+                    report.failed(src, exc)
                 else:
                     changed = Changed.YES if task.result() else Changed.NO
                     # If the file was written back or was successfully checked as

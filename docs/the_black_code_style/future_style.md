@@ -45,6 +45,8 @@ Currently, the following features are included in the preview style:
   statements.
 - `split_method_chain_on_standalone_comment`: Split method chains consistently when a
   standalone comment appears between chained calls.
+- `fmt_off_class_blank_lines`: Preserve two blank lines before a top-level class whose
+  definition starts inside a `# fmt: off` block after an import.
 
 (labels/wrap-comprehension-in)=
 

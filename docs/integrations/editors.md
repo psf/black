@@ -4,9 +4,9 @@
 
 Options include the following:
 
-- [wbolster/emacs-python-black](https://github.com/wbolster/emacs-python-black)
-- [proofit404/blacken](https://github.com/pythonic-emacs/blacken)
-- [Elpy](https://github.com/jorgenschaefer/elpy).
+- [emacs-python-black](https://github.com/wbolster/emacs-python-black)
+- [Blacken](https://github.com/pythonic-emacs/blacken)
+- [Elpy](https://elpy.readthedocs.io/en/stable/).
 
 ## PyCharm/IntelliJ IDEA
 
@@ -238,7 +238,7 @@ external command.
 
 ##### `vim-plug`
 
-To install with [vim-plug](https://github.com/junegunn/vim-plug):
+To install with [vim-plug](https://junegunn.github.io/vim-plug/):
 
 _Black_'s `stable` branch tracks official version updates, and can be used to simply
 follow the most recent stable version.
@@ -352,6 +352,24 @@ nnoremap <F9> :Black<CR>
    let g:ale_fixers = {}
    let g:ale_fixers.python = ['black']
    ```
+
+### Vim indentation plugin
+
+For insert-mode indentation that follows the same hanging-bracket style as _Black_, you
+can also use the
+[`vim-python-pep8-indent`](https://github.com/Vimjas/vim-python-pep8-indent) plugin. It
+provides Vim's `indentexpr`; _Black_ remains responsible for formatting the file. For
+example, with vim-plug:
+
+```vim
+Plug 'Vimjas/vim-python-pep8-indent'
+```
+
+With Vundle, use:
+
+```vim
+Plugin 'Vimjas/vim-python-pep8-indent'
+```
 
 ## Neovim
 
@@ -476,7 +494,7 @@ Sublime Text, Visual Studio Code and many more), you can use the
 
 ## Gradle (the build tool)
 
-Use the [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle) plugin.
+Use the [Spotless](https://plugins.gradle.org/plugin/com.diffplug.spotless) plugin.
 
 ## Kakoune
 
@@ -490,4 +508,4 @@ hook global WinSetOption filetype=python %{
 
 ## Thonny
 
-Use [Thonny-black-formatter](https://pypi.org/project/thonny-black-formatter/).
+Use [Thonny-black-formatter](https://github.com/ettore-galli/thonny-black-formatter).

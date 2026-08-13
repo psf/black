@@ -39,4 +39,4 @@
      - PSF COC: https://www.python.org/psf/conduct/
      - Contributing docs: https://black.readthedocs.io/en/latest/contributing/index.html
      - Chat on Python Discord: https://discord.gg/RtVdv86PrH
-     - Stability policy: https://black.readthedocs.io/en/latest/the_black_code_style/index.html -->
+     - Stability policy: https://black.readthedocs.io/en/stable/the_black_code_style/index.html -->

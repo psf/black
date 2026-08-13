@@ -10,7 +10,7 @@ updates:
     schedule:
       interval: daily
     cooldown:
-      default-days: 7
+      default-days: 2
 
   - package-ecosystem: "pip"
     directory: "/"
@@ -18,4 +18,4 @@ updates:
     schedule:
       interval: daily
     cooldown:
-      default-days: 7
+      default-days: 2

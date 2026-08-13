@@ -35,7 +35,7 @@ section for details). If you're feeling confident, use `--fast`.
 
 ## Testimonials
 
-**Mike Bayer**, author of [SQLAlchemy](https://www.sqlalchemy.org/):
+**Mike Bayer**, creator of [`SQLAlchemy`](https://www.sqlalchemy.org/):
 
 > _I can't think of any single tool in my entire programming career that has given me a
 > bigger productivity increase by its introduction. I can now do refactorings in about
@@ -43,11 +43,11 @@ section for details). If you're feeling confident, use `--fast`.
 > code to format itself._
 
 **Dusty Phillips**,
-[writer](https://smile.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=dusty+phillips):
+[writer](https://www.amazon.com/stores/Dusty-Phillips/author/B00HSYG5BO):
 
 > _Black is opinionated so you don't have to be._
 
-**Hynek Schlawack**, creator of [attrs](https://www.attrs.org/), core developer of
+**Hynek Schlawack**, creator of [`attrs`](https://www.attrs.org/), core developer of
 Twisted and CPython:
 
 > _An auto-formatter that doesn't suck is all I want for Xmas!_
@@ -56,8 +56,8 @@ Twisted and CPython:
 
 > _At least the name is good._
 
-**Kenneth Reitz**, creator of [requests](https://python-requests.org/) and
-[pipenv](https://docs.pipenv.org/):
+**Kenneth Reitz**, creator of [`requests`](https://requests.readthedocs.io/en/stable/)
+and [pipenv](https://pipenv.pypa.io/en/stable/):
 
 > _This vastly improves the formatting of our code. Thanks a ton!_
 

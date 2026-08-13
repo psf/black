@@ -16,6 +16,17 @@ set_of_types = {tuple[int,],}
 # Except single element tuples
 small_tuple = (1,)
 
+# Also keep the comma when a standalone comment splits the opening paren of a
+# single-element tuple used as a lambda parameter default onto a previous line.
+foo(lambda x=(
+    # comment
+    1,
+): x)
+[lambda x=(
+    # comment
+    1,
+): x]
+
 # Trailing commas in multiple chained non-nested parens.
 zero(
     one,
@@ -47,6 +58,11 @@ func(
     argument6,
 )
 
+# Also keep it when the line is long enough to be split and a power operator
+# sends it through hug_power_op, which used to rebuild the line from leaves that
+# had lost their place in the tree.
+value = alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
+
 # output
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
@@ -65,6 +81,19 @@ set_of_types = {tuple[int,]}
 # Except single element tuples
 small_tuple = (1,)
 
+# Also keep the comma when a standalone comment splits the opening paren of a
+# single-element tuple used as a lambda parameter default onto a previous line.
+foo(
+    lambda x=(
+    # comment
+    1,): x
+)
+[
+    lambda x=(
+    # comment
+    1,): x
+]
+
 # Trailing commas in multiple chained non-nested parens.
 zero(one).two(three).four(five)
 
@@ -73,3 +102,10 @@ func1(arg1).func2(arg2).func3(arg3).func4(arg4).func5(arg5)
 a, b, c, d = func1(arg1) and func2(arg2)
 
 func(argument1, (one, two), argument4, argument5, argument6)
+
+# Also keep it when the line is long enough to be split and a power operator
+# sends it through hug_power_op, which used to rebuild the line from leaves that
+# had lost their place in the tree.
+value = (
+    alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
+)

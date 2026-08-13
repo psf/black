@@ -24,6 +24,7 @@ concurrency:
 
 env:
   HATCH_BUILD_HOOKS_ENABLE: "1"
+  PIP_UPLOADED_PRIOR_TO: P2D
   # Clang is less picky with the C code it's given than gcc (and may generate faster
   # binaries too).
   CC: clang-18
@@ -37,16 +38,18 @@ jobs:
       matrix: ${{ steps.set-config.outputs.matrix }}
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group diff-shades --group diff-shades-comment
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades --group diff-shades-comment
 
       - name: Calculate run configuration & metadata
         id: set-config
@@ -65,18 +68,20 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group diff-shades
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades
 
       - name: Configure git
         run: |
@@ -85,7 +90,7 @@ jobs:
 
       - name: Attempt to use cached baseline analysis
         id: baseline-cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}
@@ -121,18 +126,20 @@ jobs:
 
     steps:
       - name: Checkout this repository (full clone)
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # The baseline revision could be rather old so a full clone is ideal.
           fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group diff-shades
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades
 
       - name: Configure git
         run: |
@@ -150,7 +157,7 @@ jobs:
       # (but it wouldn't cause problems if we theoretically did)
       - name: Attempt to find baseline analysis
         id: baseline-cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ matrix.baseline-analysis }}
           key: ${{ matrix.baseline-cache-key }}
@@ -188,7 +195,7 @@ jobs:
         include: ${{ fromJson(needs.configure.outputs.matrix) }}
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -197,11 +204,13 @@ jobs:
           merge-multiple: true
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group diff-shades --group diff-shades-comment
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group diff-shades --group diff-shades-comment
 
       - name: Generate HTML diff report
         run: |

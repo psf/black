@@ -6,3 +6,6 @@ rules:
       # treat artifacts as untrusted and only read validated files from an isolated
       # artifact directory.
       - diff_shades_comment.yml
+  dependabot-cooldown:
+    config:
+      days: 2

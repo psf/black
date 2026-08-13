@@ -73,6 +73,8 @@ VARARGS_PARENTS: Final = {
     syms.trailer,  # single argument to call
     syms.typedargslist,
     syms.varargslist,  # lambdas
+    syms.typevartuple,  # star in a PEP 695 type parameter list
+    syms.paramspec,  # double star in a PEP 695 type parameter list
 }
 UNPACKING_PARENTS: Final = {
     syms.atom,  # single element of a list or set literal
@@ -138,8 +140,6 @@ ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
     token.TSTRING_END,
     token.BANG,
 }
-
-RARROW = 55
 
 
 @mypyc_attr(allow_interpreted_subclasses=True)
@@ -455,7 +455,7 @@ def preceding_leaf(node: LN | None) -> Leaf | None:
 
 def prev_siblings_are(node: LN | None, tokens: list[NodeType | None]) -> bool:
     """Return if the `node` and its previous siblings match types against the provided
-    list of tokens; the provided `node`has its type matched against the last element in
+    list of tokens; the provided `node` has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
     list is anchored at the start of its parent's children."""
     if not tokens:
@@ -577,7 +577,9 @@ def is_docstring(node: NL) -> bool:
             return False
 
         prefix = get_string_prefix(node.value)
-        if set(prefix).intersection("bBfF"):
+        # Bytes, f-strings and t-strings never evaluate to str, so they are not
+        # docstrings even in docstring position.
+        if set(prefix).intersection("bBfFtT"):
             return False
 
     if (

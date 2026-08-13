@@ -124,7 +124,7 @@ If you are experiencing exceptionally weird issues or even segfaults, you can tr
 passing `--no-binary black` to your pip install invocation. This flag excludes all
 wheels (including the pure Python wheel), so this command will use the [sdist].
 
-[mypyc]: https://mypyc.readthedocs.io/en/latest/
+[mypyc]: https://mypyc.readthedocs.io/en/stable/
 [sdist]:
   https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist
 
@@ -136,4 +136,4 @@ fixable from _Black_'s end.
 Instead, run your chosen command line/shell through [Windows Terminal], which will
 properly handle rendering the emoji.
 
-[Windows Terminal]: https://github.com/microsoft/terminal
+[Windows Terminal]: https://aka.ms/terminal

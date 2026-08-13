@@ -190,9 +190,101 @@ def convert_unchanged_lines(src_node: Node, lines: Collection[tuple[int, int]]) 
     lines_set: set[int] = set()
     for start, end in lines:
         lines_set.update(range(start, end + 1))
-    visitor = _TopLevelStatementsVisitor(lines_set)
+    replacements = _NodeReplacements()
+    visitor = _TopLevelStatementsVisitor(lines_set, replacements)
     _ = list(visitor.visit(src_node))  # Consume all results.
+    replacements.apply()
     _convert_unchanged_line_by_line(src_node, lines_set)
+
+
+class _NodeReplacements:
+    """Collects STANDALONE_COMMENT conversions and applies them per parent.
+
+    Converting a node splices a `STANDALONE_COMMENT` leaf in place of a run of
+    sibling nodes. Doing that one node at a time with `Base.remove` /
+    `insert_child` scans and shifts the parent's children list on every call, so
+    converting the many sibling blocks of one parent (a long if/elif chain, a
+    match with many cases, a module with many top-level statements) is O(n^2).
+    Recording the conversions and rewriting each parent's children in a single
+    pass makes it O(n).
+    """
+
+    def __init__(self) -> None:
+        # id(parent) -> (parent, {id(child): standalone to splice in}, {ids to drop})
+        # A run's nodes can live under more than one parent (an `async` statement
+        # keeps the `ASYNC` leaf on the grandparent), so the standalone replaces
+        # the run's first node under its own parent while the remaining nodes are
+        # just dropped from wherever they sit.
+        self._by_parent: dict[int, tuple[Node, dict[int, Leaf], set[int]]] = {}
+        # NEWLINE leaves already inside a recorded run, so the line-by-line pass
+        # doesn't record an overlapping conversion for them.
+        self.covered_newlines: set[int] = set()
+        # Nodes already scheduled for removal. When conversions immediately
+        # mutated the tree, a second conversion touching an already-removed node
+        # was a no-op (`Base.remove` returned None); recording defers the
+        # mutation, so we skip such nodes explicitly to keep that behaviour.
+        self._recorded: set[int] = set()
+        # A leaf's prefix (indentation, blank lines, comments) moves onto its
+        # STANDALONE_COMMENT. When an inner and an outer node that share the same
+        # first leaf are both converted (a decorator inside a decorated block),
+        # the earlier conversion clears the prefix off the leaf, so the later one
+        # would see an empty prefix. Remember the taken prefix keyed by the leaf
+        # so both conversions reuse the original.
+        self._taken_prefixes: dict[int, str] = {}
+
+    def _entry(self, parent: Node) -> tuple[Node, dict[int, Leaf], set[int]]:
+        return self._by_parent.setdefault(id(parent), (parent, {}, set()))
+
+    def take_prefix(self, first: Leaf) -> str:
+        cached = self._taken_prefixes.get(id(first))
+        if cached is not None:
+            return cached
+        prefix = first.prefix
+        first.prefix = ""
+        # Immediate conversion replaced the whole run with a freshly built
+        # STANDALONE_COMMENT leaf, whose synthesized position is line 0. Recording
+        # the conversion leaves the original leaf in place, so mirror that line 0
+        # here: when a later, enclosing node shares this first leaf (a decorated
+        # block over an already-recorded decorator), _get_line_range sees the run
+        # as starting at line 0, matching the immediate behaviour.
+        first.lineno = 0
+        self._taken_prefixes[id(first)] = prefix
+        return prefix
+
+    def is_recorded(self, node: LN) -> bool:
+        return id(node) in self._recorded
+
+    def record(self, run: list[LN], standalone: Leaf) -> None:
+        first = run[0]
+        first_parent = first.parent
+        if first_parent is None or id(first) in self._recorded:
+            return
+        for node in run:
+            self._recorded.add(id(node))
+            for leaf in node.leaves():
+                if leaf.type == NEWLINE:
+                    self.covered_newlines.add(id(leaf))
+            parent = node.parent
+            if parent is not None:
+                self._entry(parent)[2].add(id(node))
+        self._entry(first_parent)[1][id(first)] = standalone
+
+    def apply(self) -> None:
+        for parent, replaced, removed in self._by_parent.values():
+            new_children: list[LN] = []
+            for child in parent.children:
+                standalone = replaced.get(id(child))
+                if standalone is not None:
+                    standalone.parent = parent
+                    new_children.append(standalone)
+                    child.parent = None
+                elif id(child) in removed:
+                    child.parent = None
+                else:
+                    new_children.append(child)
+            parent.children = new_children
+            parent.changed()
+            parent.invalidate_sibling_maps()
 
 
 def _contains_standalone_comment(node: LN) -> bool:
@@ -215,8 +307,9 @@ class _TopLevelStatementsVisitor(Visitor[None]):
     classes/functions/statements.
     """
 
-    def __init__(self, lines_set: set[int]):
+    def __init__(self, lines_set: set[int], replacements: "_NodeReplacements"):
         self._lines_set = lines_set
+        self._replacements = replacements
 
     def visit_simple_stmt(self, node: Node) -> Iterator[None]:
         # This is only called for top-level statements, since `visit_suite`
@@ -233,7 +326,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
         # its body on the same line. Example: `if cond: pass`.
         ancestor = furthest_ancestor_with_last_leaf(newline_leaf)
         if not _get_line_range(ancestor).intersection(self._lines_set):
-            _convert_node_to_standalone_comment(ancestor)
+            _convert_node_to_standalone_comment(ancestor, self._replacements)
 
     def visit_suite(self, node: Node) -> Iterator[None]:
         yield from []
@@ -256,15 +349,20 @@ class _TopLevelStatementsVisitor(Visitor[None]):
         if semantic_parent is not None and not _get_line_range(
             semantic_parent
         ).intersection(self._lines_set):
-            _convert_node_to_standalone_comment(semantic_parent)
+            _convert_node_to_standalone_comment(semantic_parent, self._replacements)
 
 
 def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
     """Converts unchanged to STANDALONE_COMMENT line by line."""
+    replacements = _NodeReplacements()
     for leaf in node.leaves():
         if leaf.type != NEWLINE:
             # We only consider "unwrapped lines", which are divided by the NEWLINE
             # token.
+            continue
+        if id(leaf) in replacements.covered_newlines:
+            # This NEWLINE is inside a run already scheduled for conversion (e.g.
+            # a second decorator on a stacked decorator block).
             continue
         if leaf.parent and leaf.parent.type == syms.match_stmt:
             # The `suite` node is defined as:
@@ -277,7 +375,9 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
                 nodes_to_ignore.insert(0, prev_sibling)
                 prev_sibling = prev_sibling.prev_sibling
             if not _get_line_range(nodes_to_ignore).intersection(lines_set):
-                _convert_nodes_to_standalone_comment(nodes_to_ignore, newline=leaf)
+                _convert_nodes_to_standalone_comment(
+                    nodes_to_ignore, newline=leaf, replacements=replacements
+                )
         elif leaf.parent and leaf.parent.type == syms.suite:
             # The `suite` node is defined as:
             #   suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
@@ -298,7 +398,9 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
             ):
                 nodes_to_ignore.insert(0, grandparent.prev_sibling)
             if not _get_line_range(nodes_to_ignore).intersection(lines_set):
-                _convert_nodes_to_standalone_comment(nodes_to_ignore, newline=leaf)
+                _convert_nodes_to_standalone_comment(
+                    nodes_to_ignore, newline=leaf, replacements=replacements
+                )
         else:
             ancestor = furthest_ancestor_with_last_leaf(leaf)
             # Consider multiple decorators as a whole block, as their
@@ -310,13 +412,16 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
             ):
                 ancestor = ancestor.parent
             if not _get_line_range(ancestor).intersection(lines_set):
-                _convert_node_to_standalone_comment(ancestor)
+                _convert_node_to_standalone_comment(ancestor, replacements)
+    replacements.apply()
 
 
-def _convert_node_to_standalone_comment(node: LN) -> None:
+def _convert_node_to_standalone_comment(
+    node: LN, replacements: "_NodeReplacements"
+) -> None:
     """Convert node to STANDALONE_COMMENT by modifying the tree inline."""
     parent = node.parent
-    if not parent:
+    if not parent or replacements.is_recorded(node):
         return
     first = first_leaf(node)
     last = last_leaf(node)
@@ -335,65 +440,53 @@ def _convert_node_to_standalone_comment(node: LN) -> None:
     # reformatted accordingly to the correct indentation level.
     # This also means the indentation will be changed on the unchanged lines, and
     # this is actually required to not break incremental reformatting.
-    prefix = first.prefix
-    first.prefix = ""
-    index = node.remove()
-    if index is not None:
-        # Because of the special handling of multiple decorators, if the decorated
-        # item is a single line then there will be a missing newline between the
-        # decorator and item, so add it back. This doesn't affect any other case
-        # since a decorated item with a newline would hit the earlier suite case
-        # in _convert_unchanged_line_by_line that correctly handles the newlines.
-        if node.type == syms.decorated:
-            # A leaf of type decorated wouldn't make sense, since it should always
-            # have at least the decorator + the decorated item, so if this assert
-            # hits that means there's a problem in the parser.
-            assert isinstance(node, Node)
-            # 1 will always be the correct index since before this function is
-            # called all the decorators are collapsed into a single leaf
-            node.insert_child(1, Leaf(NEWLINE, "\n"))
-        # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
-        # generating the formatted code.
-        value = str(node)[:-1]
-        parent.insert_child(
-            index,
-            Leaf(
-                STANDALONE_COMMENT,
-                value,
-                prefix=prefix,
-                fmt_pass_converted_first_leaf=first,
-            ),
-        )
+    prefix = replacements.take_prefix(first)
+    # For a single-line decorated item the decorator and the item need a newline
+    # between them. The conversions are recorded and applied in a single pass
+    # instead of mutating the tree per node, so the decorator here is still its
+    # own child node carrying its trailing NEWLINE, which already separates it
+    # from the item; there's nothing to add back. (A decorated item spanning
+    # multiple lines is handled by the earlier suite case in
+    # _convert_unchanged_line_by_line, which manages the newlines itself.)
+    # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
+    # generating the formatted code.
+    value = str(node)[:-1]
+    replacements.record(
+        [node],
+        Leaf(
+            STANDALONE_COMMENT,
+            value,
+            prefix=prefix,
+            fmt_pass_converted_first_leaf=first,
+        ),
+    )
 
 
-def _convert_nodes_to_standalone_comment(nodes: Sequence[LN], *, newline: Leaf) -> None:
+def _convert_nodes_to_standalone_comment(
+    nodes: Sequence[LN], *, newline: Leaf, replacements: "_NodeReplacements"
+) -> None:
     """Convert nodes to STANDALONE_COMMENT by modifying the tree inline."""
     if not nodes:
         return
     parent = nodes[0].parent
     first = first_leaf(nodes[0])
-    if not parent or not first:
+    if not parent or not first or replacements.is_recorded(nodes[0]):
         return
-    prefix = first.prefix
-    first.prefix = ""
+    prefix = replacements.take_prefix(first)
     value = "".join(str(node) for node in nodes)
     # The prefix comment on the NEWLINE leaf is the trailing comment of the statement.
     if newline.prefix:
         value += newline.prefix
         newline.prefix = ""
-    index = nodes[0].remove()
-    for node in nodes[1:]:
-        node.remove()
-    if index is not None:
-        parent.insert_child(
-            index,
-            Leaf(
-                STANDALONE_COMMENT,
-                value,
-                prefix=prefix,
-                fmt_pass_converted_first_leaf=first,
-            ),
-        )
+    replacements.record(
+        list(nodes),
+        Leaf(
+            STANDALONE_COMMENT,
+            value,
+            prefix=prefix,
+            fmt_pass_converted_first_leaf=first,
+        ),
+    )
 
 
 def _leaf_line_end(leaf: Leaf) -> int:

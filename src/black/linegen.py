@@ -4,7 +4,7 @@ Generating lines of code.
 
 import re
 import sys
-from collections.abc import Collection, Iterator
+from collections.abc import Collection, Iterable, Iterator
 from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
@@ -67,6 +67,7 @@ from black.nodes import (
     is_tuple,
     is_tuple_containing_star,
     is_tuple_containing_walrus,
+    is_type_ignore_comment,
     is_type_ignore_comment_string,
     is_vararg,
     is_walrus_assignment,
@@ -217,8 +218,9 @@ class LineGenerator(Visitor[Line]):
         This implementation is shared for `if`, `while`, `for`, `try`, `except`,
         `def`, `with`, `class`, `assert`, and assignments.
 
-        The relevant Python language `keywords` for a given statement will be
-        NAME leaves within it. This methods puts those on a separate line.
+        The relevant Python language `keywords` for a given statement
+        appear as NAME leaves within it. This method puts those on a
+        separate line.
 
         `parens` holds a set of string leaf values immediately after which
         invisible parens should be put.
@@ -615,7 +617,7 @@ class LineGenerator(Visitor[Line]):
         if "\\" in string_leaf.value and any(
             "\\" in str(child)
             for child in node.children
-            if child.type == syms.fstring_replacement_field
+            if child.type == syms.tstring_replacement_field
         ):
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
@@ -1061,6 +1063,17 @@ def _first_right_hand_split(
                     should_hug = False
                 else:
                     should_hug = True
+            if should_hug and (
+                _hugging_merges_type_ignores(line, head_leaves, hugged_opening_leaves)
+                or _hugging_merges_type_ignores(
+                    line, hugged_closing_leaves, tail_leaves
+                )
+            ):
+                # Hugging joins these leaves onto one physical line, and their
+                # trailing comments come along. `type: ignore` is recorded per
+                # line by the AST, so two of them landing on the same line would
+                # drop one and make the output non-equivalent.
+                should_hug = False
             if should_hug:
                 body_leaves = inner_body_leaves
                 head_leaves.extend(hugged_opening_leaves)
@@ -1289,6 +1302,19 @@ def _ensure_trailing_comma(
     ):
         return False
     return True
+
+
+def _hugging_merges_type_ignores(line: Line, *leaf_groups: Iterable[Leaf]) -> bool:
+    """Return True if hugging these groups would put two `type: ignore`s on a line."""
+    seen = 0
+    for leaves in leaf_groups:
+        for leaf in leaves:
+            for comment in line.comments_after(leaf):
+                if is_type_ignore_comment(comment, mode=line.mode):
+                    seen += 1
+                    if seen > 1:
+                        return True
+    return False
 
 
 def bracket_split_build_line(
@@ -1571,6 +1597,27 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         yield current_line
 
 
+def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:
+    """Whether `node` is an atom wrapping a lambda or conditional expression,
+    looking through any redundant nested parentheses.
+
+    As a comprehension's iterable, such an expression must keep at least one pair
+    of parentheses: without them the trailing `for`/`if` clauses would be parsed
+    as part of the lambda body (or break the ternary), producing invalid code.
+    """
+    while (
+        node.type == syms.atom
+        and len(node.children) == 3
+        and is_lpar_token(node.children[0])
+        and is_rpar_token(node.children[-1])
+    ):
+        middle = node.children[1]
+        if middle.type in {syms.test, syms.lambdef}:
+            return True
+        node = middle
+    return False
+
+
 def normalize_invisible_parens(
     node: Node, parens_after: set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
@@ -1671,14 +1718,22 @@ def normalize_invisible_parens(
                     and is_one_tuple(child.children[0])
                 ):
                     wrap_in_parentheses(node, child, visible=True)
-            elif child.type == syms.atom and not (
-                "in" in parens_after
-                and len(child.children) == 3
-                and is_lpar_token(child.children[0])
-                and is_rpar_token(child.children[-1])
-                and child.children[1].type in {syms.test, syms.lambdef}
-            ):
-                if maybe_make_parens_invisible_in_atom(
+            elif child.type == syms.atom:
+                if "in" in parens_after and _is_parenthesized_lambda_or_ternary(child):
+                    # A lambda or conditional expression used as a comprehension's
+                    # iterable must keep at least one pair of parentheses, otherwise
+                    # the trailing `for`/`if` clauses get absorbed into it and the
+                    # code becomes invalid. Any extra nested pairs are redundant, so
+                    # collapse them while keeping exactly one visible pair.
+                    maybe_make_parens_invisible_in_atom(
+                        child, parent=node, mode=mode, features=features
+                    )
+                    opening = child.children[0]
+                    closing = child.children[-1]
+                    if is_lpar_token(opening) and is_rpar_token(closing):
+                        opening.value = "("
+                        closing.value = ")"
+                elif maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
                 ):
                     wrap_in_parentheses(node, child, visible=False)
@@ -1972,7 +2027,6 @@ def maybe_make_parens_invisible_in_atom(
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
-            syms.for_stmt,
         ]:
             return False
 
