@@ -58,6 +58,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split method chains consistently when a standalone comment appears between chained
+  calls (#5218)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like

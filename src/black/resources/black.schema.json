@@ -93,6 +93,7 @@
           "pyi_blank_line_after_function_docstring",
           "hug_comparator",
           "parenthesize_tuple_in_yield",
+          "split_method_chain_on_standalone_comment",
           "fmt_off_class_blank_lines"
         ]
       },
