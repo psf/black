@@ -32,7 +32,7 @@ from black.lines import (
     can_be_split,
     can_omit_invisible_parens,
     is_line_short_enough,
-    is_symmetric_list_concatenation,
+    is_symmetric_collection_operation,
     line_to_string,
 )
 from black.mode import Feature, Mode, Preview
@@ -1136,7 +1136,7 @@ def _maybe_split_omitting_optional_parens(
         and not rhs.opening_bracket.value
         and rhs.closing_bracket.type == token.RPAR
         and not rhs.closing_bracket.value
-        and is_symmetric_list_concatenation(rhs.body, mode.line_length)
+        and is_symmetric_collection_operation(rhs.body, mode.line_length)
     )
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features

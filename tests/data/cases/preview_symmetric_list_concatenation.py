@@ -6,6 +6,12 @@ search_fields = (["file__%s" % field for field in FileAdmin.search_fields] + ["r
 # Plain list displays receive the same symmetric treatment.
 names = ["Alice", "Bob", "Charlie", "Diana", "Edward"] + ["Fiona", "George", "Harriet", "Isabelle"]
 
+# The matching tuple, dictionary, and set operations are also symmetric.
+tuple_values = ("first_long_value", "second_long_value") + ("third_long_value", "fourth_long_value")
+dictionary_values = {"first_long_key": first_long_value, "second_long_key": second_long_value} | {"third_long_key": third_long_value, "fourth_long_key": fourth_long_value}
+set_union = {"first_long_value", "second_long_value"} | {"third_long_value", "fourth_long_value"}
+set_intersection = {"first_long_value", "second_long_value"} & {"third_long_value", "fourth_long_value"}
+
 # Comments on an operand stay attached and formatting remains stable.
 commented = (
     ["first_long_value", "second_long_value", "third_long_value"]  # first list
@@ -61,6 +67,24 @@ search_fields = (
 names = (
     ["Alice", "Bob", "Charlie", "Diana", "Edward"]
     + ["Fiona", "George", "Harriet", "Isabelle"]
+)
+
+# The matching tuple, dictionary, and set operations are also symmetric.
+tuple_values = (
+    ("first_long_value", "second_long_value")
+    + ("third_long_value", "fourth_long_value")
+)
+dictionary_values = (
+    {"first_long_key": first_long_value, "second_long_key": second_long_value}
+    | {"third_long_key": third_long_value, "fourth_long_key": fourth_long_value}
+)
+set_union = (
+    {"first_long_value", "second_long_value"}
+    | {"third_long_value", "fourth_long_value"}
+)
+set_intersection = (
+    {"first_long_value", "second_long_value"}
+    & {"third_long_value", "fourth_long_value"}
 )
 
 # Comments on an operand stay attached and formatting remains stable.

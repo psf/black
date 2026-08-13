@@ -1520,8 +1520,8 @@ def _is_annotated_assignment(head: Line) -> bool:
     return False
 
 
-def is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
-    """Is `line` exactly two single-line lists joined by a top-level `+`?"""
+def is_symmetric_collection_operation(line: Line, line_length: int) -> bool:
+    """Is `line` a supported pair of single-line display operands?"""
     if len(line.bracket_tracker.delimiters) != 1:
         return False
 
@@ -1546,19 +1546,23 @@ def is_symmetric_list_concatenation(line: Line, line_length: int) -> bool:
     right_opening = line.leaves[delimiter_index + 1]
     last = line.leaves[-1]
 
-    if not (
-        delimiter.type == token.PLUS
-        and first.type == token.LSQB
-        and left_closing.type == token.RSQB
-        and left_closing.opening_bracket is first
-        and right_opening.type == token.LSQB
-        and last.type == token.RSQB
-        and last.opening_bracket is right_opening
+    display_operation = (
+        (token.LSQB, token.RSQB, token.PLUS),
+        (token.LPAR, token.RPAR, token.PLUS),
+        (token.LBRACE, token.RBRACE, token.VBAR),
+        (token.LBRACE, token.RBRACE, token.AMPER),
+    )
+    if (
+        (first.type, left_closing.type, delimiter.type) not in display_operation
+        or right_opening.type is not first.type
+        or last.type is not left_closing.type
+        or left_closing.opening_bracket is not first
+        or last.opening_bracket is not right_opening
     ):
         return False
 
-    # Keep the existing asymmetric split when either list is already forced to
-    # split by a magic trailing comma.
+    # Keep the existing asymmetric split when either display is already forced
+    # to split by a magic trailing comma.
     if line.mode.magic_trailing_comma and (
         line.leaves[left_closing_index - 1].type == token.COMMA
         or line.leaves[-2].type == token.COMMA
@@ -1712,10 +1716,10 @@ def can_omit_invisible_parens(
             return False
         if (
             Preview.symmetric_list_concatenation in mode
-            and is_symmetric_list_concatenation(line, line_length)
+            and is_symmetric_collection_operation(line, line_length)
         ):
             # Retaining the optional parentheses lets the delimiter splitter put
-            # each list operand on its own line instead of exploding just one list.
+            # each display operand on its own line instead of exploding just one.
             return False
         # Otherwise it may also read better, but we don't do it today and requires
         # careful considerations for all possible cases. See
