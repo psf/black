@@ -683,6 +683,19 @@ def _get_compound_statement_header(
 
     # Collect all header leaves before the body
     header_leaves: list[LN] = []
+    if (
+        compound_stmt.parent is not None
+        and compound_stmt.parent.type in (syms.async_stmt, syms.async_funcdef)
+    ):
+        for child in compound_stmt.parent.children:
+            if child is compound_stmt:
+                break
+            if isinstance(child, Leaf):
+                if child.type not in (token.NEWLINE, token.INDENT):
+                    header_leaves.append(child)
+            else:
+                header_leaves.extend(child.leaves())
+
     for child in compound_stmt.children:
         if child is body_node:
             break
