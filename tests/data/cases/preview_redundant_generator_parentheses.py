@@ -15,6 +15,16 @@ next(((item for item in items)), None)
 consume(generator=((item for item in items)))
 consume(*((item for item in items)))
 
+# Power trailers still require the generator's own parentheses.
+((item for item in items)).send(None)
+((item for item in items))[0]
+((item for item in items)).attribute
+((item for item in items))()
+(item for item in items).send(None)
+(item for item in items)[0]
+(item for item in items).attribute
+(item for item in items)()
+
 any((
     this_very_long_method_name(obj) or another_long_method_name(obj)
     for obj in this_iterable
@@ -49,6 +59,16 @@ outer(inner(item.is_valid() for item in items))
 next((item for item in items), None)
 consume(generator=(item for item in items))
 consume(*(item for item in items))
+
+# Power trailers still require the generator's own parentheses.
+(item for item in items).send(None)
+(item for item in items)[0]
+(item for item in items).attribute
+(item for item in items)()
+(item for item in items).send(None)
+(item for item in items)[0]
+(item for item in items).attribute
+(item for item in items)()
 
 any(
     this_very_long_method_name(obj) or another_long_method_name(obj)
