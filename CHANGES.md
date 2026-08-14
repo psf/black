@@ -17,7 +17,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and `async for` statements containing a semicolon (#5308)
+- Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
+  `async for` statements containing a semicolon (#5308)
 - Stop treating a t-string in docstring position as a docstring (for example
   `t"  spam  "` as the first statement of a module, class or function). t-strings
   evaluate to `Template`, never `str`, so stripping and reindenting one changed the
