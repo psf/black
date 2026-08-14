@@ -10,6 +10,7 @@ from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
+    COMPARATORS,
     MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
@@ -1567,7 +1568,7 @@ def is_symmetric_collection_binop(line: Line, line_length: int) -> bool:
     if (
         not is_collection_display(first, left_closing)
         or not is_collection_display(right_opening, last)
-        or delimiter.type not in MATH_OPERATORS
+        or delimiter.type not in MATH_OPERATORS | COMPARATORS
         or left_closing.opening_bracket is not first
         or last.opening_bracket is not right_opening
     ):

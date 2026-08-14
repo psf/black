@@ -84,9 +84,9 @@ any additional pair:
 When a binary operation between two collection displays is too long for one line and
 both operands fit on their own delimiter-split line, Black keeps optional parentheses
 around the expression so that the operands can be split symmetrically. This applies to
-every arithmetic and bitwise binary operator between collection displays. If either
-display needs an internal split, including when an active magic trailing comma forces it
-onto multiple lines, Black retains the existing formatting.
+every arithmetic, bitwise, and symbolic comparison operator between collection displays.
+If either display needs an internal split, including when an active magic trailing comma
+forces it onto multiple lines, Black retains the existing formatting.
 
 ```python
 # Before

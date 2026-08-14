@@ -26,6 +26,10 @@ collection_right_shift = {"first_long_value", "second_long_value"} >> {"third_lo
 collection_xor = ["first_long_value", "second_long_value"] ^ ["third_long_value", "fourth_long_value"]
 mixed_collection_operands = ["first_long_value", "second_long_value"] + ("third_long_value", "fourth_long_value")
 
+# Symbolic comparisons between collection displays also split symmetrically.
+list_equality = ["first_long_value", "second_long_value"] == ["third_long_value", "fourth_long_value"]
+list_comprehension_equality = [item for item in source_items] == [first_value, second_value, third_value]
+
 # Parenthesized scalars and generator expressions are not collection displays.
 parenthesized_scalars = (first_function_with_a_really_long_name(first_argument)) + (second_function_with_a_really_long_name(second_argument))
 generator_operands = (first_item for first_item in first_collection_with_a_really_long_name) + (second_item for second_item in second_collection_with_a_really_long_name)
@@ -150,6 +154,16 @@ collection_xor = (
 mixed_collection_operands = (
     ["first_long_value", "second_long_value"]
     + ("third_long_value", "fourth_long_value")
+)
+
+# Symbolic comparisons between collection displays also split symmetrically.
+list_equality = (
+    ["first_long_value", "second_long_value"]
+    == ["third_long_value", "fourth_long_value"]
+)
+list_comprehension_equality = (
+    [item for item in source_items]
+    == [first_value, second_value, third_value]
 )
 
 # Parenthesized scalars and generator expressions are not collection displays.
