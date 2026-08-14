@@ -32,7 +32,7 @@ from black.lines import (
     can_be_split,
     can_omit_invisible_parens,
     is_line_short_enough,
-    is_symmetric_collection_operation,
+    is_symmetric_collection_binop,
     line_to_string,
 )
 from black.mode import Feature, Mode, Preview
@@ -1130,13 +1130,13 @@ def _maybe_split_omitting_optional_parens(
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
-    split_symmetric_lists = (
-        Preview.symmetric_list_concatenation in mode
+    split_symmetric_collection_binops = (
+        Preview.symmetric_collection_operations in mode
         and rhs.opening_bracket.type == token.LPAR
         and not rhs.opening_bracket.value
         and rhs.closing_bracket.type == token.RPAR
         and not rhs.closing_bracket.value
-        and is_symmetric_collection_operation(rhs.body, mode.line_length)
+        and is_symmetric_collection_binop(rhs.body, mode.line_length)
     )
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
@@ -1199,7 +1199,7 @@ def _maybe_split_omitting_optional_parens(
 
     ensure_visible(rhs.opening_bracket)
     ensure_visible(rhs.closing_bracket)
-    if split_symmetric_lists:
+    if split_symmetric_collection_binops:
         rhs.body.should_split_rhs = True
     for result in (rhs.head, rhs.body, rhs.tail):
         if result:

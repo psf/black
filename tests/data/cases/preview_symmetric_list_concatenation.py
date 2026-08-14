@@ -12,6 +12,24 @@ dictionary_values = {"first_long_key": first_long_value, "second_long_key": seco
 set_union = {"first_long_value", "second_long_value"} | {"third_long_value", "fourth_long_value"}
 set_intersection = {"first_long_value", "second_long_value"} & {"third_long_value", "fourth_long_value"}
 
+# Every arithmetic and bitwise binary operator gets the same treatment when both operands
+# are collections.
+collection_subtraction = ["first_long_value", "second_long_value"] - ["third_long_value", "fourth_long_value"]
+collection_product = ("first_long_value", "second_long_value") * ("third_long_value", "fourth_long_value")
+collection_division = {"first_long_value", "second_long_value"} / {"third_long_value", "fourth_long_value"}
+collection_floor_division = ["first_long_value", "second_long_value"] // ["third_long_value", "fourth_long_value"]
+collection_modulo = {"first_long_value", "second_long_value"} % {"third_long_value", "fourth_long_value"}
+collection_matrix = ["first_long_value", "second_long_value"] @ ["third_long_value", "fourth_long_value"]
+collection_power = ("first_long_value", "second_long_value") ** ("third_long_value", "fourth_long_value")
+collection_shift = {"first_long_value", "second_long_value"} << {"third_long_value", "fourth_long_value"}
+collection_right_shift = {"first_long_value", "second_long_value"} >> {"third_long_value", "fourth_long_value"}
+collection_xor = ["first_long_value", "second_long_value"] ^ ["third_long_value", "fourth_long_value"]
+mixed_collection_operands = ["first_long_value", "second_long_value"] + ("third_long_value", "fourth_long_value")
+
+# Parenthesized scalars and generator expressions are not collection displays.
+parenthesized_scalars = (first_function_with_a_really_long_name(first_argument)) + (second_function_with_a_really_long_name(second_argument))
+generator_operands = (first_item for first_item in first_collection_with_a_really_long_name) + (second_item for second_item in second_collection_with_a_really_long_name)
+
 # Comments on an operand stay attached and formatting remains stable.
 commented = (
     ["first_long_value", "second_long_value", "third_long_value"]  # first list
@@ -86,6 +104,61 @@ set_intersection = (
     {"first_long_value", "second_long_value"}
     & {"third_long_value", "fourth_long_value"}
 )
+
+# Every arithmetic and bitwise binary operator gets the same treatment when both operands
+# are collections.
+collection_subtraction = (
+    ["first_long_value", "second_long_value"]
+    - ["third_long_value", "fourth_long_value"]
+)
+collection_product = (
+    ("first_long_value", "second_long_value")
+    * ("third_long_value", "fourth_long_value")
+)
+collection_division = (
+    {"first_long_value", "second_long_value"}
+    / {"third_long_value", "fourth_long_value"}
+)
+collection_floor_division = (
+    ["first_long_value", "second_long_value"]
+    // ["third_long_value", "fourth_long_value"]
+)
+collection_modulo = (
+    {"first_long_value", "second_long_value"}
+    % {"third_long_value", "fourth_long_value"}
+)
+collection_matrix = (
+    ["first_long_value", "second_long_value"]
+    @ ["third_long_value", "fourth_long_value"]
+)
+collection_power = (
+    ("first_long_value", "second_long_value")
+    ** ("third_long_value", "fourth_long_value")
+)
+collection_shift = (
+    {"first_long_value", "second_long_value"}
+    << {"third_long_value", "fourth_long_value"}
+)
+collection_right_shift = (
+    {"first_long_value", "second_long_value"}
+    >> {"third_long_value", "fourth_long_value"}
+)
+collection_xor = (
+    ["first_long_value", "second_long_value"]
+    ^ ["third_long_value", "fourth_long_value"]
+)
+mixed_collection_operands = (
+    ["first_long_value", "second_long_value"]
+    + ("third_long_value", "fourth_long_value")
+)
+
+# Parenthesized scalars and generator expressions are not collection displays.
+parenthesized_scalars = (first_function_with_a_really_long_name(first_argument)) + (
+    second_function_with_a_really_long_name(second_argument)
+)
+generator_operands = (
+    first_item for first_item in first_collection_with_a_really_long_name
+) + (second_item for second_item in second_collection_with_a_really_long_name)
 
 # Comments on an operand stay attached and formatting remains stable.
 commented = (

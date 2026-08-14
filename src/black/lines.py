@@ -10,16 +10,19 @@ from black.mode import Mode, Preview
 from black.nodes import (
     BRACKETS,
     CLOSING_BRACKETS,
+    MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     TEST_DESCENDANTS,
     child_towards,
     first_leaf,
     is_docstring,
+    is_generator,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
     is_one_tuple,
+    is_tuple,
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
@@ -1520,8 +1523,8 @@ def _is_annotated_assignment(head: Line) -> bool:
     return False
 
 
-def is_symmetric_collection_operation(line: Line, line_length: int) -> bool:
-    """Is `line` a supported pair of single-line display operands?"""
+def is_symmetric_collection_binop(line: Line, line_length: int) -> bool:
+    """Is `line` a binary operation between single-line collection displays?"""
     if len(line.bracket_tracker.delimiters) != 1:
         return False
 
@@ -1546,16 +1549,25 @@ def is_symmetric_collection_operation(line: Line, line_length: int) -> bool:
     right_opening = line.leaves[delimiter_index + 1]
     last = line.leaves[-1]
 
-    display_operation = (
-        (token.LSQB, token.RSQB, token.PLUS),
-        (token.LPAR, token.RPAR, token.PLUS),
-        (token.LBRACE, token.RBRACE, token.VBAR),
-        (token.LBRACE, token.RBRACE, token.AMPER),
-    )
+    collection_display = {
+        (token.LSQB, token.RSQB),
+        (token.LPAR, token.RPAR),
+        (token.LBRACE, token.RBRACE),
+    }
+
+    def is_collection_display(opening: Leaf, closing: Leaf) -> bool:
+        if (opening.type, closing.type) not in collection_display:
+            return False
+        return opening.type != token.LPAR or (
+            opening.parent is not None
+            and is_tuple(opening.parent)
+            and not is_generator(opening.parent)
+        )
+
     if (
-        (first.type, left_closing.type, delimiter.type) not in display_operation
-        or right_opening.type is not first.type
-        or last.type is not left_closing.type
+        not is_collection_display(first, left_closing)
+        or not is_collection_display(right_opening, last)
+        or delimiter.type not in MATH_OPERATORS
         or left_closing.opening_bracket is not first
         or last.opening_bracket is not right_opening
     ):
@@ -1715,8 +1727,8 @@ def can_omit_invisible_parens(
             # line.
             return False
         if (
-            Preview.symmetric_list_concatenation in mode
-            and is_symmetric_collection_operation(line, line_length)
+            Preview.symmetric_collection_operations in mode
+            and is_symmetric_collection_binop(line, line_length)
         ):
             # Retaining the optional parentheses lets the delimiter splitter put
             # each display operand on its own line instead of exploding just one.

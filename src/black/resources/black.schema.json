@@ -95,7 +95,7 @@
           "parenthesize_tuple_in_yield",
           "fmt_off_class_blank_lines",
           "remove_redundant_generator_parentheses",
-          "symmetric_list_concatenation"
+          "symmetric_collection_operations"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."

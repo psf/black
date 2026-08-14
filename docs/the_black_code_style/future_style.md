@@ -73,20 +73,20 @@ any additional pair:
 # After (with --preview)
 [(item for item in items), fallback]
 
-- `symmetric_list_concatenation`: Keep optional parentheses around long operations
-  between matching list, tuple, dictionary, or set displays when both operands fit on
-  their own delimiter-split line.
+- `symmetric_collection_operations`: Keep optional parentheses around long binary
+  operations between collection displays when both operands fit on their own
+  delimiter-split line.
 
-(labels/symmetric-list-concatenation)=
+(labels/symmetric-collection-operations)=
 
 ### Symmetric display operations
 
-When an operation between two matching displays is too long for one line and both
-operands fit on their own delimiter-split line, Black keeps optional parentheses around
-the expression so that the operands can be split symmetrically. This applies to list and
-tuple concatenation (`+`), dictionary and set union (`|`), and set intersection (`&`).
-If either display needs an internal split, including when an active magic trailing comma
-forces it onto multiple lines, Black retains the existing formatting.
+When a binary operation between two collection displays is too long for one line and
+both operands fit on their own delimiter-split line, Black keeps optional parentheses
+around the expression so that the operands can be split symmetrically. This applies to
+every arithmetic and bitwise binary operator between collection displays. If either
+display needs an internal split, including when an active magic trailing comma forces it
+onto multiple lines, Black retains the existing formatting.
 
 ```python
 # Before
