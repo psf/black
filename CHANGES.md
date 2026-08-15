@@ -54,9 +54,10 @@
   contents: the whole statement is now preserved instead of being reformatted (and
   previously crashing) (#5161)
 - Fix crash on a one-line `async with`/`async for`/`async def` with a
-  semicolon-separated body and `# fmt: skip` (e.g. `async with ctx(): a; b  # fmt: skip`).
-  The leading `async` keyword was left out of the skipped nodes and reformatted onto its
-  own line, so Black failed on its own output (#5311)
+  semicolon-separated body and `# fmt: skip` (e.g.
+  `async with ctx(): a; b  # fmt: skip`). The leading `async` keyword was left out of
+  the skipped nodes and reformatted onto its own line, so Black failed on its own output
+  (#5311)
 
 ### Preview style
 
