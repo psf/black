@@ -988,6 +988,7 @@ class EmptyLineTracker:
         if (
             len(previous_block.original_line.leaves) != 1
             or not previous_block.original_line.is_docstring
+            or previous_block.original_line.depth != 0
             or current_line.is_class
             or current_line.is_def
         ):
