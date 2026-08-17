@@ -634,6 +634,18 @@ def _find_compound_statement_context(parent: Node) -> Node | None:
     if parent.parent.type in _COMPOUND_STATEMENTS:
         return parent
 
+    # Case 3: Async one-line form.
+    # The async keyword wraps the compound statement:
+    #     async def f(): print("a"); print("b")  # fmt: skip
+    #     async with ctx(): print("a"); print("b")  # fmt: skip
+    # Structure: async_stmt -> compound_stmt -> simple_stmt
+    if (
+        isinstance(parent.parent, Node)
+        and parent.parent.parent is not None
+        and parent.parent.parent.type == syms.async_stmt
+    ):
+        return parent
+
     return None
 
 
@@ -683,6 +695,16 @@ def _get_compound_statement_header(
 
     # Collect all header leaves before the body
     header_leaves: list[LN] = []
+
+    # Special case: async_stmt wraps the compound statement, and the ASYNC
+    # token is a sibling of the compound statement (not a child).
+    if isinstance(compound_stmt.parent, Node) and compound_stmt.parent.type == syms.async_stmt:
+        async_stmt = compound_stmt.parent
+        if async_stmt.prev_sibling is not None and async_stmt.prev_sibling.type == token.ASYNC:
+            header_leaves.append(async_stmt.prev_sibling)
+        elif async_stmt.children and isinstance(async_stmt.children[0], Leaf) and async_stmt.children[0].type == token.ASYNC:
+            header_leaves.append(async_stmt.children[0])
+
     for child in compound_stmt.children:
         if child is body_node:
             break

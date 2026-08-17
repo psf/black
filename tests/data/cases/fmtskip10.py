@@ -19,3 +19,5 @@ v = (
     .setdefault("d", {})
     .setdefault("e", {})
 )
+async def foo(): return "mock"  # fmt: skip
+async with give_me_async_context(): print("a");  # fmt: skip
