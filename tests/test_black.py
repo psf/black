@@ -2815,6 +2815,38 @@ class TestFileCollection:
         )
         assert sorted(expected) == sorted(sources)
 
+    def test_gitignore_trailing_slash_negation(self) -> None:
+        # Regression test for issue #3694: a directory-only negation ("!*/")
+        # must re-include directories matched by an earlier pattern ("*"),
+        # the same way `git check-ignore` resolves it.
+        path = THIS_DIR / "data" / "gitignore_trailing_slash_negation"
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        report = black.Report()
+        gitignore = GitIgnoreSpec.from_lines(["*", "!*/", "!*.py", "!.gitignore"])
+        sources: list[Path] = []
+        expected = [
+            Path(path / "file1.py"),
+            Path(path / "a/file2.py"),
+            Path(path / "a/b/file3.py"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources.extend(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {path: gitignore},
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
     def test_nested_gitignore(self) -> None:
         path = Path(THIS_DIR / "data" / "nested_gitignore_tests")
         include = re.compile(r"\.pyi?$")
