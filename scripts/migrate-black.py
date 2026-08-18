@@ -4,6 +4,7 @@
 # blackified
 import logging
 import os
+import shlex
 import sys
 from subprocess import PIPE, Popen, check_output, run
 
@@ -35,7 +36,7 @@ def blackify(base_branch: str, black_command: str, logger: logging.Logger) -> in
     ).split()
     for commit in commits:
         git("checkout", commit, f"-b{commit}-black")
-        check_output(black_command, shell=True)
+        check_output(shlex.split(black_command))
         git("commit", "-aqm", "blackify")
 
     git("checkout", base_branch, f"-b{current_branch}-black")
