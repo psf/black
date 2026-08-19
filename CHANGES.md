@@ -8,6 +8,8 @@
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
   --target-version flag (#5167)
+- `--line-ranges` no longer inserts an empty line after a docstring when the range
+  covers only the docstring itself (#5312)
 
 ### Highlights
 
