@@ -2169,6 +2169,47 @@ class BlackTestCase(BlackBaseTestCase):
             """)
             assert expected == formatted
 
+    def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
+        source = (
+            "   #  format whitespace   \n"
+            'print( "format me" )   \n'
+            "      \n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        expected = (
+            "#  format whitespace\n"
+            'print("format me")\n'
+            "\n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
+    def test_line_ranges_formats_selected_prefix_comment(self) -> None:
+        source = (
+            'print( "format me" )\n'
+            "   #  format whitespace\n"
+            "\n"
+            'print("don\'t format me"  )\n'
+        )
+
+        expected = (
+            'print("format me")\n#  format whitespace\n\nprint("don\'t format me"  )\n'
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 2)]) == expected
+        )
+
     def test_line_ranges_with_multiple_sources(self) -> None:
         with TemporaryDirectory() as workspace:
             test1_file = Path(workspace) / "test1.py"
