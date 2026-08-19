@@ -1724,7 +1724,7 @@ def normalize_invisible_parens(
                 remove_brackets_around_comma=True,
                 allow_star_expr=True,
             ):
-                wrap_in_parentheses(node, child, visible=False)
+                wrap_in_parentheses(node, child, visible=False, index=index)
 
         if check_lpar:
             if (
@@ -1741,7 +1741,7 @@ def normalize_invisible_parens(
                     features=features,
                     remove_brackets_around_comma=True,
                 ):
-                    wrap_in_parentheses(node, child, visible=False)
+                    wrap_in_parentheses(node, child, visible=False, index=index)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node, mode=mode, features=features)
             elif (
@@ -1755,7 +1755,7 @@ def normalize_invisible_parens(
                     and child.children[0].type != syms.atom
                     and is_one_tuple(child.children[0])
                 ):
-                    wrap_in_parentheses(node, child, visible=True)
+                    wrap_in_parentheses(node, child, visible=True, index=index)
             elif child.type == syms.atom:
                 if "in" in parens_after and _is_parenthesized_lambda_or_ternary(child):
                     # A lambda or conditional expression used as a comprehension's
@@ -1774,9 +1774,9 @@ def normalize_invisible_parens(
                 elif maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
                 ):
-                    wrap_in_parentheses(node, child, visible=False)
+                    wrap_in_parentheses(node, child, visible=False, index=index)
             elif is_one_tuple(child):
-                wrap_in_parentheses(node, child, visible=True)
+                wrap_in_parentheses(node, child, visible=True, index=index)
             elif node.type == syms.import_from:
                 _normalize_import_from(node, child, index)
                 break
@@ -1815,9 +1815,9 @@ def normalize_invisible_parens(
                         mock_line.append(leaf)
                     # If it's a guard AND it's short, we DON'T wrap
                     if not is_line_short_enough(mock_line, mode=mode):
-                        wrap_in_parentheses(node, child, visible=False)
+                        wrap_in_parentheses(node, child, visible=False, index=index)
                 else:
-                    wrap_in_parentheses(node, child, visible=False)
+                    wrap_in_parentheses(node, child, visible=False, index=index)
 
         comma_check = child.type == token.COMMA
 
