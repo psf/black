@@ -1716,7 +1716,18 @@ def normalize_invisible_parens(
             and not _atom_has_magic_trailing_comma(child, mode)
             and not _is_atom_multiline(child)
         ):
-            if maybe_make_parens_invisible_in_atom(
+            if _is_parenthesized_annotation_target(node, child):
+                # One pair is what makes the target non-simple, so any nesting
+                # inside it is redundant and goes.
+                inner = child.children[1]
+                if isinstance(inner, Node) and inner.type == syms.atom:
+                    maybe_make_parens_invisible_in_atom(
+                        inner,
+                        parent=child,
+                        mode=mode,
+                        features=features,
+                    )
+            elif maybe_make_parens_invisible_in_atom(
                 child,
                 parent=node,
                 mode=mode,
@@ -1977,6 +1988,34 @@ def _atom_has_magic_trailing_comma(node: LN, mode: Mode) -> bool:
         return False
 
     return is_one_tuple(node)
+
+
+def _is_parenthesized_annotation_target(node: Node, child: Node) -> bool:
+    """Is `child` a parenthesized plain name that `node` annotates?
+
+    `(x): int = 5` and `x: int = 5` do not do the same thing: only the second one
+    records `x` in `__annotations__`, because the parentheses make the target
+    non-simple (`AnnAssign.simple` is 0). Dropping them changes what the module
+    does at runtime, so they have to stay. Attribute and subscript targets are
+    non-simple either way, so those are left alone here.
+    """
+    if len(node.children) < 2:
+        return False
+
+    annassign = node.children[1]
+    if not isinstance(annassign, Node) or annassign.type != syms.annassign:
+        return False
+
+    # `((x)): int = 5` is non-simple too, so look through any nesting.
+    target: LN = child
+    while (
+        isinstance(target, Node)
+        and target.type == syms.atom
+        and len(target.children) == 3
+    ):
+        target = target.children[1]
+
+    return isinstance(target, Leaf) and target.type == token.NAME
 
 
 def _is_atom_multiline(node: LN) -> bool:

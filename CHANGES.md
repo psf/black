@@ -20,6 +20,11 @@
 <!-- Changes that affect Black's stable style -->
 
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
+- Keep the parentheses around the target of an annotated assignment (for example
+  `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
+  `__annotations__`; removing them changed that and tripped Black's AST safety check.
+  Nesting beyond the first pair is redundant and is still removed, so `((x)): int = 5`
+  becomes `(x): int = 5` (#5321)
 - Stop treating a t-string in docstring position as a docstring (for example
   `t"  spam  "` as the first statement of a module, class or function). t-strings
   evaluate to `Template`, never `str`, so stripping and reindenting one changed the
