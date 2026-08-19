@@ -19,6 +19,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Stop treating a t-string in docstring position as a docstring (for example
   `t"  spam  "` as the first statement of a module, class or function). t-strings
   evaluate to `Template`, never `str`, so stripping and reindenting one changed the
