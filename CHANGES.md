@@ -181,6 +181,8 @@
   `"%s ..." % (a, b, c, ...)` by copying the leaves that surround the merged string in
   one `append_leaves` call instead of one call per leaf, which rescanned the shared
   parent's child list from the start every time (#5220)
+- Improve performance on long `if`/`elif` chains and other compound statements with many
+  clauses (#5322)
 
 ### Output
 
