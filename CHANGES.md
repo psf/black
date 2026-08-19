@@ -179,11 +179,8 @@
   `"%s ..." % (a, b, c, ...)` by copying the leaves that surround the merged string in
   one `append_leaves` call instead of one call per leaf, which rescanned the shared
   parent's child list from the start every time (#5220)
-- Improve performance on long `if`/`elif` chains (and other compound statements with
-  many clauses) by passing the known child index when wrapping each clause's test in
-  invisible parentheses in `normalize_invisible_parens`, so the child is swapped in
-  place instead of being located with a full rescan of the statement's child list
-  (#5322)
+- Improve performance on long `if`/`elif` chains and other compound statements with
+  many clauses (#5322)
 
 ### Output
 
