@@ -8,6 +8,8 @@
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
   --target-version flag (#5167)
+- `--line-ranges` no longer inserts an empty line after a docstring when the range
+  covers only the docstring itself (#5312)
 
 ### Highlights
 
@@ -55,11 +57,14 @@
   previously crashing) (#5161)
 - Fix an AST safety error when separate `type: ignore` comments in a parenthesized
   attribute chain were merged onto one physical line (#5297)
+- Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
+  `async for` statements containing a semicolon (#5311)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like

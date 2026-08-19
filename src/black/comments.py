@@ -683,6 +683,17 @@ def _get_compound_statement_header(
 
     # Collect all header leaves before the body
     header_leaves: list[LN] = []
+    # `async with`/`async for`/`async def` wrap the compound statement in an
+    # async_stmt, so the leading ASYNC token is a sibling of compound_stmt rather
+    # than a child. Pick it up first, otherwise it is left out of the ignored
+    # nodes and reformatted onto its own line, breaking the statement.
+    if (
+        compound_stmt.parent is not None
+        and compound_stmt.parent.type == syms.async_stmt
+        and compound_stmt.prev_sibling is not None
+        and compound_stmt.prev_sibling.type == token.ASYNC
+    ):
+        header_leaves.append(compound_stmt.prev_sibling)
     for child in compound_stmt.children:
         if child is body_node:
             break

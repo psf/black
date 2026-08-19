@@ -19,3 +19,9 @@ v = (
     .setdefault("d", {})
     .setdefault("e", {})
 )
+
+
+async def afn():
+    async with give_me_async_context(): print("a"); print("b")  # fmt: skip
+    async for i in some_async_iter(): print(i); print("done")  # fmt: skip
+    async def inner(): x = 1; return x  # fmt: skip
