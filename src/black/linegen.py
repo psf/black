@@ -1715,9 +1715,19 @@ def normalize_invisible_parens(
             and node.type == syms.expr_stmt
             and not _atom_has_magic_trailing_comma(child, mode)
             and not _is_atom_multiline(child)
-            and not _is_parenthesized_annotation_target(node, child)
         ):
-            if maybe_make_parens_invisible_in_atom(
+            if _is_parenthesized_annotation_target(node, child):
+                # One pair is what makes the target non-simple, so any nesting
+                # inside it is redundant and goes.
+                inner = child.children[1]
+                if isinstance(inner, Node) and inner.type == syms.atom:
+                    maybe_make_parens_invisible_in_atom(
+                        inner,
+                        parent=child,
+                        mode=mode,
+                        features=features,
+                    )
+            elif maybe_make_parens_invisible_in_atom(
                 child,
                 parent=node,
                 mode=mode,

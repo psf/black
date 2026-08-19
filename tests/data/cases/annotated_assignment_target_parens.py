@@ -3,7 +3,11 @@
 # there. Removing them changes what the module does at runtime.
 (x): int = 5
 (y): int
+
+# One pair is what makes the target non-simple, so the nesting above it is
+# redundant and gets removed.
 ((z)): int = 5
+(((q))): int = 5
 
 
 class C:
@@ -29,7 +33,11 @@ def f():
 # there. Removing them changes what the module does at runtime.
 (x): int = 5
 (y): int
-((z)): int = 5
+
+# One pair is what makes the target non-simple, so the nesting above it is
+# redundant and gets removed.
+(z): int = 5
+(q): int = 5
 
 
 class C:
