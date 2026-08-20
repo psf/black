@@ -1617,6 +1617,8 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
         current_line.append(leaf, preformatted=True)
+        for comment_after in line.comments_after(leaf):
+            current_line.append(comment_after, preformatted=True)
     if current_line:
         yield current_line
 
