@@ -47,6 +47,9 @@ Currently, the following features are included in the preview style:
   definition starts inside a `# fmt: off` block after an import.
 - `remove_redundant_generator_parentheses`: Remove redundant parentheses around
   generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
+- `symmetric_collection_operations`: Keep optional parentheses around long binary
+  operations between collection displays when both operands fit on their own
+  delimiter-split line.
 
 (labels/remove-redundant-generator-parentheses)=
 
@@ -72,10 +75,7 @@ any additional pair:
 
 # After (with --preview)
 [(item for item in items), fallback]
-
-- `symmetric_collection_operations`: Keep optional parentheses around long binary
-  operations between collection displays when both operands fit on their own
-  delimiter-split line.
+```
 
 (labels/symmetric-collection-operations)=
 
