@@ -115,6 +115,9 @@
 
 - Reduce the size of Linux standalone binaries by stripping debug symbols during the
   PyInstaller release build (#5223)
+- Black is now released using GitHub
+  [Immutable Releases](https://docs.github.com/code-security/concepts/supply-chain-security/immutable-releases)
+  (#5296)
 
 ### Parser
 
