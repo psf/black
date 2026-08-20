@@ -915,10 +915,10 @@ def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
     Returns:
         True iff one of the comments in @comment_list is a pragma used by one
         of the more common static analysis tools for python (e.g. mypy, flake8,
-        pylint).
+        pylint, ruff).
     """
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+        if comment.value.startswith(("# type:", "# noqa", "# pylint:", "# ruff:")):
             return True
 
     return False
