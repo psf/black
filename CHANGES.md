@@ -63,6 +63,7 @@
   previously crashing) (#5161)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
+- Fix crash when `# type: ignore` is lost during formatting (#5328)
 
 ### Preview style
 
