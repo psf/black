@@ -2383,6 +2383,10 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             replace_child(LL[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
 
+        if old_rpar_leaf is not None:
+            for comment_leaf in line.comments_after(old_rpar_leaf):
+                last_line.append(comment_leaf, preformatted=True)
+
         yield Ok(last_line)
 
 
