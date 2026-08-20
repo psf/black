@@ -152,7 +152,7 @@ def normalize_trailing_prefix(leaf: LN, total_consumed: int) -> None:
 def make_comment(content: str, mode: Mode) -> str:
     """Return a consistently formatted comment from the given `content` string.
 
-    All comments (except for "##", "#!", "#:", '#'") should have a single
+    All comments (except for "##", "#!", "#:", '#'"') should have a single
     space between the hash sign and the content.
 
     If `content` didn't start with a hash sign, one is provided.
@@ -918,7 +918,7 @@ def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
         pylint).
     """
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+        if comment.value.startswith(("# type:", "# noqa", "# pylint:", "# ruff:")):
             return True
 
     return False
