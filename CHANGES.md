@@ -63,7 +63,6 @@
   previously crashing) (#5161)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
-- Fix a crash when `# type: ignore` is lost during formatting (#5329)
 
 ### Preview style
 
@@ -93,6 +92,8 @@
 - Don't hug brackets when doing so would join two `type: ignore` comments onto one line.
   The AST records `type: ignore` per line, so merging them dropped a `TypeIgnore` entry
   and Black failed its own equivalence check (#5271)
+- Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
+  string (#5329)
 
 ### Configuration
 
