@@ -83,6 +83,15 @@ def test_empty() -> None:
     assert_format(source, expected)
 
 
+@pytest.mark.parametrize("pragma", ["# ruff:ignore[bweh]", "# ruff: ignore[bweh]"])
+def test_ruff_ignore_pragma_prevents_splitting(pragma: str) -> None:
+    source = (
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        f" = 5  {pragma}\n"
+    )
+    assert_format(source, source)
+
+
 def test_patma_invalid() -> None:
     source, expected = read_data("miscellaneous", "pattern_matching_invalid")
     mode = black.Mode(target_versions={black.TargetVersion.PY310})
