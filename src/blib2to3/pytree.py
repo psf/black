@@ -473,7 +473,7 @@ class Leaf(Base):
     # Default values for instance variables
     value: str
     fixers_applied: list[Any]
-    bracket_depth: int
+    bracket_depth: int = 0
     # Changed later in brackets.py
     opening_bracket: Optional["Leaf"] = None
     used_names: set[str] | None
@@ -494,6 +494,7 @@ class Leaf(Base):
         fixers_applied: list[Any] = [],
         opening_bracket: Optional["Leaf"] = None,
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
+        bracket_depth: int = 0,
     ) -> None:
         """
         Initializer.
@@ -513,6 +514,7 @@ class Leaf(Base):
         self.children = []
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
+        self.bracket_depth = bracket_depth
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
