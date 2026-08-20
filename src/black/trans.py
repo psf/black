@@ -2296,6 +2296,14 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             old_parens_exist = True
             leaves_to_steal_comments_from.append(left_leaves[-1])
             left_leaves.pop()
+            # The closing paren is replaced by a new leaf further down, so a
+            # comment attached to it has to be taken along or it is dropped.
+            # `# type: ignore` is the case that shows up: it is the one comment
+            # that keeps the parentheses visible, so it is still attached to a
+            # real RPAR here rather than to the string.
+            old_rpar = LL[comma_idx - 1] if ends_with_comma else LL[-1]
+            if old_rpar.type == token.RPAR:
+                leaves_to_steal_comments_from.append(old_rpar)
 
         append_leaves(first_line, line, left_leaves)
 

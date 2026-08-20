@@ -570,6 +570,11 @@ s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:
     "which is against the line length rule."
 )  # type: ignore
 
+# Don't drop a trailing type ignore when wrapping a long string in parentheses.
+x = (
+    "A very very very very very very very very very very very very very very very very long string literal"
+)  # type: ignore
+
 
 # output
 
@@ -1268,3 +1273,9 @@ s = (
     "annotated with a type ignore pragma gets merged into a single very long line "
     "which is against the line length rule."
 )  # type: ignore
+
+# Don't drop a trailing type ignore when wrapping a long string in parentheses.
+x = (  # type: ignore
+    "A very very very very very very very very very very very very very very very very"
+    " long string literal"
+)
