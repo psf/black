@@ -70,9 +70,9 @@
 
 - Remove redundant parentheses around generator expressions (#5304)
 - Keep a trailing comment when wrapping a long string in parentheses, instead of
-  dropping it. `# type: ignore` was the visible case: it kept the parentheses, so
-  it stayed attached to the closing paren that the wrap replaces, and Black then
-  failed its own AST safety check (#5331)
+  dropping it. `# type: ignore` was the visible case: it kept the parentheses, so it
+  stayed attached to the closing paren that the wrap replaces, and Black then failed its
+  own AST safety check (#5331)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
