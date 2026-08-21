@@ -485,6 +485,19 @@ def _handle_regular_fmt_block(
             parts.append(str(node))
 
     hidden_value = "".join(parts)
+
+    # The parser stores blank lines after the final statement in the END marker
+    # prefix rather than in the statement node. Preserve those newlines for an
+    # unclosed fmt: off block at EOF; otherwise they are silently discarded.
+    if not is_fmt_skip:
+        endmarker = ignored_nodes[-1].next_sibling
+        if (
+            endmarker is not None
+            and endmarker.type == token.ENDMARKER
+            and not endmarker.prefix.strip()
+        ):
+            hidden_value += endmarker.prefix
+
     comment_lineno = leaf.lineno - comment.newlines
     leaf_is_ignored = any(
         ignored is leaf
