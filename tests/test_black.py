@@ -205,6 +205,16 @@ class BlackTestCase(BlackBaseTestCase):
                 os.unlink(tmp_file)
             self.assertFormatEqual(expected, actual)
 
+    def test_fmt_off_preserves_trailing_blank_lines(self) -> None:
+        source = expected = '# fmt: off\n\nprint("hello")\n\n'
+        tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
+        try:
+            self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+            actual = tmp_file.read_bytes().decode("utf-8")
+        finally:
+            os.unlink(tmp_file)
+        self.assertFormatEqual(expected, actual)
+
     def test_piping(self) -> None:
         _, source, expected = read_data_from_file(
             PROJECT_ROOT / "src/black/__init__.py"
