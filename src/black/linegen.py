@@ -243,7 +243,9 @@ class LineGenerator(Visitor[Line]):
                 leaf.prefix + leaf.value for leaf in value_leaves
             ).strip()
             continuation_indent = 4 * (self.current_line.depth + 1)
-            key_width = str_width(node.children[0].value) + 1
+            key = node.children[0]
+            assert isinstance(key, Leaf)
+            key_width = str_width(key.value) + 1
             value_width = str_width(value_text)
             if (
                 value_text
