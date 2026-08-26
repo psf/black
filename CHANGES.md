@@ -5,6 +5,7 @@
 <!-- PR authors:
      Please include the PR number in the changelog entry, not the issue number -->
 
+- Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5336)
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
   --target-version flag (#5167)
