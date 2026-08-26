@@ -206,14 +206,64 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertFormatEqual(expected, actual)
 
     def test_fmt_off_preserves_trailing_blank_lines(self) -> None:
-        source = expected = '# fmt: off\n\nprint("hello")\n\n'
-        tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
-        try:
-            self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
-            actual = tmp_file.read_bytes().decode("utf-8")
-        finally:
-            os.unlink(tmp_file)
-        self.assertFormatEqual(expected, actual)
+        for nl in ["\n", "\r\n"]:
+            source = expected = f'# fmt: off{nl}{nl}print("hello"){nl}{nl}'
+            tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
+            try:
+                # dump_to_file() uses text mode, so write the test fixture as bytes
+                # to prevent platform newline translation from changing the input.
+                tmp_file.write_bytes(source.encode("utf-8"))
+                self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+                actual = tmp_file.read_bytes().decode("utf-8")
+            finally:
+                os.unlink(tmp_file)
+            self.assertFormatEqual(expected, actual)
+
+    def test_fmt_off_preserves_trailing_blank_lines_after_eof_comment(self) -> None:
+        cases = [
+            "# fmt: off{nl}x  =  1{nl}# tail{nl}{nl}",
+            "def f():{nl}    # fmt: off{nl}    x  =  1{nl}    # tail{nl}{nl}",
+        ]
+        for nl in ["\n", "\r\n"]:
+            for template in cases:
+                source = expected = template.format(nl=nl)
+                tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
+                try:
+                    tmp_file.write_bytes(source.encode("utf-8"))
+                    self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+                    actual = tmp_file.read_bytes().decode("utf-8")
+                finally:
+                    os.unlink(tmp_file)
+                self.assertFormatEqual(expected, actual)
+
+    def test_fmt_off_preserves_trailing_blank_lines_after_dedent(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            source = expected = f"def f():{nl}    # fmt: off{nl}    x  =  1{nl}{nl}{nl}"
+            tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
+            try:
+                tmp_file.write_bytes(source.encode("utf-8"))
+                self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+                actual = tmp_file.read_bytes().decode("utf-8")
+            finally:
+                os.unlink(tmp_file)
+            self.assertFormatEqual(expected, actual)
+
+    def test_fmt_off_preserves_trailing_blank_lines_in_nested_suite(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            source = expected = (
+                f"def f():{nl}"
+                f"    if condition:{nl}"
+                f"        # fmt: off{nl}"
+                f"        x  =  1{nl}{nl}{nl}"
+            )
+            tmp_file = Path(black.dump_to_file(source, ensure_final_newline=False))
+            try:
+                tmp_file.write_bytes(source.encode("utf-8"))
+                self.assertFalse(ff(tmp_file, write_back=black.WriteBack.YES))
+                actual = tmp_file.read_bytes().decode("utf-8")
+            finally:
+                os.unlink(tmp_file)
+            self.assertFormatEqual(expected, actual)
 
     def test_piping(self) -> None:
         _, source, expected = read_data_from_file(
