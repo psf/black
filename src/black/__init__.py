@@ -42,6 +42,7 @@ from black.files import (
     find_user_pyproject_toml,
     gen_python_files,
     get_gitignore,
+    is_filesystem_root,
     parse_pyproject_toml,
     path_is_excluded,
     resolves_outside_root_or_cannot_stat,
@@ -617,6 +618,14 @@ def main(
         find_project_root(src, stdin_filename) if code is None else (None, None)
     )
     ctx.obj["root"] = root
+
+    if code is None:
+        for source in src:
+            if source != "-" and is_filesystem_root(Path(source)):
+                err(
+                    "Warning: formatting the filesystem root can affect files "
+                    "outside your project."
+                )
 
     if verbose:
         if root:
