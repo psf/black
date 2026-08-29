@@ -795,7 +795,7 @@ def transform_line(
         if Preview.string_processing in mode:
             transformers = [string_merge, string_paren_strip]
         else:
-            transformers = []
+            transformers = [string_paren_strip]
     elif line.is_def and not should_split_funcdef_with_rhs(line, mode):
         transformers = [left_hand_split]
     else:
@@ -854,9 +854,14 @@ def transform_line(
                 ]
         else:
             if line.inside_brackets:
-                transformers = [delimiter_split, standalone_comment_split, rhs]
+                transformers = [
+                    string_paren_strip,
+                    delimiter_split,
+                    standalone_comment_split,
+                    rhs,
+                ]
             else:
-                transformers = [rhs]
+                transformers = [string_paren_strip, rhs]
 
     if Preview.simplify_power_operator_hugging not in mode:
         # It's always safe to attempt hugging of power operations and pretty much every
