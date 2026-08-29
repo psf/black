@@ -68,6 +68,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Avoid parentheszing non-fluent attribute chain exceeding the line-length (#4001)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)

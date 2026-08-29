@@ -1498,6 +1498,13 @@ def can_be_split(line: Line) -> bool:
             if dot_count > 1 and call_count > 1:
                 return False
 
+    # A pure attribute-access chain (all NAME/DOT leaves, no brackets anywhere)
+    # has no bracket pair of its own to split on, so it can never be made to fit
+    # by further splitting. Treat it like a lone atom: don't wrap it in optional
+    # parentheses that won't help.
+    if all(leaf.type in (token.NAME, token.DOT) for leaf in leaves):
+        return False
+
     return True
 
 

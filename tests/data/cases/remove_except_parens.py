@@ -58,9 +58,7 @@ except (AttributeError, ValueError) as err:
 # Test long variants.
 try:
     a.something
-except (
-    some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error
-) as err:
+except some.really.really.really.looooooooooooooooooooooooooooooooong.module.over89.chars.Error as err:
     raise err
 
 try:
