@@ -986,12 +986,34 @@ def is_type_comment_string(value: str, mode: Mode) -> bool:
 
 
 def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
-    """Return True if the given leaf is a type comment with ignore annotation."""
+    """Return True if the given leaf is a type comment with ignore annotation.
+
+    `# pyright: ignore` comments also count as ignore annotations: like
+    `# type: ignore`, they are positional, so Black must never move one to a
+    line it did not originate on.
+    """
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(
-        v, mode
+    return t in {token.COMMENT, STANDALONE_COMMENT} and (
+        is_type_ignore_comment_string(v, mode) or is_pyright_ignore_comment_string(v)
     )
+
+
+def is_pyright_ignore_comment_string(value: str) -> bool:
+    """Return True if the given string is a `# pyright: ignore` comment.
+
+    This matches both the bare form (`# pyright: ignore`) and the bracketed
+    form (`# pyright: ignore[reportUnknownMemberType]`), with any bracket
+    contents. Other pyright directive comments (e.g. `# pyright: basic`,
+    `# pyright: strict` or `# pyright: reportGeneralTypeIssues=false`) do not
+    match, since they carry no positional suppression semantics.
+    """
+    if not value.startswith("#"):
+        return False
+    directive = value[1:].lstrip()
+    if not directive.startswith("pyright:"):
+        return False
+    return directive[len("pyright:") :].lstrip().startswith("ignore")
 
 
 def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
