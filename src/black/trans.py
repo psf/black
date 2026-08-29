@@ -2280,7 +2280,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         if LL[comma_idx].type == token.COMMA:
             ends_with_comma = True
 
-        leaves_to_steal_comments_from = [LL[string_idx]]
+        leaves_to_steal_comments_from = []
         if ends_with_comma:
             leaves_to_steal_comments_from.append(LL[comma_idx])
 
@@ -2306,9 +2306,10 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             insert_str_child(lpar_leaf)
         first_line.append(lpar_leaf)
 
-        # We throw inline comments that were originally to the right of the
-        # target string to the top line. They will now be shown to the right of
-        # the LPAR.
+        # We throw inline comments that were originally to the right of a
+        # trailing comma or of a pre-existing LPAR to the top line. They will
+        # now be shown to the right of the LPAR. Comments attached directly to
+        # the target string are not touched here; they stay with the string.
         for leaf in leaves_to_steal_comments_from:
             for comment_leaf in line.comments_after(leaf):
                 first_line.append(comment_leaf, preformatted=True)
@@ -2329,6 +2330,14 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         string_leaf = Leaf(token.STRING, string_value)
         insert_str_child(string_leaf)
         string_line.append(string_leaf)
+
+        # Comments attached directly to the target string stay attached to it:
+        # they are rendered on the same output line as the string itself
+        # (inside the parentheses) instead of being moved to the opening-paren
+        # line. This preserves the semantics of inline suppression comments
+        # such as `# pyright: ignore[...]`.
+        for comment_leaf in line.comments_after(LL[string_idx]):
+            string_line.append(comment_leaf, preformatted=True)
 
         old_rpar_leaf = None
         if is_valid_index(string_idx + 1):
