@@ -3,6 +3,7 @@
 import difflib
 from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
+from typing import Any
 
 from black.nodes import (
     LN,
@@ -543,6 +544,102 @@ class _LinesMapping:
     is_changed_block: bool
 
 
+class _DiagonalTieBreakSequenceMatcher(difflib.SequenceMatcher):
+    """A SequenceMatcher that prefers matches closest to the diagonal.
+
+    When multiple matching blocks of equal length exist, the default
+    SequenceMatcher picks the one that starts earliest in the original text,
+    then earliest in the modified text. This can misalign duplicate lines.
+    Instead, we prefer the match whose start position in the original text is
+    closest to its start position in the modified text (i.e. closest to the
+    diagonal), which keeps each line aligned with its nearest counterpart.
+    """
+
+    def find_longest_match(
+        self,
+        alo: int,
+        ahi: int,
+        blo: int,
+        bhi: int,
+    ) -> difflib.Match:
+        """Find longest matching block in a[alo:ahi] and b[blo:bhi].
+
+        This is a copy of difflib.SequenceMatcher.find_longest_match with the
+        tie-breaking changed to prefer matches closest to the diagonal.
+        """
+        a, b, b2j, isbjunk = self.a, self.b, self.b2j, self.bjunk.__contains__
+        besti, bestj, bestsize = alo, blo, 0
+        # find longest junk-free match
+        # during an iteration of the loop, j2len[j] = length of longest
+        # junk-free match ending with a[i-1] and b[j]
+        j2len: dict[int, int] = {}
+        nothing: list[Any] = []
+        for i in range(alo, ahi):
+            # look at all instances of a[i] in b; note that because
+            # b2j has no junk keys, the loop is skipped if a[i] is junk
+            j2lenget = j2len.get
+            newj2len: dict[int, int] = {}
+            for j in b2j.get(a[i], nothing):
+                # a[i] matches b[j]
+                if j < blo:
+                    continue
+                if j >= bhi:
+                    break
+                k = newj2len[j] = j2lenget(j - 1, 0) + 1
+                if k > bestsize:
+                    besti, bestj, bestsize = i - k + 1, j - k + 1, k
+                elif k == bestsize:
+                    # Tie-break: prefer the match closest to the diagonal.
+                    current_distance = abs((i - k + 1) - (j - k + 1))
+                    best_distance = abs(besti - bestj)
+                    if current_distance < best_distance:
+                        besti, bestj, bestsize = i - k + 1, j - k + 1, k
+            j2len = newj2len
+
+        # Extend the best by non-junk elements on each end. In particular,
+        # "popular" non-junk elements aren't in b2j, which greatly speeds
+        # the inner loop above, but also means "the best" match so far
+        # doesn't contain any junk *or* popular non-junk elements.
+        while (
+            besti > alo
+            and bestj > blo
+            and not isbjunk(b[bestj - 1])
+            and a[besti - 1] == b[bestj - 1]
+        ):
+            besti, bestj, bestsize = besti - 1, bestj - 1, bestsize + 1
+        while (
+            besti + bestsize < ahi
+            and bestj + bestsize < bhi
+            and not isbjunk(b[bestj + bestsize])
+            and a[besti + bestsize] == b[bestj + bestsize]
+        ):
+            bestsize += 1
+
+        # Now that we have a wholly interesting match (albeit possibly
+        # empty!), we may as well suck up the matching junk on each
+        # side of it too. Can't think of a good reason not to, and it
+        # saves post-processing the (possibly considerable) expense of
+        # figuring out what to do with it. In the case of an empty
+        # interesting match, this is clearly the right thing to do,
+        # because no other kind of match is possible in the regions.
+        while (
+            besti > alo
+            and bestj > blo
+            and isbjunk(b[bestj - 1])
+            and a[besti - 1] == b[bestj - 1]
+        ):
+            besti, bestj, bestsize = besti - 1, bestj - 1, bestsize + 1
+        while (
+            besti + bestsize < ahi
+            and bestj + bestsize < bhi
+            and isbjunk(b[bestj + bestsize])
+            and a[besti + bestsize] == b[bestj + bestsize]
+        ):
+            bestsize += 1
+
+        return difflib.Match(besti, bestj, bestsize)
+
+
 def _calculate_lines_mappings(
     original_source: str,
     modified_source: str,
@@ -573,7 +670,7 @@ def _calculate_lines_mappings(
       original_source: the original source.
       modified_source: the modified source.
     """
-    matcher = difflib.SequenceMatcher(
+    matcher = _DiagonalTieBreakSequenceMatcher(
         None,
         original_source.splitlines(keepends=True),
         modified_source.splitlines(keepends=True),

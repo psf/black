@@ -212,6 +212,37 @@ def test_diffs(lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]) ->
 
 
 @pytest.mark.parametrize(
+    "lines,adjusted",
+    [
+        # The exact case from https://github.com/psf/black/issues/4052: only
+        # lines 2-3 were reformatted, but every original line is identical
+        # text, so a diff that isn't position-aware can match the unchanged
+        # original lines 1-2 against the unchanged modified lines 4-5.
+        ([(2, 3)], [(2, 3)]),
+        # Lines fully outside the changed block, on either side of it,
+        # should map straight through despite being textually identical to
+        # lines inside the changed block.
+        ([(1, 1)], [(1, 1)]),
+        ([(4, 4)], [(4, 4)]),
+        ([(4, 5)], [(4, 5)]),
+        ([(1, 5)], [(1, 5)]),
+    ],
+)
+def test_diffs_with_duplicate_lines(
+    lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]
+) -> None:
+    original_source = 'print ( "format me" )\n' * 5
+    modified_source = (
+        'print ( "format me" )\n'
+        'print("format me")\n'
+        'print("format me")\n'
+        'print ( "format me" )\n'
+        'print ( "format me" )\n'
+    )
+    assert adjusted == adjusted_lines(lines, original_source, modified_source)
+
+
+@pytest.mark.parametrize(
     "lines,sanitized",
     [
         (

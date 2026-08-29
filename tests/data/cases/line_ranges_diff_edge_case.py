@@ -2,9 +2,9 @@
 # NOTE: If you need to modify this file, pay special attention to the --line-ranges=
 # flag above as it's formatting specifically these lines.
 
-# Reproducible example for https://github.com/psf/black/issues/4033.
-# This can be fixed in the future if we use a better diffing algorithm, or make Black
-# perform formatting in a single pass.
+# Reproducible example for https://github.com/psf/black/issues/4033, fixed here by a
+# diagonal-preferring diff (https://github.com/psf/black/issues/4052): only the lines
+# within --line-ranges should be reformatted, even though the surrounding lines match.
 
 print ( "format me" )
 print ( "format me" )
@@ -17,12 +17,12 @@ print ( "format me" )
 # NOTE: If you need to modify this file, pay special attention to the --line-ranges=
 # flag above as it's formatting specifically these lines.
 
-# Reproducible example for https://github.com/psf/black/issues/4033.
-# This can be fixed in the future if we use a better diffing algorithm, or make Black
-# perform formatting in a single pass.
+# Reproducible example for https://github.com/psf/black/issues/4033, fixed here by a
+# diagonal-preferring diff (https://github.com/psf/black/issues/4052): only the lines
+# within --line-ranges should be reformatted, even though the surrounding lines match.
 
 print ( "format me" )
 print("format me")
 print("format me")
-print("format me")
-print("format me")
+print ( "format me" )
+print ( "format me" )
