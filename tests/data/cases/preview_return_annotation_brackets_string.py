@@ -20,5 +20,8 @@ def frobnicate() -> (
 # splitting the string breaks if there's any parameters
 def frobnicate(
     a,
-) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":
+) -> (
+    "ThisIsTrulyUnreasonablyExtremelyLongClassName |"
+    " list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"
+):
     pass

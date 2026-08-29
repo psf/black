@@ -68,6 +68,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Long string in return annotation does not get split if there's parameters (#3926)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)

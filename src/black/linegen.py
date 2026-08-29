@@ -1172,6 +1172,16 @@ def _maybe_split_omitting_optional_parens(
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.case_block
                 )
+                and not (
+                    Preview.string_processing in mode
+                    and len(rhs.body.leaves) == 1
+                    and rhs.body.leaves[0].type == token.STRING
+                    and rhs.opening_bracket.parent
+                    and rhs.opening_bracket.parent.parent
+                    and rhs.opening_bracket.parent.parent.type == syms.funcdef
+                    and rhs.opening_bracket.parent.prev_sibling
+                    and rhs.opening_bracket.parent.prev_sibling.type == token.RARROW
+                )
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -1376,7 +1386,7 @@ def bracket_split_build_line(
                 break
 
     leaves_to_track: set[LeafID] = set()
-    if component is _BracketSplitComponent.head:
+    if component in (_BracketSplitComponent.head, _BracketSplitComponent.tail):
         leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:
