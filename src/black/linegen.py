@@ -815,8 +815,13 @@ def transform_line(
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
                 # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], mode=mode) or (
-                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+                if (
+                    is_line_short_enough(lines[0], mode=mode)
+                    or lines[0].contains_unsplittable_type_ignore()
+                    or (
+                        omit
+                        and _over_length_only_due_to_subscript_comment(lines[0], mode)
+                    )
                 ):
                     yield from lines
                     return
