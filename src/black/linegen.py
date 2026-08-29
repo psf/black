@@ -14,6 +14,7 @@ from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
     DOT_PRIORITY,
+    MATH_PRIORITIES,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
@@ -1502,6 +1503,17 @@ def delimiter_split(
         and _can_defer_lone_comparator_to_rhs(line, mode)
     ):
         raise CannotSplit("Bracketed RHS will explode via right_hand_split")
+
+    if (
+        delimiter_priority in MATH_PRIORITIES.values()
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and not line.magic_trailing_comma
+        and line.contains_standalone_comments()
+    ):
+        raise CannotSplit(
+            "Standalone comment should be split first; expression may fit on one"
+            " line"
+        )
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
