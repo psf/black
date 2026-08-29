@@ -68,6 +68,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Failure to consistently format inline type comments on a multi-line attribute access (#3869)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)

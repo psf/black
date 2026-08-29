@@ -881,6 +881,8 @@ def transform_line(
         # output is at least valid Python.
         if line.contains_standalone_comments():
             yield from _force_standalone_comment_split(line)
+        elif line.contains_uncollapsable_type_comments():
+            yield from _force_uncollapsable_type_comment_split(line)
         else:
             yield line
 
@@ -1209,6 +1211,12 @@ def _prefer_split_rhs_oop_over_rhs(
         or rhs_oop.tail.contains_unsplittable_type_ignore()
     ):
         return True
+
+    # contains uncollapsable type comments in the head: the head has no
+    # delimiter to safely split on, so keep the (now-forced-visible) optional
+    # parens instead, giving the fallback split a real bracket to work with.
+    if rhs_oop.head.contains_uncollapsable_type_comments():
+        return False
 
     # Retain optional parens around dictionary values
     if (
@@ -1617,6 +1625,25 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
         current_line.append(leaf, preformatted=True)
+    if current_line:
+        yield current_line
+
+
+def _force_uncollapsable_type_comment_split(line: Line) -> Iterator[Line]:
+    """Last-resort split so each uncollapsable type comment gets its own line."""
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
+    last_leaf = line.leaves[-1] if line.leaves else None
+    for leaf in line.leaves:
+        current_line.append(leaf, preformatted=True)
+        for comment_after in line.comments_after(leaf):
+            current_line.append(comment_after, preformatted=True)
+        if leaf is not last_leaf and line.comments_after(leaf):
+            yield current_line
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
     if current_line:
         yield current_line
 
