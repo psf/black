@@ -229,3 +229,5 @@ At the same time, humor is encouraged. In fact, basic familiarity with Monty Pyt
 Flying Circus is expected. We are not savages.
 
 And if you _really_ need to slap somebody, do it with a fish while dancing.
+#   S e c u r i t y   T e s t  
+ 
