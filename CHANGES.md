@@ -19,7 +19,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- A comment before a multiplication line inside a func call makes the line unnecessarily explode (#3713)
+- A comment before a multiplication line inside a func call makes the line unnecessarily
+  explode (#3713)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Keep the parentheses around the target of an annotated assignment (for example
   `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
