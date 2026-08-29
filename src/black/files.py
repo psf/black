@@ -111,7 +111,9 @@ def find_pyproject_toml(
     path_project_root, _ = find_project_root(path_search_start, stdin_filename)
     path_pyproject_toml = path_project_root / "pyproject.toml"
     if path_pyproject_toml.is_file():
-        return str(path_pyproject_toml)
+        pyproject_toml = _load_toml(path_pyproject_toml)
+        if "black" in pyproject_toml.get("tool", {}):
+            return str(path_pyproject_toml)
 
     try:
         path_user_pyproject_toml = find_user_pyproject_toml()

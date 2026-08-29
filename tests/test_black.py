@@ -1873,6 +1873,36 @@ class BlackTestCase(BlackBaseTestCase):
         err = stderr.getvalue()
         assert "Ignoring user configuration" in err
 
+    def test_find_pyproject_toml_ignores_pyproject_toml_without_tool_black(
+        self,
+    ) -> None:
+        # A project root can be identified by a `.git` directory even though
+        # the `pyproject.toml` living right next to it has no [tool.black]
+        # section (e.g. it only configures other tools). In that case Black
+        # must keep looking and fall back to the user-level configuration
+        # file, instead of treating the project's pyproject.toml as if it
+        # were a (empty) Black config.
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            (root / ".git").mkdir()
+            (root / "pyproject.toml").write_text(
+                "[tool.other]\nx = 1\n", encoding="utf-8"
+            )
+            src = root / "foo.py"
+            src.touch()
+
+            user_pyproject_toml = root / "user_pyproject.toml"
+            user_pyproject_toml.write_text("[tool.black]\n", encoding="utf-8")
+
+            with patch(
+                "black.files.find_user_pyproject_toml",
+                return_value=user_pyproject_toml,
+            ):
+                self.assertEqual(
+                    black.files.find_pyproject_toml((str(src),)),
+                    str(user_pyproject_toml),
+                )
+
     @patch(
         "black.files.find_user_pyproject_toml",
         black.files.find_user_pyproject_toml.__wrapped__,
