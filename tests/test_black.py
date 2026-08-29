@@ -2909,6 +2909,18 @@ class TestFileCollection:
         expected = [root / "z.py"]
         assert_collected_sources([root], expected, root=root)
 
+    def test_gitignore_directory_reincluded_by_negation(self) -> None:
+        # Regression test for #3694: a `!*/` pattern must re-include
+        # directories that a preceding broader pattern (e.g. `*`) ignored,
+        # matching Git's "last matching pattern wins" behavior.
+        root = Path(DATA_DIR, "gitignore_negation_reinclude_tests")
+        expected = [
+            root / "file1.py",
+            root / "a" / "file2.py",
+            root / "a" / "b" / "file3.py",
+        ]
+        assert_collected_sources([root], expected, root=root)
+
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
         src = [path]

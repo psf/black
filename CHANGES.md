@@ -19,6 +19,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- gitignore patterns with trailing slashes are incorrectly handled (#3694)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Keep the parentheses around the target of an annotated assignment (for example
   `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of

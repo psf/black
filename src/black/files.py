@@ -313,7 +313,11 @@ def _path_is_ignored(
                 relative_path = relative_path + "/"
         except ValueError:
             break
-        if pattern.match_file(relative_path):
+        ignored: bool | None = None
+        for gitignore_pattern in pattern.patterns:
+            if gitignore_pattern.match_file(relative_path) is not None:
+                ignored = gitignore_pattern.include
+        if ignored:
             return True
     return False
 
