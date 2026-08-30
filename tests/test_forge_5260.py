@@ -1,7 +1,8 @@
 import pytest
+
+from black.comments import contains_pragma_comment
 from blib2to3.pgen2.token import COMMENT
 from blib2to3.pytree import Leaf
-from black.comments import contains_pragma_comment
 
 
 def _comment_leaf(value: str) -> Leaf:
