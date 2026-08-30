@@ -441,6 +441,19 @@ def _convert_node_to_standalone_comment(
     # This also means the indentation will be changed on the unchanged lines, and
     # this is actually required to not break incremental reformatting.
     prefix = replacements.take_prefix(first)
+    # Preserve the original indentation of leading comments outside the
+    # requested line ranges. The prefix may contain blank lines and/or
+    # comment lines. Only the portion from the first comment line onward is
+    # folded into the STANDALONE_COMMENT value, so that the comment's own
+    # leading whitespace is kept verbatim. Any purely-whitespace remainder
+    # stays in the prefix and continues through the normal blank-line and
+    # indentation machinery.
+    comment_start = _find_comment_start(prefix)
+    if comment_start != -1:
+        value = prefix[comment_start:] + str(node)[:-1]
+        prefix = prefix[:comment_start]
+    else:
+        value = str(node)[:-1]
     # For a single-line decorated item the decorator and the item need a newline
     # between them. The conversions are recorded and applied in a single pass
     # instead of mutating the tree per node, so the decorator here is still its
@@ -450,7 +463,6 @@ def _convert_node_to_standalone_comment(
     # _convert_unchanged_line_by_line, which manages the newlines itself.)
     # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
     # generating the formatted code.
-    value = str(node)[:-1]
     replacements.record(
         [node],
         Leaf(
@@ -460,6 +472,21 @@ def _convert_node_to_standalone_comment(
             fmt_pass_converted_first_leaf=first,
         ),
     )
+
+
+def _find_comment_start(prefix: str) -> int:
+    """Return the index in prefix where the first comment line starts.
+
+    A comment line is a line whose first non-whitespace character is '#'.
+    Returns -1 if there is no such line.
+    """
+    lines = prefix.splitlines(keepends=True)
+    offset = 0
+    for line in lines:
+        if line.lstrip().startswith("#"):
+            return offset
+        offset += len(line)
+    return -1
 
 
 def _convert_nodes_to_standalone_comment(
