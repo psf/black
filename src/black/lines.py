@@ -343,6 +343,17 @@ class Line:
                 for comment in self.comments.get(id(node), []):
                     if is_type_ignore_comment(comment, mode=self.mode):
                         return True
+        elif last_line:
+            # Even when the line spans multiple physical lines, a
+            # 'type: ignore' on the last physical line applies to the
+            # whole expression and would be lost if the line is further
+            # split (e.g. the comment is attached to an invisible
+            # closing paren that disappears during splitting).
+            for node in self.leaves[-2:]:
+                if node.lineno == last_line:
+                    for comment in self.comments.get(id(node), []):
+                        if is_type_ignore_comment(comment, mode=self.mode):
+                            return True
 
         return False
 
