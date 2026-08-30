@@ -343,8 +343,24 @@ class Line:
                 for comment in self.comments.get(id(node), []):
                     if is_type_ignore_comment(comment, mode=self.mode):
                         return True
+                    if self._is_ruff_ignore_comment(comment):
+                        return True
 
         return False
+
+    @staticmethod
+    def _is_ruff_ignore_comment(comment: Leaf) -> bool:
+        """Return True if the comment is a ruff per-line ignore pragma.
+
+        Black normalizes the whitespace after the leading ``#`` to exactly one
+        space, but does not normalize whitespace after any subsequent ``:``.
+        Both ``# ruff:ignore[...]`` and ``# ruff: ignore[...]`` are recognized.
+        """
+        value = comment.value
+        if not value.startswith("# ruff:"):
+            return False
+        remainder = value[len("# ruff:") :]
+        return remainder.lstrip().startswith("ignore")
 
     def contains_multiline_strings(self) -> bool:
         return any(is_multiline_string(leaf) for leaf in self.leaves)

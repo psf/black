@@ -68,6 +68,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- `ruff:ignore` should be processed as a pragma in `contains_pragma_comment` (#5260)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
