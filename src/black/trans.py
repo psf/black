@@ -2383,6 +2383,14 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             replace_child(LL[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
 
+        # When the original closing paren is replaced, any comments that were
+        # attached to it (e.g. `# type: ignore`) are not carried over by
+        # `replace_child`. Recover them and append them to the last line so
+        # they are not silently dropped.
+        if old_rpar_leaf is not None:
+            for comment_leaf in line.comments_after(old_rpar_leaf):
+                last_line.append(comment_leaf, preformatted=True)
+
         yield Ok(last_line)
 
 

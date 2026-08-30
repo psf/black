@@ -68,6 +68,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Formatting a dictionary with a long string and type ignore fails on --unstable (#5328)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
