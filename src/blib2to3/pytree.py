@@ -513,6 +513,8 @@ class Leaf(Base):
         self.children = []
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
+        self.bracket_depth = 0
+        self.bracket_depth = 0
 
     def __repr__(self) -> str:
         """Return a canonical string representation."""
