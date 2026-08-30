@@ -69,6 +69,11 @@
 <!-- Changes that affect Black's preview style -->
 
 - Remove redundant parentheses around generator expressions (#5304)
+- Remove every layer of redundant parentheses around a generator passed as the sole
+  argument of a call (e.g. `outer(inner(((x for x in y))))`). Only the outermost pair
+  was removed, and the pair left behind hid the `for` from the line splitter, so a
+  generator long enough to split came out differently on the second pass and Black
+  reported unstable formatting (#5329)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
