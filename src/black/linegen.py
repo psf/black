@@ -14,6 +14,7 @@ from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
     DOT_PRIORITY,
+    MATH_PRIORITIES,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
@@ -1488,6 +1489,20 @@ def delimiter_split(
         delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
     except ValueError:
         raise CannotSplit("No delimiters found") from None
+
+    if (
+        line.leaves[0].type == STANDALONE_COMMENT
+        and (
+            last_leaf.type == token.COMMA
+            or delimiter_priority == MATH_PRIORITIES[token.SLASH]
+        )
+        and delimiter_priority != COMMA_PRIORITY
+        and all(
+            split_line.is_comment or is_line_short_enough(split_line, mode=mode)
+            for split_line in standalone_comment_split(line, features, mode)
+        )
+    ):
+        raise CannotSplit("Standalone comment split produces short lines")
 
     if (
         delimiter_priority == DOT_PRIORITY
