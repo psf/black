@@ -1162,7 +1162,7 @@ def _maybe_split_omitting_optional_parens(
                 not can_be_split(rhs.body)
                 and not is_line_short_enough(rhs.body, mode=mode)
                 and not (
-                    Preview.wrap_long_dict_values_in_parens
+                    Preview.wrap_long_dict_values_in_parens in mode
                     and rhs.opening_bracket.parent
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
@@ -1212,7 +1212,7 @@ def _prefer_split_rhs_oop_over_rhs(
 
     # Retain optional parens around dictionary values
     if (
-        Preview.wrap_long_dict_values_in_parens
+        Preview.wrap_long_dict_values_in_parens in mode
         and rhs.opening_bracket.parent
         and rhs.opening_bracket.parent.parent
         and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker

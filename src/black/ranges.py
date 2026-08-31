@@ -52,7 +52,7 @@ def parse_line_ranges(line_ranges: Sequence[str]) -> list[tuple[int, int]]:
 
 def is_valid_line_range(lines: tuple[int, int]) -> bool:
     """Returns whether the line range is valid."""
-    return not lines or lines[0] <= lines[1]
+    return lines[0] <= lines[1]
 
 
 def sanitized_lines(

@@ -844,7 +844,7 @@ class EmptyLineTracker:
         if suite is None or not isinstance(suite, Node):
             return False
         if_stmt = suite.parent
-        if if_stmt is None or not isinstance(if_stmt, Node):
+        if if_stmt is None:
             return False
 
         # Check if the if_stmt's next sibling is a same-name decorated function.
