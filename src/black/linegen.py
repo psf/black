@@ -1494,7 +1494,8 @@ def delimiter_split(
         line.leaves[0].type == STANDALONE_COMMENT
         and (
             last_leaf.type == token.COMMA
-            or delimiter_priority == MATH_PRIORITIES[token.SLASH]
+            or delimiter_priority
+            in {MATH_PRIORITIES[token.PLUS], MATH_PRIORITIES[token.SLASH]}
         )
         and delimiter_priority != COMMA_PRIORITY
         and all(

@@ -22,6 +22,16 @@ fraction_without_trailing_comma = [
     23 / 7
 ]
 
+sum_without_trailing_comma = [
+    # comment
+    23 + 7
+]
+
+difference_without_trailing_comma = [
+    # comment
+    23 - 7
+]
+
 call_without_trailing_comma = f(
     # comment
     23 / 7
@@ -52,6 +62,11 @@ long_path_without_trailing_comma = [
     pathlib.Path("a_very_long_directory_name") / "another_very_long_directory_name" / "a_very_long_filename.txt"
 ]
 
+long_sum_without_trailing_comma = [
+    # comment
+    111111111111111111111111111111111111111111111 + 222222222222222222222222222222222222222222222
+]
+
 # output
 
 # Regression tests for https://github.com/psf/black/issues/4026.
@@ -76,6 +91,16 @@ short_path_without_trailing_comma = [
 fraction_without_trailing_comma = [
     # comment
     23 / 7
+]
+
+sum_without_trailing_comma = [
+    # comment
+    23 + 7
+]
+
+difference_without_trailing_comma = [
+    # comment
+    23 - 7
 ]
 
 call_without_trailing_comma = f(
@@ -111,4 +136,10 @@ long_path_without_trailing_comma = [
     pathlib.Path("a_very_long_directory_name")
     / "another_very_long_directory_name"
     / "a_very_long_filename.txt"
+]
+
+long_sum_without_trailing_comma = [
+    # comment
+    111111111111111111111111111111111111111111111
+    + 222222222222222222222222222222222222222222222
 ]
