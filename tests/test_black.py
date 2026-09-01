@@ -1858,6 +1858,19 @@ class BlackTestCase(BlackBaseTestCase):
                 (src_dir.resolve(), "pyproject.toml"),
             )
 
+    @pytest.mark.incompatible_with_mypyc
+    def test_find_project_root_different_windows_drives(self) -> None:
+        if system() != "Windows":
+            return
+
+        black.files._find_project_root_cached.cache_clear()
+        self.addCleanup(black.files._find_project_root_cached.cache_clear)
+
+        self.assertEqual(
+            black.find_project_root((r"C:\work\app\a.py", r"D:\tmp\b.py")),
+            (Path("C:\\"), "file system root"),
+        )
+
     @patch(
         "black.files.find_user_pyproject_toml",
     )

@@ -84,10 +84,14 @@ def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path, str]:
         list(path.parents) + ([path] if path.is_dir() else []) for path in path_srcs
     ]
 
-    common_base = max(
-        set.intersection(*(set(parents) for parents in src_parents)),
-        key=lambda path: path.parts,
-    )
+    common = set.intersection(*(set(parents) for parents in src_parents))
+    if common:
+        common_base = max(common, key=lambda path: path.parts)
+    else:
+        # Paths on different Windows drives have no common parent. Use the
+        # first path's filesystem root so project-root discovery can continue
+        # without exposing the implementation's empty-intersection error.
+        common_base = Path(path_srcs[0].anchor)
 
     for directory in (common_base, *common_base.parents):
         if (directory / ".git").exists():
