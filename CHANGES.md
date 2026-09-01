@@ -19,6 +19,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
+  earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Keep the parentheses around the target of an annotated assignment (for example
   `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
