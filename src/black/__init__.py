@@ -1267,7 +1267,19 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
-        return _format_str_once(dst_contents, mode=mode, lines=lines)
+        try:
+            return _format_str_once(dst_contents, mode=mode, lines=lines)
+        except InvalidInput as exc:
+            # The second pass parses Black's own output, so a parse failure
+            # here means Black produced the invalid code, not the user. Without
+            # this the error is reported against the user's file and reads
+            # exactly like a syntax error in their source.
+            log = dump_to_file(dst_contents)
+            raise ASTSafetyError(
+                f"INTERNAL ERROR: {_black_info()} produced invalid code: {exc}. "
+                "Please report a bug on https://github.com/psf/black/issues.  "
+                f"This invalid output might be helpful: {log}"
+            ) from None
     return dst_contents
 
 
