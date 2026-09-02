@@ -97,6 +97,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Honor negations in nested `.gitignore` files when an ancestor rule also matches
+  (#5382)
 - Fix `find_project_root` returning a stale cached result when `--code` is used from
   different working directories in the same process. The CWD fallback (used when no
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
