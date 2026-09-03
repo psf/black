@@ -45,7 +45,7 @@ def _cached_resolve(path: Path) -> Path:
 
 def find_project_root(
     srcs: Sequence[str | Path], stdin_filename: str | None = None
-) -> tuple[Path, str]:
+) -> tuple[Path | None, str | None]:
     """Return a directory containing .git, .hg, or pyproject.toml.
 
     pyproject.toml files are only considered if they contain a [tool.black]
@@ -56,6 +56,10 @@ def find_project_root(
 
     If no directory in the tree contains a marker that would specify it's the
     project root, the root of the file system is returned.
+
+    If the sources share no common parent at all (for example, they live on
+    different drives on Windows), there is no project root and
+    ``(None, None)`` is returned.
 
     Returns a two-tuple with the first element as the project root path and
     the second element as a string describing the method by which the
@@ -75,7 +79,7 @@ def find_project_root(
 
 
 @lru_cache
-def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path, str]:
+def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path | None, str | None]:
     path_srcs = [Path(src) for src in srcs]
 
     # A list of lists of parents for each 'src'. 'src' is included as a
@@ -84,10 +88,10 @@ def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path, str]:
         list(path.parents) + ([path] if path.is_dir() else []) for path in path_srcs
     ]
 
-    common_base = max(
-        set.intersection(*(set(parents) for parents in src_parents)),
-        key=lambda path: path.parts,
-    )
+    common_parents = set.intersection(*(set(parents) for parents in src_parents))
+    if not common_parents:
+        return None, None
+    common_base = max(common_parents, key=lambda path: path.parts)
 
     for directory in (common_base, *common_base.parents):
         if (directory / ".git").exists():
@@ -109,9 +113,10 @@ def find_pyproject_toml(
 ) -> str | None:
     """Find the absolute filepath to a pyproject.toml if it exists"""
     path_project_root, _ = find_project_root(path_search_start, stdin_filename)
-    path_pyproject_toml = path_project_root / "pyproject.toml"
-    if path_pyproject_toml.is_file():
-        return str(path_pyproject_toml)
+    if path_project_root is not None:
+        path_pyproject_toml = path_project_root / "pyproject.toml"
+        if path_pyproject_toml.is_file():
+            return str(path_pyproject_toml)
 
     try:
         path_user_pyproject_toml = find_user_pyproject_toml()
@@ -247,8 +252,10 @@ def find_user_pyproject_toml() -> Path:
 
 
 @lru_cache
-def get_gitignore(root: Path) -> GitIgnoreSpec:
+def get_gitignore(root: Path | None) -> GitIgnoreSpec:
     """Return a GitIgnoreSpec matching gitignore content if present."""
+    if root is None:
+        return GitIgnoreSpec.from_lines([])
     gitignore = root / ".gitignore"
     lines: list[str] = []
     if gitignore.is_file():
