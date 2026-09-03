@@ -1,0 +1,114 @@
+name: prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      Version_Override:
+        type: string
+  push:
+    branches: ci/prepare-release/*
+
+permissions: {}
+
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
+jobs:
+  create:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push to new branch
+      pull-requests: write # Needed to create PR
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: true # Needed for git-auto-commit-action
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group release
+
+      - name: Prepare repo
+        run: python scripts/release.py prepare "$VERSION"
+        env:
+          VERSION: ${{ inputs.Version_Override }}
+
+      - name: Get version
+        id: version
+        run:
+          echo "version=${VERSION:-$(python scripts/release.py version)}" >>
+          "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ inputs.Version_Override }}
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+        with:
+          commit_message: "Prepare release ${{ steps.version.outputs.version }}"
+          branch: "ci/prepare-release/${{ steps.version.outputs.version }}"
+          create_branch: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+
+      - name: Create release PR
+        run: |
+          gh pr create \
+            -t "Prepare release $VERSION" -b "" \
+            -l "ci: skip news" -l "C: maintenance" \
+            -a "$USER"
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          USER: ${{ github.triggering_actor }}
+          VERSION: ${{ steps.version.outputs.version }}
+
+  update:
+    needs: create
+    if:
+      always() && (needs.create.result == 'skipped' || needs.create.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # Needed to edit PR
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Write PR description
+        run: |
+          echo "Please follow the process in [the docs](https://black.readthedocs.io/en/latest/contributing/release_process.html#cutting-a-release) to cut a release." > description.md
+          echo "<details><summary>Changelog Diff</summary>" >> description.md
+          echo "" >> description.md
+          echo "\`\`\`diff" >> description.md
+          git diff origin/stable "origin/$BRANCH" -- CHANGES.md >> description.md
+          echo "\`\`\`" >> description.md
+          echo "" >> description.md
+          echo "</details>" >> description.md
+        env:
+          BRANCH: |-
+            ${{ needs.create.outputs.version
+            && format('ci/prepare-release/{0}', needs.create.outputs.version)
+            || github.ref_name }}
+
+      - name: Edit release PR
+        run: |
+          gh pr edit "$BRANCH" -F description.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BRANCH: |-
+            ${{ needs.create.outputs.version
+            && format('ci/prepare-release/{0}', needs.create.outputs.version)
+            || github.ref_name }}
