@@ -108,6 +108,8 @@
 - Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors instead
   of crashing (#5211)
 - Ignore permission errors when reading cache (#5258)
+- Raise a usage error instead of crashing when sources on different drives share
+  no common project root (#PR)
 
 ### Packaging
 

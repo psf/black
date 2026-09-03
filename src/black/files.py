@@ -7,6 +7,7 @@ from pathlib import Path
 from re import Pattern
 from typing import TYPE_CHECKING, Any, Union
 
+import click
 from mypy_extensions import mypyc_attr
 from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
 from packaging.version import InvalidVersion, Version
@@ -57,6 +58,9 @@ def find_project_root(
     If no directory in the tree contains a marker that would specify it's the
     project root, the root of the file system is returned.
 
+    Raises click.UsageError if the sources share no common parent (for example
+    they are on different Windows drives).
+
     Returns a two-tuple with the first element as the project root path and
     the second element as a string describing the method by which the
     project root was discovered.
@@ -84,10 +88,12 @@ def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path, str]:
         list(path.parents) + ([path] if path.is_dir() else []) for path in path_srcs
     ]
 
-    common_base = max(
-        set.intersection(*(set(parents) for parents in src_parents)),
-        key=lambda path: path.parts,
-    )
+    common_parents = set.intersection(*(set(parents) for parents in src_parents))
+    if not common_parents:
+        raise click.UsageError(
+            "Sources on different drives share no common project root."
+        )
+    common_base = max(common_parents, key=lambda path: path.parts)
 
     for directory in (common_base, *common_base.parents):
         if (directory / ".git").exists():
