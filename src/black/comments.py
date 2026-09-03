@@ -918,7 +918,7 @@ def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
         pylint).
     """
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+        if comment.value.startswith(("# type:", "# noqa", "# pylint:", "# ruff:")):
             return True
 
     return False

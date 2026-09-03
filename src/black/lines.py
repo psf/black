@@ -20,6 +20,7 @@ from black.nodes import (
     is_multiline_string,
     is_one_sequence_between,
     is_one_tuple,
+    is_ruff_ignore_comment,
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
@@ -341,7 +342,11 @@ class Line:
             # line.
             for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
-                    if is_type_ignore_comment(comment, mode=self.mode):
+                    # Ruff ignore annotations are line-scoped just like
+                    # type-ignore comments, so moving either can change meaning.
+                    if is_type_ignore_comment(
+                        comment, mode=self.mode
+                    ) or is_ruff_ignore_comment(comment):
                         return True
 
         return False
