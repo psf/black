@@ -650,9 +650,9 @@ fstring_with_no_fexprs = (
     f" any means whatsoever."
 )
 
-comment_string = (  # This comment gets thrown to the top.
+comment_string = (
     "Long lines with inline comments should have their comments appended to the"
-    " reformatted string's enclosing right parentheses."
+    " reformatted string's enclosing right parentheses."  # This comment gets thrown to the top.
 )
 
 arg_comment_string = print(

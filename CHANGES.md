@@ -68,6 +68,10 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Keep an inline comment that follows a string on the same line as that string when the
+  string is wrapped in parentheses, instead of moving the comment up to the opening
+  parenthesis. This lets suppression comments such as `# pyright: ignore[...]` keep
+  applying to the expression they were written for (#3802)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)

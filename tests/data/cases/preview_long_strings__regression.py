@@ -835,8 +835,9 @@ some_dictionary = {
 
 
 def foo():
-    xxx_xxx = (  # xxxx xxxxxxxxxx xxxx xx xxxx xx xxx xxxxxxxx xxxxxx xxxxx.
-        'xxxx xxx xxxxxxxx_xxxx xx "xxxxxxxxxx".\n xxx: xxxxxx xxxxxxxx_xxxx=xxxxxxxxxx'
+    xxx_xxx = (
+        'xxxx xxx xxxxxxxx_xxxx xx "xxxxxxxxxx".'
+        "\n xxx: xxxxxx xxxxxxxx_xxxx=xxxxxxxxxx"  # xxxx xxxxxxxxxx xxxx xx xxxx xx xxx xxxxxxxx xxxxxx xxxxx.
     )
 
 
