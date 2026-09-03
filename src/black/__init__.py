@@ -618,6 +618,20 @@ def main(
     )
     ctx.obj["root"] = root
 
+    if (
+        code is None
+        and root is None
+        and not quiet
+        and ctx.get_parameter_source("config") != ParameterSource.COMMANDLINE
+    ):
+        err(
+            "No project root could be identified: the given sources share no"
+            " common parent directory (for example, they are on different"
+            " drives). Black will use its default configuration. Pass"
+            " --config to select a configuration file or --quiet to silence"
+            " this warning."
+        )
+
     if verbose:
         if root:
             out(
@@ -717,7 +731,6 @@ def main(
             lines=lines,
         )
     else:
-        assert root is not None  # root is only None if code is not None
         try:
             sources = get_sources(
                 root=root,
@@ -778,7 +791,7 @@ def main(
 
 def get_sources(
     *,
-    root: Path,
+    root: Path | None,
     src: tuple[str, ...],
     quiet: bool,
     verbose: bool,
@@ -792,7 +805,9 @@ def get_sources(
     """Compute the set of files to be formatted."""
     sources: set[Path] = set()
 
-    assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
+    assert (
+        root is None or root.is_absolute()
+    ), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
     gitignore: dict[Path, GitIgnoreSpec] | None = None
@@ -812,14 +827,22 @@ def get_sources(
             path = Path(s)
             is_stdin = False
 
+        # When the sources share no common parent, there is no project root.
+        # Fall back to a per-source root so that exclusion, symlink, and
+        # gitignore handling still work for each source independently.
+        if root is None:
+            src_root = path.resolve() if path.is_dir() else path.resolve().parent
+        else:
+            src_root = root
+
         # Compare the logic here to the logic in `gen_python_files`.
         if is_stdin or path.is_file():
-            if resolves_outside_root_or_cannot_stat(path, root, report):
+            if resolves_outside_root_or_cannot_stat(path, src_root, report):
                 if verbose:
                     out(f'Skipping invalid source: "{path}"', fg="red")
                 continue
 
-            root_relative_path = best_effort_relative_path(path, root).as_posix()
+            root_relative_path = best_effort_relative_path(path, src_root).as_posix()
             root_relative_path = "/" + root_relative_path
 
             # Hard-exclude any files that matches the `--force-exclude` regex.
@@ -841,19 +864,19 @@ def get_sources(
                 out(f'Found input source: "{path}"', fg="blue")
             sources.add(path)
         elif path.is_dir():
-            path = root / (path.resolve().relative_to(root))
+            path = src_root / (path.resolve().relative_to(src_root))
             if verbose:
                 out(f'Found input source directory: "{path}"', fg="blue")
 
             if using_default_exclude:
                 gitignore = {
-                    root: root_gitignore,
+                    src_root: root_gitignore,
                     path: get_gitignore(path),
                 }
             sources.update(
                 gen_python_files(
                     path.iterdir(),
-                    root,
+                    src_root,
                     include,
                     exclude,
                     extend_exclude,
