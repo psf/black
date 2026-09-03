@@ -43,6 +43,31 @@ for (a, b), c in [
 ]:
     pass
 
+# Inline comments on the forced split must not be dropped.
+[
+    [
+        x
+        for x
+        # comment
+        in [  # trailing comment
+            # comment
+            "ABC"
+        ]
+    ]
+]
+
+[
+    [
+        x
+        for x
+        # comment
+        in [  # type: ignore[attr-defined]
+            # comment
+            "ABC"
+        ]
+    ]
+]
+
 # output
 
 # Regression tests for https://github.com/psf/black/issues/4296.
@@ -89,3 +114,20 @@ for (a, b), c in [
     z,
 ]:
     pass
+
+# Inline comments on the forced split must not be dropped.
+[
+    [x for x
+    # comment
+    in [  # trailing comment
+    # comment
+    "ABC"]]
+]
+
+[
+    [x for x
+    # comment
+    in [  # type: ignore[attr-defined]
+    # comment
+    "ABC"]]
+]
