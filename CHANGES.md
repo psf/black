@@ -19,6 +19,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Keep short binary expressions on one line when preceded by a standalone comment in a
+  bracketed expression (#5375)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Keep the parentheses around the target of an annotated assignment (for example
   `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
