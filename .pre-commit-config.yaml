@@ -42,7 +42,7 @@ repos:
     rev: v2.3.1
     hooks:
       - id: mypy
-        exclude: ^docs/conf.py$
+        exclude: ^docs/conf\.py$
         args: []
         additional_dependencies:
           - click>=8.0.0
