@@ -30,6 +30,10 @@ any((
     for obj in this_iterable
 ))
 
+# Every layer of redundant parentheses goes, including when the generator splits.
+outer(inner((((item for item in items)))))
+outer(inner(((item.is_valid_and_ready(runtime_context) for item in the_collection_of_items_to_check))))
+
 # Existing comment handling may keep the generator parentheses visible.
 any((
     long_expression_that_exceeds_the_configured_line_length_limit_value  # inline comment
@@ -73,6 +77,15 @@ consume(*(item for item in items))
 any(
     this_very_long_method_name(obj) or another_long_method_name(obj)
     for obj in this_iterable
+)
+
+# Every layer of redundant parentheses goes, including when the generator splits.
+outer(inner(item for item in items))
+outer(
+    inner(
+        item.is_valid_and_ready(runtime_context)
+        for item in the_collection_of_items_to_check
+    )
 )
 
 # Existing comment handling may keep the generator parentheses visible.

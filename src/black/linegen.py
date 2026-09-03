@@ -383,7 +383,10 @@ class LineGenerator(Visitor[Line]):
                     child.type == syms.trailer
                     and len(child.children) == 3
                     and is_lpar_token(child.children[0])
-                    and is_generator(child.children[1])
+                    and (
+                        is_generator(child.children[1])
+                        or _has_redundant_generator_parentheses(child.children[1])
+                    )
                     and is_rpar_token(child.children[2])
                 ):
                     maybe_make_parens_invisible_in_atom(
@@ -2130,6 +2133,7 @@ def maybe_make_parens_invisible_in_atom(
             mode=mode,
             features=features,
             remove_brackets_around_comma=remove_brackets_around_comma,
+            remove_generator_parens=remove_generator_parens,
         )
 
         if is_atom_with_invisible_parens(middle):
