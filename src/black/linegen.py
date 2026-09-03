@@ -234,6 +234,36 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
+    def visit_argument(self, node: Node) -> Iterator[Line]:
+        """Add potential parentheses around long keyword argument values."""
+        if len(node.children) == 3 and node.children[1].type == token.EQUAL:
+            value = node.children[2]
+            value_leaves = list(value.leaves())
+            value_text = "".join(
+                leaf.prefix + leaf.value for leaf in value_leaves
+            ).strip()
+            continuation_indent = 4 * (self.current_line.depth + 1)
+            key = node.children[0]
+            assert isinstance(key, Leaf)
+            key_width = str_width(key.value) + 1
+            value_width = str_width(value_text)
+            if (
+                value_text
+                and not any(
+                    leaf.type == token.STRING or leaf.type in OPENING_BRACKETS
+                    for leaf in value_leaves
+                )
+                and continuation_indent + key_width <= self.mode.line_length
+                and continuation_indent + key_width + value_width
+                > self.mode.line_length
+                and value_width
+                > self.mode.line_length - continuation_indent - key_width
+            ):
+                normalize_invisible_parens(
+                    node, parens_after={"="}, mode=self.mode, features=self.features
+                )
+        yield from self.visit_default(node)
+
     def visit_typeparams(self, node: Node) -> Iterator[Line]:
         yield from self.visit_default(node)
         node.children[0].prefix = ""
