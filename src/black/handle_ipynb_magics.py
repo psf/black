@@ -299,7 +299,9 @@ def replace_magics(src: str) -> tuple[str, list[Replacement]]:
             mask = get_token(src, magic, existing_tokens)
             replacements.append(Replacement(mask=mask, src=magic))
             existing_tokens.add(mask)
-            line = line[:col_offset] + mask
+            # AST column offsets are UTF-8 byte offsets, not character indices.
+            prefix = line.encode("utf-8")[:col_offset].decode("utf-8")
+            line = prefix + mask
         new_srcs.append(line)
     return "\n".join(new_srcs), replacements
 
