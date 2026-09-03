@@ -217,7 +217,10 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
             specifiers.append(stripped)
         elif s.operator == ">":
             version = Version(s.version)
-            if len(version.release) > 2:
+            # Per PEP 440, `>3.7` is equivalent to `>3.7.0`, so it should include
+            # any `3.7.x` (e.g. `3.7.0`). A stripped `major.minor` form therefore
+            # needs the inclusive `>=` operator whenever a minor version is present.
+            if len(version.release) >= 2:
                 s = Specifier(f">={version.major}.{version.minor}")
             specifiers.append(s)
         else:
