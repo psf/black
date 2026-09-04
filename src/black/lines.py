@@ -1014,7 +1014,7 @@ class EmptyLineTracker:
             # The blank lines that terminate a `# fmt: off` region live in the
             # prefix of the `# fmt: on` comment, not in the verbatim block, so
             # capping them here would edit formatting that was opted out of.
-            if not (
+            if not current_line.is_fmt_pass_converted() and not (
                 first_leaf.type == STANDALONE_COMMENT
                 and contains_fmt_directive(first_leaf.value, FMT_ON)
                 and self.previous_line is not None
