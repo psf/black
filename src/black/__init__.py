@@ -901,7 +901,7 @@ def reformat_code(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(path, str(exc))
+        report.failed(path, exc)
 
 
 # diff-shades depends on being to monkeypatch this function to operate. I know it's
@@ -965,7 +965,7 @@ def reformat_one(
     except Exception as exc:
         if report.verbose:
             traceback.print_exc()
-        report.failed(src, str(exc))
+        report.failed(src, exc)
 
 
 def format_file_in_place(
@@ -1286,14 +1286,11 @@ def _restore_unselected_trailing_blank_lines(
     if len(dst_lines) >= len(src_lines):
         return dst_contents
 
-    selected: set[int] = set()
-    for start, end in lines:
-        selected.update(range(start, end + 1))
-
     suffix = src_lines[len(dst_lines) :]
     first_suffix_line = len(dst_lines) + 1
     if all(
-        not line.strip() and line_number not in selected
+        not line.strip()
+        and not any(start <= line_number <= end for start, end in lines)
         for line_number, line in enumerate(suffix, start=first_suffix_line)
     ):
         return dst_contents + "".join(suffix)

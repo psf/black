@@ -52,7 +52,7 @@ def parse_line_ranges(line_ranges: Sequence[str]) -> list[tuple[int, int]]:
 
 def is_valid_line_range(lines: tuple[int, int]) -> bool:
     """Returns whether the line range is valid."""
-    return not lines or lines[0] <= lines[1]
+    return lines[0] <= lines[1]
 
 
 def sanitized_lines(
@@ -469,7 +469,6 @@ def _convert_node_to_standalone_comment(
             value,
             prefix=prefix,
             fmt_pass_converted_first_leaf=first,
-            line_ranges_converted=True,
             line_ranges_first_lineno=first_lineno,
             line_ranges_selected=lines_set,
         ),
@@ -504,7 +503,6 @@ def _convert_nodes_to_standalone_comment(
             value,
             prefix=prefix,
             fmt_pass_converted_first_leaf=first,
-            line_ranges_converted=True,
             line_ranges_first_lineno=first_lineno,
             line_ranges_selected=lines_set,
         ),

@@ -8,6 +8,8 @@
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
   --target-version flag (#5167)
+- `--line-ranges` no longer inserts an empty line after a docstring when the range
+  covers only the docstring itself (#5312)
 
 ### Highlights
 
@@ -17,6 +19,18 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
+  earlier on the line (#5381)
+- Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
+- Keep the parentheses around the target of an annotated assignment (for example
+  `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
+  `__annotations__`; removing them changed that and tripped Black's AST safety check.
+  Nesting beyond the first pair is redundant and is still removed, so `((x)): int = 5`
+  becomes `(x): int = 5` (#5321)
+- Stop treating a t-string in docstring position as a docstring (for example
+  `t"  spam  "` as the first statement of a module, class or function). t-strings
+  evaluate to `Template`, never `str`, so stripping and reindenting one changed the
+  value of the template and tripped Black's AST safety check (#5287)
 - Fix unparseable output for a t-string whose replacement field contains a quote (for
   example `t'\'{a["b"]}\''`). The guards that keep quote normalisation away from the
   inside of an f-string replacement field were never reached for t-strings, so the
@@ -31,8 +45,14 @@
   expression and failed Black's AST safety check (#5246)
 - Fix unstable formatting when an inline comment sits on optional parentheses (for
   example a parenthesized assert message or assignment RHS) (#5241)
+- Fix `--skip-magic-trailing-comma` dropping the trailing comma of a one-element
+  subscript (`a[x,]`) when the line is long enough to be split and contains a power
+  operator (#5272)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Fix inline comments being dropped on the lines produced by that forced split, so a
+  trailing `# comment` or `# type: ignore` on a bracket inside such a comprehension is
+  kept instead of silently removed (#5330)
 - Respect the magic trailing comma in a PEP 695 type parameter list containing a
   `*TypeVarTuple` or `**ParamSpec`, which previously collapsed back onto one line
   (#5244)
@@ -48,11 +68,14 @@
   previously crashing) (#5161)
 - Preserve comments and blank lines outside requested ranges when formatting with
   `--line-ranges` (#5175)
+- Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
+  `async for` statements containing a semicolon (#5311)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
@@ -73,6 +96,9 @@
   as a comprehension's iterable down to a single pair (e.g. `[x for x in ((lambda: 0))]`
   becomes `[x for x in (lambda: 0)]`). Previously the inner pair was stripped too,
   leaving the bare expression and crashing Black (#5200)
+- Don't hug brackets when doing so would join two `type: ignore` comments onto one line.
+  The AST records `type: ignore` per line, so merging them dropped a `TypeIgnore` entry
+  and Black failed its own equivalence check (#5271)
 
 ### Configuration
 
@@ -164,10 +190,18 @@
   chain) by walking the `blib2to3` node tree iteratively in `pre_order`, `post_order`
   and `leaves` instead of recursing with `yield from`, whose per-node generator
   delegation made a full traversal quadratic in nesting depth (#5235)
+- Improve performance of `--preview` string merging on lines such as
+  `"%s ..." % (a, b, c, ...)` by copying the leaves that surround the merged string in
+  one `append_leaves` call instead of one call per leaf, which rescanned the shared
+  parent's child list from the start every time (#5220)
+- Improve performance on long `if`/`elif` chains and other compound statements with many
+  clauses (#5322)
 
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
+- Report parser failures using editor-friendly `path:line:column` locations (#5237)
 
 ### _Blackd_
 
@@ -181,6 +215,9 @@
 
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
+
+- Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
+  insert-mode indentation (#5288)
 
 ## Version 26.5.1
 

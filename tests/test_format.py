@@ -91,7 +91,7 @@ def test_patma_invalid() -> None:
 
     exc_info.match(
         re.escape(
-            "Cannot parse for target version Python 3.10: 10:11\n"
+            "cannot parse for target version Python 3.10: 10:11\n"
             "        case a := b:\n"
             "              ^\n"
             "ParseError: bad input"

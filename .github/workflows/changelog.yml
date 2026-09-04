@@ -4,6 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, labeled, unlabeled, reopened]
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 permissions:
   contents: read
 

@@ -353,6 +353,24 @@ nnoremap <F9> :Black<CR>
    let g:ale_fixers.python = ['black']
    ```
 
+### Vim indentation plugin
+
+For insert-mode indentation that follows the same hanging-bracket style as _Black_, you
+can also use the
+[`vim-python-pep8-indent`](https://github.com/Vimjas/vim-python-pep8-indent) plugin. It
+provides Vim's `indentexpr`; _Black_ remains responsible for formatting the file. For
+example, with vim-plug:
+
+```vim
+Plug 'Vimjas/vim-python-pep8-indent'
+```
+
+With Vundle, use:
+
+```vim
+Plugin 'Vimjas/vim-python-pep8-indent'
+```
+
 ## Neovim
 
 ### Via conform.nvim

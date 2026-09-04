@@ -217,7 +217,7 @@ async def schedule_formatting(
                 elif exc := task.exception():
                     if report.verbose:
                         traceback.print_exception(type(exc), exc, exc.__traceback__)
-                    report.failed(src, str(exc))
+                    report.failed(src, exc)
                 else:
                     changed = Changed.YES if task.result() else Changed.NO
                     # If the file was written back or was successfully checked as
