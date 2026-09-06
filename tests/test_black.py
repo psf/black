@@ -95,6 +95,22 @@ def event_loop() -> Iterator[None]:
         loop.close()
 
 
+def symlink_or_skip(
+    link: Path, target: Path | str, target_is_directory: bool = False
+) -> None:
+    """Create a symlink, or skip the test where the platform forbids one.
+
+    Windows refuses symlink creation unless the process is elevated or Developer
+    Mode is enabled, so these tests cannot run for an ordinary Windows
+    contributor. Same treatment as test_broken_symlink, which has guarded this
+    since #287.
+    """
+    try:
+        link.symlink_to(target, target_is_directory=target_is_directory)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"Can't create symlinks: {e}")
+
+
 class FakeContext(click.Context):
     """A fake click Context for when calling functions that need it."""
 
@@ -1207,10 +1223,7 @@ class BlackTestCase(BlackBaseTestCase):
     def test_broken_symlink(self) -> None:
         with cache_dir() as workspace:
             symlink = workspace / "broken_link.py"
-            try:
-                symlink.symlink_to("nonexistent.py")
-            except (OSError, NotImplementedError) as e:
-                self.skipTest(f"Can't create symlinks: {e}")
+            symlink_or_skip(symlink, "nonexistent.py")
             self.invokeBlack([str(workspace.resolve())])
 
     def test_single_file_force_pyi(self) -> None:
@@ -3039,7 +3052,7 @@ class TestFileCollection:
             actual = tmp / "actual"
             actual.mkdir()
             symlink = tmp / "symlink"
-            symlink.symlink_to(actual)
+            symlink_or_skip(symlink, actual, target_is_directory=True)
 
             actual_proj = actual / "project"
             actual_proj.mkdir()
@@ -3063,7 +3076,7 @@ class TestFileCollection:
 
                 # a few tricky tests for force_exclude
                 flat_symlink = symlink_proj / "symlink_module.py"
-                flat_symlink.symlink_to(actual_proj / "module.py")
+                symlink_or_skip(flat_symlink, actual_proj / "module.py")
                 assert_collected_sources(
                     src=[flat_symlink],
                     root=symlink_proj.resolve(),
@@ -3074,7 +3087,9 @@ class TestFileCollection:
                 target = actual_proj / "target"
                 target.mkdir()
                 (target / "another.py").write_text("print('hello')", encoding="utf-8")
-                (symlink_proj / "nested").symlink_to(target)
+                symlink_or_skip(
+                    symlink_proj / "nested", target, target_is_directory=True
+                )
 
                 assert_collected_sources(
                     src=[symlink_proj / "nested" / "another.py"],
@@ -3102,7 +3117,7 @@ class TestFileCollection:
             target = tmp / "outside_root" / "a.py"
             target.parent.mkdir()
             target.write_text("print('hello')", encoding="utf-8")
-            (root / "a.py").symlink_to(target)
+            symlink_or_skip(root / "a.py", target)
 
             stdin_filename = str(root / "a.py")
             assert_collected_sources(
@@ -3188,7 +3203,7 @@ class TestFileCollection:
             tmp = Path(tempdir).resolve()
             (tmp / "exclude").mkdir()
             (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
-            (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
+            symlink_or_skip(tmp / "symlink.py", tmp / "exclude" / "a.py")
 
             stdin_filename = str(tmp / "symlink.py")
             expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
