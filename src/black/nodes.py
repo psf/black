@@ -1002,6 +1002,22 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     ].lstrip().startswith("ignore")
 
 
+def is_ruff_ignore_comment_string(value: str) -> bool:
+    """Return True if the given string is a 'ruff: ignore' pragma comment.
+
+    Ruff writes both ``ruff: ignore`` and (less commonly) ``ruff:ignore``,
+    optionally followed by a bracketed rule list. Both forms mean the line is
+    exempt from linting, so it should be treated like a ``type: ignore``
+    comment.
+    """
+    if not value.startswith("#"):
+        return False
+    stripped = value[1:].lstrip()
+    if not stripped.startswith("ruff:"):
+        return False
+    return stripped.split(":", 1)[1].lstrip().startswith("ignore")
+
+
 def wrap_in_parentheses(
     parent: Node, child: LN, *, visible: bool = True, index: int | None = None
 ) -> None:
