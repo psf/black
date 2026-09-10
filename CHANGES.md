@@ -19,6 +19,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Preserve lines ending in `# ruff: ignore` comments and recognize Ruff pragmas
+  during string processing (#5393)
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
