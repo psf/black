@@ -451,11 +451,21 @@ def _handle_regular_fmt_block(
     # Ensure STANDALONE_COMMENT nodes have trailing newlines when stringified
     # This prevents multiple fmt: skip comments from being concatenated on one line
     parts = []
-    for node in ignored_nodes:
+    for node_index, node in enumerate(ignored_nodes):
         if isinstance(node, Leaf) and node.type == STANDALONE_COMMENT:
             # Add newline after STANDALONE_COMMENT Leaf
             node_str = str(node)
-            if not node_str.endswith("\n"):
+            next_node = (
+                ignored_nodes[node_index + 1]
+                if node_index + 1 < len(ignored_nodes)
+                else None
+            )
+            if not node_str.endswith("\n") and (
+                next_node is None
+                or isinstance(next_node, Leaf)
+                and next_node.type == STANDALONE_COMMENT
+                or "\n" in next_node.prefix
+            ):
                 node_str += "\n"
             parts.append(node_str)
         elif isinstance(node, Node):
