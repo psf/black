@@ -278,7 +278,7 @@ and execute the following in a terminal:
 
 ```console
 $ cd ~/.vim/bundle/black
-$ git checkout origin/stable -b stable
+$ git checkout stable
 ```
 
 ##### Arch Linux
