@@ -79,7 +79,6 @@ from black.numerics import normalize_numeric_literal
 from black.strings import (
     fix_multiline_docstring,
     get_string_prefix,
-    has_triple_quotes,
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
@@ -1179,7 +1178,7 @@ def _maybe_split_omitting_optional_parens(
                     Preview.string_processing in mode
                     and len(rhs.body.leaves) == 1
                     and rhs.body.leaves[0].type == token.STRING
-                    and not has_triple_quotes(rhs.body.leaves[0].value)
+                    and StringSplitter.can_split_string(rhs.body.leaves[0].value)
                     and rhs.opening_bracket.parent
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.funcdef

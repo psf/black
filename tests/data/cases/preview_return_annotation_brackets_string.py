@@ -7,6 +7,10 @@ def frobnicate() -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIs
 def frobnicate(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":
     pass
 
+# Strings without a legal split point remain unwrapped.
+def frobnicate(a) -> "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX":
+    pass
+
 # Triple-quoted strings cannot be split by StringSplitter.
 def frobnicate(a) -> """ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]""":
     pass
@@ -28,6 +32,13 @@ def frobnicate(
     "ThisIsTrulyUnreasonablyExtremelyLongClassName |"
     " list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"
 ):
+    pass
+
+
+# Strings without a legal split point remain unwrapped.
+def frobnicate(
+    a,
+) -> "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX":
     pass
 
 
