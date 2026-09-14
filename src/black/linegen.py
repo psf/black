@@ -22,6 +22,7 @@ from black.comments import (
     FMT_OFF,
     FMT_ON,
     contains_fmt_directive,
+    contains_pragma_comment,
     generate_comments,
     list_comments,
 )
@@ -1184,6 +1185,11 @@ def _maybe_split_omitting_optional_parens(
                     and rhs.opening_bracket.parent.parent.type == syms.funcdef
                     and rhs.opening_bracket.parent.prev_sibling
                     and rhs.opening_bracket.parent.prev_sibling.type == token.RARROW
+                    and not any(
+                        contains_pragma_comment(comments)
+                        for split_line in (rhs.body, rhs.tail)
+                        for comments in split_line.comments.values()
+                    )
                 )
             ):
                 raise CannotSplit(

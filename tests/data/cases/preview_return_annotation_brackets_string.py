@@ -11,6 +11,15 @@ def frobnicate(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisI
 def frobnicate(a) -> "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX":
     pass
 
+# Pragmas keep the annotation on its original logical line.
+def frobnicate(a) -> ("ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"  # noqa
+):
+    pass
+
+# Type ignores also keep the annotation on its original logical line.
+def frobnicate(a) -> ("ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"):  # type: ignore
+    pass
+
 # Triple-quoted strings cannot be split by StringSplitter.
 def frobnicate(a) -> """ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]""":
     pass
@@ -39,6 +48,18 @@ def frobnicate(
 def frobnicate(
     a,
 ) -> "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX":
+    pass
+
+
+# Pragmas keep the annotation on its original logical line.
+def frobnicate(
+    a,
+) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":  # noqa
+    pass
+
+
+# Type ignores also keep the annotation on its original logical line.
+def frobnicate(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":  # type: ignore
     pass
 
 
