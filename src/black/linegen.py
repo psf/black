@@ -1610,7 +1610,11 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
     )
     for leaf in line.leaves:
         if current_line.leaves and (
-            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+            leaf.type == STANDALONE_COMMENT
+            or (
+                current_line.is_comment
+                and "#" in current_line.leaves[0].value.splitlines()[-1]
+            )
         ):
             yield current_line
             current_line = Line(
