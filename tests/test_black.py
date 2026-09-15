@@ -1858,6 +1858,10 @@ class BlackTestCase(BlackBaseTestCase):
                 (src_dir.resolve(), "pyproject.toml"),
             )
 
+    def test_is_filesystem_root(self, tmp_path: Path) -> None:
+        assert black.files.is_filesystem_root(Path("/"))
+        assert not black.files.is_filesystem_root(tmp_path)
+
     @patch(
         "black.files.find_user_pyproject_toml",
     )

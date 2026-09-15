@@ -74,6 +74,15 @@ def find_project_root(
     return _find_project_root_cached(resolved_srcs)
 
 
+def is_filesystem_root(path: Path) -> bool:
+    """Return whether ``path`` resolves to the root of its filesystem."""
+    try:
+        resolved = path.resolve()
+    except (OSError, RuntimeError):
+        return False
+    return resolved == resolved.parent
+
+
 @lru_cache
 def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path, str]:
     path_srcs = [Path(src) for src in srcs]
