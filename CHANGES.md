@@ -26,6 +26,8 @@
   `while`, `for`, or `with` header (#5405)
 - Fix crash when formatting parenthesized expressions with multiple inline comments and
   `# fmt: skip` (#5414)
+- Fix formatting of a parenthesized expression with standalone comments so it does not
+  produce a line longer than the configured line length (#3925)
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)

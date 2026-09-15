@@ -39,6 +39,9 @@ from black.nodes import (
     ASSIGNMENTS,
     BRACKETS,
     CLOSING_BRACKETS,
+    COMPARATORS,
+    LOGIC_OPERATORS,
+    MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
@@ -1226,6 +1229,24 @@ def _prefer_split_rhs_oop_over_rhs(
     Returns whether we should prefer the result from a split omitting optional parens
     (rhs_oop) over the original (rhs).
     """
+    # Do not join an overlong assignment prefix to a binary expression that starts a
+    # parenthesized, commented RHS. This can happen when standalone comments force a
+    # nested split to be considered after the first RHS expression (#3925).
+    if (
+        len(rhs_oop.head.leaves) >= 2
+        and rhs_oop.head.leaves[-1].type in OPENING_BRACKETS
+        and (
+            rhs_oop.head.leaves[-2].type in MATH_OPERATORS | COMPARATORS
+            or (
+                rhs_oop.head.leaves[-2].type == token.NAME
+                and rhs_oop.head.leaves[-2].value in LOGIC_OPERATORS
+            )
+        )
+        and rhs_oop.body.contains_standalone_comments()
+        and not is_line_short_enough(rhs_oop.head, mode=mode)
+    ):
+        return False
+
     # contains unsplittable type ignore
     if (
         rhs_oop.head.contains_unsplittable_type_ignore()
