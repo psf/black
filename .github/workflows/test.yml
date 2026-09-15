@@ -16,6 +16,7 @@ on:
       - tests/**
       - tox.ini
       - pyproject.toml
+      - docs/integrations/source_version_control.md # Run on "Prepare Release" PRs
 
 permissions:
   contents: read
@@ -29,13 +30,6 @@ concurrency:
 
 jobs:
   test:
-    # We want to run on external PRs, but not on our own internal PRs as they'll be run
-    # by the push to the branch. Without this if check, checks are duplicated since
-    # internal PRs match both the push and pull_request events.
-    if:
-      github.event_name == 'push' || github.event.pull_request.head.repo.full_name !=
-      github.repository
-
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
