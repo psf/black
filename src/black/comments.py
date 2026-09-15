@@ -409,6 +409,7 @@ def convert_one_fmt_off_pair(
                 is_fmt_skip,
                 lines,
                 leaf,
+                mode,
                 search_hints,
             )
             return idx
@@ -426,6 +427,25 @@ def _is_attached(leaf: Leaf, root: Node) -> bool:
     return False
 
 
+def _get_endmarker_and_dedents(node: LN) -> tuple[LN | None, list[LN]]:
+    """Return the ENDMARKER and terminal DEDENTs following an unclosed fmt block."""
+    dedents: list[LN] = []
+    current: LN | None = node
+    while current is not None:
+        sibling = current.next_sibling
+        if sibling is None:
+            current = current.parent
+            continue
+        if sibling.type == token.DEDENT:
+            dedents.append(sibling)
+            current = sibling
+            continue
+        if sibling.type == token.ENDMARKER:
+            return sibling, dedents
+        return None, []
+    return None, []
+
+
 def _handle_regular_fmt_block(
     ignored_nodes: list[LN],
     comment: ProtoComment,
@@ -433,6 +453,7 @@ def _handle_regular_fmt_block(
     is_fmt_skip: bool,
     lines: Collection[tuple[int, int]],
     leaf: Leaf,
+    mode: Mode,
     search_hints: dict[int, int] | None = None,
 ) -> None:
     """Handle fmt blocks with actual AST nodes."""
@@ -485,6 +506,27 @@ def _handle_regular_fmt_block(
             parts.append(str(node))
 
     hidden_value = "".join(parts)
+
+    # The parser stores blank lines after the final statement in the END marker
+    # prefix rather than in the statement node. Preserve those newlines for an
+    # unclosed fmt: off block at EOF; otherwise they are silently discarded.
+    if not is_fmt_skip:
+        endmarker, dedents = _get_endmarker_and_dedents(ignored_nodes[-1])
+        eof_nodes = [*dedents, endmarker] if endmarker is not None else []
+        has_fmt_on = any(
+            contains_fmt_directive(comment.value, FMT_ON)
+            for eof_node in eof_nodes
+            for comment in list_comments(
+                eof_node.prefix,
+                is_endmarker=eof_node.type == token.ENDMARKER,
+                mode=mode,
+            )
+        )
+        if eof_nodes and not has_fmt_on:
+            hidden_value += "".join(eof_node.prefix for eof_node in eof_nodes)
+            for eof_node in eof_nodes:
+                eof_node.prefix = ""
+
     comment_lineno = leaf.lineno - comment.newlines
     leaf_is_ignored = any(
         ignored is leaf
