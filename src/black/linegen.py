@@ -22,6 +22,7 @@ from black.comments import (
     FMT_OFF,
     FMT_ON,
     contains_fmt_directive,
+    contains_pragma_comment,
     generate_comments,
     list_comments,
 )
@@ -1172,6 +1173,24 @@ def _maybe_split_omitting_optional_parens(
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.case_block
                 )
+                and not (
+                    # Keep the optional parentheses around a function's string return
+                    # annotation so string processing can split it after the parameters.
+                    Preview.string_processing in mode
+                    and len(rhs.body.leaves) == 1
+                    and rhs.body.leaves[0].type == token.STRING
+                    and StringSplitter.can_split_string(rhs.body.leaves[0].value)
+                    and rhs.opening_bracket.parent
+                    and rhs.opening_bracket.parent.parent
+                    and rhs.opening_bracket.parent.parent.type == syms.funcdef
+                    and rhs.opening_bracket.parent.prev_sibling
+                    and rhs.opening_bracket.parent.prev_sibling.type == token.RARROW
+                    and not any(
+                        contains_pragma_comment(comments)
+                        for split_line in (rhs.body, rhs.tail)
+                        for comments in split_line.comments.values()
+                    )
+                )
             ):
                 raise CannotSplit(
                     "Splitting failed, body is still too long and can't be split."
@@ -1376,7 +1395,7 @@ def bracket_split_build_line(
                 break
 
     leaves_to_track: set[LeafID] = set()
-    if component is _BracketSplitComponent.head:
+    if component in (_BracketSplitComponent.head, _BracketSplitComponent.tail):
         leaves_to_track = get_leaves_inside_matching_brackets(leaves)
     # Populate the line
     for leaf in leaves:

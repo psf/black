@@ -1466,6 +1466,22 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
     MIN_SUBSTR_SIZE: Final = 6
 
+    @classmethod
+    def can_split_string(cls, string: str) -> bool:
+        """Return whether ``string`` has a legal breakpoint for this splitter."""
+        if not string or has_triple_quotes(string):
+            return False
+
+        splitter = cls(0, False)
+        return (
+            splitter._get_break_idx(
+                string,
+                len(string) - 1,
+                has_named_escape="\\N" in string,
+            )
+            is not None
+        )
+
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
