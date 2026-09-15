@@ -2844,6 +2844,18 @@ class TestFileCollection:
         )
         assert sorted(expected) == sorted(sources)
 
+    def test_nested_gitignore_reincludes_parent_match(self, tmp_path: Path) -> None:
+        packages = tmp_path / "packages"
+        source = packages / "playground" / "generated" / "settings.py"
+        source.parent.mkdir(parents=True)
+        source.write_text("x=1\n", encoding="utf-8")
+        (tmp_path / ".gitignore").write_text("generated\n", encoding="utf-8")
+        (packages / ".gitignore").write_text(
+            "!playground/generated\n", encoding="utf-8"
+        )
+
+        assert_collected_sources([tmp_path], [source], root=tmp_path)
+
     def test_nested_gitignore_directly_in_source_directory(self) -> None:
         # https://github.com/psf/black/issues/2598
         path = Path(DATA_DIR / "nested_gitignore_tests")

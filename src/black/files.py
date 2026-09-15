@@ -304,6 +304,7 @@ def _path_is_ignored(
     gitignore_dict: dict[Path, GitIgnoreSpec],
 ) -> bool:
     path = root / root_relative_path
+    ignored = False
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
     # ensure that gitignore_dict is ordered from least specific to most specific.
     for gitignore_path, pattern in gitignore_dict.items():
@@ -313,9 +314,12 @@ def _path_is_ignored(
                 relative_path = relative_path + "/"
         except ValueError:
             break
-        if pattern.match_file(relative_path):
-            return True
-    return False
+        # A matching rule in a deeper .gitignore overrides an earlier match. A
+        # None result means this file had no applicable rule and leaves the state alone.
+        match = pattern.check_file(relative_path).include
+        if match is not None:
+            ignored = match
+    return ignored
 
 
 def path_is_excluded(
