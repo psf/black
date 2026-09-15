@@ -50,6 +50,9 @@
   operator (#5272)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Fix crash on a `# fmt: skip` placed on the opening bracket of a parenthesized `if`,
+  `while`, `for` or `with` header, where the forced split moved the `:` onto its own
+  line (#5403)
 - Fix inline comments being dropped on the lines produced by that forced split, so a
   trailing `# comment` or `# type: ignore` on a bracket inside such a comprehension is
   kept instead of silently removed (#5330)
