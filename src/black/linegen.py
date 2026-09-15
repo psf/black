@@ -1610,7 +1610,8 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
     )
     for leaf in line.leaves:
         if current_line.leaves and (
-            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+            leaf.type == STANDALONE_COMMENT
+            or (current_line.is_comment and _ends_with_comment(current_line.leaves[0]))
         ):
             yield current_line
             current_line = Line(
@@ -1621,6 +1622,16 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
             current_line.append(comment_after, preformatted=True)
     if current_line:
         yield current_line
+
+
+def _ends_with_comment(leaf: Leaf) -> bool:
+    """Whether code following this STANDALONE_COMMENT on the same line would be
+    commented out.
+
+    Code converted by `# fmt: skip` can end in a bracket instead of a comment, as in
+    `if (  # fmt: skip ...)`. Its trailing `:` must stay on the same line.
+    """
+    return "#" in leaf.value.splitlines()[-1]
 
 
 def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:

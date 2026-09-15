@@ -53,6 +53,9 @@
 - Fix inline comments being dropped on the lines produced by that forced split, so a
   trailing `# comment` or `# type: ignore` on a bracket inside such a comprehension is
   kept instead of silently removed (#5330)
+- Fix crash when `# fmt: skip` sits on the opening bracket of a parenthesized `if`,
+  `while`, `for` or `with` header. That forced split separated the closing bracket from
+  the `:` after it, a regression from #5144 (#5406)
 - Respect the magic trailing comma in a PEP 695 type parameter list containing a
   `*TypeVarTuple` or `**ParamSpec`, which previously collapsed back onto one line
   (#5244)
