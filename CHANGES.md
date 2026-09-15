@@ -19,6 +19,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an inline comment after the closing bracket of optional parentheses being moved
+  inside the brackets when the parenthesized expression contains own-line comments
+  (#3741)
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
