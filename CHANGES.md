@@ -19,6 +19,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
+  `while`, `for`, or `with` header (#5402)
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
