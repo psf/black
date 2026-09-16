@@ -171,6 +171,30 @@ def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
 class BlackTestCase(BlackBaseTestCase):
     invokeBlack = staticmethod(invokeBlack)
 
+    def test_flat_subscript_chain_preserves_splitting(self) -> None:
+        source = "x = a" + "".join(f"[{i}]" for i in range(30)) + "\n"
+        expected = (
+            "x = a"
+            + "".join(f"[{i}]" for i in range(23))
+            + "[\n    23\n]"
+            + "".join(f"[{i}]" for i in range(24, 30))
+            + "\n"
+        )
+
+        assert black.format_str(source, mode=DEFAULT_MODE) == expected
+
+    def test_flat_subscript_chain_split_search_is_linear(self) -> None:
+        source = "x = a" + "".join(f"[{i}]" for i in range(160)) + "\n"
+        with patch(
+            "black.linegen._first_right_hand_split",
+            wraps=black.linegen._first_right_hand_split,
+        ) as first_split:
+            formatted = black.format_str(source, mode=DEFAULT_MODE)
+
+        black.assert_equivalent(source, formatted)
+        black.assert_stable(source, formatted, DEFAULT_MODE)
+        assert first_split.call_count <= 2 * 160
+
     def test_empty_ff(self) -> None:
         expected = ""
         tmp_file = Path(black.dump_to_file())
