@@ -129,6 +129,7 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Improve formatting performance for long chains of simple subscript trailers (#5275)
 - Improve performance on strings containing many consecutive backslashes (#5163)
 - Improve performance when merging implicitly concatenated f-strings whose expressions
   contain long string literals (#5165)

@@ -2282,6 +2282,25 @@ class BlackTestCase(BlackBaseTestCase):
                 "Failed to properly detect encoding on second line",
             )
 
+    def test_long_subscript_chain_avoids_retracking_prefixes(self) -> None:
+        from black.brackets import BracketTracker
+
+        source = "x = a" + "".join(f"[{index}]" for index in range(160)) + "\n"
+        mark_calls = 0
+        original_mark = BracketTracker.mark
+
+        def counting_mark(self: BracketTracker, leaf: Any) -> None:
+            nonlocal mark_calls
+            mark_calls += 1
+            original_mark(self, leaf)
+
+        with patch.object(BracketTracker, "mark", counting_mark):
+            formatted = black.format_str(source, mode=Mode())
+
+        assert len(formatted.splitlines()) == 233
+        assert mark_calls < 100_000
+        assert black.format_str(formatted, mode=Mode()) == formatted
+
 
 class TestCaching:
     def test_get_cache_dir(
