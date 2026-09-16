@@ -119,4 +119,6 @@ Here's an example configuration:
 
 The action provides the following outputs:
 
-- `is_formatted`: Set to `"true"` if any files were reformatted (or in `--check` mode, would be reformatted); `"false"` otherwise. This can be used to run subsequent steps conditionally (for example, auto-committing formatted changes).
+- `is_formatted`: Set to `"true"` if any files were reformatted (or in `--check` mode,
+  would be reformatted); `"false"` otherwise. This can be used to run subsequent steps
+  conditionally (for example, auto-committing formatted changes).
