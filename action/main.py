@@ -207,7 +207,10 @@ if "GITHUB_OUTPUT" in os.environ:
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
             f.write(f"is_formatted={str(is_formatted).lower()}\n")
     except Exception as e:
-        print(f"::warning::Failed to write output to GITHUB_OUTPUT: {e}", file=sys.stderr)
+        print(
+            f"::warning::Failed to write output to GITHUB_OUTPUT: {e}",
+            file=sys.stderr,
+        )
 
 print(proc.stdout)
 sys.exit(proc.returncode)
