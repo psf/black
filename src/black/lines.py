@@ -313,6 +313,18 @@ class Line:
 
         return False
 
+    def contains_multiple_type_ignores_at_current_depth(self) -> bool:
+        count = 0
+        for leaf in self.leaves:
+            if leaf.bracket_depth != 0:
+                continue
+            for comment in self.comments_after(leaf):
+                if is_type_ignore_comment(comment, mode=self.mode):
+                    count += 1
+                    if count > 1:
+                        return True
+        return False
+
     def contains_unsplittable_type_ignore(self) -> bool:
         if not self.leaves:
             return False
@@ -1532,6 +1544,15 @@ def can_omit_invisible_parens(
     are too long.
     """
     line = rhs.body
+
+    # Multiple type ignores must stay on separate physical lines. Keeping the
+    # optional parens gives the line transformer a safe place to split them.
+    if (
+        line.contains_multiple_type_ignores_at_current_depth()
+        and not line.bracket_tracker.delimiters
+        and any(leaf.type == token.DOT for leaf in line.leaves)
+    ):
+        return False
 
     # Don't omit optional parens when the opening paren carries an inline comment.
     # Omitting them re-parents the comment onto a different leaf after the next
