@@ -197,5 +197,20 @@ if OUTPUT_FILE:
         print(f"::error::Failed to write output to {OUTPUT_FILE}: {e}", file=sys.stderr)
         sys.exit(1)
 
+is_formatted = (
+    proc.returncode == 1
+    or "reformatted" in proc.stdout
+    or "would be reformatted" in proc.stdout
+)
+if "GITHUB_OUTPUT" in os.environ:
+    try:
+        with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+            f.write(f"is_formatted={str(is_formatted).lower()}\n")
+    except Exception as e:
+        print(
+            f"::warning::Failed to write output to GITHUB_OUTPUT: {e}",
+            file=sys.stderr,
+        )
+
 print(proc.stdout)
 sys.exit(proc.returncode)

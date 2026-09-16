@@ -10,6 +10,7 @@
   --target-version flag (#5167)
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
+- Add `is_formatted` output to the official GitHub Action (#5408)
 
 ### Highlights
 
