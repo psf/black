@@ -11,7 +11,6 @@
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
 
-
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
