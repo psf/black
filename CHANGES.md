@@ -10,8 +10,7 @@
   --target-version flag (#5167)
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
-- Avoid dynamic class creation and class name inspection in line transformer dispatch
-  (#5396)
+
 
 ### Highlights
 

@@ -800,7 +800,6 @@ def transform_line(
         transformers = [left_hand_split]
     else:
 
-        rhs = right_hand_split_with_omits
         if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
@@ -810,7 +809,7 @@ def transform_line(
                     delimiter_split,
                     standalone_comment_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
             else:
                 transformers = [
@@ -818,13 +817,17 @@ def transform_line(
                     string_paren_strip,
                     string_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
         else:
             if line.inside_brackets:
-                transformers = [delimiter_split, standalone_comment_split, rhs]
+                transformers = [
+                    delimiter_split,
+                    standalone_comment_split,
+                    right_hand_split_with_omits,
+                ]
             else:
-                transformers = [rhs]
+                transformers = [right_hand_split_with_omits]
 
     if Preview.simplify_power_operator_hugging not in mode:
         # It's always safe to attempt hugging of power operations and pretty much every
