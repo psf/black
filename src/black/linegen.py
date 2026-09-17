@@ -132,8 +132,9 @@ class LineGenerator(Visitor[Line]):
             self.current_line.depth += indent
             return  # Line is empty, don't emit. Creating a new one unnecessary.
 
-        if len(self.current_line.leaves) == 1 and is_async_stmt_or_funcdef(
-            self.current_line.leaves[0]
+        if (
+            len(self.current_line.leaves) == 1
+            and is_async_stmt_or_funcdef(self.current_line.leaves[0])
         ):
             # Special case for async def/for/with statements. `visit_async_stmt`
             # adds an `ASYNC` leaf then visits the child def/for/with statement
@@ -599,8 +600,9 @@ class LineGenerator(Visitor[Line]):
         if len(node.children) == 3:
             first = node.children[0]
             last = node.children[-1]
-            if (first.type == token.LSQB and last.type == token.RSQB) or (
-                first.type == token.LBRACE and last.type == token.RBRACE
+            if (
+                (first.type == token.LSQB and last.type == token.RSQB)
+                or (first.type == token.LBRACE and last.type == token.RBRACE)
             ):
                 # Lists or sets of one item
                 maybe_make_parens_invisible_in_atom(
@@ -809,6 +811,20 @@ def transform_line(
             content), meaning the trailers get glued together to split on another
             bracket pair instead.
             """
+            preferred_omit = _conditional_expression_trailers_to_omit(line, mode)
+            if preferred_omit:
+                lines = list(
+                    right_hand_split(
+                        line,
+                        mode,
+                        {*features, Feature.FORCE_OPTIONAL_PARENTHESES},
+                        omit=preferred_omit,
+                    )
+                )
+                if is_line_short_enough(lines[0], mode=mode):
+                    yield from lines
+                    return
+
             for omit in generate_trailers_to_omit(line, mode.line_length):
                 lines = list(right_hand_split(line, mode, features, omit=omit))
                 # Note: this check is only able to figure out if the first line of the
@@ -963,8 +979,9 @@ def left_hand_split(
                 current_leaves = tail_leaves if body_leaves else head_leaves
             current_leaves.append(leaf)
             if current_leaves is head_leaves:
-                if leaf.type == leaf_type and (
-                    not (leaf_type == token.LPAR and depth > 0)
+                if (
+                    leaf.type == leaf_type
+                    and (not (leaf_type == token.LPAR and depth > 0))
                 ):
                     matching_bracket = leaf
                     current_leaves = body_leaves
@@ -1387,8 +1404,9 @@ def bracket_split_build_line(
         )
         for comment_after in original.comments_after(leaf):
             result.append(comment_after, preformatted=True)
-    if component is _BracketSplitComponent.body and should_split_line(
-        result, opening_bracket
+    if (
+        component is _BracketSplitComponent.body
+        and should_split_line(result, opening_bracket)
     ):
         result.should_split_rhs = True
     return result
@@ -1459,8 +1477,9 @@ def _can_defer_lone_comparator_to_rhs(line: Line, mode: Mode) -> bool:
     for leaf in line.leaves:
         if leaf.type in OPENING_BRACKETS and not past_comparator:
             return False
-        if not past_comparator and (
-            line.bracket_tracker.delimiters.get(id(leaf)) == COMPARATOR_PRIORITY
+        if (
+            not past_comparator
+            and (line.bracket_tracker.delimiters.get(id(leaf)) == COMPARATOR_PRIORITY)
         ):
             past_comparator = True
     try:
@@ -1609,8 +1628,9 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
     )
     for leaf in line.leaves:
-        if current_line.leaves and (
-            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+        if (
+            current_line.leaves
+            and (leaf.type == STANDALONE_COMMENT or current_line.is_comment)
         ):
             yield current_line
             current_line = Line(
@@ -1967,8 +1987,9 @@ def remove_with_parens(
         for child in node.children:
             if isinstance(child, Node):
                 remove_with_parens(child, node, mode=mode, features=features)
-    elif node.type == syms.asexpr_test and not any(
-        leaf.type == token.COLONEQUAL for leaf in node.leaves()
+    elif (
+        node.type == syms.asexpr_test
+        and not any(leaf.type == token.COLONEQUAL for leaf in node.leaves())
     ):
         if maybe_make_parens_invisible_in_atom(
             node.children[0],
@@ -2253,6 +2274,91 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
             if leaf.value:
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
+
+
+def _conditional_expression_trailers_to_omit(line: Line, mode: Mode) -> set[LeafID]:
+    """Return trailers to omit so a boolean condition's outer parens split first."""
+    if (
+        Preview.parenthesize_whole_conditional_expression not in mode
+        or not line.leaves
+        or line.leaves[0].value not in {"if", "elif", "while"}
+    ):
+        return set()
+
+    opening_index = next(
+        (
+            index
+            for index, leaf in enumerate(line.leaves[1:], 1)
+            if leaf.type == token.LPAR and not leaf.value
+        ),
+        None,
+    )
+    if opening_index is None:
+        return set()
+
+    opening = line.leaves[opening_index]
+    closing_index = next(
+        (
+            index
+            for index, leaf in enumerate(
+                line.leaves[opening_index + 1 :], opening_index + 1
+            )
+            if leaf.type == token.RPAR and leaf.opening_bracket is opening
+        ),
+        None,
+    )
+    if closing_index is None:
+        return set()
+
+    boolean_operators = [
+        (index, leaf)
+        for index, leaf in enumerate(
+            line.leaves[opening_index + 1 : closing_index], opening_index + 1
+        )
+        if leaf.value in {"and", "or"}
+        and leaf.bracket_depth == opening.bracket_depth + 1
+    ]
+    if not boolean_operators:
+        return set()
+
+    term_start = opening_index + 1
+    for term_index in range(len(boolean_operators) + 1):
+        term_end = (
+            boolean_operators[term_index][0]
+            if term_index < len(boolean_operators)
+            else closing_index
+        )
+        term = line.leaves[term_start:term_end]
+        prefix = f"{boolean_operators[term_index - 1][1].value} " if term_index else ""
+        if not _boolean_term_fits_on_one_line(line, term, prefix, mode):
+            return set()
+        term_start = term_end + 1
+
+    return {
+        id(leaf)
+        for leaf in line.leaves[opening_index + 1 : closing_index]
+        if leaf.type in CLOSING_BRACKETS
+    }
+
+
+def _boolean_term_fits_on_one_line(
+    line: Line, term: list[Leaf], prefix: str, mode: Mode
+) -> bool:
+    """Return True if a boolean term fits on the line it would be split onto."""
+    if not term:
+        return False
+
+    if mode.magic_trailing_comma:
+        term_line = Line(mode=mode, inside_brackets=True)
+        for leaf in term:
+            term_line.append(leaf, preformatted=True)
+        if term_line.magic_trailing_comma is not None:
+            return False
+
+    rendered = "    " * (line.depth + 1) + prefix
+    for index, leaf in enumerate(term):
+        rendered += leaf.value if index == 0 else str(leaf)
+    return "\n" not in rendered and str_width(rendered) <= mode.line_length
 
 
 def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:

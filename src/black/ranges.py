@@ -138,8 +138,9 @@ def adjusted_lines(
             start_mapping_index,
         )
         current_mapping_index = start_mapping_index
-        if start_mapping_index >= len(lines_mappings) or end_mapping_index >= len(
-            lines_mappings
+        if (
+            start_mapping_index >= len(lines_mappings)
+            or end_mapping_index >= len(lines_mappings)
         ):
             # Protect against invalid inputs.
             continue
@@ -346,9 +347,10 @@ class _TopLevelStatementsVisitor(Visitor[None]):
                 and semantic_parent.prev_sibling.type == ASYNC
             ):
                 semantic_parent = semantic_parent.parent
-        if semantic_parent is not None and not _get_line_range(
-            semantic_parent
-        ).intersection(self._lines_set):
+        if (
+            semantic_parent is not None
+            and not _get_line_range(semantic_parent).intersection(self._lines_set)
+        ):
             _convert_node_to_standalone_comment(semantic_parent, self._replacements)
 
 

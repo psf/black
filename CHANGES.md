@@ -73,6 +73,10 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Prefer parenthesizing and splitting whole boolean conditions in `if`, `elif`, and
+  `while` statements instead of splitting a function call within them, as long as each
+  top-level operand fits on one line (#5252)
+
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
