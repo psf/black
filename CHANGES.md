@@ -19,9 +19,6 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix formatting of a parenthesized expression with standalone comments so it does not
-  produce a line longer than the configured line length (#3925)
-
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
@@ -76,6 +73,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix formatting of a parenthesized expression with standalone comments so it does not
+  produce a line longer than the configured line length (#5407)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)

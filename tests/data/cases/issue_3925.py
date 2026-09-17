@@ -1,3 +1,5 @@
+# flags: --preview
+
 if True:
     if True:
         if True:
