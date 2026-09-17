@@ -450,24 +450,25 @@ def _handle_regular_fmt_block(
 
     # Ensure STANDALONE_COMMENT nodes have trailing newlines when stringified
     # This prevents multiple fmt: skip comments from being concatenated on one line
+    def stringify_standalone_comment(node: Leaf, next_node: LN | None) -> str:
+        node_str = str(node)
+        if not node_str.endswith("\n") and (
+            next_node is None
+            or (isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT)
+            or "\n" in next_node.prefix
+        ):
+            node_str += "\n"
+        return node_str
+
     parts = []
     for node_index, node in enumerate(ignored_nodes):
         if isinstance(node, Leaf) and node.type == STANDALONE_COMMENT:
-            # Add newline after STANDALONE_COMMENT Leaf
-            node_str = str(node)
             next_node = (
                 ignored_nodes[node_index + 1]
                 if node_index + 1 < len(ignored_nodes)
                 else None
             )
-            if not node_str.endswith("\n") and (
-                next_node is None
-                or isinstance(next_node, Leaf)
-                and next_node.type == STANDALONE_COMMENT
-                or "\n" in next_node.prefix
-            ):
-                node_str += "\n"
-            parts.append(node_str)
+            parts.append(stringify_standalone_comment(node, next_node))
         elif isinstance(node, Node):
             # For nodes that might contain STANDALONE_COMMENT leaves,
             # we need custom stringify
@@ -476,17 +477,45 @@ def _handle_regular_fmt_block(
             )
             if has_standalone:
                 # Stringify node with STANDALONE_COMMENT leaves having trailing newlines
-                def stringify_node(n: LN) -> str:
+                def stringify_node(n: LN, next_node: LN | None = None) -> str:
                     if isinstance(n, Leaf):
                         if n.type == STANDALONE_COMMENT:
                             result = n.prefix + n.value
+                            if (
+                                isinstance(next_node, Leaf)
+                                and next_node.type in CLOSING_BRACKETS
+                                and "\n" in n.value
+                            ):
+                                comment_start = result.rfind("# fmt")
+                                newline_before_comment = result.rfind(
+                                    "\n", 0, comment_start
+                                )
+                                comment_line = result[newline_before_comment + 1 :]
+                                if (
+                                    newline_before_comment >= 0
+                                    and comment_line.lstrip().startswith("#")
+                                ):
+                                    result = (
+                                        result[:newline_before_comment]
+                                        + result[newline_before_comment + 1 :]
+                                    )
                             if not result.endswith("\n"):
                                 result += "\n"
                             return result
                         return str(n)
                     else:
                         # For nested nodes, recursively process children
-                        return "".join(stringify_node(child) for child in n.children)
+                        return "".join(
+                            stringify_node(
+                                child,
+                                (
+                                    n.children[index + 1]
+                                    if index + 1 < len(n.children)
+                                    else None
+                                ),
+                            )
+                            for index, child in enumerate(n.children)
+                        )
 
                 parts.append(stringify_node(node))
             else:
