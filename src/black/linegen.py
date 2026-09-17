@@ -800,39 +800,6 @@ def transform_line(
         transformers = [left_hand_split]
     else:
 
-        def _rhs(
-            self: object, line: Line, features: Collection[Feature], mode: Mode
-        ) -> Iterator[Line]:
-            """Wraps calls to `right_hand_split`.
-
-            The calls increasingly `omit` right-hand trailers (bracket pairs with
-            content), meaning the trailers get glued together to split on another
-            bracket pair instead.
-            """
-            for omit in generate_trailers_to_omit(line, mode.line_length):
-                lines = list(right_hand_split(line, mode, features, omit=omit))
-                # Note: this check is only able to figure out if the first line of the
-                # *current* transformation fits in the line length.  This is true only
-                # for simple cases.  All others require running more transforms via
-                # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], mode=mode) or (
-                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
-                ):
-                    yield from lines
-                    return
-
-            # All splits failed, best effort split with no omits.
-            # This mostly happens to multiline strings that are by definition
-            # reported as not fitting a single line, as well as lines that contain
-            # trailing commas (those have to be exploded).
-            yield from right_hand_split(line, mode, features=features)
-
-        # HACK: nested functions (like _rhs) compiled by mypyc don't retain their
-        # __name__ attribute which is needed in `run_transformer` further down.
-        # Unfortunately a nested class breaks mypyc too. So a class must be created
-        # via type ... https://github.com/mypyc/mypyc/issues/884
-        rhs = type("rhs", (), {"__call__": _rhs})()
-
         if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
@@ -842,7 +809,7 @@ def transform_line(
                     delimiter_split,
                     standalone_comment_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
             else:
                 transformers = [
@@ -850,13 +817,17 @@ def transform_line(
                     string_paren_strip,
                     string_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
         else:
             if line.inside_brackets:
-                transformers = [delimiter_split, standalone_comment_split, rhs]
+                transformers = [
+                    delimiter_split,
+                    standalone_comment_split,
+                    right_hand_split_with_omits,
+                ]
             else:
-                transformers = [rhs]
+                transformers = [right_hand_split_with_omits]
 
     if Preview.simplify_power_operator_hugging not in mode:
         # It's always safe to attempt hugging of power operations and pretty much every
@@ -1006,6 +977,34 @@ def right_hand_split(
     yield from _maybe_split_omitting_optional_parens(
         rhs_result, line, mode, features=features, omit=omit
     )
+
+
+def right_hand_split_with_omits(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
+    """Wraps calls to `right_hand_split`.
+
+    The calls increasingly `omit` right-hand trailers (bracket pairs with
+    content), meaning the trailers get glued together to split on another
+    bracket pair instead.
+    """
+    for omit in generate_trailers_to_omit(line, mode.line_length):
+        lines = list(right_hand_split(line, mode, features, omit=omit))
+        # Note: this check is only able to figure out if the first line of the
+        # *current* transformation fits in the line length.  This is true only
+        # for simple cases.  All others require running more transforms via
+        # `transform_line()`.  This check doesn't know if those would succeed.
+        if is_line_short_enough(lines[0], mode=mode) or (
+            omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+        ):
+            yield from lines
+            return
+
+    # All splits failed, best effort split with no omits.
+    # This mostly happens to multiline strings that are by definition
+    # reported as not fitting a single line, as well as lines that contain
+    # trailing commas (those have to be exploded).
+    yield from right_hand_split(line, mode, features=features)
 
 
 def _first_right_hand_split(
@@ -2306,7 +2305,7 @@ def run_transformer(
     features_set = set(features)
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES in features_set
-        or transform.__class__.__name__ != "rhs"
+        or transform is not right_hand_split_with_omits
         or not line.bracket_tracker.invisible
         or any(bracket.value for bracket in line.bracket_tracker.invisible)
         or line.contains_multiline_strings()
