@@ -27,8 +27,12 @@ if check_very_very_very_very_very_very_very_very_very_very_long_expression(first
 if check_very_very_very_very_very_very_very_very_very_long_expression((first and second)):
     pass
 
-# A trailing comma still explodes the call normally.
-if enabled and check_very_very_very_very_very_very_very_very_long_expression(first, second,):
+# A trailing comma in a term keeps the existing split.
+if first_condition and check_short(first, second,):
+    pass
+
+# A term that has to split keeps the existing split.
+if first_condition and not isinstance(very_very_very_very_very_very_long_expression, SomeVeryLongClassName):
     pass
 
 # The split preference is limited to conditional statements.
@@ -78,13 +82,16 @@ if check_very_very_very_very_very_very_very_very_very_long_expression(
 ):
     pass
 
-# A trailing comma still explodes the call normally.
-if (
-    enabled
-    and check_very_very_very_very_very_very_very_very_long_expression(
-        first,
-        second,
-    )
+# A trailing comma in a term keeps the existing split.
+if first_condition and check_short(
+    first,
+    second,
+):
+    pass
+
+# A term that has to split keeps the existing split.
+if first_condition and not isinstance(
+    very_very_very_very_very_very_long_expression, SomeVeryLongClassName
 ):
     pass
 

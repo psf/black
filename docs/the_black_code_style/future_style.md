@@ -47,7 +47,8 @@ Currently, the following features are included in the preview style:
   definition starts inside a `# fmt: off` block after an import.
 - `parenthesize_whole_conditional_expression`: Prefer parenthesizing and splitting a
   whole boolean condition in an `if`, `elif`, or `while` statement instead of splitting
-  a function call within it.
+  a function call within it. If any top-level operand cannot fit on one line, Black
+  keeps the existing split behavior.
 
 (labels/wrap-comprehension-in)=
 

@@ -419,13 +419,10 @@ class LineGenerator(Visitor[Line]):
             # the fmt block itself directly to preserve its formatting
 
             # Only process prefix comments if there actually is a prefix with comments
-            if (
-                leaf.prefix
-                and any(
-                    line.strip().startswith("#")
-                    and not contains_fmt_directive(line.strip())
-                    for line in leaf.prefix.split("\n")
-                )
+            if leaf.prefix and any(
+                line.strip().startswith("#")
+                and not contains_fmt_directive(line.strip())
+                for line in leaf.prefix.split("\n")
             ):
                 for comment in generate_comments(leaf, mode=self.mode):
                     yield from self.line()
@@ -469,11 +466,8 @@ class LineGenerator(Visitor[Line]):
 
         def foo(a: (int), b: (float) = 7): ...
         """
-        if (
-            len(node.children) == 3
-            and maybe_make_parens_invisible_in_atom(
-                node.children[2], parent=node, mode=self.mode, features=self.features
-            )
+        if len(node.children) == 3 and maybe_make_parens_invisible_in_atom(
+            node.children[2], parent=node, mode=self.mode, features=self.features
         ):
             wrap_in_parentheses(node, node.children[2], visible=False)
 
@@ -600,13 +594,10 @@ class LineGenerator(Visitor[Line]):
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
-        if (
-            "\\" in string_leaf.value
-            and any(
-                "\\" in str(child)
-                for child in node.children
-                if child.type == syms.fstring_replacement_field
-            )
+        if "\\" in string_leaf.value and any(
+            "\\" in str(child)
+            for child in node.children
+            if child.type == syms.fstring_replacement_field
         ):
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
@@ -623,13 +614,10 @@ class LineGenerator(Visitor[Line]):
         # currently we don't want to format and split t-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
-        if (
-            "\\" in string_leaf.value
-            and any(
-                "\\" in str(child)
-                for child in node.children
-                if child.type == syms.tstring_replacement_field
-            )
+        if "\\" in string_leaf.value and any(
+            "\\" in str(child)
+            for child in node.children
+            if child.type == syms.tstring_replacement_field
         ):
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
@@ -813,12 +801,8 @@ def transform_line(
                 # *current* transformation fits in the line length.  This is true only
                 # for simple cases.  All others require running more transforms via
                 # `transform_line()`.  This check doesn't know if those would succeed.
-                if (
-                    is_line_short_enough(lines[0], mode=mode)
-                    or (
-                        omit
-                        and _over_length_only_due_to_subscript_comment(lines[0], mode)
-                    )
+                if is_line_short_enough(lines[0], mode=mode) or (
+                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
                 ):
                     yield from lines
                     return
@@ -1833,15 +1817,12 @@ def remove_await_parens(node: Node, mode: Mode, features: Collection[Feature]) -
             opening_bracket = cast(Leaf, node.children[1].children[0])
             closing_bracket = cast(Leaf, node.children[1].children[-1])
             bracket_contents = node.children[1].children[1]
-            if (
-                isinstance(bracket_contents, Node)
-                and (
-                    bracket_contents.type != syms.power
-                    or bracket_contents.children[0].type == token.AWAIT
-                    or any(
-                        isinstance(child, Leaf) and child.type == token.DOUBLESTAR
-                        for child in bracket_contents.children
-                    )
+            if isinstance(bracket_contents, Node) and (
+                bracket_contents.type != syms.power
+                or bracket_contents.children[0].type == token.AWAIT
+                or any(
+                    isinstance(child, Leaf) and child.type == token.DOUBLESTAR
+                    for child in bracket_contents.children
                 )
             ):
                 ensure_visible(opening_bracket)
@@ -2215,21 +2196,58 @@ def _conditional_expression_trailers_to_omit(line: Line, mode: Mode) -> set[Leaf
         ),
         None,
     )
-    if (
-        closing_index is None
-        or not any(
-            leaf.value in {"and", "or"}
-            and leaf.bracket_depth == opening.bracket_depth + 1
-            for leaf in line.leaves[opening_index + 1 : closing_index]
-        )
-    ):
+    if closing_index is None:
         return set()
+
+    boolean_operators = [
+        (index, leaf)
+        for index, leaf in enumerate(
+            line.leaves[opening_index + 1 : closing_index], opening_index + 1
+        )
+        if leaf.value in {"and", "or"}
+        and leaf.bracket_depth == opening.bracket_depth + 1
+    ]
+    if not boolean_operators:
+        return set()
+
+    term_start = opening_index + 1
+    for term_index in range(len(boolean_operators) + 1):
+        term_end = (
+            boolean_operators[term_index][0]
+            if term_index < len(boolean_operators)
+            else closing_index
+        )
+        term = line.leaves[term_start:term_end]
+        prefix = f"{boolean_operators[term_index - 1][1].value} " if term_index else ""
+        if not _boolean_term_fits_on_one_line(line, term, prefix, mode):
+            return set()
+        term_start = term_end + 1
 
     return {
         id(leaf)
         for leaf in line.leaves[opening_index + 1 : closing_index]
         if leaf.type in CLOSING_BRACKETS
     }
+
+
+def _boolean_term_fits_on_one_line(
+    line: Line, term: list[Leaf], prefix: str, mode: Mode
+) -> bool:
+    """Return True if a boolean term fits on the line it would be split onto."""
+    if not term:
+        return False
+
+    if mode.magic_trailing_comma:
+        term_line = Line(mode=mode, inside_brackets=True)
+        for leaf in term:
+            term_line.append(leaf, preformatted=True)
+        if term_line.magic_trailing_comma is not None:
+            return False
+
+    rendered = "    " * (line.depth + 1) + prefix
+    for index, leaf in enumerate(term):
+        rendered += leaf.value if index == 0 else str(leaf)
+    return "\n" not in rendered and str_width(rendered) <= mode.line_length
 
 
 def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
