@@ -7,6 +7,7 @@ import itertools
 import logging
 import multiprocessing
 import os
+import pickle
 import re
 import sys
 import textwrap
@@ -131,6 +132,40 @@ def invokeBlack(
         f"exception: {result.exception}"
     )
     assert result.exit_code == exit_code, msg
+
+
+def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
+    source = tmp_path / "invalid.py"
+    source.write_text("return if you can\n", encoding="utf8")
+
+    result = BlackRunner().invoke(
+        black.main, ["--config", str(THIS_DIR / "empty.toml"), str(source)]
+    )
+
+    assert result.exit_code == 123
+    assert (
+        f"error: cannot parse: {source}:1:7\n"
+        "    return if you can\n"
+        "          ^\n"
+        "ParseError: bad input\n"
+        in result.stderr
+    )
+
+    second_source = tmp_path / "also_invalid.py"
+    second_source.write_text("print(\n", encoding="utf8")
+    result = BlackRunner().invoke(
+        black.main,
+        [
+            "--config",
+            str(THIS_DIR / "empty.toml"),
+            str(source),
+            str(second_source),
+        ],
+    )
+
+    assert result.exit_code == 123
+    assert f"error: cannot parse: {source}:1:7\n" in result.stderr
+    assert f"error: cannot parse: {second_source}:1:6\n" in result.stderr
 
 
 class BlackTestCase(BlackBaseTestCase):
@@ -551,7 +586,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 3)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -571,7 +606,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 4)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -648,7 +683,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -667,7 +702,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 0)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -744,7 +779,7 @@ class BlackTestCase(BlackBaseTestCase):
             report.check = True
             self.assertEqual(report.return_code, 1)
             report.check = False
-            report.failed(Path("e1"), "boom")
+            report.failed(Path("e1"), Exception("boom"))
             self.assertEqual(len(out_lines), 1)
             self.assertEqual(len(err_lines), 1)
             self.assertEqual(err_lines[-1], "error: cannot format e1: boom")
@@ -764,7 +799,7 @@ class BlackTestCase(BlackBaseTestCase):
                 " reformat.",
             )
             self.assertEqual(report.return_code, 123)
-            report.failed(Path("e2"), "boom")
+            report.failed(Path("e2"), Exception("boom"))
             self.assertEqual(len(out_lines), 2)
             self.assertEqual(len(err_lines), 2)
             self.assertEqual(err_lines[-1], "error: cannot format e2: boom")
@@ -814,8 +849,16 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(output, unstyle(output))
 
     def test_lib2to3_parse(self) -> None:
-        with self.assertRaises(black.InvalidInput):
+        with self.assertRaises(black.InvalidInput) as exc_info:
             black.lib2to3_parse("invalid syntax")
+        error = exc_info.exception
+        restored_error = pickle.loads(pickle.dumps(error))
+        self.assertEqual((error.lineno, error.column), (1, 8))
+        self.assertEqual(str(restored_error), str(error))
+        self.assertEqual(
+            (error.lineno, error.column),
+            (restored_error.lineno, restored_error.column),
+        )
 
         straddling = "x + y"
         black.lib2to3_parse(straddling)
@@ -1045,7 +1088,7 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_file_contents(invalid, mode=mode, fast=False)
         self.assertEqual(
             str(e.exception),
-            "Cannot parse: 1:7\n"
+            "cannot parse: 1:7\n"
             "    return if you can\n"
             "          ^\n"
             "ParseError: bad input",
@@ -2069,7 +2112,7 @@ class BlackTestCase(BlackBaseTestCase):
 
         exc_info.match(
             re.escape(
-                "Cannot parse: 1:6\n"
+                "cannot parse: 1:6\n"
                 "    print(\n"
                 "         ^\n"
                 "TokenError: Unexpected EOF in multi-line statement"
@@ -2602,6 +2645,20 @@ class TestCaching:
             assert len(set(keys)) == len(modes)
 
 
+def symlink_or_skip(link: Path, target: Path | str) -> None:
+    """Create a symlink, or skip the test where the platform forbids one.
+
+    Windows refuses symlink creation unless the process is elevated or
+    Developer Mode is enabled, so these tests cannot run for an ordinary
+    Windows contributor. Same treatment as test_broken_symlink, which has
+    guarded this since GH #287.
+    """
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"Can't create symlinks: {e}")
+
+
 def assert_collected_sources(
     src: Sequence[str | Path],
     expected: Sequence[str | Path],
@@ -2997,7 +3054,7 @@ class TestFileCollection:
             actual = tmp / "actual"
             actual.mkdir()
             symlink = tmp / "symlink"
-            symlink.symlink_to(actual)
+            symlink_or_skip(symlink, actual)
 
             actual_proj = actual / "project"
             actual_proj.mkdir()
@@ -3021,7 +3078,7 @@ class TestFileCollection:
 
                 # a few tricky tests for force_exclude
                 flat_symlink = symlink_proj / "symlink_module.py"
-                flat_symlink.symlink_to(actual_proj / "module.py")
+                symlink_or_skip(flat_symlink, actual_proj / "module.py")
                 assert_collected_sources(
                     src=[flat_symlink],
                     root=symlink_proj.resolve(),
@@ -3032,7 +3089,7 @@ class TestFileCollection:
                 target = actual_proj / "target"
                 target.mkdir()
                 (target / "another.py").write_text("print('hello')", encoding="utf-8")
-                (symlink_proj / "nested").symlink_to(target)
+                symlink_or_skip(symlink_proj / "nested", target)
 
                 assert_collected_sources(
                     src=[symlink_proj / "nested" / "another.py"],
@@ -3060,7 +3117,7 @@ class TestFileCollection:
             target = tmp / "outside_root" / "a.py"
             target.parent.mkdir()
             target.write_text("print('hello')", encoding="utf-8")
-            (root / "a.py").symlink_to(target)
+            symlink_or_skip(root / "a.py", target)
 
             stdin_filename = str(root / "a.py")
             assert_collected_sources(
@@ -3146,7 +3203,7 @@ class TestFileCollection:
             tmp = Path(tempdir).resolve()
             (tmp / "exclude").mkdir()
             (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
-            (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
+            symlink_or_skip(tmp / "symlink.py", tmp / "exclude" / "a.py")
 
             stdin_filename = str(tmp / "symlink.py")
             expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]

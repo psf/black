@@ -49,6 +49,34 @@ Currently, the following features are included in the preview style:
   whole boolean condition in an `if`, `elif`, or `while` statement instead of splitting
   a function call within it. If any top-level operand cannot fit on one line, Black
   keeps the existing split behavior.
+- `remove_redundant_generator_parentheses`: Remove redundant parentheses around
+  generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
+
+(labels/remove-redundant-generator-parentheses)=
+
+### Redundant generator parentheses
+
+Black removes extra parentheses around generator expressions. When a generator
+expression is the sole argument to a call, the call's parentheses are sufficient:
+
+```python
+# Before
+any((item.is_valid() for item in items))
+
+# After (with --preview)
+any(item.is_valid() for item in items)
+```
+
+In other contexts, Black keeps the parentheses required by Python syntax while removing
+any additional pair:
+
+```python
+# Before
+[((item for item in items)), fallback]
+
+# After (with --preview)
+[(item for item in items), fallback]
+```
 
 (labels/wrap-comprehension-in)=
 

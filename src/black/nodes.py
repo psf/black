@@ -141,8 +141,6 @@ ALWAYS_NO_SPACE: Final = CLOSING_BRACKETS | {
     token.BANG,
 }
 
-RARROW = 55
-
 
 @mypyc_attr(allow_interpreted_subclasses=True)
 class Visitor(Generic[T]):
@@ -198,22 +196,16 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if (
-        t == token.COLON
-        and p.type not in {
-            syms.subscript,
-            syms.subscriptlist,
-            syms.sliceop,
-        }
-    ):
+    if t == token.COLON and p.type not in {
+        syms.subscript,
+        syms.subscriptlist,
+        syms.sliceop,
+    }:
         return NO
 
-    if (
-        t == token.LBRACE
-        and p.type in (
-            syms.fstring_replacement_field,
-            syms.tstring_replacement_field,
-        )
+    if t == token.LBRACE and p.type in (
+        syms.fstring_replacement_field,
+        syms.tstring_replacement_field,
     ):
         return NO
 
@@ -393,13 +385,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if (
-                prevp.type == token.COLON
-                and prevp_parent.type in {
-                    syms.subscript,
-                    syms.sliceop,
-                }
-            ):
+            if prevp.type == token.COLON and prevp_parent.type in {
+                syms.subscript,
+                syms.sliceop,
+            }:
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -466,7 +455,7 @@ def preceding_leaf(node: LN | None) -> Leaf | None:
 
 def prev_siblings_are(node: LN | None, tokens: list[NodeType | None]) -> bool:
     """Return if the `node` and its previous siblings match types against the provided
-    list of tokens; the provided `node`has its type matched against the last element in
+    list of tokens; the provided `node` has its type matched against the last element in
     the list.  `None` can be used as the first element to declare that the start of the
     list is anchored at the start of its parent's children."""
     if not tokens:
@@ -588,7 +577,9 @@ def is_docstring(node: NL) -> bool:
             return False
 
         prefix = get_string_prefix(node.value)
-        if set(prefix).intersection("bBfF"):
+        # Bytes, f-strings and t-strings never evaluate to str, so they are not
+        # docstrings even in docstring position.
+        if set(prefix).intersection("bBfFtT"):
             return False
 
     if (
@@ -724,13 +715,10 @@ def is_one_sequence_between(
         bracket_depth = leaf.bracket_depth
         if bracket_depth == depth and leaf.type == token.COMMA:
             commas += 1
-            if (
-                leaf.parent
-                and leaf.parent.type in {
-                    syms.arglist,
-                    syms.typedargslist,
-                }
-            ):
+            if leaf.parent and leaf.parent.type in {
+                syms.arglist,
+                syms.typedargslist,
+            }:
                 commas += 1
                 break
 

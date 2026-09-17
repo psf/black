@@ -172,12 +172,9 @@ async def schedule_formatting(
     :func:`format_file_in_place`.
     """
     cache = None if no_cache else Cache.read(mode)
-    if (
-        cache is not None
-        and write_back not in (
-            WriteBack.DIFF,
-            WriteBack.COLOR_DIFF,
-        )
+    if cache is not None and write_back not in (
+        WriteBack.DIFF,
+        WriteBack.COLOR_DIFF,
     ):
         sources, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
@@ -220,7 +217,7 @@ async def schedule_formatting(
                 elif exc := task.exception():
                     if report.verbose:
                         traceback.print_exception(type(exc), exc, exc.__traceback__)
-                    report.failed(src, str(exc))
+                    report.failed(src, exc)
                 else:
                     changed = Changed.YES if task.result() else Changed.NO
                     # If the file was written back or was successfully checked as

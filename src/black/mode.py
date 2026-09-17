@@ -265,6 +265,7 @@ class Preview(Enum):
     parenthesize_tuple_in_yield = auto()
     fmt_off_class_blank_lines = auto()
     parenthesize_whole_conditional_expression = auto()
+    remove_redundant_generator_parentheses = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

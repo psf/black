@@ -6,6 +6,9 @@ on:
 
 permissions: {}
 
+env:
+  PIP_UPLOADED_PRIOR_TO: P2D
+
 jobs:
   update-stable:
     runs-on: ubuntu-latest
@@ -42,10 +45,10 @@ jobs:
           persist-credentials: true # Needed for git-auto-commit-action
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
+          python-version: "3.15"
+          allow-prereleases: true
 
       - run: python scripts/release.py -a
 

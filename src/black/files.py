@@ -412,8 +412,7 @@ def gen_python_files(
                 and not jupyter_dependencies_are_installed(warn=verbose or not quiet)
             ):
                 continue
-            include_match = include.search(root_relative_path) if include else True
-            if include_match:
+            if include.search(root_relative_path):
                 yield child
 
 
