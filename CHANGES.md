@@ -73,6 +73,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix formatting of a parenthesized expression with standalone comments so it does not
+  produce a line longer than the configured line length (#5407)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
