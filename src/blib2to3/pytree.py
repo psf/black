@@ -546,8 +546,6 @@ class Leaf(Base):
             self.value,
             (self.prefix, (self.lineno, self.column)),
             fixers_applied=self.fixers_applied,
-            opening_bracket=self.opening_bracket,
-            fmt_pass_converted_first_leaf=self.fmt_pass_converted_first_leaf,
             bracket_depth=self.bracket_depth,
         )
 
