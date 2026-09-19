@@ -19,6 +19,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Remove redundant parentheses around individual variables in unpacking targets (for
+  example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
+
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
