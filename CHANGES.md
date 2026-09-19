@@ -18,11 +18,12 @@
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
-
 - Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
   `while`, `for`, or `with` header (#5405)
 - Fix crash when formatting parenthesized expressions with multiple inline comments and
   `# fmt: skip` (#5414)
+- Remove redundant parentheses around individual variables in unpacking targets (for
+  example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
