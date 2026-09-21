@@ -473,7 +473,7 @@ class Leaf(Base):
     # Default values for instance variables
     value: str
     fixers_applied: list[Any]
-    bracket_depth: int
+    bracket_depth: int = 0
     # Changed later in brackets.py
     opening_bracket: Optional["Leaf"] = None
     used_names: set[str] | None
@@ -501,6 +501,7 @@ class Leaf(Base):
         fixers_applied: list[Any] = [],
         opening_bracket: Optional["Leaf"] = None,
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
+        bracket_depth: int = 0,
         line_ranges_first_lineno: int = 0,
         line_ranges_selected: Optional[set[int]] = None,
     ) -> None:
@@ -522,6 +523,7 @@ class Leaf(Base):
         self.children = []
         self.opening_bracket = opening_bracket
         self.fmt_pass_converted_first_leaf = fmt_pass_converted_first_leaf
+        self.bracket_depth = bracket_depth
         self.line_ranges_first_lineno = line_ranges_first_lineno
         self.line_ranges_selected = line_ranges_selected
 
@@ -555,6 +557,7 @@ class Leaf(Base):
             self.value,
             (self.prefix, (self.lineno, self.column)),
             fixers_applied=self.fixers_applied,
+            bracket_depth=self.bracket_depth,
         )
 
     def leaves(self) -> Iterator["Leaf"]:
