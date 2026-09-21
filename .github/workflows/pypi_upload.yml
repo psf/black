@@ -10,6 +10,7 @@ on:
 permissions: {}
 
 env:
+  PIP_UPLOADED_PRIOR_TO: P2D
   PROJECT: https://pypi.org/p/black
 
 jobs:
@@ -24,11 +25,13 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group cibw
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group cibw
 
       - name: generate matrix
         if: |
@@ -77,11 +80,13 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group cibw
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group cibw
 
       - name: Run cibuildwheel
         run: cibuildwheel . --only ${{ matrix.only }}
@@ -102,14 +107,24 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group hatch
+          python-version: "3.15"
+          allow-prereleases: true
+
+      - name: Install dependencies
+        run: python -m pip install --group hatch
+
+      - name: Calculate PIP_UPLOADED_PRIOR_TO
+        # virtualenv 20.39 uses pip 26.0 - manually calculate this until we bump virtualenv/hatch
+        id: uploaded_prior_to
+        run:
+          echo "date=$(date -u -d "2 days ago" +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
 
       - name: Build wheel and source distributions
         run: python -m hatch build
+        env:
+          PIP_UPLOADED_PRIOR_TO: ${{ steps.uploaded_prior_to.outputs.date }}
 
       - name: Store the distribution packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -134,7 +149,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           packages-dir: wheelhouse/
           verbose: true
@@ -155,6 +170,6 @@ jobs:
           path: dist/
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           verbose: true

@@ -45,6 +45,34 @@ Currently, the following features are included in the preview style:
   statements.
 - `fmt_off_class_blank_lines`: Preserve two blank lines before a top-level class whose
   definition starts inside a `# fmt: off` block after an import.
+- `remove_redundant_generator_parentheses`: Remove redundant parentheses around
+  generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
+
+(labels/remove-redundant-generator-parentheses)=
+
+### Redundant generator parentheses
+
+Black removes extra parentheses around generator expressions. When a generator
+expression is the sole argument to a call, the call's parentheses are sufficient:
+
+```python
+# Before
+any((item.is_valid() for item in items))
+
+# After (with --preview)
+any(item.is_valid() for item in items)
+```
+
+In other contexts, Black keeps the parentheses required by Python syntax while removing
+any additional pair:
+
+```python
+# Before
+[((item for item in items)), fallback]
+
+# After (with --preview)
+[(item for item in items), fallback]
+```
 
 (labels/wrap-comprehension-in)=
 
