@@ -21,7 +21,6 @@
 
 - Fix crash when formatting parenthesized expressions with multiple inline comments and
   `# fmt: skip` (#5414)
-
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
@@ -69,6 +68,8 @@
   `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
   contents: the whole statement is now preserved instead of being reformatted (and
   previously crashing) (#5161)
+- Preserve comments and blank lines outside requested ranges when formatting with
+  `--line-ranges` (#5175)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
 

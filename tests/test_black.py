@@ -2169,6 +2169,33 @@ class BlackTestCase(BlackBaseTestCase):
             """)
             assert expected == formatted
 
+    def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
+        # This regression stays inline because it requires literal trailing spaces,
+        # which would fail `git diff --check` in a data case file.
+        source = (
+            "   #  format whitespace   \n"
+            'print( "format me" )   \n'
+            "      \n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        expected = (
+            "#  format whitespace\n"
+            'print("format me")\n'
+            "\n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
     def test_line_ranges_with_multiple_sources(self) -> None:
         with TemporaryDirectory() as workspace:
             test1_file = Path(workspace) / "test1.py"
