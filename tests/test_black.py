@@ -1613,7 +1613,7 @@ class BlackTestCase(BlackBaseTestCase):
                 [TargetVersion.PY37, TargetVersion.PY38, TargetVersion.PY39],
             ),
             (
-                ">3.7,!=3.8,!=3.9",
+                ">3.7,!=3.8.*,!=3.9.*",
                 [
                     TargetVersion.PY37,
                     TargetVersion.PY310,
@@ -1637,8 +1637,27 @@ class BlackTestCase(BlackBaseTestCase):
                 ],
             ),
             (
+                "!=3.3.*,!=3.4.*",
+                [
+                    TargetVersion.PY35,
+                    TargetVersion.PY36,
+                    TargetVersion.PY37,
+                    TargetVersion.PY38,
+                    TargetVersion.PY39,
+                    TargetVersion.PY310,
+                    TargetVersion.PY311,
+                    TargetVersion.PY312,
+                    TargetVersion.PY313,
+                    TargetVersion.PY314,
+                    TargetVersion.PY315,
+                ],
+            ),
+            # `!=` only ignores a specific patch release unless used with `.*`
+            (
                 "!=3.3,!=3.4",
                 [
+                    TargetVersion.PY33,
+                    TargetVersion.PY34,
                     TargetVersion.PY35,
                     TargetVersion.PY36,
                     TargetVersion.PY37,
@@ -1681,6 +1700,8 @@ class BlackTestCase(BlackBaseTestCase):
             ("2.7.18", None),
             ("==2.7", None),
             (">3.10,<3.11", [TargetVersion.PY310]),
+            ("~=3.0.0", None),
+            ("~=3.3.0", [TargetVersion.PY33]),
         ]:
             test_toml = {"project": {"requires-python": version}}
             result = black.files.infer_target_version(test_toml)
