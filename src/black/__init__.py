@@ -1023,15 +1023,12 @@ def format_file_in_place(
             diff_contents = color_diff(diff_contents)
 
         with lock or nullcontext():
-            f = io.TextIOWrapper(
-                sys.stdout.buffer,
+            _write_to_stdout(
+                diff_contents,
                 encoding=encoding,
                 newline=newline,
-                write_through=True,
+                wrap_for_windows=True,
             )
-            f = wrap_stream_for_windows(f)
-            f.write(diff_contents)
-            f.detach()
 
     return True
 
@@ -1068,14 +1065,11 @@ def format_stdin_to_stdout(
         return False
 
     finally:
-        f = io.TextIOWrapper(
-            sys.stdout.buffer, encoding=encoding, newline=newline, write_through=True
-        )
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content
             if dst and dst[-1] != "\n" and dst[-1] != "\r":
                 dst += newline
-            f.write(dst)
+            _write_to_stdout(dst, encoding=encoding, newline=newline)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
             src_name = f"STDIN\t{then}"
@@ -1083,9 +1077,36 @@ def format_stdin_to_stdout(
             d = diff(src, dst, src_name, dst_name)
             if write_back == WriteBack.COLOR_DIFF:
                 d = color_diff(d)
-                f = wrap_stream_for_windows(f)
-            f.write(d)
-        f.detach()
+            _write_to_stdout(
+                d,
+                encoding=encoding,
+                newline=newline,
+                wrap_for_windows=write_back == WriteBack.COLOR_DIFF,
+            )
+
+
+def _write_to_stdout(
+    content: str, *, encoding: str, newline: str, wrap_for_windows: bool = False
+) -> None:
+    """Write `content` to stdout with the given encoding and newline translation.
+
+    `sys.stdout` isn't required to expose the underlying binary `buffer` (for
+    example ipykernel's `OutStream` in Jupyter doesn't). In that case the stream
+    only accepts text, so the newline translation that `io.TextIOWrapper` would do
+    is applied here and the encoding is left to the stream itself.
+    """
+    buffer = getattr(sys.stdout, "buffer", None)
+    if buffer is None:
+        if newline != "\n":
+            content = content.replace("\n", newline)
+        stream = wrap_stream_for_windows(sys.stdout) if wrap_for_windows else sys.stdout
+        stream.write(content)
+        return
+
+    f = io.TextIOWrapper(buffer, encoding=encoding, newline=newline, write_through=True)
+    wrapped = wrap_stream_for_windows(f) if wrap_for_windows else f
+    wrapped.write(content)
+    f.detach()
 
 
 def check_stability_and_equivalence(
