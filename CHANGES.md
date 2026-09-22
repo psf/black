@@ -10,8 +10,6 @@
   --target-version flag (#5167)
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
-- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
-  Action (#5399)
 
 ### Highlights
 
@@ -218,6 +216,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
+  Action (#5399)
 
 ### Documentation
 
