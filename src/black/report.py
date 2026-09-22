@@ -125,7 +125,6 @@ class Report:
         is_formatted = "true" if self.change_count > 0 else "false"
         _outputs = {
             "is_formatted": is_formatted,
-            "is-formatted": is_formatted,
             "change_count": str(self.change_count),
             "same_count": str(self.same_count),
             "failure_count": str(self.failure_count),
