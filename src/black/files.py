@@ -83,10 +83,11 @@ def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path, str]:
         list(path.parents) + ([path] if path.is_dir() else []) for path in path_srcs
     ]
 
-    common_base = max(
-        set.intersection(*(set(parents) for parents in src_parents)),
-        key=lambda path: path.parts,
-    )
+    common = set.intersection(*(set(parents) for parents in src_parents))
+    if common:
+        common_base = max(common, key=lambda path: path.parts)
+    else:
+        raise ValueError("Cannot find a common project root across multiple drives")
 
     for directory in (common_base, *common_base.parents):
         if (directory / ".git").exists():

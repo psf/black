@@ -1925,6 +1925,19 @@ class BlackTestCase(BlackBaseTestCase):
                 (src_dir.resolve(), "pyproject.toml"),
             )
 
+    @pytest.mark.skipif(
+        sys.platform != "win32",
+        reason="Multiple drives only exist on Windows",
+    )
+    def test_find_project_root_multiple_drives(self) -> None:
+        black.files._find_project_root_cached.cache_clear()
+        try:
+            with self.assertRaises(ValueError) as ctx:
+                black.files.find_project_root(("C:\\a.py", "D:\\b.py"))
+            self.assertIn("Cannot find a common project root", str(ctx.exception))
+        finally:
+            black.files._find_project_root_cached.cache_clear()
+
     @patch(
         "black.files.find_user_pyproject_toml",
     )

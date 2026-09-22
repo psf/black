@@ -122,9 +122,18 @@ def read_pyproject_toml(
     otherwise.
     """
     if not value:
-        value = find_pyproject_toml(
-            ctx.params.get("src", ()), ctx.params.get("stdin_filename", None)
-        )
+        try:
+            value = find_pyproject_toml(
+                ctx.params.get("src", ()), ctx.params.get("stdin_filename", None)
+            )
+        except ValueError as e:
+            if "Cannot find a common project root" in str(e):
+                raise click.UsageError(
+                    "Cannot find a common project root across multiple drives. "
+                    "Please provide a configuration file via --config or run "
+                    "from a common drive."
+                ) from e
+            raise
         if value is None:
             return None
 
@@ -613,9 +622,15 @@ def main(
         )
         ctx.exit(1)
 
-    root, method = (
-        find_project_root(src, stdin_filename) if code is None else (None, None)
-    )
+    try:
+        root, method = (
+            find_project_root(src, stdin_filename) if code is None else (None, None)
+        )
+    except ValueError as e:
+        if "Cannot find a common project root" in str(e):
+            root, method = None, None
+        else:
+            raise
     ctx.obj["root"] = root
 
     if verbose:
