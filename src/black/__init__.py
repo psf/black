@@ -1023,15 +1023,12 @@ def format_file_in_place(
             diff_contents = color_diff(diff_contents)
 
         with lock or nullcontext():
-            f = io.TextIOWrapper(
-                sys.stdout.buffer,
+            _write_to_stdout(
+                diff_contents,
                 encoding=encoding,
                 newline=newline,
-                write_through=True,
+                wrap_for_windows=True,
             )
-            f = wrap_stream_for_windows(f)
-            f.write(diff_contents)
-            f.detach()
 
     return True
 
@@ -1068,14 +1065,11 @@ def format_stdin_to_stdout(
         return False
 
     finally:
-        f = io.TextIOWrapper(
-            sys.stdout.buffer, encoding=encoding, newline=newline, write_through=True
-        )
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content
             if dst and dst[-1] != "\n" and dst[-1] != "\r":
                 dst += newline
-            f.write(dst)
+            _write_to_stdout(dst, encoding=encoding, newline=newline)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
             src_name = f"STDIN\t{then}"
@@ -1083,9 +1077,36 @@ def format_stdin_to_stdout(
             d = diff(src, dst, src_name, dst_name)
             if write_back == WriteBack.COLOR_DIFF:
                 d = color_diff(d)
-                f = wrap_stream_for_windows(f)
-            f.write(d)
-        f.detach()
+            _write_to_stdout(
+                d,
+                encoding=encoding,
+                newline=newline,
+                wrap_for_windows=write_back == WriteBack.COLOR_DIFF,
+            )
+
+
+def _write_to_stdout(
+    content: str, *, encoding: str, newline: str, wrap_for_windows: bool = False
+) -> None:
+    """Write `content` to stdout with the given encoding and newline translation.
+
+    `sys.stdout` isn't required to expose the underlying binary `buffer` (for
+    example ipykernel's `OutStream` in Jupyter doesn't). In that case the stream
+    only accepts text, so the newline translation that `io.TextIOWrapper` would do
+    is applied here and the encoding is left to the stream itself.
+    """
+    buffer = getattr(sys.stdout, "buffer", None)
+    if buffer is None:
+        if newline != "\n":
+            content = content.replace("\n", newline)
+        stream = wrap_stream_for_windows(sys.stdout) if wrap_for_windows else sys.stdout
+        stream.write(content)
+        return
+
+    f = io.TextIOWrapper(buffer, encoding=encoding, newline=newline, write_through=True)
+    wrapped = wrap_stream_for_windows(f) if wrap_for_windows else f
+    wrapped.write(content)
+    f.detach()
 
 
 def check_stability_and_equivalence(
@@ -1267,7 +1288,33 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
-        return _format_str_once(dst_contents, mode=mode, lines=lines)
+        dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
+    if lines:
+        dst_contents = _restore_unselected_trailing_blank_lines(
+            src_contents, dst_contents, lines
+        )
+    return dst_contents
+
+
+def _restore_unselected_trailing_blank_lines(
+    src_contents: str,
+    dst_contents: str,
+    lines: Collection[tuple[int, int]],
+) -> str:
+    """Restore trailing whitespace-only lines outside requested line ranges."""
+    src_lines = src_contents.splitlines(keepends=True)
+    dst_lines = dst_contents.splitlines(keepends=True)
+    if len(dst_lines) >= len(src_lines):
+        return dst_contents
+
+    suffix = src_lines[len(dst_lines) :]
+    first_suffix_line = len(dst_lines) + 1
+    if all(
+        not line.strip()
+        and not any(start <= line_number <= end for start, end in lines)
+        for line_number, line in enumerate(suffix, start=first_suffix_line)
+    ):
+        return dst_contents + "".join(suffix)
     return dst_contents
 
 
