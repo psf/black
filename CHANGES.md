@@ -220,6 +220,7 @@
 
 - Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
   Action (#5399)
+- Add `is_formatted` output to GitHub Action runs (#5408)
 
 ### Documentation
 
