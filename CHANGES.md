@@ -77,6 +77,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
+
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
