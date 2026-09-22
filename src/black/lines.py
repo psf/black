@@ -844,7 +844,7 @@ class EmptyLineTracker:
         if suite is None or not isinstance(suite, Node):
             return False
         if_stmt = suite.parent
-        if if_stmt is None or not isinstance(if_stmt, Node):
+        if if_stmt is None:
             return False
 
         # Check if the if_stmt's next sibling is a same-name decorated function.
@@ -1014,7 +1014,7 @@ class EmptyLineTracker:
             # The blank lines that terminate a `# fmt: off` region live in the
             # prefix of the `# fmt: on` comment, not in the verbatim block, so
             # capping them here would edit formatting that was opted out of.
-            if not (
+            if not current_line.is_fmt_pass_converted() and not (
                 first_leaf.type == STANDALONE_COMMENT
                 and contains_fmt_directive(first_leaf.value, FMT_ON)
                 and self.previous_line is not None

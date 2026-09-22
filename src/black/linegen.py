@@ -149,7 +149,22 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node, mode=self.mode):
+            preserve_comment_formatting = (
+                node.type == STANDALONE_COMMENT
+                and node.fmt_pass_converted_first_leaf is not None
+                and node.line_ranges_selected is not None
+            )
+            for comment in generate_comments(
+                node,
+                mode=self.mode,
+                preserve_comment_formatting=preserve_comment_formatting,
+                line_ranges_first_lineno=node.line_ranges_first_lineno,
+                line_ranges_selected=node.line_ranges_selected,
+            ):
+                if preserve_comment_formatting:
+                    indent = "    " * self.current_line.depth
+                    if indent and comment.value.startswith(indent):
+                        comment.value = comment.value[len(indent) :]
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -501,7 +516,7 @@ class LineGenerator(Visitor[Line]):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
-                docstring = normalize_string_prefix(leaf.value)
+                docstring = normalize_string_prefix(leaf.value, self.mode)
                 # We handle string normalization at the end of this method, but since
                 # what we do right now acts differently depending on quote style (ex.
                 # see padding logic below), there's a possibility for unstable
@@ -578,7 +593,7 @@ class LineGenerator(Visitor[Line]):
                 leaf.value = prefix + quote + docstring + quote
 
         if self.mode.string_normalization and leaf.type == token.STRING:
-            leaf.value = normalize_string_prefix(leaf.value)
+            leaf.value = normalize_string_prefix(leaf.value, self.mode)
             leaf.value = normalize_string_quotes(leaf.value)
         yield from self.visit_default(leaf)
 
@@ -670,7 +685,7 @@ class LineGenerator(Visitor[Line]):
         # )
 
         # if not is_docstring(node, self.mode):
-        #     prefix = normalize_string_prefix(prefix)
+        #     prefix = normalize_string_prefix(prefix, self.mode)
 
         # assert quote == fstring_end.value
 
@@ -803,39 +818,6 @@ def transform_line(
         transformers = [left_hand_split]
     else:
 
-        def _rhs(
-            self: object, line: Line, features: Collection[Feature], mode: Mode
-        ) -> Iterator[Line]:
-            """Wraps calls to `right_hand_split`.
-
-            The calls increasingly `omit` right-hand trailers (bracket pairs with
-            content), meaning the trailers get glued together to split on another
-            bracket pair instead.
-            """
-            for omit in generate_trailers_to_omit(line, mode.line_length):
-                lines = list(right_hand_split(line, mode, features, omit=omit))
-                # Note: this check is only able to figure out if the first line of the
-                # *current* transformation fits in the line length.  This is true only
-                # for simple cases.  All others require running more transforms via
-                # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], mode=mode) or (
-                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
-                ):
-                    yield from lines
-                    return
-
-            # All splits failed, best effort split with no omits.
-            # This mostly happens to multiline strings that are by definition
-            # reported as not fitting a single line, as well as lines that contain
-            # trailing commas (those have to be exploded).
-            yield from right_hand_split(line, mode, features=features)
-
-        # HACK: nested functions (like _rhs) compiled by mypyc don't retain their
-        # __name__ attribute which is needed in `run_transformer` further down.
-        # Unfortunately a nested class breaks mypyc too. So a class must be created
-        # via type ... https://github.com/mypyc/mypyc/issues/884
-        rhs = type("rhs", (), {"__call__": _rhs})()
-
         if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
@@ -845,7 +827,7 @@ def transform_line(
                     delimiter_split,
                     standalone_comment_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
             else:
                 transformers = [
@@ -853,13 +835,17 @@ def transform_line(
                     string_paren_strip,
                     string_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
         else:
             if line.inside_brackets:
-                transformers = [delimiter_split, standalone_comment_split, rhs]
+                transformers = [
+                    delimiter_split,
+                    standalone_comment_split,
+                    right_hand_split_with_omits,
+                ]
             else:
-                transformers = [rhs]
+                transformers = [right_hand_split_with_omits]
 
     if Preview.simplify_power_operator_hugging not in mode:
         # It's always safe to attempt hugging of power operations and pretty much every
@@ -1009,6 +995,34 @@ def right_hand_split(
     yield from _maybe_split_omitting_optional_parens(
         rhs_result, line, mode, features=features, omit=omit
     )
+
+
+def right_hand_split_with_omits(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
+    """Wraps calls to `right_hand_split`.
+
+    The calls increasingly `omit` right-hand trailers (bracket pairs with
+    content), meaning the trailers get glued together to split on another
+    bracket pair instead.
+    """
+    for omit in generate_trailers_to_omit(line, mode.line_length):
+        lines = list(right_hand_split(line, mode, features, omit=omit))
+        # Note: this check is only able to figure out if the first line of the
+        # *current* transformation fits in the line length.  This is true only
+        # for simple cases.  All others require running more transforms via
+        # `transform_line()`.  This check doesn't know if those would succeed.
+        if is_line_short_enough(lines[0], mode=mode) or (
+            omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+        ):
+            yield from lines
+            return
+
+    # All splits failed, best effort split with no omits.
+    # This mostly happens to multiline strings that are by definition
+    # reported as not fitting a single line, as well as lines that contain
+    # trailing commas (those have to be exploded).
+    yield from right_hand_split(line, mode, features=features)
 
 
 def _first_right_hand_split(
@@ -1165,7 +1179,7 @@ def _maybe_split_omitting_optional_parens(
                 not can_be_split(rhs.body)
                 and not is_line_short_enough(rhs.body, mode=mode)
                 and not (
-                    Preview.wrap_long_dict_values_in_parens
+                    Preview.wrap_long_dict_values_in_parens in mode
                     and rhs.opening_bracket.parent
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
@@ -1215,7 +1229,7 @@ def _prefer_split_rhs_oop_over_rhs(
 
     # Retain optional parens around dictionary values
     if (
-        Preview.wrap_long_dict_values_in_parens
+        Preview.wrap_long_dict_values_in_parens in mode
         and rhs.opening_bracket.parent
         and rhs.opening_bracket.parent.parent
         and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
@@ -1612,14 +1626,20 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
     )
     for leaf in line.leaves:
-        if current_line.leaves and (
-            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+        if (
+            current_line.leaves
+            and (leaf.type == STANDALONE_COMMENT or current_line.is_comment)
+            # Do not isolate the header colon onto its own line when a
+            # standalone comment (e.g. from `# fmt: skip`) ends with `)`.
+            and not (current_line.is_comment and leaf.type == token.COLON)
         ):
             yield current_line
             current_line = Line(
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
         current_line.append(leaf, preformatted=True)
+        for comment_after in line.comments_after(leaf):
+            current_line.append(comment_after, preformatted=True)
     if current_line:
         yield current_line
 
@@ -2308,7 +2328,7 @@ def run_transformer(
     features_set = set(features)
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES in features_set
-        or transform.__class__.__name__ != "rhs"
+        or transform is not right_hand_split_with_omits
         or not line.bracket_tracker.invisible
         or any(bracket.value for bracket in line.bracket_tracker.invisible)
         or line.contains_multiline_strings()
