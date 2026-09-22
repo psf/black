@@ -19,6 +19,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an inline comment after the closing bracket of optional parentheses being moved
+  inside the brackets when the parenthesized expression contains own-line comments
+  (#5395)
 - Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
   `while`, `for`, or `with` header (#5405)
 - Fix crash when formatting parenthesized expressions with multiple inline comments and
