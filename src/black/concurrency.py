@@ -222,8 +222,9 @@ async def schedule_formatting(
                     changed = Changed.YES if task.result() else Changed.NO
                     # If the file was written back or was successfully checked as
                     # well-formatted, store this information in the cache.
-                    if write_back is WriteBack.YES or (
-                        write_back is WriteBack.CHECK and changed is Changed.NO
+                    if (
+                        write_back is WriteBack.YES
+                        or (write_back is WriteBack.CHECK and changed is Changed.NO)
                     ):
                         sources_to_cache.append(src)
                     report.done(src, changed)

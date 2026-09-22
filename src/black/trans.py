@@ -176,8 +176,9 @@ def handle_is_simple_lookup_forward(
         current = line.leaves[index]
         if current.type in disallowed:
             return False
-        if current.type not in {token.NAME, token.DOT} or (
-            current.type == token.NAME and current.value == "for"
+        if (
+            current.type not in {token.NAME, token.DOT}
+            or (current.type == token.NAME and current.value == "for")
         ):
             # If the current token isn't disallowed, we'll assume this is simple as
             # only the disallowed tokens are semantically attached to this lookup
@@ -1183,8 +1184,9 @@ class BaseStringSplitter(StringTransformer):
                 " no parent)."
             )
 
-        if id(line.leaves[string_idx]) in line.comments and contains_pragma_comment(
-            line.comments[id(line.leaves[string_idx])]
+        if (
+            id(line.leaves[string_idx]) in line.comments
+            and contains_pragma_comment(line.comments[id(line.leaves[string_idx])])
         ):
             return TErr(
                 "Line appears to end with an inline pragma comment. Splitting the line"
@@ -1343,8 +1345,9 @@ class BaseStringSplitter(StringTransformer):
                 assert parent is not None  # For type checkers.
                 prev_sibling = parent.prev_sibling
                 next_sibling = parent.next_sibling
-            if (not prev_sibling or prev_sibling.type == token.COMMA) and (
-                not next_sibling or next_sibling.type == token.COMMA
+            if (
+                (not prev_sibling or prev_sibling.type == token.COMMA)
+                and (not next_sibling or next_sibling.type == token.COMMA)
             ):
                 return 0
 
@@ -2076,9 +2079,10 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         """
         # If this line is a part of a return/yield statement and the first leaf
         # contains either the "return" or "yield" keywords...
-        if parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr] and LL[
-            0
-        ].value in ["return", "yield"]:
+        if (
+            parent_type(LL[0]) in [syms.return_stmt, syms.yield_expr]
+            and LL[0].value in ["return", "yield"]
+        ):
             is_valid_index = is_valid_index_factory(LL)
 
             idx = 2 if is_valid_index(1) and is_empty_par(LL[1]) else 1

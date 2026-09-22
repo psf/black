@@ -388,8 +388,9 @@ def convert_one_fmt_off_pair(
 
         # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on/skip processing
         # to avoid reprocessing them in subsequent iterations
-        if leaf.type == STANDALONE_COMMENT and hasattr(
-            leaf, "fmt_pass_converted_first_leaf"
+        if (
+            leaf.type == STANDALONE_COMMENT
+            and hasattr(leaf, "fmt_pass_converted_first_leaf")
         ):
             continue
 
@@ -519,8 +520,9 @@ def _handle_regular_fmt_block(
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
-        if len(lines) > 0 and not any(
-            line[0] <= comment_lineno <= line[1] for line in lines
+        if (
+            len(lines) > 0
+            and not any(line[0] <= comment_lineno <= line[1] for line in lines)
         ):
             # keeping indentation of comment by preserving original whitespaces.
             fmt_off_prefix = prefix.split(comment.value)[0]
