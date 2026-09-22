@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import platform
 import re
 import sys
@@ -739,6 +740,8 @@ def main(
                 out("No Python files are present to be formatted. Nothing to do 😴")
             if "-" in src:
                 sys.stdout.write(sys.stdin.read())
+            if "GITHUB_OUTPUT" in os.environ:
+                report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
             ctx.exit(0)
 
         if len(sources) == 1:
@@ -773,6 +776,8 @@ def main(
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
             click.echo(str(report), err=True)
+    if "GITHUB_OUTPUT" in os.environ:
+        report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
     ctx.exit(report.return_code)
 
 

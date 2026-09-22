@@ -41,6 +41,10 @@ inputs:
       keeping GitHub Actions logs clean when using --diff or --check.
     required: false
     default: ""
+outputs:
+  is_formatted:
+    description: "Whether any files were reformatted or would be reformatted."
+    value: ${{ steps.black.outputs.is_formatted }}
 branding:
   color: "black"
   icon: "check-circle"
@@ -48,6 +52,7 @@ runs:
   using: composite
   steps:
     - name: black
+      id: black
       run: |
         # Even when black fails, do not close the shell
         set +e
