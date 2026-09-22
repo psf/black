@@ -1623,8 +1623,12 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
     )
     for leaf in line.leaves:
-        if current_line.leaves and (
-            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+        if (
+            current_line.leaves
+            and (leaf.type == STANDALONE_COMMENT or current_line.is_comment)
+            # Do not isolate the header colon onto its own line when a
+            # standalone comment (e.g. from `# fmt: skip`) ends with `)`.
+            and not (current_line.is_comment and leaf.type == token.COLON)
         ):
             yield current_line
             current_line = Line(
