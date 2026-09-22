@@ -10,7 +10,6 @@
   --target-version flag (#5167)
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
-- Fix invalid Git command syntax in Vundle editor integration docs (#5398)
 
 ### Highlights
 
@@ -225,6 +224,7 @@
 
 - Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
   insert-mode indentation (#5288)
+- Fix Git commands for Vundle in editor integration documentation (#5398)
 
 ## Version 26.5.1
 

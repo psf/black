@@ -278,6 +278,7 @@ and execute the following in a terminal:
 
 ```console
 $ cd ~/.vim/bundle/black
+$ git fetch origin stable
 $ git checkout stable
 ```
 
