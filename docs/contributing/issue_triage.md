@@ -2,8 +2,8 @@
 
 Currently, _Black_ uses the issue tracker for bugs, feature requests, proposed style
 modifications, and general user support. Each of these issues have to be triaged so they
-can eventually be resolved somehow. This document outlines the triaging process and
-also the current guidelines and recommendations.
+can eventually be resolved somehow. This document outlines the triaging process and also
+the current guidelines and recommendations.
 
 ```{tip}
 If you're looking for a way to contribute without submitting patches, this might be the
