@@ -349,10 +349,13 @@ class _TopLevelStatementsVisitor(Visitor[None]):
                 and semantic_parent.prev_sibling.type == ASYNC
             ):
                 semantic_parent = semantic_parent.parent
-            if not _get_line_range(semantic_parent).intersection(self._lines_set):
-                _convert_node_to_standalone_comment(
-                    semantic_parent, self._replacements, self._lines_set
-                )
+        if (
+            semantic_parent is not None
+            and not _get_line_range(semantic_parent).intersection(self._lines_set)
+        ):
+            _convert_node_to_standalone_comment(
+                semantic_parent, self._replacements, self._lines_set
+            )
 
 
 def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
