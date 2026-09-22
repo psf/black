@@ -326,7 +326,9 @@ class _TopLevelStatementsVisitor(Visitor[None]):
         # its body on the same line. Example: `if cond: pass`.
         ancestor = furthest_ancestor_with_last_leaf(newline_leaf)
         if not _get_line_range(ancestor).intersection(self._lines_set):
-            _convert_node_to_standalone_comment(ancestor, self._replacements)
+            _convert_node_to_standalone_comment(
+                ancestor, self._replacements, self._lines_set
+            )
 
     def visit_suite(self, node: Node) -> Iterator[None]:
         yield from []
@@ -349,7 +351,9 @@ class _TopLevelStatementsVisitor(Visitor[None]):
         if semantic_parent is not None and not _get_line_range(
             semantic_parent
         ).intersection(self._lines_set):
-            _convert_node_to_standalone_comment(semantic_parent, self._replacements)
+            _convert_node_to_standalone_comment(
+                semantic_parent, self._replacements, self._lines_set
+            )
 
 
 def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
@@ -376,7 +380,10 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
                 prev_sibling = prev_sibling.prev_sibling
             if not _get_line_range(nodes_to_ignore).intersection(lines_set):
                 _convert_nodes_to_standalone_comment(
-                    nodes_to_ignore, newline=leaf, replacements=replacements
+                    nodes_to_ignore,
+                    newline=leaf,
+                    replacements=replacements,
+                    lines_set=lines_set,
                 )
         elif leaf.parent and leaf.parent.type == syms.suite:
             # The `suite` node is defined as:
@@ -399,7 +406,10 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
                 nodes_to_ignore.insert(0, grandparent.prev_sibling)
             if not _get_line_range(nodes_to_ignore).intersection(lines_set):
                 _convert_nodes_to_standalone_comment(
-                    nodes_to_ignore, newline=leaf, replacements=replacements
+                    nodes_to_ignore,
+                    newline=leaf,
+                    replacements=replacements,
+                    lines_set=lines_set,
                 )
         else:
             ancestor = furthest_ancestor_with_last_leaf(leaf)
@@ -412,12 +422,12 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
             ):
                 ancestor = ancestor.parent
             if not _get_line_range(ancestor).intersection(lines_set):
-                _convert_node_to_standalone_comment(ancestor, replacements)
+                _convert_node_to_standalone_comment(ancestor, replacements, lines_set)
     replacements.apply()
 
 
 def _convert_node_to_standalone_comment(
-    node: LN, replacements: "_NodeReplacements"
+    node: LN, replacements: "_NodeReplacements", lines_set: set[int]
 ) -> None:
     """Convert node to STANDALONE_COMMENT by modifying the tree inline."""
     parent = node.parent
@@ -440,6 +450,7 @@ def _convert_node_to_standalone_comment(
     # reformatted accordingly to the correct indentation level.
     # This also means the indentation will be changed on the unchanged lines, and
     # this is actually required to not break incremental reformatting.
+    first_lineno = first.lineno
     prefix = replacements.take_prefix(first)
     # For a single-line decorated item the decorator and the item need a newline
     # between them. The conversions are recorded and applied in a single pass
@@ -458,12 +469,18 @@ def _convert_node_to_standalone_comment(
             value,
             prefix=prefix,
             fmt_pass_converted_first_leaf=first,
+            line_ranges_first_lineno=first_lineno,
+            line_ranges_selected=lines_set,
         ),
     )
 
 
 def _convert_nodes_to_standalone_comment(
-    nodes: Sequence[LN], *, newline: Leaf, replacements: "_NodeReplacements"
+    nodes: Sequence[LN],
+    *,
+    newline: Leaf,
+    replacements: "_NodeReplacements",
+    lines_set: set[int],
 ) -> None:
     """Convert nodes to STANDALONE_COMMENT by modifying the tree inline."""
     if not nodes:
@@ -472,6 +489,7 @@ def _convert_nodes_to_standalone_comment(
     first = first_leaf(nodes[0])
     if not parent or not first or replacements.is_recorded(nodes[0]):
         return
+    first_lineno = first.lineno
     prefix = replacements.take_prefix(first)
     value = "".join(str(node) for node in nodes)
     # The prefix comment on the NEWLINE leaf is the trailing comment of the statement.
@@ -485,6 +503,8 @@ def _convert_nodes_to_standalone_comment(
             value,
             prefix=prefix,
             fmt_pass_converted_first_leaf=first,
+            line_ranges_first_lineno=first_lineno,
+            line_ranges_selected=lines_set,
         ),
     )
 
