@@ -897,9 +897,14 @@ def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
             track_bracket=id(leaf) in leaves_to_track,
         )
 
-    # we could also return true if the line is too long, and the return type is longer
-    # than the param list. Or if `should_split_rhs` returns True.
-    return result.magic_trailing_comma is not None
+    first_visible_return_leaf = next(
+        (leaf for leaf in return_type_leaves if leaf.value), None
+    )
+    return result.magic_trailing_comma is not None or (
+        first_visible_return_leaf is not None
+        and first_visible_return_leaf.type == token.STRING
+        and not is_line_short_enough(result, mode=mode)
+    )
 
 
 class _BracketSplitComponent(Enum):
