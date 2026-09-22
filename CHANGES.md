@@ -218,6 +218,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
+  Action (#5399)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies. Small docs changes
