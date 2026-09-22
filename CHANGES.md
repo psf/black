@@ -79,6 +79,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long stringified return annotations even when the function has parameters
+  (#5427)
 - Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
