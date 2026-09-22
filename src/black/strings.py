@@ -9,6 +9,7 @@ from re import Match, Pattern
 from typing import Final
 
 from black._width_table import WIDTH_TABLE
+from black.mode import Mode, Preview
 from blib2to3.pytree import Leaf
 
 STRING_PREFIX_CHARS: Final = "fturbFTURB"  # All possible string prefix characters.
@@ -142,7 +143,7 @@ def assert_is_leaf_string(string: str) -> None:
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
 
 
-def normalize_string_prefix(s: str) -> str:
+def normalize_string_prefix(s: str, mode: Mode) -> str:
     """Make all string prefixes lowercase."""
     match = STRING_PREFIX_RE.match(s)
     assert match is not None, f"failed to match string {s!r}"
@@ -154,6 +155,8 @@ def normalize_string_prefix(s: str) -> str:
         .replace("u", "")
     )
 
+    if Preview.normalize_tstring_prefix in mode:
+        new_prefix = new_prefix.replace("T", "t")
     # Python syntax guarantees max 2 prefixes and that one of them is "r"
     if len(new_prefix) == 2 and new_prefix[0].lower() != "r":
         new_prefix = new_prefix[::-1]

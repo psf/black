@@ -264,7 +264,7 @@ _Black_ to merge consecutive string literals that ended up on the same line (see
 Why settle on double quotes? They anticipate apostrophes in English text. They match the
 docstring standard described in
 [PEP 257](https://peps.python.org/pep-0257/#what-is-a-docstring). An empty string in
-double quotes (`""`) is impossible to confuse with a one double-quote regardless of
+double quotes (`""`) is impossible to confuse with a single double-quote regardless of
 fonts and syntax highlighting used. On top of this, double quotes for strings are
 consistent with C which Python interacts a lot with.
 

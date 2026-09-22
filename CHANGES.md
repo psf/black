@@ -19,6 +19,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
+  `while`, `for`, or `with` header (#5405)
+- Fix crash when formatting parenthesized expressions with multiple inline comments and
+  `# fmt: skip` (#5414)
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
@@ -66,6 +70,8 @@
   `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
   contents: the whole statement is now preserved instead of being reformatted (and
   previously crashing) (#5161)
+- Preserve comments and blank lines outside requested ranges when formatting with
+  `--line-ranges` (#5175)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
 
@@ -76,7 +82,7 @@
 - Prefer parenthesizing and splitting whole boolean conditions in `if`, `elif`, and
   `while` statements instead of splitting a function call within them, as long as each
   top-level operand fits on one line (#5252)
-
+- Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
 - Remove redundant parentheses around generator expressions (#5304)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
@@ -204,6 +210,8 @@
 <!-- Changes to Black's terminal output and error messages -->
 
 - Report parser failures using editor-friendly `path:line:column` locations (#5237)
+- Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
+  attribute, such as in Jupyter notebooks (#5411)
 
 ### _Blackd_
 
@@ -212,6 +220,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
+  Action (#5399)
 
 ### Documentation
 

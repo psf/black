@@ -55,9 +55,18 @@ class ProtoComment:
     consumed: int  # how many characters of the original leaf's prefix did we consume
     form_feed: bool  # is there a form feed before the comment
     leading_whitespace: str  # leading whitespace before the comment, if any
+    original_value: str  # original comment text, before normalization
+    prefix_line_index: int  # 0-based physical line index within the parsed prefix
 
 
-def generate_comments(leaf: LN, mode: Mode) -> Iterator[Leaf]:
+def generate_comments(
+    leaf: LN,
+    mode: Mode,
+    *,
+    preserve_comment_formatting: bool = False,
+    line_ranges_first_lineno: int = 0,
+    line_ranges_selected: set[int] | None = None,
+) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
     Comments in lib2to3 are shoved into the whitespace prefix.  This happens
@@ -77,12 +86,23 @@ def generate_comments(leaf: LN, mode: Mode) -> Iterator[Leaf]:
     are emitted with a fake STANDALONE_COMMENT token identifier.
     """
     total_consumed = 0
-    for pc in list_comments(
+    comments = list_comments(
         leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER, mode=mode
-    ):
+    )
+    prefix_line_count = len(re.split(r"\r?\n|\r", leaf.prefix)) - 1
+    for pc in comments:
         total_consumed = pc.consumed
         prefix = make_simple_prefix(pc.newlines, pc.form_feed)
-        yield Leaf(pc.type, pc.value, prefix=prefix)
+        value = pc.value
+        comment_lineno = (
+            line_ranges_first_lineno - prefix_line_count + pc.prefix_line_index
+        )
+        should_preserve = preserve_comment_formatting and (
+            line_ranges_selected is None or comment_lineno not in line_ranges_selected
+        )
+        if should_preserve:
+            value = pc.leading_whitespace + pc.original_value
+        yield Leaf(pc.type, value, prefix=prefix)
     normalize_trailing_prefix(leaf, total_consumed)
 
 
@@ -127,6 +147,8 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
                 consumed=consumed,
                 form_feed=form_feed,
                 leading_whitespace=whitespace,
+                original_value=line,
+                prefix_line_index=index,
             )
         )
         form_feed = False
