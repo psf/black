@@ -2,7 +2,7 @@
 
 Currently, _Black_ uses the issue tracker for bugs, feature requests, proposed style
 modifications, and general user support. Each of these issues have to be triaged so they
-can be eventually be resolved somehow. This document outlines the triaging process and
+can eventually be resolved somehow. This document outlines the triaging process and
 also the current guidelines and recommendations.
 
 ```{tip}
@@ -43,7 +43,7 @@ The lifecycle of a bug report or user support issue typically goes something lik
 2. **identified** - has been marked with a type label and other relevant labels, more
    details or a functional reproduction may be still needed (and therefore should be
    marked with `S: needs repro` or `S: awaiting response`)
-3. **confirmed** - the issue can reproduced and necessary details have been provided
+3. **confirmed** - the issue can be reproduced and necessary details have been provided
 4. **discussion** - initial triage has been done and now the general details on how the
    issue should be best resolved are being hashed out
 5. **awaiting fix** - no further discussion on the issue is necessary and a resolving PR
