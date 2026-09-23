@@ -149,7 +149,22 @@ class LineGenerator(Visitor[Line]):
         """Default `visit_*()` implementation. Recurses to children of `node`."""
         if isinstance(node, Leaf):
             any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
-            for comment in generate_comments(node, mode=self.mode):
+            preserve_comment_formatting = (
+                node.type == STANDALONE_COMMENT
+                and node.fmt_pass_converted_first_leaf is not None
+                and node.line_ranges_selected is not None
+            )
+            for comment in generate_comments(
+                node,
+                mode=self.mode,
+                preserve_comment_formatting=preserve_comment_formatting,
+                line_ranges_first_lineno=node.line_ranges_first_lineno,
+                line_ranges_selected=node.line_ranges_selected,
+            ):
+                if preserve_comment_formatting:
+                    indent = "    " * self.current_line.depth
+                    if indent and comment.value.startswith(indent):
+                        comment.value = comment.value[len(indent) :]
                 if any_open_brackets:
                     # any comment within brackets is subject to splitting
                     self.current_line.append(comment)
@@ -383,7 +398,10 @@ class LineGenerator(Visitor[Line]):
                     child.type == syms.trailer
                     and len(child.children) == 3
                     and is_lpar_token(child.children[0])
-                    and is_generator(child.children[1])
+                    and (
+                        is_generator(child.children[1])
+                        or _has_redundant_generator_parentheses(child.children[1])
+                    )
                     and is_rpar_token(child.children[2])
                 ):
                     maybe_make_parens_invisible_in_atom(
@@ -498,7 +516,7 @@ class LineGenerator(Visitor[Line]):
             # We're ignoring docstrings with backslash newline escapes because changing
             # indentation of those changes the AST representation of the code.
             if self.mode.string_normalization:
-                docstring = normalize_string_prefix(leaf.value)
+                docstring = normalize_string_prefix(leaf.value, self.mode)
                 # We handle string normalization at the end of this method, but since
                 # what we do right now acts differently depending on quote style (ex.
                 # see padding logic below), there's a possibility for unstable
@@ -575,7 +593,7 @@ class LineGenerator(Visitor[Line]):
                 leaf.value = prefix + quote + docstring + quote
 
         if self.mode.string_normalization and leaf.type == token.STRING:
-            leaf.value = normalize_string_prefix(leaf.value)
+            leaf.value = normalize_string_prefix(leaf.value, self.mode)
             leaf.value = normalize_string_quotes(leaf.value)
         yield from self.visit_default(leaf)
 
@@ -667,7 +685,7 @@ class LineGenerator(Visitor[Line]):
         # )
 
         # if not is_docstring(node, self.mode):
-        #     prefix = normalize_string_prefix(prefix)
+        #     prefix = normalize_string_prefix(prefix, self.mode)
 
         # assert quote == fstring_end.value
 
@@ -800,39 +818,6 @@ def transform_line(
         transformers = [left_hand_split]
     else:
 
-        def _rhs(
-            self: object, line: Line, features: Collection[Feature], mode: Mode
-        ) -> Iterator[Line]:
-            """Wraps calls to `right_hand_split`.
-
-            The calls increasingly `omit` right-hand trailers (bracket pairs with
-            content), meaning the trailers get glued together to split on another
-            bracket pair instead.
-            """
-            for omit in generate_trailers_to_omit(line, mode.line_length):
-                lines = list(right_hand_split(line, mode, features, omit=omit))
-                # Note: this check is only able to figure out if the first line of the
-                # *current* transformation fits in the line length.  This is true only
-                # for simple cases.  All others require running more transforms via
-                # `transform_line()`.  This check doesn't know if those would succeed.
-                if is_line_short_enough(lines[0], mode=mode) or (
-                    omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
-                ):
-                    yield from lines
-                    return
-
-            # All splits failed, best effort split with no omits.
-            # This mostly happens to multiline strings that are by definition
-            # reported as not fitting a single line, as well as lines that contain
-            # trailing commas (those have to be exploded).
-            yield from right_hand_split(line, mode, features=features)
-
-        # HACK: nested functions (like _rhs) compiled by mypyc don't retain their
-        # __name__ attribute which is needed in `run_transformer` further down.
-        # Unfortunately a nested class breaks mypyc too. So a class must be created
-        # via type ... https://github.com/mypyc/mypyc/issues/884
-        rhs = type("rhs", (), {"__call__": _rhs})()
-
         if Preview.string_processing in mode:
             if line.inside_brackets:
                 transformers = [
@@ -843,7 +828,7 @@ def transform_line(
                     type_ignore_comment_split,
                     standalone_comment_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
             else:
                 transformers = [
@@ -851,7 +836,7 @@ def transform_line(
                     string_paren_strip,
                     string_split,
                     string_paren_wrap,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
         else:
             if line.inside_brackets:
@@ -859,10 +844,10 @@ def transform_line(
                     delimiter_split,
                     type_ignore_comment_split,
                     standalone_comment_split,
-                    rhs,
+                    right_hand_split_with_omits,
                 ]
             else:
-                transformers = [rhs]
+                transformers = [right_hand_split_with_omits]
 
     if Preview.simplify_power_operator_hugging not in mode:
         # It's always safe to attempt hugging of power operations and pretty much every
@@ -1012,6 +997,34 @@ def right_hand_split(
     yield from _maybe_split_omitting_optional_parens(
         rhs_result, line, mode, features=features, omit=omit
     )
+
+
+def right_hand_split_with_omits(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
+    """Wraps calls to `right_hand_split`.
+
+    The calls increasingly `omit` right-hand trailers (bracket pairs with
+    content), meaning the trailers get glued together to split on another
+    bracket pair instead.
+    """
+    for omit in generate_trailers_to_omit(line, mode.line_length):
+        lines = list(right_hand_split(line, mode, features, omit=omit))
+        # Note: this check is only able to figure out if the first line of the
+        # *current* transformation fits in the line length.  This is true only
+        # for simple cases.  All others require running more transforms via
+        # `transform_line()`.  This check doesn't know if those would succeed.
+        if is_line_short_enough(lines[0], mode=mode) or (
+            omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+        ):
+            yield from lines
+            return
+
+    # All splits failed, best effort split with no omits.
+    # This mostly happens to multiline strings that are by definition
+    # reported as not fitting a single line, as well as lines that contain
+    # trailing commas (those have to be exploded).
+    yield from right_hand_split(line, mode, features=features)
 
 
 def _first_right_hand_split(
@@ -1168,7 +1181,7 @@ def _maybe_split_omitting_optional_parens(
                 not can_be_split(rhs.body)
                 and not is_line_short_enough(rhs.body, mode=mode)
                 and not (
-                    Preview.wrap_long_dict_values_in_parens
+                    Preview.wrap_long_dict_values_in_parens in mode
                     and rhs.opening_bracket.parent
                     and rhs.opening_bracket.parent.parent
                     and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
@@ -1218,7 +1231,7 @@ def _prefer_split_rhs_oop_over_rhs(
 
     # Retain optional parens around dictionary values
     if (
-        Preview.wrap_long_dict_values_in_parens
+        Preview.wrap_long_dict_values_in_parens in mode
         and rhs.opening_bracket.parent
         and rhs.opening_bracket.parent.parent
         and rhs.opening_bracket.parent.parent.type == syms.dictsetmaker
@@ -1643,14 +1656,20 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
     )
     for leaf in line.leaves:
-        if current_line.leaves and (
-            leaf.type == STANDALONE_COMMENT or current_line.is_comment
+        if (
+            current_line.leaves
+            and (leaf.type == STANDALONE_COMMENT or current_line.is_comment)
+            # Do not isolate the header colon onto its own line when a
+            # standalone comment (e.g. from `# fmt: skip`) ends with `)`.
+            and not (current_line.is_comment and leaf.type == token.COLON)
         ):
             yield current_line
             current_line = Line(
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
             )
         current_line.append(leaf, preformatted=True)
+        for comment_after in line.comments_after(leaf):
+            current_line.append(comment_after, preformatted=True)
     if current_line:
         yield current_line
 
@@ -1750,7 +1769,18 @@ def normalize_invisible_parens(
             and not _atom_has_magic_trailing_comma(child, mode)
             and not _is_atom_multiline(child)
         ):
-            if maybe_make_parens_invisible_in_atom(
+            if _is_parenthesized_annotation_target(node, child):
+                # One pair is what makes the target non-simple, so any nesting
+                # inside it is redundant and goes.
+                inner = child.children[1]
+                if isinstance(inner, Node) and inner.type == syms.atom:
+                    maybe_make_parens_invisible_in_atom(
+                        inner,
+                        parent=child,
+                        mode=mode,
+                        features=features,
+                    )
+            elif maybe_make_parens_invisible_in_atom(
                 child,
                 parent=node,
                 mode=mode,
@@ -1758,7 +1788,7 @@ def normalize_invisible_parens(
                 remove_brackets_around_comma=True,
                 allow_star_expr=True,
             ):
-                wrap_in_parentheses(node, child, visible=False)
+                wrap_in_parentheses(node, child, visible=False, index=index)
 
         if check_lpar:
             if (
@@ -1775,7 +1805,7 @@ def normalize_invisible_parens(
                     features=features,
                     remove_brackets_around_comma=True,
                 ):
-                    wrap_in_parentheses(node, child, visible=False)
+                    wrap_in_parentheses(node, child, visible=False, index=index)
             elif isinstance(child, Node) and node.type == syms.with_stmt:
                 remove_with_parens(child, node, mode=mode, features=features)
             elif (
@@ -1789,7 +1819,7 @@ def normalize_invisible_parens(
                     and child.children[0].type != syms.atom
                     and is_one_tuple(child.children[0])
                 ):
-                    wrap_in_parentheses(node, child, visible=True)
+                    wrap_in_parentheses(node, child, visible=True, index=index)
             elif child.type == syms.atom:
                 if "in" in parens_after and _is_parenthesized_lambda_or_ternary(child):
                     # A lambda or conditional expression used as a comprehension's
@@ -1808,9 +1838,9 @@ def normalize_invisible_parens(
                 elif maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=mode, features=features
                 ):
-                    wrap_in_parentheses(node, child, visible=False)
+                    wrap_in_parentheses(node, child, visible=False, index=index)
             elif is_one_tuple(child):
-                wrap_in_parentheses(node, child, visible=True)
+                wrap_in_parentheses(node, child, visible=True, index=index)
             elif node.type == syms.import_from:
                 _normalize_import_from(node, child, index)
                 break
@@ -1849,9 +1879,9 @@ def normalize_invisible_parens(
                         mock_line.append(leaf)
                     # If it's a guard AND it's short, we DON'T wrap
                     if not is_line_short_enough(mock_line, mode=mode):
-                        wrap_in_parentheses(node, child, visible=False)
+                        wrap_in_parentheses(node, child, visible=False, index=index)
                 else:
-                    wrap_in_parentheses(node, child, visible=False)
+                    wrap_in_parentheses(node, child, visible=False, index=index)
 
         comma_check = child.type == token.COMMA
 
@@ -2013,6 +2043,34 @@ def _atom_has_magic_trailing_comma(node: LN, mode: Mode) -> bool:
     return is_one_tuple(node)
 
 
+def _is_parenthesized_annotation_target(node: Node, child: Node) -> bool:
+    """Is `child` a parenthesized plain name that `node` annotates?
+
+    `(x): int = 5` and `x: int = 5` do not do the same thing: only the second one
+    records `x` in `__annotations__`, because the parentheses make the target
+    non-simple (`AnnAssign.simple` is 0). Dropping them changes what the module
+    does at runtime, so they have to stay. Attribute and subscript targets are
+    non-simple either way, so those are left alone here.
+    """
+    if len(node.children) < 2:
+        return False
+
+    annassign = node.children[1]
+    if not isinstance(annassign, Node) or annassign.type != syms.annassign:
+        return False
+
+    # `((x)): int = 5` is non-simple too, so look through any nesting.
+    target: LN = child
+    while (
+        isinstance(target, Node)
+        and target.type == syms.atom
+        and len(target.children) == 3
+    ):
+        target = target.children[1]
+
+    return isinstance(target, Leaf) and target.type == token.NAME
+
+
 def _is_atom_multiline(node: LN) -> bool:
     """Check if an atom node is multiline (indicating intentional formatting)."""
     if not isinstance(node, Node) or len(node.children) < 3:
@@ -2123,6 +2181,7 @@ def maybe_make_parens_invisible_in_atom(
             mode=mode,
             features=features,
             remove_brackets_around_comma=remove_brackets_around_comma,
+            remove_generator_parens=remove_generator_parens,
         )
 
         if is_atom_with_invisible_parens(middle):
@@ -2299,7 +2358,7 @@ def run_transformer(
     features_set = set(features)
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES in features_set
-        or transform.__class__.__name__ != "rhs"
+        or transform is not right_hand_split_with_omits
         or not line.bracket_tracker.invisible
         or any(bracket.value for bracket in line.bracket_tracker.invisible)
         or line.contains_multiline_strings()
