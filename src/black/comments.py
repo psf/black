@@ -426,6 +426,21 @@ def _is_attached(leaf: Leaf, root: Node) -> bool:
     return False
 
 
+def _remove_preceding_newline_for_comment(result: str) -> str:
+    comment_line_start = result.rfind("\n") + 1
+    comment_start = result.find("#", comment_line_start)
+    if comment_start < 0:
+        return result
+
+    newline_before_comment = result.rfind("\n", 0, comment_start)
+    if (
+        newline_before_comment >= 0
+        and result[newline_before_comment + 1 :].lstrip().startswith("#")
+    ):
+        return result[:newline_before_comment] + result[newline_before_comment + 1 :]
+    return result
+
+
 def _handle_regular_fmt_block(
     ignored_nodes: list[LN],
     comment: ProtoComment,
@@ -486,19 +501,7 @@ def _handle_regular_fmt_block(
                                 and next_node.type in CLOSING_BRACKETS
                                 and "\n" in n.value
                             ):
-                                comment_start = result.rfind("# fmt")
-                                newline_before_comment = result.rfind(
-                                    "\n", 0, comment_start
-                                )
-                                comment_line = result[newline_before_comment + 1 :]
-                                if (
-                                    newline_before_comment >= 0
-                                    and comment_line.lstrip().startswith("#")
-                                ):
-                                    result = (
-                                        result[:newline_before_comment]
-                                        + result[newline_before_comment + 1 :]
-                                    )
+                                result = _remove_preceding_newline_for_comment(result)
                             if not result.endswith("\n"):
                                 result += "\n"
                             return result
