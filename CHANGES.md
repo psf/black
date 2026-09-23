@@ -19,6 +19,15 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an inline comment after the closing bracket of optional parentheses being moved
+  inside the brackets when the parenthesized expression contains own-line comments
+  (#5395)
+- Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
+  `while`, `for`, or `with` header (#5405)
+- Fix crash when formatting parenthesized expressions with multiple inline comments and
+  `# fmt: skip` (#5414)
+- Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
+  earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Keep the parentheses around the target of an annotated assignment (for example
   `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
@@ -48,6 +57,9 @@
   operator (#5272)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Fix inline comments being dropped on the lines produced by that forced split, so a
+  trailing `# comment` or `# type: ignore` on a bracket inside such a comprehension is
+  kept instead of silently removed (#5330)
 - Respect the magic trailing comma in a PEP 695 type parameter list containing a
   `*TypeVarTuple` or `**ParamSpec`, which previously collapsed back onto one line
   (#5244)
@@ -61,6 +73,8 @@
   `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
   contents: the whole statement is now preserved instead of being reformatted (and
   previously crashing) (#5161)
+- Preserve comments and blank lines outside requested ranges when formatting with
+  `--line-ranges` (#5175)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
 
@@ -68,7 +82,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Remove redundant parentheses around generator expressions (#5304)
+- Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
+- Remove redundant parentheses around generator expressions (#5304, #5369)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
@@ -197,6 +212,8 @@
 <!-- Changes to Black's terminal output and error messages -->
 
 - Report parser failures using editor-friendly `path:line:column` locations (#5237)
+- Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
+  attribute, such as in Jupyter notebooks (#5411)
 
 ### _Blackd_
 
@@ -205,6 +222,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
+  Action (#5399)
 
 ### Documentation
 
