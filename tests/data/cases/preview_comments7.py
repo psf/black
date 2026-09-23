@@ -306,3 +306,9 @@ square = Square(4)  # type: Optional[Square]
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     ),
 ]
+
+my_dict = {
+    "key": (
+        "A very very very very very very very very very very very very very very very very long string literal"
+    )  # type: ignore
+}
