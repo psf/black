@@ -417,16 +417,15 @@ class Line:
             and last_leaf.parent
             and len(list(last_leaf.parent.leaves())) <= 3
             and not is_type_comment(comment, mode=self.mode)
+            and not self.contains_standalone_comments()
         ):
             # Comments on an optional parens wrapping a single leaf should belong to
             # the wrapped node except if it's a type comment. Pinning the comment like
-            # this avoids unstable formatting caused by comment migration.
-            if len(self.leaves) < 2:
-                comment.type = STANDALONE_COMMENT
-                comment.prefix = ""
-                return False
-
-            last_leaf = self.leaves[-2]
+            # this avoids unstable formatting caused by comment migration. If the
+            # parens contain standalone comments they are going to stay visible, so
+            # the comment belongs to the closing paren, as it was written.
+            if len(self.leaves) >= 2:
+                last_leaf = self.leaves[-2]
         self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
 
@@ -844,7 +843,7 @@ class EmptyLineTracker:
         if suite is None or not isinstance(suite, Node):
             return False
         if_stmt = suite.parent
-        if if_stmt is None or not isinstance(if_stmt, Node):
+        if if_stmt is None:
             return False
 
         # Check if the if_stmt's next sibling is a same-name decorated function.
@@ -1014,7 +1013,7 @@ class EmptyLineTracker:
             # The blank lines that terminate a `# fmt: off` region live in the
             # prefix of the `# fmt: on` comment, not in the verbatim block, so
             # capping them here would edit formatting that was opted out of.
-            if not (
+            if not current_line.is_fmt_pass_converted() and not (
                 first_leaf.type == STANDALONE_COMMENT
                 and contains_fmt_directive(first_leaf.value, FMT_ON)
                 and self.previous_line is not None

@@ -1473,6 +1473,73 @@ class BlackTestCase(BlackBaseTestCase):
                     output.getvalue() == expected
                 ), f"incorrect formatting of {repr(content)}"
 
+    def test_format_stdin_to_stdout_without_buffer(self) -> None:
+        # Text streams aren't required to expose `.buffer` (e.g. ipykernel's
+        # OutStream in Jupyter), see #2516.
+        src = "print ( 'hello' )"
+        for write_back, expected in (
+            (black.WriteBack.YES, 'print("hello")\n'),
+            (black.WriteBack.CHECK, ""),
+            (black.WriteBack.NO, ""),
+        ):
+            output = io.StringIO()
+            assert not hasattr(output, "buffer")
+            with patch("sys.stdout", output):
+                changed = black.format_stdin_to_stdout(
+                    fast=True, content=src, write_back=write_back, mode=DEFAULT_MODE
+                )
+            self.assertTrue(changed)
+            self.assertEqual(output.getvalue(), expected)
+            self.assertFalse(output.closed)
+
+        for write_back in (black.WriteBack.DIFF, black.WriteBack.COLOR_DIFF):
+            output = io.StringIO()
+            with patch("sys.stdout", output):
+                black.format_stdin_to_stdout(
+                    fast=True, content=src, write_back=write_back, mode=DEFAULT_MODE
+                )
+            actual = unstyle(output.getvalue())
+            self.assertIn("-print ( 'hello' )\n", actual)
+            self.assertIn('+print("hello")\n', actual)
+            self.assertFalse(output.closed)
+
+    def test_reformat_code_without_stdout_buffer(self) -> None:
+        output = io.StringIO()
+        report = MagicMock()
+        with patch("sys.stdout", output):
+            black.reformat_code(
+                "x = ( 1 )",
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+        self.assertEqual(output.getvalue(), "x = 1\n")
+        report.failed.assert_not_called()
+
+    def test_format_file_in_place_diff_without_stdout_buffer(self) -> None:
+        for nl in ("\n", "\r\n"):
+            with TemporaryDirectory() as workspace:
+                test_file = Path(workspace) / "test.py"
+                test_file.write_bytes(f"x = ( 1 ){nl}".encode())
+                output = io.StringIO(newline="")
+                with patch("sys.stdout", output):
+                    changed = black.format_file_in_place(
+                        test_file,
+                        fast=True,
+                        mode=DEFAULT_MODE,
+                        write_back=black.WriteBack.DIFF,
+                    )
+                self.assertTrue(changed)
+                actual = output.getvalue()
+                self.assertIn(f"-x = ( 1 ){nl}", actual)
+                self.assertIn(f"+x = 1{nl}", actual)
+                if nl == "\n":
+                    self.assertNotIn("\r\n", actual)
+                self.assertFalse(output.closed)
+                # The file itself is left untouched.
+                self.assertEqual(test_file.read_bytes(), f"x = ( 1 ){nl}".encode())
+
     def test_cli_unstable(self) -> None:
         self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
         self.invokeBlack(["--preview", "-c", "0"], exit_code=0)
@@ -2261,6 +2328,33 @@ class BlackTestCase(BlackBaseTestCase):
             """)
             assert expected == formatted
 
+    def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
+        # This regression stays inline because it requires literal trailing spaces,
+        # which would fail `git diff --check` in a data case file.
+        source = (
+            "   #  format whitespace   \n"
+            'print( "format me" )   \n'
+            "      \n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        expected = (
+            "#  format whitespace\n"
+            'print("format me")\n'
+            "\n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
     def test_line_ranges_with_multiple_sources(self) -> None:
         with TemporaryDirectory() as workspace:
             test1_file = Path(workspace) / "test1.py"
@@ -2736,6 +2830,20 @@ class TestCaching:
             assert len(set(keys)) == len(modes)
 
 
+def symlink_or_skip(link: Path, target: Path | str) -> None:
+    """Create a symlink, or skip the test where the platform forbids one.
+
+    Windows refuses symlink creation unless the process is elevated or
+    Developer Mode is enabled, so these tests cannot run for an ordinary
+    Windows contributor. Same treatment as test_broken_symlink, which has
+    guarded this since GH #287.
+    """
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"Can't create symlinks: {e}")
+
+
 def assert_collected_sources(
     src: Sequence[str | Path],
     expected: Sequence[str | Path],
@@ -3131,7 +3239,7 @@ class TestFileCollection:
             actual = tmp / "actual"
             actual.mkdir()
             symlink = tmp / "symlink"
-            symlink.symlink_to(actual)
+            symlink_or_skip(symlink, actual)
 
             actual_proj = actual / "project"
             actual_proj.mkdir()
@@ -3155,7 +3263,7 @@ class TestFileCollection:
 
                 # a few tricky tests for force_exclude
                 flat_symlink = symlink_proj / "symlink_module.py"
-                flat_symlink.symlink_to(actual_proj / "module.py")
+                symlink_or_skip(flat_symlink, actual_proj / "module.py")
                 assert_collected_sources(
                     src=[flat_symlink],
                     root=symlink_proj.resolve(),
@@ -3166,7 +3274,7 @@ class TestFileCollection:
                 target = actual_proj / "target"
                 target.mkdir()
                 (target / "another.py").write_text("print('hello')", encoding="utf-8")
-                (symlink_proj / "nested").symlink_to(target)
+                symlink_or_skip(symlink_proj / "nested", target)
 
                 assert_collected_sources(
                     src=[symlink_proj / "nested" / "another.py"],
@@ -3194,7 +3302,7 @@ class TestFileCollection:
             target = tmp / "outside_root" / "a.py"
             target.parent.mkdir()
             target.write_text("print('hello')", encoding="utf-8")
-            (root / "a.py").symlink_to(target)
+            symlink_or_skip(root / "a.py", target)
 
             stdin_filename = str(root / "a.py")
             assert_collected_sources(
@@ -3280,7 +3388,7 @@ class TestFileCollection:
             tmp = Path(tempdir).resolve()
             (tmp / "exclude").mkdir()
             (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
-            (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
+            symlink_or_skip(tmp / "symlink.py", tmp / "exclude" / "a.py")
 
             stdin_filename = str(tmp / "symlink.py")
             expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]

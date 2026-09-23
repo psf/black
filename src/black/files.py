@@ -1,11 +1,10 @@
-import io
 import os
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from functools import lru_cache
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, TextIO, Union
 
 from mypy_extensions import mypyc_attr
 from packaging.specifiers import InvalidSpecifier, Specifier, SpecifierSet
@@ -417,14 +416,13 @@ def gen_python_files(
                 warn=verbose or not quiet
             ):
                 continue
-            include_match = include.search(root_relative_path) if include else True
-            if include_match:
+            if include.search(root_relative_path):
                 yield child
 
 
 def wrap_stream_for_windows(
-    f: io.TextIOWrapper,
-) -> Union[io.TextIOWrapper, "colorama.AnsiToWin32"]:
+    f: TextIO,
+) -> Union[TextIO, "colorama.AnsiToWin32"]:
     """
     Wrap stream with colorama's wrap_stream so colors are shown on Windows.
 
