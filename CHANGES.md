@@ -82,6 +82,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
+  same-name decorated functions, such as `@overload`s or a property setter (#5430)
 - Remove redundant parentheses around individual variables in unpacking targets (for
   example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
 - Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
