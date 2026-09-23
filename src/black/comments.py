@@ -865,6 +865,19 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             if current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
+                # Every child of the node we are climbing out of is now ignored, so
+                # take the node itself instead. Converting only its leaves would
+                # leave the emptied node in the tree, and visitors that expect
+                # children, like the one for PEP 695 type parameters, crash on it.
+                # Children collapsed on an earlier climb are already nodes here, so
+                # compare against children rather than leaves.
+                children = current_node.children
+                if (
+                    children
+                    and len(ignored_nodes) >= len(children)
+                    and all(a is b for a, b in zip(ignored_nodes, children))
+                ):
+                    ignored_nodes[: len(children)] = [current_node]
 
         # Special handling for compound statements with semicolon-separated bodies
         if isinstance(parent, Node):
