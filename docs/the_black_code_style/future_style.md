@@ -13,6 +13,8 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
+- `wrap_long_rhs_with_standalone_comments`: Avoid joining an overlong assignment prefix
+  to a parenthesized, commented right-hand side.
 - `normalize_tstring_prefix`: Lowercase the `T` prefix of t-strings (for example,
   `T"hello"` becomes `t"hello"`).
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions

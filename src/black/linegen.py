@@ -1232,8 +1232,12 @@ def _prefer_split_rhs_oop_over_rhs(
     # Do not join an overlong assignment prefix to a binary expression that starts a
     # parenthesized, commented RHS. This can happen when standalone comments force a
     # nested split to be considered after the first RHS expression (#3925).
-    if mode.preview and (
-        len(rhs_oop.head.leaves) >= 2
+    if Preview.wrap_long_rhs_with_standalone_comments in mode and (
+        # Keep this limited to a parenthesized assignment RHS. Applying it to other
+        # commented expressions changes established preview formatting.
+        len(rhs.head.leaves) >= 2
+        and rhs.head.leaves[-2].type == token.EQUAL
+        and len(rhs_oop.head.leaves) >= 2
         and rhs_oop.head.leaves[-1].type in OPENING_BRACKETS
         and (
             rhs_oop.head.leaves[-2].type in MATH_OPERATORS | COMPARATORS
