@@ -702,7 +702,10 @@ class LineGenerator(Visitor[Line]):
         # yield from self.visit_default(node)
 
     def visit_comp_for(self, node: Node) -> Iterator[Line]:
-        if len(node.children) > 1:
+        if (
+            Preview.remove_redundant_unpacking_parentheses in self.mode
+            and len(node.children) > 1
+        ):
             _normalize_unpacking_targets(
                 node.children[1], mode=self.mode, features=self.features
             )
@@ -1728,26 +1731,33 @@ def normalize_invisible_parens(
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
 
-    if node.type in (syms.for_stmt, syms.comp_for, syms.old_comp_for):
-        if len(node.children) > 1:
-            _normalize_unpacking_targets(node.children[1], mode=mode, features=features)
-    elif node.type == syms.expr_stmt:
-        equal_indices = [
-            i for i, child in enumerate(node.children) if child.type == token.EQUAL
-        ]
-        if equal_indices:
-            for child in node.children[: equal_indices[-1]]:
-                if child.type != token.EQUAL:
-                    _normalize_unpacking_targets(child, mode=mode, features=features)
-    elif node.type == syms.del_stmt:
-        if len(node.children) > 1:
-            _normalize_unpacking_targets(node.children[1], mode=mode, features=features)
-    elif node.type == syms.with_stmt:
-        for child in node.children:
-            if child.type == syms.asexpr_test and len(child.children) > 2:
+    if Preview.remove_redundant_unpacking_parentheses in mode:
+        if node.type in (syms.for_stmt, syms.comp_for, syms.old_comp_for):
+            if len(node.children) > 1:
                 _normalize_unpacking_targets(
-                    child.children[2], mode=mode, features=features
+                    node.children[1], mode=mode, features=features
                 )
+        elif node.type == syms.expr_stmt:
+            equal_indices = [
+                i for i, child in enumerate(node.children) if child.type == token.EQUAL
+            ]
+            if equal_indices:
+                for child in node.children[: equal_indices[-1]]:
+                    if child.type != token.EQUAL:
+                        _normalize_unpacking_targets(
+                            child, mode=mode, features=features
+                        )
+        elif node.type == syms.del_stmt:
+            if len(node.children) > 1:
+                _normalize_unpacking_targets(
+                    node.children[1], mode=mode, features=features
+                )
+        elif node.type == syms.with_stmt:
+            for child in node.children:
+                if child.type == syms.asexpr_test and len(child.children) > 2:
+                    _normalize_unpacking_targets(
+                        child.children[2], mode=mode, features=features
+                    )
 
     # The multiple context managers grammar has a different pattern, thus this is
     # separate from the for-loop below. This possibly wraps them in invisible parens,
