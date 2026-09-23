@@ -19,6 +19,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an inline comment after the closing bracket of optional parentheses being moved
+  inside the brackets when the parenthesized expression contains own-line comments
+  (#5395)
 - Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
   `while`, `for`, or `with` header (#5405)
 - Fix crash when formatting parenthesized expressions with multiple inline comments and
@@ -81,7 +84,8 @@
 
 - Remove redundant parentheses around individual variables in unpacking targets (for
   example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
-- Remove redundant parentheses around generator expressions (#5304)
+- Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
+- Remove redundant parentheses around generator expressions (#5304, #5369)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
@@ -218,6 +222,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
+  Action (#5399)
 
 ### Documentation
 
