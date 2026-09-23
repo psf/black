@@ -2101,9 +2101,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 continue
 
             string_idx = (
-                i + 2
-                if is_valid_index(i + 1) and is_empty_lpar(LL[i + 1])
-                else i + 1
+                i + 2 if is_valid_index(i + 1) and is_empty_lpar(LL[i + 1]) else i + 1
             )
             if not is_valid_index(string_idx) or LL[string_idx].type != token.STRING:
                 return None
@@ -2312,9 +2310,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         if LL[comma_idx].type == token.COMMA:
             ends_with_comma = True
         return_annotation_arrow_idx = (
-            string_idx - 2
-            if is_empty_lpar(LL[string_idx - 1])
-            else string_idx - 1
+            string_idx - 2 if is_empty_lpar(LL[string_idx - 1]) else string_idx - 1
         )
         ends_with_return_annotation = (
             LL[return_annotation_arrow_idx].type == token.RARROW
