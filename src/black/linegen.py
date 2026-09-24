@@ -705,6 +705,13 @@ class LineGenerator(Visitor[Line]):
         # yield from self.visit_default(node)
 
     def visit_comp_for(self, node: Node) -> Iterator[Line]:
+        if (
+            Preview.remove_redundant_unpacking_parentheses in self.mode
+            and len(node.children) > 1
+        ):
+            _normalize_unpacking_targets(
+                node.children[1], mode=self.mode, features=self.features
+            )
         if Preview.wrap_comprehension_in in self.mode:
             normalize_invisible_parens(
                 node, parens_after={"in"}, mode=self.mode, features=self.features
@@ -1679,6 +1686,38 @@ def _has_redundant_generator_parentheses(node: LN) -> bool:
     return is_generator(middle) or _has_redundant_generator_parentheses(middle)
 
 
+def _normalize_unpacking_targets(
+    node: LN,
+    mode: Mode,
+    features: Collection[Feature],
+) -> None:
+    """Remove redundant parentheses from individual elements in unpacking targets."""
+    if not isinstance(node, Node):
+        return
+
+    if node.type in (
+        syms.exprlist,
+        syms.testlist_star_expr,
+        syms.testlist_gexp,
+        syms.testlist,
+        syms.listmaker,
+        syms.star_expr,
+    ):
+        for child in node.children:
+            if child.type == syms.atom and not _is_atom_multiline(child):
+                maybe_make_parens_invisible_in_atom(
+                    child,
+                    parent=node,
+                    mode=mode,
+                    features=features,
+                )
+            _normalize_unpacking_targets(child, mode=mode, features=features)
+    elif node.type == syms.atom:
+        for child in node.children:
+            if isinstance(child, Node):
+                _normalize_unpacking_targets(child, mode=mode, features=features)
+
+
 def normalize_invisible_parens(
     node: Node, parens_after: set[str], *, mode: Mode, features: Collection[Feature]
 ) -> None:
@@ -1694,6 +1733,34 @@ def normalize_invisible_parens(
         if contains_fmt_directive(pc.value, FMT_OFF):
             # This `node` has a prefix with `# fmt: off`, don't mess with parens.
             return
+
+    if Preview.remove_redundant_unpacking_parentheses in mode:
+        if node.type in (syms.for_stmt, syms.comp_for, syms.old_comp_for):
+            if len(node.children) > 1:
+                _normalize_unpacking_targets(
+                    node.children[1], mode=mode, features=features
+                )
+        elif node.type == syms.expr_stmt:
+            equal_indices = [
+                i for i, child in enumerate(node.children) if child.type == token.EQUAL
+            ]
+            if equal_indices:
+                for child in node.children[: equal_indices[-1]]:
+                    if child.type != token.EQUAL:
+                        _normalize_unpacking_targets(
+                            child, mode=mode, features=features
+                        )
+        elif node.type == syms.del_stmt:
+            if len(node.children) > 1:
+                _normalize_unpacking_targets(
+                    node.children[1], mode=mode, features=features
+                )
+        elif node.type == syms.with_stmt:
+            for child in node.children:
+                if child.type == syms.asexpr_test and len(child.children) > 2:
+                    _normalize_unpacking_targets(
+                        child.children[2], mode=mode, features=features
+                    )
 
     # The multiple context managers grammar has a different pattern, thus this is
     # separate from the for-loop below. This possibly wraps them in invisible parens,

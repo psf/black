@@ -82,6 +82,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove redundant parentheses around individual variables in unpacking targets (for
+  example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
 - Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
 - Remove redundant parentheses around generator expressions (#5304, #5369)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
