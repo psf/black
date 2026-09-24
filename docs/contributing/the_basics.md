@@ -67,6 +67,88 @@ files in the `tests/data/cases` directory. These files consist of up to three pa
 - The line `# output`, followed by the output of _Black_ when run on the previous block.
   If this is omitted, the test asserts that _Black_ will leave the input code unchanged.
 
+#### Multi-cell format
+
+Large fixture files can also group multiple cases inside one file using a cell header
+inspired by [mypy's test data format][mypy-test-data]. The two formats coexist: a file
+is detected as multi-cell only when its first non-blank non-comment line is a `[case ]`
+header. Each cell starts at column 0 with `[case <name>]` and runs as an independent
+test. Cell names match `[A-Za-z_][A-Za-z0-9_]*` and must be unique within the file.
+
+[mypy-test-data]: https://github.com/python/mypy/blob/master/mypy/test/data.py
+
+```
+[case empty_call]
+foo()
+# output
+foo()
+
+[case nested_call_with_args]
+# flags: --preview
+foo(bar(x, y))
+# output
+foo(bar(x, y))
+```
+
+Rules:
+
+- Anything before the first `[case ]` is file-level prose and is ignored by the loader,
+  with one exception: a single `# flags: ` line in that region is taken as the
+  file-level flag set and merged into every cell.
+- Within a cell, the legacy rules apply: an optional `# flags: ` line on the first
+  non-blank line, then input, then optional `# output` followed by expected output.
+  Omitting `# output` asserts idempotency.
+- Trailing whitespace on a `[case <name>]` line is tolerated; everything else on the
+  line is rejected.
+
+#### File-level flags
+
+When most cells in a file share the same flags, lifting them above the first `[case ]`
+keeps the cells terse:
+
+```
+# flags: --preview --line-length=88
+
+[case keep_short_strings]
+x = "abc"
+# output
+x = "abc"
+
+[case override_per_cell]
+# flags: --preview --line-length=120
+x = "the quick brown fox jumps over the lazy dog repeatedly"
+# output
+x = "the quick brown fox jumps over the lazy dog repeatedly"
+
+[case narrow_line_range]
+# flags: --line-ranges=2-2
+x = "first"
+x = "second longer string that would normally wrap"
+# output
+x = "first"
+x = "second longer string that would normally wrap"
+```
+
+Merge semantics, driven by argparse:
+
+- Scalar / store flags (`--line-length`, `--preview`, `--pyi`, `--target-version`, …):
+  the cell wins when it sets the same flag. So `keep_short_strings` runs at
+  `--line-length=88`, and `override_per_cell` runs at `--line-length=120`.
+- `--line-ranges` is rejected at the file level. Line numbers are per-cell, so a
+  file-level range would apply to every cell against unrelated content. Set it inside
+  the relevant `[case ]` instead.
+- Once a `store_true` flag is set at the file level, a cell cannot un-set it (there is
+  no `--no-preview`). If a file has both preview and stable cases, leave `--preview` off
+  the file-level line and set it per cell.
+
+Only one file-level `# flags: ` line is allowed; multiples raise at load time. A
+malformed file-level flag string fails fast with the file path attached.
+
+Pytest IDs reflect the format. Single-case files keep the legacy
+`test_simple_format[<stem>]` shape; multi-cell files produce
+`test_simple_format[<stem>::<cell_name>]`. On failure, the error message points at the
+file path, the cell header line, and the cell's `# output` marker line.
+
 _Black_ has two pytest command-line options affecting test files in `tests/data/` that
 are split into an input part, and an output part, separated by a line with `# output`.
 These can be passed to `pytest` through `tox`, or directly into pytest if not using
