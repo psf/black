@@ -19,6 +19,15 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an inline comment after the closing bracket of optional parentheses being moved
+  inside the brackets when the parenthesized expression contains own-line comments
+  (#5395)
+- Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
+  `while`, `for`, or `with` header (#5405)
+- Fix crash when formatting parenthesized expressions with multiple inline comments and
+  `# fmt: skip` (#5414)
+- Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
+  earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Keep the parentheses around the target of an annotated assignment (for example
   `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
@@ -48,6 +57,11 @@
   operator (#5272)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Preserve paired `# fmt: skip` comments on parenthesized compound statement headers
+  (#5401)
+- Fix inline comments being dropped on the lines produced by that forced split, so a
+  trailing `# comment` or `# type: ignore` on a bracket inside such a comprehension is
+  kept instead of silently removed (#5330)
 - Respect the magic trailing comma in a PEP 695 type parameter list containing a
   `*TypeVarTuple` or `**ParamSpec`, which previously collapsed back onto one line
   (#5244)
@@ -61,6 +75,10 @@
   `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
   contents: the whole statement is now preserved instead of being reformatted (and
   previously crashing) (#5161)
+- Fix an AST safety error when separate `type: ignore` comments in a parenthesized
+  attribute chain were merged onto one physical line (#5297)
+- Preserve comments and blank lines outside requested ranges when formatting with
+  `--line-ranges` (#5175)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
 
@@ -68,7 +86,14 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Remove redundant parentheses around generator expressions (#5304)
+- Split long stringified return annotations even when the function has parameters
+  (#5427)
+- Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
+  same-name decorated functions, such as `@overload`s or a property setter (#5430)
+- Remove redundant parentheses around individual variables in unpacking targets (for
+  example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
+- Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
+- Remove redundant parentheses around generator expressions (#5304, #5369)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
@@ -92,11 +117,16 @@
 - Don't hug brackets when doing so would join two `type: ignore` comments onto one line.
   The AST records `type: ignore` per line, so merging them dropped a `TypeIgnore` entry
   and Black failed its own equivalence check (#5271)
+- Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
+  string (#5329)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
+- Fall back to the default configuration, with a warning, when the given sources share
+  no common project root (for example, they are on different drives on Windows) instead
+  of crashing (#5386)
 - Fix `find_project_root` returning a stale cached result when `--code` is used from
   different working directories in the same process. The CWD fallback (used when no
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
@@ -195,6 +225,8 @@
 <!-- Changes to Black's terminal output and error messages -->
 
 - Report parser failures using editor-friendly `path:line:column` locations (#5237)
+- Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
+  attribute, such as in Jupyter notebooks (#5411)
 - A `# fmt: off` region that keeps a different indent width from the rest of the file
   can make Black's own output unparseable. That failure is now reported as an internal
   error naming Black, instead of as a syntax error pointing at the user's file (#5383)
@@ -203,9 +235,15 @@
 
 <!-- Changes to blackd -->
 
+- Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
+  empty entry, such as a trailing comma (#5428)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
+  Action (#5399)
 
 ### Documentation
 
@@ -214,6 +252,7 @@
 
 - Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
   insert-mode indentation (#5288)
+- Fix Git commands for Vundle in editor integration documentation (#5398)
 
 ## Version 26.5.1
 

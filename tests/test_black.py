@@ -141,7 +141,8 @@ def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
     Reindenting to 4 spaces stops at a ``# fmt: off`` region, so the result can
     mix indent widths and fail the forced second pass. That parse failure is
     Black's, but it used to surface as ``cannot parse: <user file>:<line>``,
-    which is what a genuine syntax error in the user's source looks like.
+    which is exactly what a genuine syntax error in the user's source looks
+    like.
     """
     source = tmp_path / "reindent.py"
     source.write_text(
@@ -154,7 +155,7 @@ def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
         "  qux = 4\n",
         encoding="utf8",
     )
-    # the file itself is valid Python; only Black's output is not
+    # the file itself is valid Python; only Black's own output is not
     ast.parse(source.read_text(encoding="utf8"))
 
     result = BlackRunner().invoke(
@@ -162,11 +163,13 @@ def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 123
-    assert "INTERNAL ERROR" in result.stderr
+    # the internal error must come first, so the parse location that follows is
+    # read as part of it rather than as a syntax error in the user's file
+    assert result.stderr.startswith("error: INTERNAL ERROR:")
     assert "produced invalid code" in result.stderr
     assert "https://github.com/psf/black/issues" in result.stderr
-    # must not read as a syntax error in the user's file
-    assert f"cannot parse: {source}:" not in result.stderr
+    # the parse location is kept, it points into Black's output
+    assert f"cannot parse: {source}:" in result.stderr
 
 
 def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
@@ -1508,6 +1511,73 @@ class BlackTestCase(BlackBaseTestCase):
                     output.getvalue() == expected
                 ), f"incorrect formatting of {repr(content)}"
 
+    def test_format_stdin_to_stdout_without_buffer(self) -> None:
+        # Text streams aren't required to expose `.buffer` (e.g. ipykernel's
+        # OutStream in Jupyter), see #2516.
+        src = "print ( 'hello' )"
+        for write_back, expected in (
+            (black.WriteBack.YES, 'print("hello")\n'),
+            (black.WriteBack.CHECK, ""),
+            (black.WriteBack.NO, ""),
+        ):
+            output = io.StringIO()
+            assert not hasattr(output, "buffer")
+            with patch("sys.stdout", output):
+                changed = black.format_stdin_to_stdout(
+                    fast=True, content=src, write_back=write_back, mode=DEFAULT_MODE
+                )
+            self.assertTrue(changed)
+            self.assertEqual(output.getvalue(), expected)
+            self.assertFalse(output.closed)
+
+        for write_back in (black.WriteBack.DIFF, black.WriteBack.COLOR_DIFF):
+            output = io.StringIO()
+            with patch("sys.stdout", output):
+                black.format_stdin_to_stdout(
+                    fast=True, content=src, write_back=write_back, mode=DEFAULT_MODE
+                )
+            actual = unstyle(output.getvalue())
+            self.assertIn("-print ( 'hello' )\n", actual)
+            self.assertIn('+print("hello")\n', actual)
+            self.assertFalse(output.closed)
+
+    def test_reformat_code_without_stdout_buffer(self) -> None:
+        output = io.StringIO()
+        report = MagicMock()
+        with patch("sys.stdout", output):
+            black.reformat_code(
+                "x = ( 1 )",
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+        self.assertEqual(output.getvalue(), "x = 1\n")
+        report.failed.assert_not_called()
+
+    def test_format_file_in_place_diff_without_stdout_buffer(self) -> None:
+        for nl in ("\n", "\r\n"):
+            with TemporaryDirectory() as workspace:
+                test_file = Path(workspace) / "test.py"
+                test_file.write_bytes(f"x = ( 1 ){nl}".encode())
+                output = io.StringIO(newline="")
+                with patch("sys.stdout", output):
+                    changed = black.format_file_in_place(
+                        test_file,
+                        fast=True,
+                        mode=DEFAULT_MODE,
+                        write_back=black.WriteBack.DIFF,
+                    )
+                self.assertTrue(changed)
+                actual = output.getvalue()
+                self.assertIn(f"-x = ( 1 ){nl}", actual)
+                self.assertIn(f"+x = 1{nl}", actual)
+                if nl == "\n":
+                    self.assertNotIn("\r\n", actual)
+                self.assertFalse(output.closed)
+                # The file itself is left untouched.
+                self.assertEqual(test_file.read_bytes(), f"x = ( 1 ){nl}".encode())
+
     def test_cli_unstable(self) -> None:
         self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
         self.invokeBlack(["--preview", "-c", "0"], exit_code=0)
@@ -1893,6 +1963,98 @@ class BlackTestCase(BlackBaseTestCase):
                 (src_dir.resolve(), "pyproject.toml"),
             )
 
+    @pytest.mark.incompatible_with_mypyc
+    def test_find_project_root_no_common_parent(self) -> None:
+        # Absolute vs relative paths share no parents on any platform. That is
+        # the same empty-intersection situation as C:\... and D:\... on Windows.
+        cases: list[tuple[str, ...]] = [("/work/app/a.py", "tmp/b.py")]
+        if sys.platform == "win32":
+            cases.append((r"C:\work\app\a.py", r"D:\tmp\b.py"))
+
+        for srcs in cases:
+            parents = [set(Path(src).parents) for src in srcs]
+            self.assertFalse(set.intersection(*parents))
+            with self.subTest(srcs=srcs):
+                self.assertEqual(
+                    black.files._find_project_root_cached(srcs), (None, None)
+                )
+
+        if sys.platform == "win32":
+            self.assertEqual(
+                black.find_project_root((r"C:\work\app\a.py", r"D:\tmp\b.py")),
+                (None, None),
+            )
+
+    @pytest.mark.incompatible_with_mypyc
+    @patch("black.files.find_user_pyproject_toml")
+    def test_find_pyproject_toml_no_common_parent(
+        self, find_user_pyproject_toml: MagicMock
+    ) -> None:
+        if system() != "Windows":
+            return
+
+        with TemporaryDirectory() as workspace:
+            user_config = Path(workspace) / "user-pyproject.toml"
+            user_config.write_text("[tool.black]", encoding="utf-8")
+            find_user_pyproject_toml.return_value = user_config
+
+            # Sources on different drives share no project root, so the
+            # project-level config is skipped and the user-level config
+            # applies, same as when the project root has no pyproject.toml.
+            result = black.files.find_pyproject_toml(
+                (r"C:\work\app\a.py", r"D:\tmp\b.py")
+            )
+            self.assertEqual(result, str(user_config))
+
+    @pytest.mark.incompatible_with_mypyc
+    @patch("black.files.find_user_pyproject_toml")
+    @patch("black.files.find_project_root")
+    @patch("black.find_project_root")
+    def test_no_common_parent_warns_and_formats(
+        self,
+        find_project_root: MagicMock,
+        files_find_project_root: MagicMock,
+        find_user_pyproject_toml: MagicMock,
+    ) -> None:
+        find_project_root.return_value = (None, None)
+        files_find_project_root.return_value = (None, None)
+        find_user_pyproject_toml.return_value = Path("does-not-exist")
+
+        runner = BlackRunner()
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            project1 = root / "project1"
+            project2 = root / "project2"
+            project1.mkdir()
+            project2.mkdir()
+            (project1 / "a.py").write_text("x=1\n", encoding="utf-8")
+            (project2 / "b.py").write_text("y=2\n", encoding="utf-8")
+
+            def invoke(args: list[str]) -> tuple[int, str]:
+                for path in (project1 / "a.py", project2 / "b.py"):
+                    path.write_text("x=1\n", encoding="utf-8")
+                result = runner.invoke(
+                    black.main,
+                    [str(project1), str(project2), *args],
+                    catch_exceptions=False,
+                )
+                return result.exit_code, result.output
+
+            exit_code, output = invoke([])
+            assert exit_code == 0, output
+            assert "No project root could be identified" in output
+            assert "reformatted" in output
+            assert "a.py" in output and "b.py" in output
+
+            exit_code, output = invoke(["--quiet"])
+            assert exit_code == 0, output
+            assert "No project root could be identified" not in output
+
+            exit_code, output = invoke(["--config", str(THIS_DIR / "empty.toml")])
+            assert exit_code == 0, output
+            assert "No project root could be identified" not in output
+            assert "reformatted" in output
+
     @patch(
         "black.files.find_user_pyproject_toml",
     )
@@ -2203,6 +2365,33 @@ class BlackTestCase(BlackBaseTestCase):
                 print  ( "OK" )
             """)
             assert expected == formatted
+
+    def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
+        # This regression stays inline because it requires literal trailing spaces,
+        # which would fail `git diff --check` in a data case file.
+        source = (
+            "   #  format whitespace   \n"
+            'print( "format me" )   \n'
+            "      \n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        expected = (
+            "#  format whitespace\n"
+            'print("format me")\n'
+            "\n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
 
     def test_line_ranges_with_multiple_sources(self) -> None:
         with TemporaryDirectory() as workspace:
@@ -2679,6 +2868,20 @@ class TestCaching:
             assert len(set(keys)) == len(modes)
 
 
+def symlink_or_skip(link: Path, target: Path | str) -> None:
+    """Create a symlink, or skip the test where the platform forbids one.
+
+    Windows refuses symlink creation unless the process is elevated or
+    Developer Mode is enabled, so these tests cannot run for an ordinary
+    Windows contributor. Same treatment as test_broken_symlink, which has
+    guarded this since GH #287.
+    """
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"Can't create symlinks: {e}")
+
+
 def assert_collected_sources(
     src: Sequence[str | Path],
     expected: Sequence[str | Path],
@@ -3074,7 +3277,7 @@ class TestFileCollection:
             actual = tmp / "actual"
             actual.mkdir()
             symlink = tmp / "symlink"
-            symlink.symlink_to(actual)
+            symlink_or_skip(symlink, actual)
 
             actual_proj = actual / "project"
             actual_proj.mkdir()
@@ -3098,7 +3301,7 @@ class TestFileCollection:
 
                 # a few tricky tests for force_exclude
                 flat_symlink = symlink_proj / "symlink_module.py"
-                flat_symlink.symlink_to(actual_proj / "module.py")
+                symlink_or_skip(flat_symlink, actual_proj / "module.py")
                 assert_collected_sources(
                     src=[flat_symlink],
                     root=symlink_proj.resolve(),
@@ -3109,7 +3312,7 @@ class TestFileCollection:
                 target = actual_proj / "target"
                 target.mkdir()
                 (target / "another.py").write_text("print('hello')", encoding="utf-8")
-                (symlink_proj / "nested").symlink_to(target)
+                symlink_or_skip(symlink_proj / "nested", target)
 
                 assert_collected_sources(
                     src=[symlink_proj / "nested" / "another.py"],
@@ -3137,7 +3340,7 @@ class TestFileCollection:
             target = tmp / "outside_root" / "a.py"
             target.parent.mkdir()
             target.write_text("print('hello')", encoding="utf-8")
-            (root / "a.py").symlink_to(target)
+            symlink_or_skip(root / "a.py", target)
 
             stdin_filename = str(root / "a.py")
             assert_collected_sources(
@@ -3223,7 +3426,7 @@ class TestFileCollection:
             tmp = Path(tempdir).resolve()
             (tmp / "exclude").mkdir()
             (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
-            (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
+            symlink_or_skip(tmp / "symlink.py", tmp / "exclude" / "a.py")
 
             stdin_filename = str(tmp / "symlink.py")
             expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]

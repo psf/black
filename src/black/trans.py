@@ -1972,6 +1972,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         * The line is a return/yield statement, which returns/yields a string.
           OR
+        * The line is a function definition with a stringified return annotation.
+          OR
         * The line is part of a ternary expression (e.g. `x = y if cond else
           z`) such that the line starts with `else <string>`, where <string> is
           some string.
@@ -2030,6 +2032,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         string_idx = (
             self._return_match(LL)
+            or self._return_annotation_match(LL)
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
@@ -2085,6 +2088,33 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             # The next visible leaf MUST contain a string...
             if is_valid_index(idx) and LL[idx].type == token.STRING:
                 return idx
+
+        return None
+
+    @staticmethod
+    def _return_annotation_match(LL: list[Leaf]) -> int | None:
+        """Return the string index for a stringified return annotation."""
+        is_valid_index = is_valid_index_factory(LL)
+
+        for i, leaf in enumerate(LL):
+            if leaf.type != token.RARROW:
+                continue
+
+            string_idx = (
+                i + 2 if is_valid_index(i + 1) and is_empty_lpar(LL[i + 1]) else i + 1
+            )
+            if not is_valid_index(string_idx) or LL[string_idx].type != token.STRING:
+                return None
+
+            idx = StringParser().parse(LL, string_idx)
+            if (
+                is_valid_index(idx)
+                and LL[idx].type == token.COLON
+                and idx == len(LL) - 1
+            ):
+                return string_idx
+
+            return None
 
         return None
 
@@ -2279,6 +2309,13 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         ends_with_comma = False
         if LL[comma_idx].type == token.COMMA:
             ends_with_comma = True
+        return_annotation_arrow_idx = (
+            string_idx - 2 if is_empty_lpar(LL[string_idx - 1]) else string_idx - 1
+        )
+        ends_with_return_annotation = (
+            LL[return_annotation_arrow_idx].type == token.RARROW
+            and LL[-1].type == token.COLON
+        )
 
         leaves_to_steal_comments_from = [LL[string_idx]]
         if ends_with_comma:
@@ -2335,6 +2372,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             right_leaves = LL[string_idx + 1 :]
             if ends_with_comma:
                 right_leaves.pop()
+            if ends_with_return_annotation:
+                right_leaves.pop()
 
             if old_parens_exist:
                 assert right_leaves and right_leaves[-1].type == token.RPAR, (
@@ -2382,6 +2421,12 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             comma_leaf = Leaf(token.COMMA, ",")
             replace_child(LL[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
+        if ends_with_return_annotation:
+            append_leaves(last_line, line, [LL[-1]])
+
+        if old_rpar_leaf is not None:
+            for comment_leaf in line.comments_after(old_rpar_leaf):
+                last_line.append(comment_leaf, preformatted=True)
 
         yield Ok(last_line)
 

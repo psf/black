@@ -313,6 +313,18 @@ class Line:
 
         return False
 
+    def contains_multiple_type_ignores_at_current_depth(self) -> bool:
+        count = 0
+        for leaf in self.leaves:
+            if leaf.bracket_depth != 0:
+                continue
+            for comment in self.comments_after(leaf):
+                if is_type_ignore_comment(comment, mode=self.mode):
+                    count += 1
+                    if count > 1:
+                        return True
+        return False
+
     def contains_unsplittable_type_ignore(self) -> bool:
         if not self.leaves:
             return False
@@ -417,16 +429,15 @@ class Line:
             and last_leaf.parent
             and len(list(last_leaf.parent.leaves())) <= 3
             and not is_type_comment(comment, mode=self.mode)
+            and not self.contains_standalone_comments()
         ):
             # Comments on an optional parens wrapping a single leaf should belong to
             # the wrapped node except if it's a type comment. Pinning the comment like
-            # this avoids unstable formatting caused by comment migration.
-            if len(self.leaves) < 2:
-                comment.type = STANDALONE_COMMENT
-                comment.prefix = ""
-                return False
-
-            last_leaf = self.leaves[-2]
+            # this avoids unstable formatting caused by comment migration. If the
+            # parens contain standalone comments they are going to stay visible, so
+            # the comment belongs to the closing paren, as it was written.
+            if len(self.leaves) >= 2:
+                last_leaf = self.leaves[-2]
         self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
 
@@ -605,6 +616,10 @@ class EmptyLineTracker:
         if not isinstance(funcdef, Node) or funcdef.type != syms.funcdef:
             return None
         # Grammar: funcdef = 'def' NAME parameters ':' ...
+        # `# fmt: skip` turns the leaves of a one-line definition into a
+        # STANDALONE_COMMENT, so there may be no name left to read.
+        if len(funcdef.children) < 2 or funcdef.children[1].type != token.NAME:
+            return None
         name_node = funcdef.children[1]
         assert isinstance(name_node, Leaf)
         return name_node.value
@@ -844,7 +859,7 @@ class EmptyLineTracker:
         if suite is None or not isinstance(suite, Node):
             return False
         if_stmt = suite.parent
-        if if_stmt is None or not isinstance(if_stmt, Node):
+        if if_stmt is None:
             return False
 
         # Check if the if_stmt's next sibling is a same-name decorated function.
@@ -1014,7 +1029,7 @@ class EmptyLineTracker:
             # The blank lines that terminate a `# fmt: off` region live in the
             # prefix of the `# fmt: on` comment, not in the verbatim block, so
             # capping them here would edit formatting that was opted out of.
-            if not (
+            if not current_line.is_fmt_pass_converted() and not (
                 first_leaf.type == STANDALONE_COMMENT
                 and contains_fmt_directive(first_leaf.value, FMT_ON)
                 and self.previous_line is not None
@@ -1532,6 +1547,15 @@ def can_omit_invisible_parens(
     are too long.
     """
     line = rhs.body
+
+    # Multiple type ignores must stay on separate physical lines. Keeping the
+    # optional parens gives the line transformer a safe place to split them.
+    if (
+        line.contains_multiple_type_ignores_at_current_depth()
+        and not line.bracket_tracker.delimiters
+        and any(leaf.type == token.DOT for leaf in line.leaves)
+    ):
+        return False
 
     # Don't omit optional parens when the opening paren carries an inline comment.
     # Omitting them re-parents the comment onto a different leaf after the next
