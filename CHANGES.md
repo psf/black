@@ -244,6 +244,7 @@
 
 - Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
   insert-mode indentation (#5288)
+- Fix Git commands for Vundle in editor integration documentation (#5398)
 
 ## Version 26.5.1
 
