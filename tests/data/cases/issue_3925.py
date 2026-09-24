@@ -1,30 +1,20 @@
-# flags: --preview
+# flags: --preview --line-length=24
 
-if True:
-    if True:
-        if True:
-            abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr = (
-                abcdefghijklmnopqrstuvwxyzabcd
-                | (
-                    # Blablablablablablablablablablablablablablablablablablabl
-                    # blablablablablablablablablablablablablablablablabla - (
-                    abcdefghijk - (
-                        abcdefghijklmnopqrstuvwxyzabcd
-                        | abcdefghijklmnopqrstuvwxyza
-                    )
-                )
-            )
+abcdefghij = (
+    abcdefgh
+    + (
+        # comment
+        abcdefghijkl
+        + abcdefghijkl
+    )
+)
 
 # output
-if True:
-    if True:
-        if True:
-            abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr = (
-                abcdefghijklmnopqrstuvwxyzabcd
-                | (
-                    # Blablablablablablablablablablablablablablablablablablabl
-                    # blablablablablablablablablablablablablablablablabla - (
-                    abcdefghijk
-                    - (abcdefghijklmnopqrstuvwxyzabcd | abcdefghijklmnopqrstuvwxyza)
-                )
-            )
+abcdefghij = (
+    abcdefgh
+    + (
+        # comment
+        abcdefghijkl
+        + abcdefghijkl
+    )
+)

@@ -1229,10 +1229,18 @@ def _prefer_split_rhs_oop_over_rhs(
     Returns whether we should prefer the result from a split omitting optional parens
     (rhs_oop) over the original (rhs).
     """
+    # contains unsplittable type ignore
+    if (
+        rhs_oop.head.contains_unsplittable_type_ignore()
+        or rhs_oop.body.contains_unsplittable_type_ignore()
+        or rhs_oop.tail.contains_unsplittable_type_ignore()
+    ):
+        return True
+
     # Do not join an overlong assignment prefix to a binary expression that starts a
     # parenthesized, commented RHS. This can happen when standalone comments force a
     # nested split to be considered after the first RHS expression (#3925).
-    if Preview.wrap_long_rhs_with_standalone_comments in mode and (
+    if Preview.wrap_commented_rhs in mode and (
         # Keep this limited to a parenthesized assignment RHS. Applying it to other
         # commented expressions changes established preview formatting.
         len(rhs.head.leaves) >= 2
@@ -1250,14 +1258,6 @@ def _prefer_split_rhs_oop_over_rhs(
         and not is_line_short_enough(rhs_oop.head, mode=mode)
     ):
         return False
-
-    # contains unsplittable type ignore
-    if (
-        rhs_oop.head.contains_unsplittable_type_ignore()
-        or rhs_oop.body.contains_unsplittable_type_ignore()
-        or rhs_oop.tail.contains_unsplittable_type_ignore()
-    ):
-        return True
 
     # Retain optional parens around dictionary values
     if (

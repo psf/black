@@ -97,7 +97,7 @@
           "remove_redundant_generator_parentheses",
           "normalize_tstring_prefix",
           "remove_redundant_unpacking_parentheses",
-          "wrap_long_rhs_with_standalone_comments"
+          "wrap_commented_rhs"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
