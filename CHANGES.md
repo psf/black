@@ -10,6 +10,9 @@
   --target-version flag (#5167)
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
+- Fix negated `.gitignore` patterns with a trailing slash (e.g. `!*/`) not re-including
+  directories matched by an earlier pattern (e.g. `*`), which made Black skip files that
+  Git tracks (#5306)
 
 ### Highlights
 
