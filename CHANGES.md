@@ -124,6 +124,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fall back to the default configuration, with a warning, when the given sources share
+  no common project root (for example, they are on different drives on Windows) instead
+  of crashing (#5386)
 - Fix `find_project_root` returning a stale cached result when `--code` is used from
   different working directories in the same process. The CWD fallback (used when no
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
