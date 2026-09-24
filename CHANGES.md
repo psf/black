@@ -227,6 +227,9 @@
 - Report parser failures using editor-friendly `path:line:column` locations (#5237)
 - Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
   attribute, such as in Jupyter notebooks (#5411)
+- A `# fmt: off` region that keeps a different indent width from the rest of the file
+  can make Black's own output unparseable. That failure is now reported as an internal
+  error naming Black, instead of as a syntax error pointing at the user's file (#5383)
 
 ### _Blackd_
 

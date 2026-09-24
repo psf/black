@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ast
 import asyncio
 import inspect
 import io
@@ -132,6 +133,43 @@ def invokeBlack(
         f"exception: {result.exception}"
     )
     assert result.exit_code == exit_code, msg
+
+
+def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
+    """Black must own the error when its own output fails to parse.
+
+    Reindenting to 4 spaces stops at a ``# fmt: off`` region, so the result can
+    mix indent widths and fail the forced second pass. That parse failure is
+    Black's, but it used to surface as ``cannot parse: <user file>:<line>``,
+    which is exactly what a genuine syntax error in the user's source looks
+    like.
+    """
+    source = tmp_path / "reindent.py"
+    source.write_text(
+        'if __name__ == "__main__":\n'
+        "  foo = 3\n"
+        "  # fmt: off\n"
+        "  bar = 1\n"
+        "  baz  =  2\n"
+        "  # fmt: on\n"
+        "  qux = 4\n",
+        encoding="utf8",
+    )
+    # the file itself is valid Python; only Black's own output is not
+    ast.parse(source.read_text(encoding="utf8"))
+
+    result = BlackRunner().invoke(
+        black.main, ["--config", str(THIS_DIR / "empty.toml"), str(source)]
+    )
+
+    assert result.exit_code == 123
+    # the internal error must come first, so the parse location that follows is
+    # read as part of it rather than as a syntax error in the user's file
+    assert result.stderr.startswith("error: INTERNAL ERROR:")
+    assert "produced invalid code" in result.stderr
+    assert "https://github.com/psf/black/issues" in result.stderr
+    # the parse location is kept, it points into Black's output
+    assert f"cannot parse: {source}:" in result.stderr
 
 
 def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
