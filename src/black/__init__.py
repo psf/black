@@ -26,8 +26,9 @@ from mypy_extensions import mypyc_attr
 from pathspec import GitIgnoreSpec
 from pathspec.patterns.gitignore import GitIgnorePatternError
 
+import black.cache as cache_module
 from _black_version import version as __version__
-from black.cache import Cache
+from black.cache import Cache, get_cache_dir
 from black.comments import normalize_fmt_off
 from black.const import (
     DEFAULT_EXCLUDES,
@@ -78,6 +79,7 @@ from black.ranges import (
     sanitized_lines,
 )
 from black.report import Changed, NothingChanged, Report
+from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
@@ -543,6 +545,11 @@ def validate_regex(
     help="Read configuration options from a configuration file.",
 )
 @click.option(
+    "--cache-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Store the cache in this directory. Takes precedence over BLACK_CACHE_DIR.",
+)
+@click.option(
     "--no-cache",
     is_flag=True,
     help=(
@@ -581,6 +588,7 @@ def main(
     workers: int | None,
     src: tuple[str, ...],
     config: str | None,
+    cache_dir: Path | None,
     no_cache: bool,
 ) -> None:
     """The uncompromising code formatter."""
@@ -675,6 +683,15 @@ def main(
         ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
+    cache_dir = (
+        cache_module.CACHE_DIR if cache_dir is None else get_cache_dir(cache_dir)
+    )
+    if not no_cache:
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            pass
+        pygram.initialize(cache_dir)
     if target_version:
         versions = set(target_version)
     else:
@@ -763,6 +780,7 @@ def main(
                 report=report,
                 lines=lines,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
         else:
             from black.concurrency import reformat_many
@@ -778,6 +796,7 @@ def main(
                 report=report,
                 workers=workers,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
 
     if verbose or not quiet:
@@ -939,6 +958,7 @@ def reformat_one(
     *,
     lines: Collection[tuple[int, int]] = (),
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -968,7 +988,7 @@ def reformat_one(
             ):
                 changed = Changed.YES
         else:
-            cache = None if no_cache else Cache.read(mode)
+            cache = None if no_cache else Cache.read(mode, cache_dir)
             if cache is not None and write_back not in (
                 WriteBack.DIFF,
                 WriteBack.COLOR_DIFF,

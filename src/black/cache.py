@@ -28,19 +28,20 @@ class FileData(NamedTuple):
     hash: str
 
 
-def get_cache_dir() -> Path:
+def get_cache_dir(cache_dir: Path | None = None) -> Path:
     """Get the cache directory used by black.
 
-    Users can customize this directory on all systems using `BLACK_CACHE_DIR`
-    environment variable. By default, the cache directory is the user cache directory
-    under the black application.
+    Users can customize this directory directly or, on all systems, using the
+    `BLACK_CACHE_DIR` environment variable. By default, the cache directory is the
+    user cache directory under the black application.
 
     This result is immediately set to a constant `black.cache.CACHE_DIR` as to avoid
     repeated calls.
     """
     # NOTE: Function mostly exists as a clean way to test getting the cache directory.
     default_cache_dir = user_cache_dir("black")
-    cache_dir = Path(os.environ.get("BLACK_CACHE_DIR", default_cache_dir))
+    if cache_dir is None:
+        cache_dir = Path(os.environ.get("BLACK_CACHE_DIR", default_cache_dir))
     cache_dir = cache_dir / __version__
     return cache_dir
 
@@ -48,8 +49,8 @@ def get_cache_dir() -> Path:
 CACHE_DIR = get_cache_dir()
 
 
-def get_cache_file(mode: Mode) -> Path:
-    return CACHE_DIR / f"cache.{mode.get_cache_key()}.pickle"
+def get_cache_file(mode: Mode, cache_dir: Path | None = None) -> Path:
+    return (cache_dir or CACHE_DIR) / f"cache.{mode.get_cache_key()}.pickle"
 
 
 @dataclass
@@ -59,13 +60,13 @@ class Cache:
     file_data: dict[str, FileData] = field(default_factory=dict)
 
     @classmethod
-    def read(cls, mode: Mode) -> Self:
+    def read(cls, mode: Mode, cache_dir: Path | None = None) -> Self:
         """Read the cache if it exists and is well-formed.
 
         If it is not well-formed, the call to write later should
         resolve the issue.
         """
-        cache_file = get_cache_file(mode)
+        cache_file = get_cache_file(mode, cache_dir)
         try:
             exists = cache_file.exists()
         except OSError as e:
@@ -142,7 +143,7 @@ class Cache:
             **{str(src.resolve()): Cache.get_file_data(src) for src in sources}
         )
         try:
-            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
             with tempfile.NamedTemporaryFile(
                 dir=str(self.cache_file.parent), delete=False
             ) as f:
