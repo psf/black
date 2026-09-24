@@ -575,6 +575,8 @@ s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:
 some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt ut labore")
 some_function_name(lambda: r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt ut labore")
 value = some_value if condition else r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt"
+# If the first string already fits, split at the concatenation without parens.
+some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod " r"tempor incididunt")
 
 
 # output
@@ -1296,4 +1298,9 @@ value = (
         r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor"
         r" incididunt"
     )
+)
+# If the first string already fits, split at the concatenation without parens.
+some_function_name(
+    argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
+    r"tempor incididunt"
 )
