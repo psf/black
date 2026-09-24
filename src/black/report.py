@@ -120,3 +120,18 @@ class Report:
                 style_output(f"{self.failure_count} file{s} {failed}", fg="red")
             )
         return ", ".join(report) + "."
+
+    def write_github_outputs(self, output: Path) -> None:
+        is_formatted = "true" if self.change_count > 0 else "false"
+        _outputs = {
+            "is_formatted": is_formatted,
+            "change_count": str(self.change_count),
+            "same_count": str(self.same_count),
+            "failure_count": str(self.failure_count),
+        }
+        try:
+            with output.open("a", encoding="utf-8") as f:
+                for k, v in _outputs.items():
+                    f.write(f"{k}={v}\n")
+        except OSError:
+            pass

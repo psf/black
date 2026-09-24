@@ -226,6 +226,8 @@
 
 - Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
   Action (#5399)
+- Add outputs (`is_formatted`, `change_count`, `same_count`, `failure_count`) to GitHub
+  Action runs (#5408)
 
 ### Documentation
 
