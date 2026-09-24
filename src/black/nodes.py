@@ -642,6 +642,16 @@ def is_tuple(node: LN) -> bool:
     return True
 
 
+def is_list(node: LN) -> bool:
+    """Return True if `node` holds a list or list comprehension."""
+    return (
+        node.type == syms.atom
+        and len(node.children) >= 2
+        and node.children[0].type == token.LSQB
+        and node.children[-1].type == token.RSQB
+    )
+
+
 def is_tuple_containing_walrus(node: LN) -> bool:
     """Return True if `node` holds a tuple that contains a walrus operator."""
     if node.type != syms.atom:
