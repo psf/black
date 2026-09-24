@@ -433,10 +433,9 @@ def _remove_preceding_newline_for_comment(result: str) -> str:
         return result
 
     newline_before_comment = result.rfind("\n", 0, comment_start)
-    if (
-        newline_before_comment >= 0
-        and result[newline_before_comment + 1 :].lstrip().startswith("#")
-    ):
+    if newline_before_comment >= 0 and result[
+        newline_before_comment + 1 :
+    ].lstrip().startswith("#"):
         return result[:newline_before_comment] + result[newline_before_comment + 1 :]
     return result
 
