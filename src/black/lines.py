@@ -604,6 +604,10 @@ class EmptyLineTracker:
         if not isinstance(funcdef, Node) or funcdef.type != syms.funcdef:
             return None
         # Grammar: funcdef = 'def' NAME parameters ':' ...
+        # `# fmt: skip` turns the leaves of a one-line definition into a
+        # STANDALONE_COMMENT, so there may be no name left to read.
+        if len(funcdef.children) < 2 or funcdef.children[1].type != token.NAME:
+            return None
         name_node = funcdef.children[1]
         assert isinstance(name_node, Leaf)
         return name_node.value
