@@ -54,6 +54,7 @@ from black.nodes import (
     is_docstring,
     is_empty_tuple,
     is_generator,
+    is_list,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -606,6 +607,17 @@ class LineGenerator(Visitor[Line]):
         if (
             Preview.remove_redundant_generator_parentheses in self.mode
             and _has_redundant_generator_parentheses(node)
+        ):
+            maybe_make_parens_invisible_in_atom(
+                node,
+                parent=node.parent or node,
+                mode=self.mode,
+                features=self.features,
+            )
+
+        if (
+            Preview.remove_redundant_list_parentheses in self.mode
+            and _has_redundant_list_parentheses(node)
         ):
             maybe_make_parens_invisible_in_atom(
                 node,
@@ -1677,6 +1689,20 @@ def _has_redundant_generator_parentheses(node: LN) -> bool:
 
     middle = node.children[1]
     return is_generator(middle) or _has_redundant_generator_parentheses(middle)
+
+
+def _has_redundant_list_parentheses(node: LN) -> bool:
+    """Whether `node` adds parentheses around a list."""
+    if (
+        node.type != syms.atom
+        or len(node.children) != 3
+        or not is_lpar_token(node.children[0])
+        or not is_rpar_token(node.children[-1])
+    ):
+        return False
+
+    middle = node.children[1]
+    return is_list(middle) or _has_redundant_list_parentheses(middle)
 
 
 def normalize_invisible_parens(
