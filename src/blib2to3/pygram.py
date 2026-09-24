@@ -167,7 +167,9 @@ python_symbols: _python_symbols
 pattern_symbols: _pattern_symbols
 
 
-def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
+def initialize(
+    cache_dir: Union[str, "os.PathLike[str]", None] = None, *, save: bool = True
+) -> None:
     global python_grammar
     global python_grammar_async_keywords
     global python_grammar_soft_keywords
@@ -181,7 +183,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
         os.path.dirname(__file__), "PatternGrammar.txt"
     )
 
-    python_grammar = driver.load_packaged_grammar(_GRAMMAR_FILE, cache_dir)
+    python_grammar = driver.load_packaged_grammar(_GRAMMAR_FILE, cache_dir, save=save)
     assert "print" not in python_grammar.keywords
     assert "exec" not in python_grammar.keywords
 
@@ -203,5 +205,7 @@ def initialize(cache_dir: Union[str, "os.PathLike[str]", None] = None) -> None:
     python_grammar_soft_keywords.soft_keywords = soft_keywords
     python_grammar_soft_keywords.version = (3, 10)
 
-    pattern_grammar = driver.load_packaged_grammar(_PATTERN_GRAMMAR_FILE, cache_dir)
+    pattern_grammar = driver.load_packaged_grammar(
+        _PATTERN_GRAMMAR_FILE, cache_dir, save=save
+    )
     pattern_symbols = _pattern_symbols(pattern_grammar)

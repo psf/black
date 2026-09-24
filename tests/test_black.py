@@ -9,6 +9,7 @@ import multiprocessing
 import os
 import pickle
 import re
+import subprocess
 import sys
 import textwrap
 import types
@@ -2496,6 +2497,81 @@ class TestCaching:
         # If it is set, use the path provided in the env var.
         monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
         assert get_cache_dir().parent == workspace2
+
+        # An explicit directory takes precedence over BLACK_CACHE_DIR.
+        workspace3 = tmp_path / "ws3"
+        assert get_cache_dir(workspace3).parent == workspace3
+
+    @pytest.mark.parametrize("multiple_files", [False, True])
+    def test_cache_dir_option(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        multiple_files: bool,
+    ) -> None:
+        env_cache_dir = tmp_path / "env-cache"
+        cli_cache_dir = tmp_path / "cli-cache"
+        source_dir = tmp_path / "src"
+        source_dir.mkdir()
+        sources = [source_dir / "one.py"]
+        if multiple_files:
+            sources.append(source_dir / "two.py")
+        for source in sources:
+            source.write_text("print('hello')", encoding="utf-8")
+
+        monkeypatch.setenv("BLACK_CACHE_DIR", str(env_cache_dir))
+        target = source_dir if multiple_files else sources[0]
+        with patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor):
+            invokeBlack([str(target), "--cache-dir", str(cli_cache_dir)])
+
+        cli_cache_file = get_cache_file(DEFAULT_MODE, get_cache_dir(cli_cache_dir))
+        env_cache_file = get_cache_file(DEFAULT_MODE, get_cache_dir())
+        assert cli_cache_file.exists()
+        assert any(cli_cache_file.parent.glob("Grammar*.pickle"))
+        assert any(cli_cache_file.parent.glob("PatternGrammar*.pickle"))
+        assert not env_cache_file.exists()
+
+    def test_cache_dir_option_does_not_write_grammar_cache_to_env(
+        self, tmp_path: Path
+    ) -> None:
+        env_cache_dir = tmp_path / "env-cache"
+        cli_cache_dir = tmp_path / "cli-cache"
+        env_version_dir = get_cache_dir(env_cache_dir)
+        env_version_dir.mkdir(parents=True)
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+        env = os.environ.copy()
+        env["BLACK_CACHE_DIR"] = str(env_cache_dir)
+
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "black",
+                str(source),
+                "--cache-dir",
+                str(cli_cache_dir),
+            ],
+            env=env,
+            check=True,
+            capture_output=True,
+        )
+
+        assert not list(env_version_dir.glob("*Grammar*.pickle"))
+        cli_version_dir = get_cache_dir(cli_cache_dir)
+        assert any(cli_version_dir.glob("Grammar*.pickle"))
+        assert any(cli_version_dir.glob("PatternGrammar*.pickle"))
+
+    def test_cache_dir_option_with_no_cache_does_not_create_directory(
+        self, tmp_path: Path
+    ) -> None:
+        cli_cache_dir = tmp_path / "cli-cache"
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+
+        invokeBlack([str(source), "--cache-dir", str(cli_cache_dir), "--no-cache"])
+
+        assert not cli_cache_dir.exists()
 
     def test_cache_file_length(self) -> None:
         cases = [
