@@ -302,6 +302,8 @@ def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersi
         for version in value.split(","):
             if version.startswith("py"):
                 version = version[len("py") :]
+            if not version:
+                raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'")
             if "." in version:
                 major_str, *rest = version.split(".")
             else:

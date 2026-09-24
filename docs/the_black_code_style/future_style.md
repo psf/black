@@ -49,6 +49,30 @@ Currently, the following features are included in the preview style:
   definition starts inside a `# fmt: off` block after an import.
 - `remove_redundant_generator_parentheses`: Remove redundant parentheses around
   generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
+- `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
+  individual variables in unpacking targets.
+  ([see below](labels/remove-redundant-unpacking-parentheses))
+
+(labels/remove-redundant-unpacking-parentheses)=
+
+### Redundant unpacking parentheses
+
+Black removes extra parentheses around individual variables in unpacking targets, such
+as in assignments, `for` loops, `with` statements, and `del` statements:
+
+```python
+# Before
+for (x), (y) in points:
+    pass
+
+(x), (y) = point
+
+# After (with --preview)
+for x, y in points:
+    pass
+
+x, y = point
+```
 
 (labels/remove-redundant-generator-parentheses)=
 

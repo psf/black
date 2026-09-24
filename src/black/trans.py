@@ -2424,6 +2424,10 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         if ends_with_return_annotation:
             append_leaves(last_line, line, [LL[-1]])
 
+        if old_rpar_leaf is not None:
+            for comment_leaf in line.comments_after(old_rpar_leaf):
+                last_line.append(comment_leaf, preformatted=True)
+
         yield Ok(last_line)
 
 

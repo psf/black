@@ -19,6 +19,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an inline comment after the closing bracket of optional parentheses being moved
+  inside the brackets when the parenthesized expression contains own-line comments
+  (#5395)
 - Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
   `while`, `for`, or `with` header (#5405)
 - Fix crash when formatting parenthesized expressions with multiple inline comments and
@@ -81,8 +84,10 @@
 
 - Split long stringified return annotations even when the function has parameters
   (#5427)
+- Remove redundant parentheses around individual variables in unpacking targets (for
+  example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
 - Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
-- Remove redundant parentheses around generator expressions (#5304)
+- Remove redundant parentheses around generator expressions (#5304, #5369)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
 - Fix unnecessary parentheses around short RHS expressions in indexed assignments like
@@ -106,6 +111,8 @@
 - Don't hug brackets when doing so would join two `type: ignore` comments onto one line.
   The AST records `type: ignore` per line, so merging them dropped a `TypeIgnore` entry
   and Black failed its own equivalence check (#5271)
+- Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
+  string (#5329)
 
 ### Configuration
 
@@ -216,9 +223,15 @@
 
 <!-- Changes to blackd -->
 
+- Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
+  empty entry, such as a trailing comma (#5428)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
+  Action (#5399)
 
 ### Documentation
 

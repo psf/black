@@ -417,16 +417,15 @@ class Line:
             and last_leaf.parent
             and len(list(last_leaf.parent.leaves())) <= 3
             and not is_type_comment(comment, mode=self.mode)
+            and not self.contains_standalone_comments()
         ):
             # Comments on an optional parens wrapping a single leaf should belong to
             # the wrapped node except if it's a type comment. Pinning the comment like
-            # this avoids unstable formatting caused by comment migration.
-            if len(self.leaves) < 2:
-                comment.type = STANDALONE_COMMENT
-                comment.prefix = ""
-                return False
-
-            last_leaf = self.leaves[-2]
+            # this avoids unstable formatting caused by comment migration. If the
+            # parens contain standalone comments they are going to stay visible, so
+            # the comment belongs to the closing paren, as it was written.
+            if len(self.leaves) >= 2:
+                last_leaf = self.leaves[-2]
         self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
 

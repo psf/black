@@ -93,6 +93,10 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("3.0")
         await check("pypy3.0")
         await check("jython3.4")
+        await check("")
+        await check("py")
+        await check("3.6,")
+        await check("py3.6,,py3.7")
 
     async def test_blackd_pyi(self) -> None:
         source, expected = read_data("cases", "stub.py")
