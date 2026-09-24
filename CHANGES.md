@@ -57,6 +57,8 @@
   operator (#5272)
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
+- Preserve paired `# fmt: skip` comments on parenthesized compound statement headers
+  (#5401)
 - Fix inline comments being dropped on the lines produced by that forced split, so a
   trailing `# comment` or `# type: ignore` on a bracket inside such a comprehension is
   kept instead of silently removed (#5330)
