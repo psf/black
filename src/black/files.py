@@ -210,15 +210,32 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
     for s in specifier_set:
         if "*" in str(s):
             specifiers.append(s)
-        elif s.operator in ["~=", "==", ">=", "==="]:
+        elif s.operator in ["==", ">=", "==="]:
             version = Version(s.version)
             stripped = Specifier(f"{s.operator}{version.major}.{version.minor}")
             specifiers.append(stripped)
         elif s.operator == ">":
             version = Version(s.version)
-            if len(version.release) > 2:
+            # Per PEP 440, `>3.7` is equivalent to `>3.7.0`, so it should include
+            # any `3.7.x` (e.g. `3.7.0`). A stripped `major.minor` form therefore
+            # needs the inclusive `>=` operator whenever a minor version is present.
+            if len(version.release) >= 2:
                 s = Specifier(f">={version.major}.{version.minor}")
             specifiers.append(s)
+        elif s.operator == "~=":
+            version = Version(s.version)
+            stripped = (
+                Specifier(f"~={version.major}.{version.minor}.0")
+                if len(version.release) > 2
+                else Specifier(f"~={version.major}.{version.minor}")
+            )
+            specifiers.append(stripped)
+        elif s.operator == "!=":
+            # `!=` only ignores a specific patch release unless used with `.*`, which
+            # is passed through above.
+            version = Version(s.version)
+            stripped = Specifier(f"!={version.major}.{version.minor}.1")
+            specifiers.append(stripped)
         else:
             specifiers.append(s)
 
