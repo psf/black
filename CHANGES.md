@@ -147,6 +147,7 @@
 
 - Fix `--force-exclude` not excluding files whose path contains `..`, such as
   `black ../generated/file.py` run from a subdirectory (#5471)
+- Add `--cache-dir` to configure the cache directory from the command line (#5433)
 - Fall back to the default configuration, with a warning, when the given sources share
   no common project root (for example, they are on different drives on Windows) instead
   of crashing (#5386)
