@@ -508,16 +508,13 @@ def _handle_regular_fmt_block(
                         return str(n)
                     else:
                         # For nested nodes, recursively process children
+                        children = n.children
+                        next_children = [*children[1:], None]
                         return "".join(
-                            stringify_node(
-                                child,
-                                (
-                                    n.children[index + 1]
-                                    if index + 1 < len(n.children)
-                                    else None
-                                ),
+                            stringify_node(child, next_child)
+                            for child, next_child in zip(
+                                children, next_children, strict=True
                             )
-                            for index, child in enumerate(n.children)
                         )
 
                 parts.append(stringify_node(node))
