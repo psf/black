@@ -571,10 +571,10 @@ s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:
 )  # type: ignore
 
 # Regression test for https://github.com/psf/black/issues/3855.
-# Don't wrap only the first part of an implicit concatenation in parens.
-some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" r" incididunt ut labore")
-some_function_name(lambda: r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" r" incididunt ut labore")
-value = some_value if condition else r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" r" incididunt"
+# Wrap the whole implicit concatenation in parens, not only its first string.
+some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt ut labore")
+some_function_name(lambda: r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt ut labore")
+value = some_value if condition else r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt"
 
 
 # output
@@ -1276,18 +1276,24 @@ s = (
 )  # type: ignore
 
 # Regression test for https://github.com/psf/black/issues/3855.
-# Don't wrap only the first part of an implicit concatenation in parens.
+# Wrap the whole implicit concatenation in parens, not only its first string.
 some_function_name(
-    argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
-    r" incididunt ut labore"
+    argument=(
+        r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor"
+        r" incididunt ut labore"
+    )
 )
 some_function_name(
-    lambda: r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
-    r" incididunt ut labore"
+    lambda: (
+        r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor"
+        r" incididunt ut labore"
+    )
 )
 value = (
     some_value
     if condition
-    else r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
-    r" incididunt"
+    else (
+        r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor"
+        r" incididunt"
+    )
 )

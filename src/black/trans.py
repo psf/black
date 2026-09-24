@@ -12,7 +12,7 @@ from typing import Any, ClassVar, Final, Literal, TypeVar, Union
 from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
-from black.lines import Line, append_leaves
+from black.lines import Line, append_leaves, line_to_string
 from black.mode import Feature, Mode
 from black.nodes import (
     CLOSING_BRACKETS,
@@ -2050,15 +2050,29 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             # line (e.g. raw strings, which StringMerger leaves alone), wrapping
             # it in parens on its own would produce invalid code.
             next_sibling = LL[string_idx].next_sibling
-            if (
-                next_sibling is not None
-                and next_sibling.type == token.STRING
-                and not any(leaf is next_sibling for leaf in LL)
-            ):
-                return TErr(
-                    "Cannot wrap a string that is implicitly concatenated with a"
-                    " string on another line."
-                )
+            if next_sibling is not None and next_sibling.type == token.STRING:
+                if not any(leaf is next_sibling for leaf in LL):
+                    return TErr(
+                        "Cannot wrap a string that is implicitly concatenated with a"
+                        " string on another line."
+                    )
+
+                # Wrapping would move the first string's comments to the LPAR.
+                if line.comments:
+                    return TErr(
+                        "Cannot wrap an implicit concatenation that has comments."
+                    )
+
+                # If the first string fits on the line, splitting at the
+                # concatenation is enough.
+                tail = "".join(str(leaf) for leaf in LL[string_idx + 1 :])
+                if str_width(line_to_string(line)) - str_width(tail) <= (
+                    self.line_length
+                ):
+                    return TErr(
+                        "The first string of the implicit concatenation fits on"
+                        " the line."
+                    )
 
             string_value = line.leaves[string_idx].value
             # If the string has neither spaces nor East Asian stops...
@@ -2222,9 +2236,15 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
+                        # Skip any strings implicitly concatenated with it.
+                        while (
+                            is_valid_index(idx + 1) and LL[idx + 1].type == token.STRING
+                        ):
+                            idx += 1
+
                         # Skip the string trailer, if one exists.
                         string_parser = StringParser()
-                        idx = string_parser.parse(LL, string_idx)
+                        idx = string_parser.parse(LL, idx)
 
                         # The next leaf MAY be a comma iff this line is a part
                         # of a function argument...
@@ -2266,9 +2286,15 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
+                        # Skip any strings implicitly concatenated with it.
+                        while (
+                            is_valid_index(idx + 1) and LL[idx + 1].type == token.STRING
+                        ):
+                            idx += 1
+
                         # Skip the string trailer, if one exists.
                         string_parser = StringParser()
-                        idx = string_parser.parse(LL, string_idx)
+                        idx = string_parser.parse(LL, idx)
 
                         # That string MAY be followed by a comma...
                         if is_valid_index(idx) and LL[idx].type == token.COMMA:

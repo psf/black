@@ -837,6 +837,11 @@ def transform_line(
                     string_paren_wrap,
                     right_hand_split_with_omits,
                 ]
+                if _is_implicit_concatenation_value(line):
+                    # Wrap the whole concatenation in parens instead of
+                    # splitting it apart first (#3855).
+                    transformers.remove(string_paren_wrap)
+                    transformers.insert(3, string_paren_wrap)
             else:
                 transformers = [
                     string_merge,
@@ -881,6 +886,23 @@ def transform_line(
             yield from _force_standalone_comment_split(line)
         else:
             yield line
+
+
+def _is_implicit_concatenation_value(line: Line) -> bool:
+    """Is `line` something like `a=STRING STRING`, where the only delimiters are
+    between the implicitly concatenated strings?"""
+    if line.leaves[0].type == token.STRING:
+        return False
+
+    exclude = set()
+    if line.leaves[-1].type == token.COMMA:
+        exclude.add(id(line.leaves[-1]))
+    try:
+        max_priority = line.bracket_tracker.max_delimiter_priority(exclude=exclude)
+    except ValueError:
+        return False
+
+    return max_priority == STRING_PRIORITY
 
 
 def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:

@@ -121,7 +121,7 @@
   string (#5329)
 - Fix `string_processing` producing invalid code by wrapping only the first part of an
   implicitly concatenated string it cannot merge (such as `r"..." r"..."`) in
-  parentheses (#5434)
+  parentheses. The whole concatenation is now wrapped instead (#5434)
 
 ### Configuration
 
