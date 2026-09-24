@@ -570,6 +570,12 @@ s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:
     "which is against the line length rule."
 )  # type: ignore
 
+# Regression test for https://github.com/psf/black/issues/3855.
+# Don't wrap only the first part of an implicit concatenation in parens.
+some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" r" incididunt ut labore")
+some_function_name(lambda: r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" r" incididunt ut labore")
+value = some_value if condition else r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor" r" incididunt"
+
 
 # output
 
@@ -1268,3 +1274,20 @@ s = (
     "annotated with a type ignore pragma gets merged into a single very long line "
     "which is against the line length rule."
 )  # type: ignore
+
+# Regression test for https://github.com/psf/black/issues/3855.
+# Don't wrap only the first part of an implicit concatenation in parens.
+some_function_name(
+    argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
+    r" incididunt ut labore"
+)
+some_function_name(
+    lambda: r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
+    r" incididunt ut labore"
+)
+value = (
+    some_value
+    if condition
+    else r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor"
+    r" incididunt"
+)

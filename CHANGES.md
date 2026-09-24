@@ -119,6 +119,9 @@
   and Black failed its own equivalence check (#5271)
 - Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
   string (#5329)
+- Fix `string_processing` producing invalid code by wrapping only the first part of an
+  implicitly concatenated string it cannot merge (such as `r"..." r"..."`) in
+  parentheses (#5434)
 
 ### Configuration
 

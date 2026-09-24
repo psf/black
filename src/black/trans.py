@@ -2046,6 +2046,20 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             string_idx = self._prefer_paren_wrap_match(LL)
 
         if string_idx is not None:
+            # If the string is implicitly concatenated with a string on another
+            # line (e.g. raw strings, which StringMerger leaves alone), wrapping
+            # it in parens on its own would produce invalid code.
+            next_sibling = LL[string_idx].next_sibling
+            if (
+                next_sibling is not None
+                and next_sibling.type == token.STRING
+                and not any(leaf is next_sibling for leaf in LL)
+            ):
+                return TErr(
+                    "Cannot wrap a string that is implicitly concatenated with a"
+                    " string on another line."
+                )
+
             string_value = line.leaves[string_idx].value
             # If the string has neither spaces nor East Asian stops...
             if not any(
