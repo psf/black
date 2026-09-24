@@ -82,6 +82,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long stringified return annotations even when the function has parameters
+  (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
   same-name decorated functions, such as `@overload`s or a property setter (#5430)
 - Remove redundant parentheses around individual variables in unpacking targets (for
