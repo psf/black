@@ -5,6 +5,9 @@
 <!-- PR authors:
      Please include the PR number in the changelog entry, not the issue number -->
 
+- Apply exclusions from an explicit ancestor `--config` to files in nested Git
+  repositories (#5437)
+
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
