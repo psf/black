@@ -10,6 +10,8 @@
   --target-version flag (#5167)
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
+- Apply exclusions from an explicit ancestor `--config` to files in nested Git
+  repositories (#5437)
 
 ### Highlights
 
