@@ -593,12 +593,46 @@ def _calculate_lines_mappings(
       original_source: the original source.
       modified_source: the modified source.
     """
+    original_lines = original_source.splitlines(keepends=True)
+    modified_lines = modified_source.splitlines(keepends=True)
+
+    # SequenceMatcher can align repeated unchanged lines at a different position,
+    # making a change in the middle look like an insertion at the start and a
+    # deletion at the end. Anchor the common edges before diffing the middle.
+    prefix = 0
+    while (
+        prefix < min(len(original_lines), len(modified_lines))
+        and original_lines[prefix] == modified_lines[prefix]
+    ):
+        prefix += 1
+
+    suffix = 0
+    while (
+        suffix < min(len(original_lines), len(modified_lines)) - prefix
+        and original_lines[-suffix - 1] == modified_lines[-suffix - 1]
+    ):
+        suffix += 1
+
+    original_middle_end = len(original_lines) - suffix
+    modified_middle_end = len(modified_lines) - suffix
     matcher = difflib.SequenceMatcher(
         None,
-        original_source.splitlines(keepends=True),
-        modified_source.splitlines(keepends=True),
+        original_lines[prefix:original_middle_end],
+        modified_lines[prefix:modified_middle_end],
     )
-    matching_blocks = matcher.get_matching_blocks()
+    matching_blocks = []
+    if prefix:
+        matching_blocks.append(difflib.Match(0, 0, prefix))
+    matching_blocks.extend(
+        difflib.Match(block.a + prefix, block.b + prefix, block.size)
+        for block in matcher.get_matching_blocks()
+        if block.size
+    )
+    if suffix:
+        matching_blocks.append(
+            difflib.Match(original_middle_end, modified_middle_end, suffix)
+        )
+    matching_blocks.append(difflib.Match(len(original_lines), len(modified_lines), 0))
     lines_mappings: list[_LinesMapping] = []
     # matching_blocks is a sequence of "same block of code ranges", see
     # https://docs.python.org/3/library/difflib.html#difflib.SequenceMatcher.get_matching_blocks

@@ -54,6 +54,11 @@ To get started right away with sensible defaults:
 black {source_file_or_directory}
 ```
 
+To format selected lines in a single file, use `black --line-ranges=START-END file.py`.
+See the
+[line-range documentation](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#line-ranges)
+for details and limitations.
+
 You can run _Black_ as a package if running it as a script doesn't work:
 
 ```sh
