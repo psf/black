@@ -2328,6 +2328,27 @@ class BlackTestCase(BlackBaseTestCase):
             """)
             assert expected == formatted
 
+    def test_line_ranges_do_not_format_later_identical_lines(self) -> None:
+        original_line = 'print ( "format me" )\n'
+        formatted_line = 'print("format me")\n'
+        source = original_line * 5
+        expected = original_line + formatted_line * 2 + original_line * 2
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(2, 3)]) == expected
+        )
+
+    def test_disjoint_line_ranges_leave_repeated_middle_line_unchanged(self) -> None:
+        original_line = 'print ( "format me" )\n'
+        formatted_line = 'print("format me")\n'
+        source = original_line * 3
+        expected = formatted_line + original_line + formatted_line
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 1), (3, 3)])
+            == expected
+        )
+
     def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
         # This regression stays inline because it requires literal trailing spaces,
         # which would fail `git diff --check` in a data case file.
