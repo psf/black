@@ -1650,6 +1650,81 @@ class BlackTestCase(BlackBaseTestCase):
         finally:
             tmp_file.unlink()
 
+    def test_explicit_config_roots_force_exclude_above_nested_repo(self) -> None:
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            config = root / "pyproject.toml"
+            config.write_text(
+                '[tool.black]\nforce-exclude = "^/subproject/"\n', encoding="utf-8"
+            )
+            subproject = root / "subproject"
+            subproject.mkdir()
+            (subproject / ".git").write_text("gitdir: elsewhere\n", encoding="utf-8")
+            source = subproject / "file.py"
+            source.write_text("x=1\n", encoding="utf-8")
+
+            result = BlackRunner().invoke(
+                black.main,
+                ["--check", "--verbose", "--config", str(config), str(source)],
+            )
+
+            assert result.exit_code == 0, result.output
+            assert "ignored: matches the --force-exclude regular expression" in (
+                result.output
+            )
+
+            implicit = BlackRunner().invoke(
+                black.main, ["--check", "--verbose", str(source)]
+            )
+            assert implicit.exit_code == 1, implicit.output
+            assert "would reformat" in implicit.output
+
+    def test_explicit_config_outside_sources_keeps_discovered_root(self) -> None:
+        with TemporaryDirectory() as workspace:
+            workspace_path = Path(workspace)
+            config_dir = workspace_path / "config"
+            config_dir.mkdir()
+            config = config_dir / "pyproject.toml"
+            config.write_text(
+                '[tool.black]\nforce-exclude = "^/subproject/"\n', encoding="utf-8"
+            )
+            subproject = workspace_path / "subproject"
+            subproject.mkdir()
+            (subproject / ".git").write_text("gitdir: elsewhere\n", encoding="utf-8")
+            source = subproject / "file.py"
+            source.write_text("x=1\n", encoding="utf-8")
+
+            result = BlackRunner().invoke(
+                black.main,
+                ["--check", "--verbose", "--config", str(config), str(source)],
+            )
+
+            assert result.exit_code == 1, result.output
+            assert "would reformat" in result.output
+            assert f"Identified `{subproject}` as project root" in result.output
+
+    def test_explicit_config_below_discovered_root_keeps_that_root(self) -> None:
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            (root / ".git").write_text("gitdir: elsewhere\n", encoding="utf-8")
+            subproject = root / "subproject"
+            subproject.mkdir()
+            config = subproject / "config.toml"
+            config.write_text(
+                '[tool.black]\nforce-exclude = "^/subproject/file.py$"\n',
+                encoding="utf-8",
+            )
+            source = subproject / "file.py"
+            source.write_text("x=1\n", encoding="utf-8")
+
+            result = BlackRunner().invoke(
+                black.main,
+                ["--check", "--verbose", "--config", str(config), str(source)],
+            )
+
+            assert result.exit_code == 0, result.output
+            assert f"Identified `{root}` as project root" in result.output
+
     def test_parse_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "test.toml"
         config = black.parse_pyproject_toml(str(test_toml_file))

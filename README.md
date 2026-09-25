@@ -64,6 +64,11 @@ Further information can be found in our docs:
 
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
 
+When using an explicit `--config` file above nested repositories, _Black_ evaluates
+exclusion paths from that file's directory. See the
+[configuration documentation](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#config)
+for details.
+
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
 projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
 tests, and our own auto formatting and parallel Continuous Integration runner. Now that
