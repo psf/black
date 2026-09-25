@@ -875,7 +875,9 @@ def _generate_ignored_nodes_from_fmt_skip(
                 if (
                     children
                     and len(ignored_nodes) >= len(children)
-                    and all(a is b for a, b in zip(ignored_nodes, children))
+                    and all(
+                        a is b for a, b in zip(ignored_nodes, children, strict=False)
+                    )
                 ):
                     ignored_nodes[: len(children)] = [current_node]
 
