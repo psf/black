@@ -39,6 +39,9 @@ from black.nodes import (
     ASSIGNMENTS,
     BRACKETS,
     CLOSING_BRACKETS,
+    COMPARATORS,
+    LOGIC_OPERATORS,
+    MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     STATEMENT,
@@ -1240,6 +1243,24 @@ def _prefer_split_rhs_oop_over_rhs(
         or rhs_oop.tail.contains_unsplittable_type_ignore()
     ):
         return True
+
+    # Keep optional parentheses when omitting them would join an overlong prefix to a
+    # parenthesized binary operand containing standalone comments (#3925). This also
+    # applies to statement expressions such as `return`, `assert`, and `yield`.
+    if Preview.wrap_commented_rhs in mode and (
+        len(rhs_oop.head.leaves) >= 2
+        and rhs_oop.head.leaves[-1].type in OPENING_BRACKETS
+        and (
+            rhs_oop.head.leaves[-2].type in MATH_OPERATORS | COMPARATORS
+            or (
+                rhs_oop.head.leaves[-2].type == token.NAME
+                and rhs_oop.head.leaves[-2].value in LOGIC_OPERATORS
+            )
+        )
+        and rhs_oop.body.contains_standalone_comments()
+        and not is_line_short_enough(rhs_oop.head, mode=mode)
+    ):
+        return False
 
     # Retain optional parens around dictionary values
     if (

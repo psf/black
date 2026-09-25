@@ -93,6 +93,8 @@
 - Remove redundant parentheses around individual variables in unpacking targets (for
   example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
 - Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
+- Fix formatting of a parenthesized expression with standalone comments so it does not
+  produce a line longer than the configured line length (#5407)
 - Remove redundant parentheses around generator expressions (#5304, #5369)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
