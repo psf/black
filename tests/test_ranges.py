@@ -47,6 +47,16 @@ pass
     assert lines == adjusted_lines(lines, source, source)
 
 
+@pytest.mark.parametrize("start,end", [(1, 2), (2, 3), (3, 4), (4, 5)])
+def test_repeated_lines_map_to_their_original_positions(start: int, end: int) -> None:
+    unformatted = 'print ( "format me" )\n'
+    formatted = 'print("format me")\n'
+    original = unformatted * 5
+    modified = unformatted * (start - 1) + formatted * 2 + unformatted * (5 - end)
+
+    assert adjusted_lines([(start, end)], original, modified) == [(start, end)]
+
+
 @pytest.mark.parametrize(
     "lines",
     [
