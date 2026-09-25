@@ -120,6 +120,25 @@ def adjusted_lines(
       original_source: the original source.
       modified_source: the modified source.
     """
+    if len(lines) > 1:
+        original_lines = original_source.splitlines(keepends=True)
+        modified_lines = modified_source.splitlines(keepends=True)
+        if len(original_lines) == len(modified_lines) and all(
+            1 <= start <= end <= len(original_lines) for start, end in lines
+        ):
+            selected_lines = {
+                line for start, end in lines for line in range(start - 1, end)
+            }
+            # Equal-length edits confined to the requested ranges cannot shift
+            # their line numbers. Diffing repeated text can move them anyway.
+            if all(
+                index in selected_lines or original == modified
+                for index, (original, modified) in enumerate(
+                    zip(original_lines, modified_lines, strict=True)
+                )
+            ):
+                return sorted(lines)
+
     lines_mappings = _calculate_lines_mappings(original_source, modified_source)
 
     new_lines = []
