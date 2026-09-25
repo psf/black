@@ -54,11 +54,6 @@ To get started right away with sensible defaults:
 black {source_file_or_directory}
 ```
 
-When using an explicit `--config` file above nested repositories, _Black_ evaluates
-exclusion paths from that file's directory. See the
-[configuration documentation](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#config)
-for details.
-
 You can run _Black_ as a package if running it as a script doesn't work:
 
 ```sh
@@ -68,6 +63,11 @@ python -m black {source_file_or_directory}
 Further information can be found in our docs:
 
 - [Usage and Configuration](https://black.readthedocs.io/en/stable/usage_and_configuration/index.html)
+
+When using an explicit `--config` file above nested repositories, _Black_ evaluates
+exclusion paths from that file's directory. See the
+[configuration documentation](https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#config)
+for details.
 
 _Black_ is already [successfully used](https://github.com/psf/black#used-by) by many
 projects, small and big. _Black_ has a comprehensive test suite, with efficient parallel
