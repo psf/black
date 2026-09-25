@@ -16,6 +16,8 @@
 - Fix a long Jupyter notebook assignment magic (for example `x = !ls -la`) being wrapped
   in parentheses, which IPython can no longer run; such cells are now left unchanged
   (#5481)
+- Keep repeated unchanged lines outside the selected `--line-ranges` when diffing the
+  first formatting pass (#5436)
 
 ### Preview style
 
