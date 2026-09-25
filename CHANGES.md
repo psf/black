@@ -86,6 +86,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Keep dictionary keys containing operators together on one line when the value can be
+  wrapped onto a new line (#3442)
+
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of

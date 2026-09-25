@@ -52,6 +52,33 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
+- `keep_dict_keys_with_operators`: Keep dictionary keys containing operators together on
+  one line when the value can be wrapped onto a new line.
+  ([see below](labels/keep-dict-keys-with-operators))
+
+(labels/keep-dict-keys-with-operators)=
+
+### Keep dictionary keys with operators together
+
+When a dictionary key contains operators (such as `+`, `-`, or `%`) and the key-value
+pair exceeds the line length, Black previously broke the line inside the key at the
+operator. With this feature enabled, Black keeps the key intact on the line and wraps
+the value onto the next line instead:
+
+```python
+# Before
+tests = {
+    Timestamp("2014-07-04 15:00")
+    + Nano(5): this_is_a_very_long_function("2014-07-04 16:00"),
+}
+
+# After (with --preview)
+tests = {
+    Timestamp("2014-07-04 15:00") + Nano(5): this_is_a_very_long_function(
+        "2014-07-04 16:00"
+    ),
+}
+```
 
 (labels/remove-redundant-unpacking-parentheses)=
 
