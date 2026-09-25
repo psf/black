@@ -316,10 +316,11 @@ is typically useful when setting these options in a `pyproject.toml` configurati
 see [Configuration format](#configuration-format) for more information.
 
 These options use regular expressions, not shell globs. Paths have a leading `/` and are
-relative to the [project root](#where-black-looks-for-the-file) that _Black_ discovers.
-For example, `^/foo\.py$` matches only `foo.py` in that root. If no `pyproject.toml`,
-`.git`, or `.hg` is found, the project root may be the root of the file system; use
-`--verbose` to see which root _Black_ selected.
+relative to the [project root](#where-black-looks-for-the-file) that _Black_ discovers
+or selects from an explicit `--config` file. For example, `^/foo\.py$` matches only
+`foo.py` in that root. If no `pyproject.toml`, `.git`, or `.hg` is found, the project
+root may be the root of the file system; use `--verbose` to see which root _Black_
+selected.
 
 #### `--extend-exclude`
 
@@ -400,7 +401,11 @@ black, 26.5.1
 #### `--config`
 
 Read configuration options from a configuration file. See
-[below](#configuration-via-a-file) for more details on the configuration file.
+[below](#configuration-via-a-file) for more details on the configuration file. If its
+directory is above the discovered project root and contains all input sources, an
+explicit `--config` uses that directory as the root for exclusion paths. This is useful
+when a source is inside a nested Git repository. A configuration file inside the
+discovered root or outside the source tree does not change that root.
 
 ### Environment variable options
 
