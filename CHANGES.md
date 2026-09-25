@@ -124,6 +124,7 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Add `--cache-dir` to configure the cache directory from the command line (#5433)
 - Fall back to the default configuration, with a warning, when the given sources share
   no common project root (for example, they are on different drives on Windows) instead
   of crashing (#5386)

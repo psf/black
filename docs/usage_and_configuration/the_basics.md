@@ -237,6 +237,11 @@ nor write to the cache. This is helpful for reproducing formatting results from 
 run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
 every time.
 
+#### `--cache-dir`
+
+Store Black's cache in the specified directory. This option takes precedence over the
+`BLACK_CACHE_DIR` environment variable.
+
 #### `--color` / `--no-color`
 
 Show (or do not show) colored diff. Only applies when `--diff` is given.
