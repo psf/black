@@ -424,8 +424,7 @@ D4 = {
         "This is a really really really long string that has to go inside of a"
         " dictionary. It is {soooo} bad (#{x}).".format(sooo="soooo", x=2)
     ),
-    "A %s %s"
-    % ("formatted", "string"): (
+    "A %s %s" % ("formatted", "string"): (
         "This is a really really really long string that has to go inside of a"
         " dictionary. It is %s bad (#%d)." % ("soooo", 2)
     ),
