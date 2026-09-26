@@ -84,6 +84,9 @@
 
 ### Preview style
 
+- Add missing blank lines after classes whose last method has an ellipsis body
+  (#5439)
+
 <!-- Changes that affect Black's preview style -->
 
 - Split long stringified return annotations even when the function has parameters

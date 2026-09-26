@@ -1311,7 +1311,14 @@ class EmptyLineTracker:
             newlines = 1 if current_line.depth else 2
             # If a user has left no space after a dummy implementation, don't insert
             # new lines. This is useful for instance for @overload or Protocols.
-            if self.previous_line.is_stub_def and not user_had_newline:
+            if (
+                self.previous_line.is_stub_def
+                and not user_had_newline
+                and (
+                    Preview.blank_line_after_stub_method not in self.mode
+                    or self.previous_line.depth == current_line.depth
+                )
+            ):
                 newlines = 0
         if comment_to_add_newlines is not None:
             previous_block = comment_to_add_newlines.previous_block

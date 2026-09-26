@@ -13,6 +13,8 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
+- `blank_line_after_stub_method`: Add the usual blank lines after a class whose last
+  method has an ellipsis body, while keeping consecutive stub methods together.
 - `normalize_tstring_prefix`: Lowercase the `T` prefix of t-strings (for example,
   `T"hello"` becomes `t"hello"`).
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions
