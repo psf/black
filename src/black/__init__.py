@@ -1027,8 +1027,13 @@ def format_file_in_place(
         raise ValueError(
             f"File '{src}' cannot be parsed as valid Jupyter notebook."
         ) from None
-    src_contents = header.decode(encoding) + src_contents
-    dst_contents = header.decode(encoding) + dst_contents
+    header_str = header.decode(encoding)
+    if newline != "\n" and header_str.endswith(newline):
+        # The contents are written with `newline` translation, which would turn the
+        # header's original line ending into e.g. "\r\r\n".
+        header_str = header_str[: -len(newline)] + "\n"
+    src_contents = header_str + src_contents
+    dst_contents = header_str + dst_contents
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:

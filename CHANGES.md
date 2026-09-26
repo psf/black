@@ -138,6 +138,8 @@
 - Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors instead
   of crashing (#5211)
 - Ignore permission errors when reading cache (#5258)
+- Fix `--skip-source-first-line` turning the skipped line's CRLF ending into `\r\r\n`
+  when reformatting a file with CRLF line endings, and in `--diff` output (#5438)
 
 ### Packaging
 
