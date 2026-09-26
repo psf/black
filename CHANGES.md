@@ -84,8 +84,7 @@
 
 ### Preview style
 
-- Add missing blank lines after classes whose last method has an ellipsis body
-  (#5439)
+- Add missing blank lines after classes whose last method has an ellipsis body (#5439)
 
 <!-- Changes that affect Black's preview style -->
 
