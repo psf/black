@@ -19,6 +19,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Preserve Ruff `ignore[...]` pragma comments when formatting long lines.
 - Fix an inline comment after the closing bracket of optional parentheses being moved
   inside the brackets when the parenthesized expression contains own-line comments
   (#5395)
