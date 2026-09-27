@@ -234,6 +234,8 @@
 
 - Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
   empty entry, such as a trailing comma (#5428)
+- Allow optional whitespace around comma-separated versions and `pyi` in the
+  `X-Python-Variant` header in blackd
 
 ### Integrations
 

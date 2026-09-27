@@ -94,14 +94,22 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("pypy3.0")
         await check("jython3.4")
         await check("")
+        await check("   ")
         await check("py")
         await check("3.6,")
+        await check("3.6, ,3.7")
         await check("py3.6,,py3.7")
 
     async def test_blackd_pyi(self) -> None:
         source, expected = read_data("cases", "stub.py")
         response = await self.client.post(
             "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: "pyi"}
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.text(), expected)
+
+        response = await self.client.post(
+            "/", data=source, headers={blackd.PYTHON_VARIANT_HEADER: " pyi "}
         )
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.text(), expected)
@@ -145,13 +153,19 @@ class BlackDTestCase(AioHTTPTestCase):
         await check("3.6", 200)
         await check("py3.6", 200)
         await check("3.6,3.7", 200)
+        await check("3.6, 3.7", 200)
         await check("3.6,py3.7", 200)
+        await check("3.6, py3.7", 200)
+        await check("py3.6, py3.7", 200)
+        await check(" py3.6 , py3.7 ", 200)
         await check("py36,py37", 200)
+        await check("py36, py37", 200)
         await check("36", 200)
         await check("3.6.4", 200)
         await check("3.4", 204)
         await check("py3.4", 204)
         await check("py34,py36", 204)
+        await check("py34, py36", 204)
         await check("34", 204)
 
     async def test_blackd_line_length(self) -> None:
