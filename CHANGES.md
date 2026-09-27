@@ -87,7 +87,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Parenthesize expressions with parameter comments when they exceed the line length
-  under `--preview` (#3113)
+  under `--preview` (#5442)
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
