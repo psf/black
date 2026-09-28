@@ -29,7 +29,7 @@
 - Keep the parentheses around a tuple used as a context manager, for example
   `with ((a, b)):`. They belong to the tuple rather than to the `with` statement, and
   `with (a, b):` is _two_ context managers, so removing them changed the meaning of the
-  code and tripped Black's AST safety check
+  code and tripped Black's AST safety check (#5440)
 - Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
