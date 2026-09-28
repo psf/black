@@ -1020,6 +1020,7 @@ def right_hand_split_with_omits(
     content), meaning the trailers get glued together to split on another
     bracket pair instead.
     """
+    fallback_omit: set[LeafID] | None = None
     for omit in generate_trailers_to_omit(line, mode.line_length):
         lines = list(right_hand_split(line, mode, features, omit=omit))
         # Note: this check is only able to figure out if the first line of the
@@ -1029,8 +1030,23 @@ def right_hand_split_with_omits(
         if is_line_short_enough(lines[0], mode=mode) or (
             omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
         ):
+            if (
+                Preview.fix_magic_trailing_comma_trailer_split in mode
+                and line.magic_trailing_comma
+                and lines[0].magic_trailing_comma
+            ):
+                # The head still has to explode on its magic trailing comma, so
+                # splitting this trailer too is wasted. Prefer a later omit that
+                # splits on the magic trailing comma's own brackets.
+                if fallback_omit is None:
+                    fallback_omit = set(omit)
+                continue
             yield from lines
             return
+
+    if fallback_omit is not None:
+        yield from right_hand_split(line, mode, features, omit=fallback_omit)
+        return
 
     # All splits failed, best effort split with no omits.
     # This mostly happens to multiline strings that are by definition

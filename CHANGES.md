@@ -86,6 +86,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split only the brackets holding a magic trailing comma when more trailers follow them,
+  so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
