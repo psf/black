@@ -33,6 +33,11 @@
 <!-- Changes to how Black can be configured -->
 
 - Add `--cache-dir` to configure the cache directory from the command line (#5433)
+- Resolve `.gitignore` files the way git does: the file closest to a path decides it,
+  and shallower ones are only consulted when no deeper file has a matching pattern. A
+  nested `.gitignore` can now re-include something an ancestor excluded with a `!`
+  pattern, which Black previously skipped silently, so `black --check` passed on files
+  git tracks (#5453)
 
 ### Packaging
 
