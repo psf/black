@@ -14,6 +14,7 @@ from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
     DOT_PRIORITY,
+    MATH_PRIORITIES,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
@@ -1525,6 +1526,13 @@ def delimiter_split(
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
+
+    if (
+        Preview.defer_delimiter_split_for_standalone_comments in mode
+        and line.contains_standalone_comments()
+        and delimiter_priority in MATH_PRIORITIES.values()
+    ):
+        raise CannotSplit("Standalone comments should be split first")
 
     if (
         Preview.hug_comparator in mode

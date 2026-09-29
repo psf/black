@@ -52,6 +52,34 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
+- `defer_delimiter_split_for_standalone_comments`: Do not split expressions on
+  delimiters (such as binary operators) inside brackets when preceded by a standalone
+  comment if the expression fits within the line length limit.
+  ([see below](labels/defer-delimiter-split-for-standalone-comments))
+
+(labels/defer-delimiter-split-for-standalone-comments)=
+
+### Avoid unnecessary line breaks for expressions with comments
+
+Black previously split expressions containing binary operators (such as `/`, `*`, `+`)
+across multiple lines when placed after a standalone comment inside brackets (such as
+lists or function calls), even if the expression was well within the line length limit:
+
+```python
+# Before
+foobar = [
+    # comment
+    pathlib.Path("foo")
+    / "bar"
+    / "baz",
+]
+
+# After (with --preview)
+foobar = [
+    # comment
+    pathlib.Path("foo") / "bar" / "baz",
+]
+```
 
 (labels/remove-redundant-unpacking-parentheses)=
 
