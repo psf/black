@@ -450,6 +450,24 @@ class BlackTestCase(BlackBaseTestCase):
             ff(test_file, mode=mode, write_back=black.WriteBack.YES)
             self.assertEqual(test_file.read_bytes(), expected)
 
+    def test_skip_source_first_line_with_crlf_newlines(self) -> None:
+        code = b"Header will be skipped\r\ni = [1,2,3]\r\nj = [1,2,3]\r\n"
+        expected = b"Header will be skipped\r\ni = [1, 2, 3]\r\nj = [1, 2, 3]\r\n"
+        mode = replace(DEFAULT_MODE, skip_source_first_line=True)
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "skip_header.py"
+            test_file.write_bytes(code)
+            ff(test_file, mode=mode, write_back=black.WriteBack.YES)
+            self.assertEqual(test_file.read_bytes(), expected)
+
+            test_file.write_bytes(code)
+            output = io.StringIO(newline="")
+            with patch("sys.stdout", output):
+                ff(test_file, mode=mode, write_back=black.WriteBack.DIFF)
+            actual = output.getvalue()
+            self.assertIn(" Header will be skipped\r\n-i = [1,2,3]\r\n", actual)
+            self.assertNotIn("\r\r\n", actual)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
