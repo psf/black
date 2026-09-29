@@ -1527,6 +1527,13 @@ def delimiter_split(
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     if (
+        Preview.defer_delimiter_split_for_standalone_comments in mode
+        and line.contains_standalone_comments()
+        and delimiter_priority < COMMA_PRIORITY
+    ):
+        raise CannotSplit("Standalone comments should be split first")
+
+    if (
         Preview.hug_comparator in mode
         and delimiter_priority == COMPARATOR_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1

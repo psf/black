@@ -86,6 +86,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Do not split short expressions on delimiters (such as binary operators) inside
+  brackets when preceded by a standalone comment (#4026, #3713)
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
