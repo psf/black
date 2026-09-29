@@ -303,18 +303,38 @@ def _path_is_ignored(
     root: Path,
     gitignore_dict: dict[Path, GitIgnoreSpec],
 ) -> bool:
+    """Return whether the path is ignored by any of the .gitignore files in scope.
+
+    Git resolves this per path: the .gitignore file closest to the path wins, and
+    shallower ones are only consulted when no deeper file has a matching pattern.
+    A nested .gitignore is therefore able to re-include something an ancestor
+    excluded with a `!` pattern, which is what `git check-ignore` reports for both
+    the pattern that matched and the file it came from.
+
+    Because directories are resolved by this same function, an ignored directory is
+    still pruned: it is only skipped when nothing deeper re-included it, and it is
+    descended into when a nested .gitignore does. That mirrors git, which also
+    refuses to re-include a path whose parent directory stays excluded.
+    """
     path = root / root_relative_path
+    is_dir = path.is_dir()
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
-    # ensure that gitignore_dict is ordered from least specific to most specific.
-    for gitignore_path, pattern in gitignore_dict.items():
+    # ensure that gitignore_dict is ordered from least specific to most specific, so
+    # that walking it in reverse visits the most specific .gitignore first.
+    for gitignore_path, pattern in reversed(gitignore_dict.items()):
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
-            if path.is_dir():
+            if is_dir:
                 relative_path = relative_path + "/"
         except ValueError:
-            break
-        if pattern.match_file(relative_path):
-            return True
+            continue
+        # A `None` include means this .gitignore has no pattern matching the path at
+        # all, in which case the decision falls to a shallower .gitignore.
+        result = pattern.check_file(relative_path)
+        if result is None or result.include is None:
+            continue
+        # Within a single .gitignore, pathspec already applies last-match-wins.
+        return bool(result.include)
     return False
 
 
