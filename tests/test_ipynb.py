@@ -44,6 +44,30 @@ def test_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.parametrize(
+    "src",
+    [
+        pytest.param("    x = 1", id="single line"),
+        pytest.param("        x = 1", id="deeper indent"),
+        pytest.param("\tx = 1", id="tab indent"),
+        pytest.param("    if x:\n        pass", id="block"),
+        pytest.param("    # just a comment", id="comment only"),
+    ],
+)
+@pytest.mark.parametrize("fast", [True, False])
+def test_indented_cell_is_not_dedented(src: str, fast: bool) -> None:
+    """Indented cells are left alone.
+
+    A cell that does not parse on its own has to be masked, and masking runs it
+    through IPython's TransformerManager, which dedents it. A cell that does
+    parse still loses its leading whitespace to the formatter. Either way the
+    result silently drops the original indentation, so these cells must be
+    reported as unchanged instead.
+    """
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=fast, mode=JUPYTER_MODE)
+
+
 @pytest.mark.parametrize("n_chars", [1, 2, 3, 4, 5, 17])
 def test_create_token_uses_requested_length(n_chars: int) -> None:
     assert len(create_token(n_chars)) == n_chars

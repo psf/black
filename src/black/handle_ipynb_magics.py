@@ -77,6 +77,12 @@ def validate_cell(src: str, mode: Mode) -> None:
 
     Due to the impossibility of safely roundtripping in such situations, cells
     containing transformed magics will be ignored.
+
+    An indented cell is not safe to format. If it does not parse on its own it
+    has to be masked, and IPython's ``TransformerManager`` dedents whatever it
+    transforms; if it does parse, formatting the cell still drops the leading
+    whitespace. Either way the original indentation would be silently lost, so
+    indented cells are ignored.
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
         raise NothingChanged
@@ -87,6 +93,17 @@ def validate_cell(src: str, mode: Mode) -> None:
         not in PYTHON_CELL_MAGICS | mode.python_cell_magics
     ):
         raise NothingChanged
+
+    if _is_indented(src):
+        raise NothingChanged
+
+
+def _is_indented(src: str) -> bool:
+    """Does `src` start with leading whitespace on its first non-blank line?"""
+    for line in src.splitlines():
+        if line.strip():
+            return line[0].isspace()
+    return False
 
 
 def remove_trailing_semicolon(src: str) -> tuple[str, bool]:

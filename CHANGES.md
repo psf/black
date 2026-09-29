@@ -19,6 +19,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix silently dropping the indentation of an indented Jupyter notebook cell. A cell
+  that does not parse on its own is masked, and IPython's `TransformerManager` dedents
+  whatever it transforms; a cell that does parse still loses its leading whitespace to
+  the formatter. Indented cells are now left unchanged (#5454)
 - Fix an inline comment after the closing bracket of optional parentheses being moved
   inside the brackets when the parenthesized expression contains own-line comments
   (#5395)
