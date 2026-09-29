@@ -14,7 +14,7 @@
   and shallower ones are only consulted when no deeper file has a matching pattern. A
   nested `.gitignore` can now re-include something an ancestor excluded with a `!`
   pattern, which Black previously skipped silently, so `black --check` passed on files
-  git tracks (#5376)
+  git tracks (#5453)
 
 ### Highlights
 
