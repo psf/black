@@ -14,6 +14,7 @@ from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
     DOT_PRIORITY,
+    LOGIC_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
@@ -1520,6 +1521,9 @@ def _can_defer_dict_key_delimiter_to_rhs(
     if colon_idx is None:
         return False
 
+    if any(leaf.type == token.RBRACE for leaf in line.leaves[:colon_idx]):
+        return False
+
     bt = line.bracket_tracker
     last_leaf = line.leaves[-1]
     try:
@@ -1527,7 +1531,7 @@ def _can_defer_dict_key_delimiter_to_rhs(
     except ValueError:
         return False
 
-    if delimiter_priority == COMMA_PRIORITY:
+    if delimiter_priority >= LOGIC_PRIORITY:
         return False
 
     for leaf_id, prio in bt.delimiters.items():
