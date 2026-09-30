@@ -690,9 +690,16 @@ def main(
     if not no_cache:
         try:
             cache_dir.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            pass
-        pygram.initialize(cache_dir)
+        except OSError as e:
+            no_cache = True
+            if verbose:
+                out(
+                    f"Unable to use cache directory `{cache_dir}`: {e}. "
+                    "Disabling the cache.",
+                    fg="blue",
+                )
+        else:
+            pygram.initialize(cache_dir)
     if target_version:
         versions = set(target_version)
     else:
