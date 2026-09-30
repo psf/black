@@ -2629,6 +2629,36 @@ class TestCaching:
 
         assert not cli_cache_dir.exists()
 
+    def test_cache_dir_creation_error_disables_cache(self, tmp_path: Path) -> None:
+        blocked_parent = tmp_path / "blocked-parent"
+        blocked_parent.write_text("not a directory", encoding="utf-8")
+        blocked_cache_dir = blocked_parent / "cache"
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+
+        with (
+            patch.object(black.Cache, "read") as read_cache,
+            patch.object(black.pygram, "initialize") as initialize_grammar,
+        ):
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--verbose",
+                    "--config",
+                    str(THIS_DIR / "empty.toml"),
+                    str(source),
+                    "--cache-dir",
+                    str(blocked_cache_dir),
+                ],
+                catch_exceptions=False,
+            )
+
+        assert result.exit_code == 0
+        assert "Unable to use cache directory" in result.stderr
+        assert "Disabling the cache" in result.stderr
+        read_cache.assert_not_called()
+        initialize_grammar.assert_not_called()
+
     def test_cache_file_length(self) -> None:
         cases = [
             DEFAULT_MODE,
