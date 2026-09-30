@@ -80,6 +80,29 @@ tests = {
 }
 ```
 
+This also affects operations involving dictionaries (such as string formatting with
+`%`), keeping the operator and dictionary together on the line when the dictionary
+contents can be wrapped onto new lines:
+
+```python
+# Before
+self.message_user(
+    request,
+    gettext("Add another %(verbose_name)s")
+    % {
+        "verbose_name": capfirst(verbose_name),
+    },
+)
+
+# After (with --preview)
+self.message_user(
+    request,
+    gettext("Add another %(verbose_name)s") % {
+        "verbose_name": capfirst(verbose_name),
+    },
+)
+```
+
 (labels/remove-redundant-unpacking-parentheses)=
 
 ### Redundant unpacking parentheses

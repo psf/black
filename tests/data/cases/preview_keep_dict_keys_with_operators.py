@@ -41,6 +41,16 @@ tasks = {
     ): src,
 }
 
+# Operations involving dictionaries (e.g. % string formatting) should also keep
+# the operator and dict opening together when the dict value wraps:
+self.message_user(
+    request,
+    gettext("Add another %(verbose_name)s")
+    % {
+        "verbose_name": capfirst(verbose_name),
+    },
+)
+
 # output
 
 # Regression test for https://github.com/psf/black/issues/3442
@@ -88,3 +98,13 @@ tasks = {
         xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxx
     ): src,
 }
+
+# Operations involving dictionaries (e.g. % string formatting) should also keep
+# the operator and dict opening together when the dict value wraps:
+self.message_user(
+    request,
+    gettext("Add another %(verbose_name)s") % {
+        "verbose_name": capfirst(verbose_name),
+    },
+)
+
