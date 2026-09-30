@@ -83,10 +83,9 @@
   `--line-ranges` (#5175)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
-- Fix changing the value of a docstring that contains a form feed or another
-  character that is not a line break for the Python parser. `Black` split the
-  docstring on it and reindented the lines after it, so the character became a
-  newline (#5460)
+- Fix changing the value of a docstring that contains a form feed or another character
+  that is not a line break for the Python parser. `Black` split the docstring on it and
+  reindented the lines after it, so the character became a newline (#5460)
 
 ### Preview style
 
