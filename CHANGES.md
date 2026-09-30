@@ -23,6 +23,8 @@
   that does not parse on its own is masked, and IPython's `TransformerManager` dedents
   whatever it transforms; a cell that does parse still loses its leading whitespace to
   the formatter. Indented cells are now left unchanged (#5454)
+- Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695
+  type parameters (#5429)
 - Fix an inline comment after the closing bracket of optional parentheses being moved
   inside the brackets when the parenthesized expression contains own-line comments
   (#5395)
@@ -142,6 +144,8 @@
 - Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors instead
   of crashing (#5211)
 - Ignore permission errors when reading cache (#5258)
+- Fix `--skip-source-first-line` turning the skipped line's CRLF ending into `\r\r\n`
+  when reformatting a file with CRLF line endings, and in `--diff` output (#5438)
 
 ### Packaging
 
@@ -238,6 +242,8 @@
 
 - Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
   empty entry, such as a trailing comma (#5428)
+- Allow optional whitespace around comma-separated versions and `pyi` in the
+  `X-Python-Variant` header in blackd (#5441)
 
 ### Integrations
 
