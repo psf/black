@@ -13,6 +13,9 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
+- `respect_ruff_ignore`: Preserve single physical lines ending in `# ruff: ignore` or
+  `# ruff: ignore[...]`, like `# type: ignore`. Also prevent string splitting and
+  merging from changing the scope of these comments.
 - `normalize_tstring_prefix`: Lowercase the `T` prefix of t-strings (for example,
   `T"hello"` becomes `t"hello"`).
 - `wrap_comprehension_in`: Wrap the `in` clause of list and dictionary comprehensions

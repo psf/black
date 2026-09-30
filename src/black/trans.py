@@ -861,7 +861,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             if id(leaf) in line.comments:
                 num_of_inline_string_comments += 1
-                if contains_pragma_comment(line.comments[id(leaf)]):
+                if contains_pragma_comment(line.comments[id(leaf)], line.mode):
                     return TErr("Cannot merge strings which have pragma comments.")
 
         if num_of_strings < 2:
@@ -878,7 +878,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         while is_valid_index(next_idx):
             next_leaf = line.leaves[next_idx]
             if id(next_leaf) in line.comments:
-                if contains_pragma_comment(line.comments[id(next_leaf)]):
+                if contains_pragma_comment(line.comments[id(next_leaf)], line.mode):
                     return TErr(
                         "Cannot merge strings when a pragma comment follows"
                         " the string group."
@@ -1184,7 +1184,7 @@ class BaseStringSplitter(StringTransformer):
             )
 
         if id(line.leaves[string_idx]) in line.comments and contains_pragma_comment(
-            line.comments[id(line.leaves[string_idx])]
+            line.comments[id(line.leaves[string_idx])], line.mode
         ):
             return TErr(
                 "Line appears to end with an inline pragma comment. Splitting the line"

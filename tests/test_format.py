@@ -97,3 +97,52 @@ def test_patma_invalid() -> None:
             "ParseError: bad input"
         )
     )
+
+
+@pytest.mark.parametrize("comment", ["ruff: ignore[B018]", "ruff:ignore[B018]"])
+def test_ruff_ignore_assignment(comment: str) -> None:
+    source = "x" * 65 + f" = 5  # {comment}\n"
+    assert_format(source, source, black.Mode(preview=True))
+
+
+@pytest.mark.parametrize("preview", [False, True])
+def test_ruff_ignore_stable_style(preview: bool) -> None:
+    source = "x" * 65 + " = 5  # ruff: ignore[B018]\n"
+    expected = (
+        source if preview else ("x" * 65 + " = (\n    5  # ruff: ignore[B018]\n)\n")
+    )
+    assert_format(source, expected, black.Mode(preview=preview))
+
+
+@pytest.mark.parametrize(
+    "comment",
+    [
+        "ruff: ignore",
+        "ruff: ignore[B018]",
+        "ruff:ignore[unused-import]",
+        "ruff: ignore[B018, F401]",
+    ],
+)
+def test_ruff_ignore_long_string(comment: str) -> None:
+    source = (
+        'message = "This is a long string that should not be split because the '
+        f'ignore applies to its original line."  # {comment}\n'
+    )
+    assert_format(source, source, black.Mode(unstable=True))
+
+
+@pytest.mark.parametrize(
+    "comment", ["ruff: noqa", "ruff: ignored", "ruff: ignoreme", "note: ignore[B018]"]
+)
+def test_other_comments_do_not_prevent_splitting(comment: str) -> None:
+    source = "x" * 80 + f" = 5  # {comment}\n"
+    expected = "x" * 80 + f" = (\n    5  # {comment}\n)\n"
+    assert_format(source, expected, black.Mode(preview=True))
+
+
+def test_ruff_ignore_prevents_string_merging() -> None:
+    source = (
+        'message = (\n    "First part of a string "  # ruff: ignore[B018]\n'
+        '    "second part of the string"\n)\n'
+    )
+    assert_format(source, source, black.Mode(unstable=True))

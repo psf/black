@@ -1002,6 +1002,22 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     ].lstrip().startswith("ignore")
 
 
+def is_ruff_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
+    """Recognize Ruff's line-specific ignore directive in preview style."""
+    if Preview.respect_ruff_ignore not in mode:
+        return False
+    if leaf.type not in {token.COMMENT, STANDALONE_COMMENT}:
+        return False
+    value = leaf.value
+    if not value.startswith("#"):
+        return False
+    value = value[1:].lstrip()
+    if not value.startswith("ruff:"):
+        return False
+    directive = value[len("ruff:") :].lstrip()
+    return directive == "ignore" or directive.startswith("ignore[")
+
+
 def wrap_in_parentheses(
     parent: Node, child: LN, *, visible: bool = True, index: int | None = None
 ) -> None:

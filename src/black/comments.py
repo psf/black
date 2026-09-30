@@ -13,6 +13,7 @@ from black.nodes import (
     WHITESPACE,
     container_of,
     first_leaf_of,
+    is_ruff_ignore_comment,
     is_type_comment_string,
     make_simple_prefix,
     preceding_leaf,
@@ -985,7 +986,7 @@ def children_contains_fmt_on(container: LN, mode: Mode) -> bool:
     return False
 
 
-def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
+def contains_pragma_comment(comment_list: list[Leaf], mode: Mode) -> bool:
     """
     Returns:
         True iff one of the comments in @comment_list is a pragma used by one
@@ -993,7 +994,9 @@ def contains_pragma_comment(comment_list: list[Leaf]) -> bool:
         pylint).
     """
     for comment in comment_list:
-        if comment.value.startswith(("# type:", "# noqa", "# pylint:")):
+        if comment.value.startswith(("# type:", "# noqa", "# pylint:")) or (
+            is_ruff_ignore_comment(comment, mode)
+        ):
             return True
 
     return False

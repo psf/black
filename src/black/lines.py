@@ -20,6 +20,7 @@ from black.nodes import (
     is_multiline_string,
     is_one_sequence_between,
     is_one_tuple,
+    is_ruff_ignore_comment,
     is_type_comment,
     is_type_ignore_comment,
     is_with_or_async_with_stmt,
@@ -325,20 +326,20 @@ class Line:
                         return True
         return False
 
-    def contains_unsplittable_type_ignore(self) -> bool:
+    def contains_unsplittable_ignore(self) -> bool:
         if not self.leaves:
             return False
 
-        # If a 'type: ignore' is attached to the end of a line, we
+        # If a line-specific ignore is attached to the end of a line, we
         # can't split the line, because we can't know which of the
         # subexpressions the ignore was meant to apply to.
         #
         # We only want this to apply to actual physical lines from the
         # original source, though: we don't want the presence of a
-        # 'type: ignore' at the end of a multiline expression to
+        # line-specific ignore at the end of a multiline expression to
         # justify pushing it all onto one line. Thus we
         # (unfortunately) need to check the actual source lines and
-        # only report an unsplittable 'type: ignore' if this line was
+        # only report an unsplittable line-specific ignore if this line was
         # one line in the original code.
 
         # Grab the first and last line numbers, skipping generated leaves
@@ -353,7 +354,9 @@ class Line:
             # line.
             for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
-                    if is_type_ignore_comment(comment, mode=self.mode):
+                    if is_type_ignore_comment(
+                        comment, mode=self.mode
+                    ) or is_ruff_ignore_comment(comment, self.mode):
                         return True
 
         return False

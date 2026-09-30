@@ -88,6 +88,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Respect `# ruff: ignore` comments when splitting lines and processing strings (PR
+  number pending).
+
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of

@@ -811,7 +811,7 @@ def transform_line(
         and not line.magic_trailing_comma
         and (
             is_line_short_enough(line, mode=mode, line_str=line_str_hugging_power_ops)
-            or line.contains_unsplittable_type_ignore()
+            or line.contains_unsplittable_ignore()
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
         and not line.contains_implicit_multiline_string_with_comments()
@@ -1235,9 +1235,9 @@ def _prefer_split_rhs_oop_over_rhs(
     """
     # contains unsplittable type ignore
     if (
-        rhs_oop.head.contains_unsplittable_type_ignore()
-        or rhs_oop.body.contains_unsplittable_type_ignore()
-        or rhs_oop.tail.contains_unsplittable_type_ignore()
+        rhs_oop.head.contains_unsplittable_ignore()
+        or rhs_oop.body.contains_unsplittable_ignore()
+        or rhs_oop.tail.contains_unsplittable_ignore()
     ):
         return True
 
@@ -2435,7 +2435,7 @@ def run_transformer(
         or any(bracket.value for bracket in line.bracket_tracker.invisible)
         or line.contains_multiline_strings()
         or result[0].contains_uncollapsable_type_comments()
-        or result[0].contains_unsplittable_type_ignore()
+        or result[0].contains_unsplittable_ignore()
         or is_line_short_enough(result[0], mode=mode)
         # result[0] only exceeds the length because of a comment attached to a
         # subscript opening bracket.  Taking the FORCE_OPTIONAL_PARENTHESES
