@@ -88,8 +88,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Respect `# ruff: ignore` comments when splitting lines and processing strings
-  (#5459).
+- Respect `# ruff: ignore` comments when splitting lines and processing strings (#5459).
 
 - Split long stringified return annotations even when the function has parameters
   (#5427)
