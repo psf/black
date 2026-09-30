@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ast
 import asyncio
 import inspect
 import io
@@ -2452,6 +2453,41 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_str("class A\\\r:...", mode=black.FileMode())
             == "class A: ...\r"
         )
+
+    def test_docstring_with_non_newline_line_break(self) -> None:
+        # These tests are here instead of in the normal cases because a form feed
+        # and the Unicode separators are invisible in a diff.
+        #
+        # Only \n, \r and \r\n end a line for the Python parser, so the other
+        # characters str.splitlines() breaks on are ordinary characters of a
+        # docstring's value. Reformatting must not turn one of them into a
+        # newline, which would change the value of the docstring.
+        for line_break in ("\x0c", "\x0b", "\x85", "\u2028", "\u2029"):
+            for source in (
+                f'def f():\n    """a{line_break}b\n    c"""\n',
+                f'def f():\n    """a\n    b{line_break}c"""\n',
+            ):
+                formatted = black.format_str(source, mode=black.FileMode())
+                # Black's own AST check normalizes docstring whitespace away, so
+                # the docstring's value has to be compared directly here.
+                before = ast.parse(source).body[0].body[0].value.value
+                after = ast.parse(formatted).body[0].body[0].value.value
+                assert before == after, f"{line_break!r}: {source!r} -> {formatted!r}"
+                assert black.format_str(formatted, mode=black.FileMode()) == formatted
+
+    def test_docstring_still_splits_on_real_line_breaks(self) -> None:
+        # The counterpart to the test above: CR and CRLF *are* line breaks for
+        # the Python parser, so they must keep being treated as line endings.
+        # Without this, narrowing the split to LF alone passes the whole suite.
+        quotes = chr(34) * 3
+        for newline in ("\n", "\r\n", "\r"):
+            docstring = quotes + "a" + newline + "    b" + quotes
+            source = "def f():" + newline + "    " + docstring + newline
+            formatted = black.format_str(source, mode=black.FileMode())
+            value = ast.parse(formatted).body[0].body[0].value.value
+            # Two docstring lines, not one: the break survived the round trip.
+            assert value.count("\n") == 1, f"{newline!r}: {value!r}"
+            assert formatted == black.format_str(formatted, mode=black.FileMode())
 
     def test_newline_type_detection(self) -> None:
         mode = Mode()
