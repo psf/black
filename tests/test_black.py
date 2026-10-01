@@ -135,6 +135,17 @@ def invokeBlack(
     assert result.exit_code == exit_code, msg
 
 
+def docstring_value(source: str) -> str:
+    # Not ast.get_docstring(): its default clean=True runs inspect.cleandoc,
+    # which trims exactly the whitespace these tests are about.
+    node = ast.parse(source).body[0]
+    assert isinstance(node, ast.FunctionDef)
+    expr = node.body[0]
+    assert isinstance(expr, ast.Expr)
+    assert isinstance(expr.value, ast.Constant)
+    return str(expr.value.value)
+
+
 def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
     source = tmp_path / "invalid.py"
     source.write_text("return if you can\n", encoding="utf8")
@@ -2470,8 +2481,8 @@ class BlackTestCase(BlackBaseTestCase):
                 formatted = black.format_str(source, mode=black.FileMode())
                 # Black's own AST check normalizes docstring whitespace away, so
                 # the docstring's value has to be compared directly here.
-                before = ast.parse(source).body[0].body[0].value.value
-                after = ast.parse(formatted).body[0].body[0].value.value
+                before = docstring_value(source)
+                after = docstring_value(formatted)
                 assert before == after, f"{line_break!r}: {source!r} -> {formatted!r}"
                 assert black.format_str(formatted, mode=black.FileMode()) == formatted
 
@@ -2484,7 +2495,7 @@ class BlackTestCase(BlackBaseTestCase):
             docstring = quotes + "a" + newline + "    b" + quotes
             source = "def f():" + newline + "    " + docstring + newline
             formatted = black.format_str(source, mode=black.FileMode())
-            value = ast.parse(formatted).body[0].body[0].value.value
+            value = docstring_value(formatted)
             # Two docstring lines, not one: the break survived the round trip.
             assert value.count("\n") == 1, f"{newline!r}: {value!r}"
             assert formatted == black.format_str(formatted, mode=black.FileMode())
