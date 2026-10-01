@@ -570,6 +570,18 @@ s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:
     "which is against the line length rule."
 )  # type: ignore
 
+x = (
+    "A very very very very very very very very very very very very long string "
+    "formatted with percent operator: %s" % arg
+)  # type: ignore
+
+(
+    "A very very very very very very very very very very very very long string "
+    "annotated with a type ignore pragma in a tuple still splits across lines "
+    "instead of collapsing onto a single line.",
+    1,
+)  # type: ignore
+
 
 # output
 
@@ -1267,4 +1279,18 @@ s = (
     "A very very very very very very very very very very very very long string "
     "annotated with a type ignore pragma gets merged into a single very long line "
     "which is against the line length rule."
+)  # type: ignore
+
+x = (
+    "A very very very very very very very very very very very very long string "
+    "formatted with percent operator: %s" % arg
+)  # type: ignore
+
+(
+    (
+        "A very very very very very very very very very very very very long string "
+        "annotated with a type ignore pragma in a tuple still splits across lines "
+        "instead of collapsing onto a single line."
+    ),
+    1,
 )  # type: ignore
