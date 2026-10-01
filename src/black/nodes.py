@@ -2,6 +2,7 @@
 blib2to3 Node/Leaf transformation-related utility functions.
 """
 
+import re
 from collections.abc import Iterator
 from typing import Final, Generic, Literal, TypeGuard, TypeVar, Union
 
@@ -1000,6 +1001,19 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     return is_type_comment_string(value, mode) and value.split(":", 1)[
         1
     ].lstrip().startswith("ignore")
+
+
+def is_ignore_pragma_comment_string(value: str) -> bool:
+    """Return True if the string is a type-checker ignore pragma, such as
+    `# pyright: ignore[reportFoo]` or `# ty: ignore`.
+
+    The `ignore` must be the last word, optionally followed by a bracketed
+    code list, so that prose comments are not mistaken for pragmas.
+    `# type: ignore` is excluded: those lines are kept unsplittable by
+    dedicated handling and must not be relocated.
+    """
+    match = re.match(r"#\s*([A-Za-z_][\w.]*)\s*:\s*ignore\s*(?:\[[^\]]*\])?\s*$", value)
+    return match is not None and match.group(1) != "type"
 
 
 def wrap_in_parentheses(

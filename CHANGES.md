@@ -19,6 +19,11 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix trailing type-checker ignore pragmas, such as `# pyright: ignore[...]`, ending
+  up on the last line when Black splits the line, where the pragma no longer applies
+  to any diagnostic; they are now placed on the first line of the split, where the
+  expression starts. Lines that trail such a pragma are no longer split at invisible
+  parentheses (#5462)
 - Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695
   type parameters (#5429)
 - Fix an inline comment after the closing bracket of optional parentheses being moved
