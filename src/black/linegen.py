@@ -14,6 +14,7 @@ from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
     DOT_PRIORITY,
+    LOGIC_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
     max_delimiter_priority_in_atom,
@@ -1488,7 +1489,7 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
 MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
 
 
-def _can_defer_lone_comparator_to_rhs(line: Line, mode: Mode) -> bool:
+def _can_defer_lone_comparator_to_rhs(line: Line, rhs: RHSResult, mode: Mode) -> bool:
     """Return True if the lone comparator on `line` can defer to right_hand_split.
 
     Caller has already established exactly one delimiter at
@@ -1510,10 +1511,51 @@ def _can_defer_lone_comparator_to_rhs(line: Line, mode: Mode) -> bool:
             line.bracket_tracker.delimiters.get(id(leaf)) == COMPARATOR_PRIORITY
         ):
             past_comparator = True
-    try:
-        rhs = _first_right_hand_split(line)
-    except CannotSplit:
+    return is_line_short_enough(rhs.head, mode=mode)
+
+
+def _can_defer_dict_key_delimiter_to_rhs(
+    line: Line, rhs: RHSResult, mode: Mode
+) -> bool:
+    """Return True if delimiters on a dictionary key can defer to right_hand_split.
+
+    When a dictionary key contains operators (like +, -, %, etc.), delimiter_split
+    would split inside the key instead of allowing the dictionary value to be
+    wrapped onto a new line. We defer to right_hand_split when the key itself
+    (along with the opening paren around the value) fits within the line length.
+    """
+    colon_idx: int | None = None
+    for idx, leaf in enumerate(line.leaves):
+        if (
+            leaf.type == token.COLON
+            and leaf.bracket_depth == 0
+            and leaf.parent
+            and leaf.parent.type == syms.dictsetmaker
+        ):
+            colon_idx = idx
+            break
+    if colon_idx is None:
         return False
+
+    if any(leaf.type == token.RBRACE for leaf in line.leaves[:colon_idx]):
+        return False
+
+    bt = line.bracket_tracker
+    last_leaf = line.leaves[-1]
+    try:
+        delimiter_priority = bt.max_delimiter_priority(exclude={id(last_leaf)})
+    except ValueError:
+        return False
+
+    if delimiter_priority >= LOGIC_PRIORITY:
+        return False
+
+    for leaf_id, prio in bt.delimiters.items():
+        if prio == delimiter_priority:
+            leaf_idx = next(i for i, l in enumerate(line.leaves) if id(l) == leaf_id)
+            if leaf_idx >= colon_idx:
+                return False
+
     return is_line_short_enough(rhs.head, mode=mode)
 
 
@@ -1542,13 +1584,32 @@ def delimiter_split(
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
+    rhs: RHSResult | None = None
     if (
         Preview.hug_comparator in mode
         and delimiter_priority == COMPARATOR_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
-        and _can_defer_lone_comparator_to_rhs(line, mode)
+    ) or Preview.keep_dict_keys_with_operators in mode:
+        try:
+            rhs = _first_right_hand_split(line)
+        except CannotSplit:
+            pass
+
+    if (
+        rhs is not None
+        and Preview.hug_comparator in mode
+        and delimiter_priority == COMPARATOR_PRIORITY
+        and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and _can_defer_lone_comparator_to_rhs(line, rhs, mode)
     ):
         raise CannotSplit("Bracketed RHS will explode via right_hand_split")
+
+    if (
+        rhs is not None
+        and Preview.keep_dict_keys_with_operators in mode
+        and _can_defer_dict_key_delimiter_to_rhs(line, rhs, mode)
+    ):
+        raise CannotSplit("Dict key delimiter will explode via right_hand_split")
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
