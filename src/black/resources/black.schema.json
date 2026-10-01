@@ -96,7 +96,8 @@
           "fmt_off_class_blank_lines",
           "remove_redundant_generator_parentheses",
           "normalize_tstring_prefix",
-          "remove_redundant_unpacking_parentheses"
+          "remove_redundant_unpacking_parentheses",
+          "keep_dict_keys_with_operators"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
