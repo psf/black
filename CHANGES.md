@@ -88,6 +88,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split only the brackets holding a magic trailing comma when more trailers follow them,
+  so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
 - Keep dictionary keys containing operators together on one line when the value can be
   wrapped onto a new line (#5435)
 - Split long stringified return annotations even when the function has parameters

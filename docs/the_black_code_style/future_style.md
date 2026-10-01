@@ -52,6 +52,9 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
+- `fix_magic_trailing_comma_trailer_split`: When a magic trailing comma forces a line to
+  split, split only at the brackets holding that comma. Trailers after them, such as
+  `[1,][2](3)`, stay on the closing line.
 - `keep_dict_keys_with_operators`: Keep dictionary keys containing operators together on
   one line when the value can be wrapped onto a new line.
   ([see below](labels/keep-dict-keys-with-operators))
