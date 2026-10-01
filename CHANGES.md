@@ -20,9 +20,9 @@
 <!-- Changes that affect Black's stable style -->
 
 - Fix silently dropping the indentation of an indented Jupyter notebook cell. A cell
-  that does not parse on its own is masked, and IPython's `TransformerManager` dedents
-  whatever it transforms; a cell that does parse still loses its leading whitespace to
-  the formatter. Indented cells are now left unchanged (#5454)
+  whose first line of code is indented does not parse on its own, so it is masked, and
+  IPython's `TransformerManager` dedents whatever it transforms; the formatted cell no
+  longer matches the original indentation. Such cells are now left unchanged (#5454)
 - Fix `# fmt: skip` on a bracketed ternary like `a + b if c else d,` turning the
   surrounding tuple into a call (#5464)
 - Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695

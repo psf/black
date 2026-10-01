@@ -51,21 +51,44 @@ def test_noop() -> None:
         pytest.param("        x = 1", id="deeper indent"),
         pytest.param("\tx = 1", id="tab indent"),
         pytest.param("    if x:\n        pass", id="block"),
-        pytest.param("    # just a comment", id="comment only"),
+        pytest.param("    # comment\n    x = 1", id="indented comment then code"),
+        pytest.param("\n    x = 1", id="blank line then code"),
     ],
 )
 @pytest.mark.parametrize("fast", [True, False])
 def test_indented_cell_is_not_dedented(src: str, fast: bool) -> None:
-    """Indented cells are left alone.
+    """Cells whose first line of code is indented are left alone.
 
-    A cell that does not parse on its own has to be masked, and masking runs it
-    through IPython's TransformerManager, which dedents it. A cell that does
-    parse still loses its leading whitespace to the formatter. Either way the
-    result silently drops the original indentation, so these cells must be
-    reported as unchanged instead.
+    Such a cell does not parse on its own, so it has to be masked, and masking
+    runs it through IPython's TransformerManager, which dedents it. The result no
+    longer matches the original indentation, so these cells must be reported as
+    unchanged instead.
     """
     with pytest.raises(NothingChanged):
         format_cell(src, fast=fast, mode=JUPYTER_MODE)
+
+
+@pytest.mark.parametrize(
+    "src,expected",
+    [
+        pytest.param("    # load data\nx=1\n", "# load data\nx = 1", id="indent cmt"),
+        pytest.param("\t# note\ny  =  2\n", "# note\ny = 2", id="indent tab cmt"),
+        pytest.param("    # only a comment\n", "# only a comment", id="cmt only"),
+        pytest.param("    # load\nx=1", "# load\nx = 1", id="no trailing newline"),
+        pytest.param(
+            "y=2\n    # trailing\n", "y = 2\n# trailing", id="trailing comment"
+        ),
+    ],
+)
+def test_indented_leading_comment_still_formats(src: str, expected: str) -> None:
+    """A leading comment does not count as the cell's first line of code.
+
+    Indenting a comment matches what Black already does to the same source in a
+    .py file, so the rest of the cell should still be formatted rather than the
+    whole cell being skipped.
+    """
+    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
+    assert result == expected
 
 
 @pytest.mark.parametrize("n_chars", [1, 2, 3, 4, 5, 17])

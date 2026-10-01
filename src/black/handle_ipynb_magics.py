@@ -78,11 +78,15 @@ def validate_cell(src: str, mode: Mode) -> None:
     Due to the impossibility of safely roundtripping in such situations, cells
     containing transformed magics will be ignored.
 
-    An indented cell is not safe to format. If it does not parse on its own it
-    has to be masked, and IPython's ``TransformerManager`` dedents whatever it
-    transforms; if it does parse, formatting the cell still drops the leading
-    whitespace. Either way the original indentation would be silently lost, so
-    indented cells are ignored.
+    A cell whose first line of code is indented is not safe to format. Such a
+    cell does not parse on its own, so it has to be masked, and IPython's
+    ``TransformerManager`` dedents whatever it transforms. The formatted cell
+    would no longer match the original indentation, so such cells are ignored.
+
+    Only the first line of actual code counts. Leading blank and comment lines
+    are skipped, because indenting a comment does not stop the rest of the cell
+    from being formatted, and matches what Black already does to the same source
+    in a ``.py`` file.
     """
     if any(transformed_magic in src for transformed_magic in TRANSFORMED_MAGICS):
         raise NothingChanged
@@ -99,10 +103,17 @@ def validate_cell(src: str, mode: Mode) -> None:
 
 
 def _is_indented(src: str) -> bool:
-    """Does `src` start with leading whitespace on its first non-blank line?"""
+    """Is the first line of code in `src` indented?
+
+    Blank lines and comment lines are skipped, so an indented comment at the top
+    of a cell does not count. The cell itself is never returned indented here,
+    because a cell whose every line is blank or a comment carries no code.
+    """
     for line in src.splitlines():
-        if line.strip():
-            return line[0].isspace()
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        return line[0].isspace()
     return False
 
 
