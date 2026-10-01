@@ -555,7 +555,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Skip reading and writing the cache, forcing Black to reformat all"
-        " included files."
+        " included files. Overrides --cache-dir."
     ),
 )
 @click.pass_context
@@ -698,8 +698,8 @@ def main(
                     "Disabling the cache.",
                     fg="blue",
                 )
-        else:
-            pygram.initialize(cache_dir)
+    if not no_cache:
+        pygram.initialize(cache_dir)
     if target_version:
         versions = set(target_version)
     else:

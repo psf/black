@@ -165,7 +165,7 @@
     },
     "no-cache": {
       "type": "boolean",
-      "description": "Skip reading and writing the cache, forcing Black to reformat all included files.",
+      "description": "Skip reading and writing the cache, forcing Black to reformat all included files. Overrides --cache-dir.",
       "default": false
     }
   }

@@ -35,7 +35,9 @@ write the above files to `.cache/black`. The command-line option takes precedenc
 If you need Black to always perform a fresh analysis and not consult or update the
 on-disk cache, use the `--no-cache` flag. When provided, Black will neither read from
 nor write to the per-user cache. This is useful for debugging, for CI runs where you
-want a deterministic fresh run, or when you suspect cache corruption.
+want a deterministic fresh run, or when you suspect cache corruption. If combined with
+`--cache-dir`, `--no-cache` takes precedence and the specified cache directory is not
+created or used.
 
 Example:
 

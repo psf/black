@@ -49,8 +49,8 @@ def get_cache_dir(cache_dir: Path | None = None) -> Path:
 CACHE_DIR = get_cache_dir()
 
 
-def get_cache_file(mode: Mode, cache_dir: Path | None = None) -> Path:
-    return (cache_dir or CACHE_DIR) / f"cache.{mode.get_cache_key()}.pickle"
+def get_cache_file(mode: Mode, cache_dir: Path) -> Path:
+    return cache_dir / f"cache.{mode.get_cache_key()}.pickle"
 
 
 @dataclass
@@ -66,7 +66,9 @@ class Cache:
         If it is not well-formed, the call to write later should
         resolve the issue.
         """
-        cache_file = get_cache_file(mode, cache_dir)
+        cache_file = get_cache_file(
+            mode, CACHE_DIR if cache_dir is None else cache_dir
+        )
         try:
             exists = cache_file.exists()
         except OSError as e:
