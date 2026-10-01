@@ -23,6 +23,8 @@
   that does not parse on its own is masked, and IPython's `TransformerManager` dedents
   whatever it transforms; a cell that does parse still loses its leading whitespace to
   the formatter. Indented cells are now left unchanged (#5454)
+- Fix `# fmt: skip` on a bracketed ternary like `a + b if c else d,` turning the
+  surrounding tuple into a call (#5464)
 - Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695
   type parameters (#5429)
 - Fix an inline comment after the closing bracket of optional parentheses being moved
@@ -92,6 +94,10 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split only the brackets holding a magic trailing comma when more trailers follow them,
+  so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
+- Keep dictionary keys containing operators together on one line when the value can be
+  wrapped onto a new line (#5435)
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
@@ -235,6 +241,9 @@
 - Report parser failures using editor-friendly `path:line:column` locations (#5237)
 - Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
   attribute, such as in Jupyter notebooks (#5411)
+- A `# fmt: off` region that keeps a different indent width from the rest of the file
+  can make Black's own output unparseable. That failure is now reported as an internal
+  error naming Black, instead of as a syntax error pointing at the user's file (#5383)
 
 ### _Blackd_
 
