@@ -19,6 +19,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `# fmt: skip` on a bracketed ternary like `a + b if c else d,` turning the
+  surrounding tuple into a call (#5464)
 - Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695
   type parameters (#5429)
 - Fix an inline comment after the closing bracket of optional parentheses being moved
