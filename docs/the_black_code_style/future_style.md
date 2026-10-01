@@ -52,6 +52,36 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
+- `parenthesize_expressions_with_comments`: Parenthesize expressions (such as function
+  calls) that exceed the line length when their parameters contain comments.
+  ([see below](labels/parenthesize-expressions-with-comments))
+
+(labels/parenthesize-expressions-with-comments)=
+
+### Parenthesizing expressions with parameter comments
+
+When an expression in an assignment (such as a function call) exceeds the line length
+and contains parameter comments, Black previously failed to wrap the expression in
+parentheses. With this feature enabled, Black wraps the expression so that the line fits
+within the line length limit:
+
+```python
+# Before
+long_variable_name = long_function_name(
+    arg1,
+    # comment
+    arg2,
+)
+
+# After (with --preview)
+long_variable_name = (
+    long_function_name(
+        arg1,
+        # comment
+        arg2,
+    )
+)
+```
 
 (labels/remove-redundant-unpacking-parentheses)=
 
