@@ -1,3 +1,4 @@
+# flags: --preview
 asm_client: SecretsManagerClient = boto3.client("secretsmanager")  # pyright: ignore[reportUnknownMemberType]
 long_call = some_function(argument_one, argument_two)  # pyright: ignore[reportUnknownVariableType]
 short = foo("x")  # ty: ignore[call-overload]

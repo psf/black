@@ -52,6 +52,34 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
+- `relocate_trailing_ignore_pragmas`: When splitting a line that trails a
+  type-checker ignore pragma (such as `# pyright: ignore[...]`), place the pragma on
+  the first line of the split, where the suppressed diagnostics originate, instead of
+  the last line. ([see below](labels/relocate-trailing-ignore-pragmas))
+
+(labels/relocate-trailing-ignore-pragmas)=
+
+### Trailing ignore pragmas
+
+Type checkers apply ignore pragmas to the line where a diagnostic originates. When
+Black splits a line like
+
+```python
+asm_client: SecretsManagerClient = boto3.client("secretsmanager")  # pyright: ignore[reportUnknownMemberType]
+```
+
+the pragma used to travel to the last line of the split, where it no longer suppressed
+anything. Under this feature the pragma stays with the first line, where the expression
+starts:
+
+```python
+asm_client: SecretsManagerClient = boto3.client(  # pyright: ignore[reportUnknownMemberType]
+    "secretsmanager"
+)
+```
+
+`# type: ignore` is unaffected: lines trailing it keep their dedicated unsplittable
+handling.
 
 (labels/remove-redundant-unpacking-parentheses)=
 

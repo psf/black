@@ -1030,7 +1030,10 @@ def right_hand_split_with_omits(
         if (
             is_line_short_enough(lines[0], mode=mode)
             or (omit and _over_length_only_due_to_subscript_comment(lines[0], mode))
-            or _over_length_only_due_to_ignore_pragma(lines[0], mode)
+            or (
+                Preview.relocate_trailing_ignore_pragmas in mode
+                and _over_length_only_due_to_ignore_pragma(lines[0], mode)
+            )
         ):
             yield from _relocate_trailing_ignore_pragmas(line, lines)
             return
@@ -1056,6 +1059,8 @@ def _is_single_physical_line(line: Line) -> bool:
 def _trails_ignore_pragma(line: Line) -> bool:
     """Return True if `line` was a single physical source line whose trailing
     comment is a type-checker ignore pragma."""
+    if Preview.relocate_trailing_ignore_pragmas not in line.mode:
+        return False
     if not line.leaves:
         return False
     comments = line.comments_after(line.leaves[-1])
@@ -1072,6 +1077,8 @@ def _relocate_trailing_ignore_pragmas(line: Line, lines: list[Line]) -> list[Lin
     but the comment would otherwise end up on the last line, where the pragma
     no longer suppresses anything.
     """
+    if Preview.relocate_trailing_ignore_pragmas not in line.mode:
+        return lines
     if len(lines) < 2:
         return lines
     head, tail = lines[0], lines[-1]
@@ -1323,7 +1330,10 @@ def _prefer_split_rhs_oop_over_rhs(
         rhs_oop.head.contains_unsplittable_type_ignore()
         or rhs_oop.body.contains_unsplittable_type_ignore()
         or rhs_oop.tail.contains_unsplittable_type_ignore()
-        or _head_ends_with_ignore_pragma(rhs_oop.head)
+        or (
+            Preview.relocate_trailing_ignore_pragmas in mode
+            and _head_ends_with_ignore_pragma(rhs_oop.head)
+        )
     ):
         return True
 
@@ -2562,7 +2572,10 @@ def run_transformer(
         # migrates the comment outside the subscript, which then oscillates with
         # a deeper-bracket split on the next formatter pass (issue #4733).
         or _over_length_only_due_to_subscript_comment(result[0], mode)
-        or _over_length_only_due_to_ignore_pragma(result[0], mode)
+        or (
+            Preview.relocate_trailing_ignore_pragmas in mode
+            and _over_length_only_due_to_ignore_pragma(result[0], mode)
+        )
         # If any leaves have no parents (which _can_ occur since
         # `transform(line)` potentially destroys the line's underlying node
         # structure), then we can't proceed. Doing so would cause the below
