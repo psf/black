@@ -235,7 +235,8 @@ Do not consult or update Black's per-user cache during this run. When `--no-cach
 specified, Black will perform fresh analysis for all files and will neither read from
 nor write to the cache. This is helpful for reproducing formatting results from a clean
 run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
-every time.
+every time. If combined with `--cache-dir`, `--no-cache` takes precedence and the
+specified cache directory is not created or used.
 
 #### `--cache-dir`
 

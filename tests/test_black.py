@@ -2676,7 +2676,7 @@ class TestCaching:
             ),
         ]
         for case in cases:
-            cache_file = get_cache_file(case)
+            cache_file = get_cache_file(case, Path())
             # Some common file systems enforce a maximum path length
             # of 143 (issue #4174). We can't do anything if the directory
             # path is too long, but ensure the name of the cache file itself
@@ -2686,7 +2686,7 @@ class TestCaching:
     def test_cache_file_path_ignores_python_cell_magic_separators(self) -> None:
         mode = replace(DEFAULT_MODE, python_cell_magics={"../../../tmp/pwned"})
         with cache_dir() as workspace:
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             assert cache_file.parent == workspace
             assert "/" not in cache_file.name
             assert ".." not in cache_file.name
@@ -2695,7 +2695,7 @@ class TestCaching:
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             cache_file.write_text("this is not a pickle", encoding="utf-8")
             assert black.Cache.read(mode).file_data == {}
             src = (workspace / "test.py").resolve()
@@ -2706,8 +2706,8 @@ class TestCaching:
 
     def test_cache_empty_file(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
-            cache_file = get_cache_file(mode)
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode, workspace)
             cache_file.touch()
             assert black.Cache.read(mode).file_data == {}
 
@@ -2756,7 +2756,7 @@ class TestCaching:
                 if color:
                     cmd.append("--color")
                 invokeBlack(cmd)
-                cache_file = get_cache_file(mode)
+                cache_file = get_cache_file(mode, workspace)
                 assert cache_file.exists() is False
                 read_cache.assert_called_once()
                 write_cache.assert_not_called()
@@ -2781,12 +2781,12 @@ class TestCaching:
 
     def test_no_cache_when_stdin(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
+        with cache_dir() as workspace:
             result = BlackRunner().invoke(
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
             assert not result.exit_code
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             assert not cache_file.exists()
 
     def test_no_cache_flag_prevents_writes(self) -> None:
