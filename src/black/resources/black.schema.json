@@ -97,6 +97,8 @@
           "remove_redundant_generator_parentheses",
           "normalize_tstring_prefix",
           "remove_redundant_unpacking_parentheses",
+          "fix_magic_trailing_comma_trailer_split",
+          "keep_dict_keys_with_operators",
           "blank_line_after_stub_method"
         ]
       },
