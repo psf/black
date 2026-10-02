@@ -132,6 +132,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Preserve the upper bound of compatible-release `requires-python` constraints such as
+  `~=3.11.0` when inferring target versions (#5469)
 - Fall back to the default configuration, with a warning, when the given sources share
   no common project root (for example, they are on different drives on Windows) instead
   of crashing (#5386)
