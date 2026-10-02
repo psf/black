@@ -94,6 +94,10 @@
   so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
 - Keep dictionary keys containing operators together on one line when the value can be
   wrapped onto a new line (#5435)
+- Place trailing type-checker ignore pragmas, such as `# pyright: ignore[...]`, on the
+  first line of a split instead of the last line, where the pragma no longer applies to
+  any diagnostic. Lines that trail such a pragma are no longer split at invisible
+  parentheses under `--preview` (#5467)
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
