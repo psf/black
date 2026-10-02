@@ -5,34 +5,34 @@
 Treat the initial reformat as a mechanical change. Before running _Black_, agree on the
 files that it should format and commit the project's configuration (such as the target
 Python versions and line length) to `pyproject.toml`. Pinning the same _Black_ version
-in local development and CI also prevents contributors from producing different
-results during the rollout.
+in local development and CI also prevents contributors from producing different results
+during the rollout.
 
 Run the project's tests before and after formatting. Commit the formatting by itself,
-without refactors or other behavior changes, so that reviewers can verify it quickly
-and future history remains easy to follow. If formatting the entire repository at once
-is impractical, split the rollout along clear directory or package boundaries and avoid
+without refactors or other behavior changes, so that reviewers can verify it quickly and
+future history remains easy to follow. If formatting the entire repository at once is
+impractical, split the rollout along clear directory or package boundaries and avoid
 editing those areas for other reasons until their formatting commit lands.
 
 Enable enforcement as soon as the formatting commit is merged. For example, add
 `black --check .` to CI and use the
-{doc}`pre-commit integration </integrations/source_version_control>` for local
-feedback. Keeping configuration and enforcement in the same pull request prevents new
-unformatted changes from accumulating during the transition.
+{doc}`pre-commit integration </integrations/source_version_control>` for local feedback.
+Keeping configuration and enforcement in the same pull request prevents new unformatted
+changes from accumulating during the transition.
 
 ### Coordinating active branches
 
-A repository-wide formatting commit will conflict with long-running branches that
-edit the same lines. Announce the planned merge time and ask contributors to minimize
-large changes around it. Once the formatting commit is on the target branch,
-contributors should update their branch, resolve any semantic conflicts, and run
-_Black_ over the result. The final diff against the newly formatted target branch will
-then mostly contain the intended code changes.
+A repository-wide formatting commit will conflict with long-running branches that edit
+the same lines. Announce the planned merge time and ask contributors to minimize large
+changes around it. Once the formatting commit is on the target branch, contributors
+should update their branch, resolve any semantic conflicts, and run _Black_ over the
+result. The final diff against the newly formatted target branch will then mostly
+contain the intended code changes.
 
-Avoid combining the reformat with automatic conflict strategies that always choose
-one side: they can silently discard real changes. For especially busy repositories,
-merging small or nearly complete branches before the rollout can reduce the number of
-conflicts considerably.
+Avoid combining the reformat with automatic conflict strategies that always choose one
+side: they can silently discard real changes. For especially busy repositories, merging
+small or nearly complete branches before the rollout can reduce the number of conflicts
+considerably.
 
 ## Avoiding ruining git blame
 
