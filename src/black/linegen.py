@@ -2475,6 +2475,19 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
+def _fits_without_comments(line: Line, mode: Mode) -> bool:
+    """Return True if `line` fits `mode.line_length` once its comments are
+    ignored, i.e. any over-length is caused entirely by the comments."""
+    if not line.leaves:
+        return False
+    indent = "    " * line.depth
+    leaves_iter = iter(line.leaves)
+    first = next(leaves_iter)
+    text_without_comments = f"{first.prefix}{indent}{first.value}"
+    text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
+    return str_width(text_without_comments) <= mode.line_length
+
+
 def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
     """Return True if `line` only exceeds `mode.line_length` because of an inline
     comment attached to a subscript opening bracket (`[`).
@@ -2486,15 +2499,8 @@ def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
     the annotation in extra parens and migrates the comment outside the
     subscript, which then oscillates on the next formatter pass.
     """
-    if not line.leaves:
-        return False
     # The over-length must be caused entirely by a trailing comment.
-    indent = "    " * line.depth
-    leaves_iter = iter(line.leaves)
-    first = next(leaves_iter)
-    text_without_comments = f"{first.prefix}{indent}{first.value}"
-    text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
-    if str_width(text_without_comments) > mode.line_length:
+    if not _fits_without_comments(line, mode):
         return False
     # And the comment must be attached to a subscript opening bracket.
     for leaf_id, comments in line.comments.items():
@@ -2527,14 +2533,7 @@ def _over_length_only_due_to_ignore_pragma(line: Line, mode: Mode) -> bool:
     and would oscillate with the deeper-bracket split on the next formatter
     pass.
     """
-    if not line.leaves:
-        return False
-    indent = "    " * line.depth
-    leaves_iter = iter(line.leaves)
-    first = next(leaves_iter)
-    text_without_comments = f"{first.prefix}{indent}{first.value}"
-    text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
-    if str_width(text_without_comments) > mode.line_length:
+    if not _fits_without_comments(line, mode):
         return False
     return _head_ends_with_ignore_pragma(line)
 
