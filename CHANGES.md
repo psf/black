@@ -262,6 +262,8 @@
 <!-- Major changes to documentation and policies. Small docs changes
      don't need a changelog entry. -->
 
+- Expand the guide for introducing Black to an existing project with rollout and
+  active-branch guidance (#5472)
 - Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
   insert-mode indentation (#5288)
 - Fix Git commands for Vundle in editor integration documentation (#5398)
