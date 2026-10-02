@@ -1027,8 +1027,13 @@ def format_file_in_place(
         raise ValueError(
             f"File '{src}' cannot be parsed as valid Jupyter notebook."
         ) from None
-    src_contents = header.decode(encoding) + src_contents
-    dst_contents = header.decode(encoding) + dst_contents
+    header_str = header.decode(encoding)
+    if newline != "\n" and header_str.endswith(newline):
+        # The contents are written with `newline` translation, which would turn the
+        # header's original line ending into e.g. "\r\r\n".
+        header_str = header_str[: -len(newline)] + "\n"
+    src_contents = header_str + src_contents
+    dst_contents = header_str + dst_contents
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -1311,7 +1316,31 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
-        dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
+        try:
+            dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
+        except InvalidInput as exc:
+            # This pass parses Black's own output, so failing to parse it means
+            # Black produced the invalid code, not the user. Reported as an
+            # internal error rather than as a syntax error in the user's file,
+            # keeping the parse location, which points into Black's output.
+            log = dump_to_file(dst_contents)
+            exc.context = (
+                f"INTERNAL ERROR: {_black_info()} produced invalid code:\n"
+                f"{exc.context or 'cannot parse'}"
+            )
+            exc.details = (
+                f"{exc.details or ''}\n"
+                "Please report a bug on https://github.com/psf/black/issues.  "
+                f"This invalid output might be helpful: {log}"
+            )
+            exc.args = (
+                f"{exc.context}: {exc.lineno}:{exc.column}{exc.details}",
+                exc.lineno,
+                exc.column,
+                exc.context,
+                exc.details,
+            )
+            raise
     if lines:
         dst_contents = _restore_unselected_trailing_blank_lines(
             src_contents, dst_contents, lines

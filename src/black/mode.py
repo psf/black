@@ -267,6 +267,8 @@ class Preview(Enum):
     remove_redundant_generator_parentheses = auto()
     normalize_tstring_prefix = auto()
     remove_redundant_unpacking_parentheses = auto()
+    fix_magic_trailing_comma_trailer_split = auto()
+    keep_dict_keys_with_operators = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
