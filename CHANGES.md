@@ -132,6 +132,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Fix `--force-exclude` not excluding files whose path contains `..`, such as
+  `black ../generated/file.py` run from a subdirectory (#XXXX)
 - Fall back to the default configuration, with a warning, when the given sources share
   no common project root (for example, they are on different drives on Windows) instead
   of crashing (#5386)
