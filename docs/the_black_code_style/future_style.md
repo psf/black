@@ -105,17 +105,18 @@ self.message_user(
     },
 )
 ```
-- `relocate_trailing_ignore_pragmas`: When splitting a line that trails a
-  type-checker ignore pragma (such as `# pyright: ignore[...]`), place the pragma on
-  the first line of the split, where the suppressed diagnostics originate, instead of
-  the last line. ([see below](labels/relocate-trailing-ignore-pragmas))
+
+- `relocate_trailing_ignore_pragmas`: When splitting a line that trails a type-checker
+  ignore pragma (such as `# pyright: ignore[...]`), place the pragma on the first line
+  of the split, where the suppressed diagnostics originate, instead of the last line.
+  ([see below](labels/relocate-trailing-ignore-pragmas))
 
 (labels/relocate-trailing-ignore-pragmas)=
 
 ### Trailing ignore pragmas
 
-Type checkers apply ignore pragmas to the line where a diagnostic originates. When
-Black splits a line like
+Type checkers apply ignore pragmas to the line where a diagnostic originates. When Black
+splits a line like
 
 ```python
 asm_client: SecretsManagerClient = boto3.client("secretsmanager")  # pyright: ignore[reportUnknownMemberType]
