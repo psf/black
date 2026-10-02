@@ -3355,11 +3355,12 @@ class TestFileCollection:
             (root / "other").mkdir()
             (root / "other" / "ok.py").write_text("x = 1", encoding="utf-8")
 
+            srcs: list[str | Path] = [
+                "../generated/gen.py",
+                root / "src" / ".." / "generated" / "gen.py",
+            ]
             with change_directory(root / "src"):
-                for src in [
-                    "../generated/gen.py",
-                    root / "src" / ".." / "generated" / "gen.py",
-                ]:
+                for src in srcs:
                     assert_collected_sources(
                         src=[src],
                         root=root,
@@ -3391,12 +3392,16 @@ class TestFileCollection:
             (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
             symlink_or_skip(root / "link", root / "a" / "b")
 
+            # Windows removes ".." before following symlinks, so there the path
+            # points outside the root to a file that doesn't exist.
+            src = "link/../../a/x/mod.py"
+            expected = [] if sys.platform == "win32" else [src]
             with change_directory(root):
                 assert_collected_sources(
-                    src=["link/../../a/x/mod.py"],
+                    src=[src],
                     root=root,
                     force_exclude=r"^/generated/",
-                    expected=["link/../../a/x/mod.py"],
+                    expected=expected,
                 )
 
     def test_get_sources_with_stdin_symlink_outside_root(
