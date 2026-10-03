@@ -96,6 +96,8 @@
   so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
 - Keep dictionary keys containing operators together on one line when the value can be
   wrapped onto a new line (#5435)
+- Fix `string_processing` duplicating an inline comment when it strips the parentheses
+  around a string or merges a backslash-continued string on the same line (#5449)
 - Split long stringified return annotations even when the function has parameters
   (#5427)
 - Fix crash in stub files when `# fmt: skip` is placed on a function in a group of

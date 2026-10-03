@@ -540,7 +540,6 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             )
 
         new_line = line.clone()
-        new_line.comments = line.comments.copy()
         append_leaves(new_line, line, LL)
 
         for string_idx in indices_to_transform:
@@ -1058,7 +1057,6 @@ class StringParenStripper(StringTransformer):
         LL = line.leaves
 
         new_line = line.clone()
-        new_line.comments = line.comments.copy()
 
         previous_idx = -1
         # We need to sort the indices, since string_idx and its matching
@@ -1074,9 +1072,8 @@ class StringParenStripper(StringTransformer):
                 LL[lpar_or_rpar_idx].remove()  # Remove lpar.
                 replace_child(LL[idx], string_leaf)
                 new_line.append(string_leaf)
-                # replace comments
-                old_comments = new_line.comments.pop(id(LL[idx]), [])
-                new_line.comments.setdefault(id(string_leaf), []).extend(old_comments)
+                for comment_leaf in line.comments_after(LL[idx]):
+                    new_line.append(comment_leaf, preformatted=True)
             else:
                 LL[lpar_or_rpar_idx].remove()  # This is a rpar.
 
