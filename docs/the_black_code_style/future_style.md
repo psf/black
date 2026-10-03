@@ -60,6 +60,46 @@ Currently, the following features are included in the preview style:
 - `keep_dict_keys_with_operators`: Keep dictionary keys containing operators together on
   one line when the value can be wrapped onto a new line.
   ([see below](labels/keep-dict-keys-with-operators))
+- `avoid_parens_for_unbreakable_rhs_in_assignments`: Avoid adding unnecessary
+  parentheses around unbreakable right-hand side expressions in assignments (such as
+  annotated assignments or subscript targets) when the expression cannot fit within the
+  line length even with parentheses.
+  ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
+
+(labels/avoid-parens-for-unbreakable-rhs-in-assignments)=
+
+### Avoid unnecessary parentheses for unbreakable right-hand side in assignments
+
+When an assignment's target contains type annotations or brackets (e.g.
+`x: str = "long..."` or `x[0] = "long..."`) and the right-hand side is an unbreakable
+expression that exceeds the line length limit regardless, Black previously added outer
+parentheses around the right-hand side expression, creating an inconsistency with
+standard assignments (`x = "long..."`). With this feature enabled, Black avoids adding
+unnecessary parentheses in these cases.
+
+For example:
+
+```python
+# Before
+class A:
+    # Standard assignment was left unparenthesized:
+    raw = "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+
+    # But annotated assignment was unnecessarily wrapped:
+    attr: str = (
+        "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+    )
+```
+
+will be formatted consistently:
+
+```python
+# After (with --preview)
+class A:
+    raw = "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+
+    attr: str = "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+```
 
 (labels/keep-dict-keys-with-operators)=
 
