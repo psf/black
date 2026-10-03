@@ -1,9 +1,6 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
+## Version 26.10.0
 
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
@@ -11,13 +8,7 @@
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
 
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
-
 ### Stable style
-
-<!-- Changes that affect Black's stable style -->
 
 - Fix `# fmt: skip` on a bracketed ternary like `a + b if c else d,` turning the
   surrounding tuple into a call (#5464)
@@ -90,8 +81,6 @@
 
 - Add missing blank lines after classes whose last method has an ellipsis body (#5439)
 
-<!-- Changes that affect Black's preview style -->
-
 - Preserve leaf line numbers in `append_leaves` so multi-line expressions with merged
   strings and trailing `# type: ignore` comments are not treated as single-line
   unsplittable expressions (#5466)
@@ -140,8 +129,6 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - Fix `--force-exclude` not excluding files whose path contains `..`, such as
   `black ../generated/file.py` run from a subdirectory (#5471)
 - Fall back to the default configuration, with a warning, when the given sources share
@@ -163,21 +150,13 @@
 
 ### Packaging
 
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
 - Reduce the size of Linux standalone binaries by stripping debug symbols during the
   PyInstaller release build (#5223)
 - Black is now released using GitHub
   [Immutable Releases](https://docs.github.com/code-security/concepts/supply-chain-security/immutable-releases)
   (#5296)
 
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
 ### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 - Improve performance on strings containing many consecutive backslashes (#5163)
 - Improve performance when merging implicitly concatenated f-strings whose expressions
@@ -247,8 +226,6 @@
 
 ### Output
 
-<!-- Changes to Black's terminal output and error messages -->
-
 - Report parser failures using editor-friendly `path:line:column` locations (#5237)
 - Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
   attribute, such as in Jupyter notebooks (#5411)
@@ -258,8 +235,6 @@
 
 ### _Blackd_
 
-<!-- Changes to blackd -->
-
 - Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
   empty entry, such as a trailing comma (#5428)
 - Allow optional whitespace around comma-separated versions and `pyi` in the
@@ -267,17 +242,12 @@
 
 ### Integrations
 
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
 - Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
   Action (#5399)
 - Add outputs (`is_formatted`, `change_count`, `same_count`, `failure_count`) to GitHub
   Action runs (#5408)
 
 ### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 - Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
   insert-mode indentation (#5288)
