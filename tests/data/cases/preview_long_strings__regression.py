@@ -582,6 +582,14 @@ x = (
     1,
 )  # type: ignore
 
+# Regression test for https://github.com/psf/black/issues/3855.
+# Wrap the whole implicit concatenation in parens, not only its first string.
+some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt ut labore")
+some_function_name(lambda: r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt ut labore")
+value = some_value if condition else r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt"
+# If the first string already fits, split at the concatenation without parens.
+some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod " r"tempor incididunt")
+
 
 # output
 
@@ -1294,3 +1302,31 @@ x = (
     ),
     1,
 )  # type: ignore
+
+# Regression test for https://github.com/psf/black/issues/3855.
+# Wrap the whole implicit concatenation in parens, not only its first string.
+some_function_name(
+    argument=(
+        r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor"
+        r" incididunt ut labore"
+    )
+)
+some_function_name(
+    lambda: (
+        r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor"
+        r" incididunt ut labore"
+    )
+)
+value = (
+    some_value
+    if condition
+    else (
+        r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor"
+        r" incididunt"
+    )
+)
+# If the first string already fits, split at the concatenation without parens.
+some_function_name(
+    argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
+    r"tempor incididunt"
+)
