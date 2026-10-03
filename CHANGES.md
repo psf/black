@@ -92,6 +92,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Preserve leaf line numbers in `append_leaves` so multi-line expressions with merged
+  strings and trailing `# type: ignore` comments are not treated as single-line
+  unsplittable expressions (#5466)
 - Split only the brackets holding a magic trailing comma when more trailers follow them,
   so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
 - Keep dictionary keys containing operators together on one line when the value can be
@@ -164,6 +167,9 @@
 
 - Reduce the size of Linux standalone binaries by stripping debug symbols during the
   PyInstaller release build (#5223)
+- Black is now released using GitHub
+  [Immutable Releases](https://docs.github.com/code-security/concepts/supply-chain-security/immutable-releases)
+  (#5296)
 
 ### Parser
 
@@ -269,6 +275,8 @@
 
 - Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
   Action (#5399)
+- Add outputs (`is_formatted`, `change_count`, `same_count`, `failure_count`) to GitHub
+  Action runs (#5408)
 
 ### Documentation
 

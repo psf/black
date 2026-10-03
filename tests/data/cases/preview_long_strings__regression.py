@@ -570,6 +570,18 @@ s = f'Lorem Ipsum is simply dummy text of the printing and typesetting industry:
     "which is against the line length rule."
 )  # type: ignore
 
+x = (
+    "A very very very very very very very very very very very very long string "
+    "formatted with percent operator: %s" % arg
+)  # type: ignore
+
+(
+    "A very very very very very very very very very very very very long string "
+    "annotated with a type ignore pragma in a tuple still splits across lines "
+    "instead of collapsing onto a single line.",
+    1,
+)  # type: ignore
+
 # Regression test for https://github.com/psf/black/issues/3855.
 # Wrap the whole implicit concatenation in parens, not only its first string.
 some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit sed do eiusmod tempor" r" incididunt ut labore")
@@ -1275,6 +1287,20 @@ s = (
     "A very very very very very very very very very very very very long string "
     "annotated with a type ignore pragma gets merged into a single very long line "
     "which is against the line length rule."
+)  # type: ignore
+
+x = (
+    "A very very very very very very very very very very very very long string "
+    "formatted with percent operator: %s" % arg
+)  # type: ignore
+
+(
+    (
+        "A very very very very very very very very very very very very long string "
+        "annotated with a type ignore pragma in a tuple still splits across lines "
+        "instead of collapsing onto a single line."
+    ),
+    1,
 )  # type: ignore
 
 # Regression test for https://github.com/psf/black/issues/3855.
