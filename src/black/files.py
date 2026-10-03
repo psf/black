@@ -217,7 +217,11 @@ def strip_specifier_set(specifier_set: SpecifierSet) -> SpecifierSet:
             specifiers.append(s)
         elif s.operator in ["~=", "==", ">=", "==="]:
             version = Version(s.version)
-            stripped = Specifier(f"{s.operator}{version.major}.{version.minor}")
+            if s.operator == "~=" and len(version.release) > 2:
+                # ~=3.11.0 permits only 3.11, whereas ~=3.11 also permits 3.12+.
+                stripped = Specifier(f"=={version.major}.{version.minor}.*")
+            else:
+                stripped = Specifier(f"{s.operator}{version.major}.{version.minor}")
             specifiers.append(stripped)
         elif s.operator == ">":
             version = Version(s.version)
