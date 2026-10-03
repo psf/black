@@ -90,6 +90,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
+  assignments (such as annotated assignments or subscript targets) (#5473)
 - Split only the brackets holding a magic trailing comma when more trailers follow them,
   so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
 - Keep dictionary keys containing operators together on one line when the value can be
