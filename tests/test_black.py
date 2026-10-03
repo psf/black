@@ -3492,6 +3492,13 @@ class TestDeFactoAPI:
         with pytest.raises(black.NothingChanged):
             black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
 
+    def test_subscript_chain_long_line_performance(self) -> None:
+        # Issue #5270: consecutive subscript trailers should not trigger quadratic
+        # RHS omit search.
+        code = "x = a" + "".join(f"[{i}]" for i in range(100))
+        formatted = black.format_str(code, mode=black.Mode())
+        assert formatted.startswith("x = a[0][1]")
+
 
 class TestASTSafety(BlackBaseTestCase):
     def check_ast_equivalence(
