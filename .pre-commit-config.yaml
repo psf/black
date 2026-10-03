@@ -24,12 +24,12 @@ repos:
           - commonmark>=0.9.1
 
   - repo: https://github.com/pycqa/isort
-    rev: 9.0.1
+    rev: 9.0.2
     hooks:
       - id: isort
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
+    rev: 7.4.1
     hooks:
       - id: flake8
         additional_dependencies:
@@ -73,7 +73,7 @@ repos:
           - types-pyyaml>=6.0.0
 
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.9.8
+    rev: v3.9.9
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]
