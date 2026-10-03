@@ -11,7 +11,7 @@
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
 - Fix `--line-ranges` crashing with an internal error when an unselected statement has a
-  `# fmt: skip` comment on the last line before a closing bracket (#XXXX)
+  `# fmt: skip` comment on the last line before a closing bracket (#5477)
 
 ### Highlights
 
