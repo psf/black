@@ -269,6 +269,7 @@ class Preview(Enum):
     remove_redundant_unpacking_parentheses = auto()
     fix_magic_trailing_comma_trailer_split = auto()
     keep_dict_keys_with_operators = auto()
+    blank_line_after_stub_method = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

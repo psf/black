@@ -291,15 +291,28 @@ def resolves_outside_root_or_cannot_stat(
     return False
 
 
+def _collapse_parent_dirs(relative_path: Path) -> Path:
+    """Collapse ".." in a root-relative path without resolving symlinks.
+
+    This way exclusion regexes see "generated/x.py" rather than
+    "src/../generated/x.py". If a symlink makes the collapsed path leave the
+    root, the path is kept as given.
+    """
+    collapsed = Path(os.path.normpath(relative_path))
+    if collapsed.parts[:1] == ("..",):
+        return relative_path
+    return collapsed
+
+
 def best_effort_relative_path(path: Path, root: Path) -> Path:
     # Precondition: resolves_outside_root_or_cannot_stat(path, root) is False
     try:
-        return path.absolute().relative_to(root)
+        return _collapse_parent_dirs(path.absolute().relative_to(root))
     except ValueError:
         pass
     root_parent = next((p for p in path.parents if _cached_resolve(p) == root), None)
     if root_parent is not None:
-        return path.relative_to(root_parent)
+        return _collapse_parent_dirs(path.relative_to(root_parent))
     # something adversarial, fallback to path guaranteed by precondition
     return _cached_resolve(path).relative_to(root)
 
