@@ -616,6 +616,25 @@ def main(
     root, method = (
         find_project_root(src, stdin_filename) if code is None else (None, None)
     )
+    if (
+        code is None
+        and config is not None
+        and ctx.get_parameter_source("config") is ParameterSource.COMMANDLINE
+    ):
+        config_root = Path(config).resolve().parent
+        source_paths = (
+            Path(
+                stdin_filename if source == "-" and stdin_filename else source
+            ).resolve()
+            for source in src
+        )
+        if (
+            root is not None
+            and root != config_root
+            and root.is_relative_to(config_root)
+            and all(path.is_relative_to(config_root) for path in source_paths)
+        ):
+            root, method = config_root, "configuration file"
     ctx.obj["root"] = root
 
     if (
