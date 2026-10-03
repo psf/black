@@ -173,6 +173,9 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Avoid quadratic runtime in `right_hand_split_with_omits` when splitting very long
+  lines with many trailing bracket pairs (such as consecutive subscripts) (#5475)
+
 - Improve performance on strings containing many consecutive backslashes (#5163)
 - Improve performance when merging implicitly concatenated f-strings whose expressions
   contain long string literals (#5165)
