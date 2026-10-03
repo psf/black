@@ -88,6 +88,8 @@
 
 ### Preview style
 
+- Add missing blank lines after classes whose last method has an ellipsis body (#5439)
+
 <!-- Changes that affect Black's preview style -->
 
 - Split only the brackets holding a magic trailing comma when more trailers follow them,
@@ -127,6 +129,9 @@
   and Black failed its own equivalence check (#5271)
 - Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
   string (#5329)
+- Fix `string_processing` producing invalid code by wrapping only the first part of an
+  implicitly concatenated string it cannot merge (such as `r"..." r"..."`) in
+  parentheses. The whole concatenation is now wrapped instead (#5434)
 
 ### Configuration
 

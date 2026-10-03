@@ -344,7 +344,7 @@ recursive searches. An empty value means all files are included regardless of th
 Use forward slashes for directories on all platforms (Windows, too). Overrides all
 exclusions, including from `.gitignore` and command line options.
 
-Default Inclusions: `['.pyi', '.ipynb']`
+Default Inclusions: `['.py', '.pyi', '.ipynb']`
 
 #### `-W`, `--workers`
 
