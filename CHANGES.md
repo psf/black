@@ -148,6 +148,9 @@
 - Ignore permission errors when reading cache (#5258)
 - Fix `--skip-source-first-line` turning the skipped line's CRLF ending into `\r\r\n`
   when reformatting a file with CRLF line endings, and in `--diff` output (#5438)
+- Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
+  which made a later full `black --check` pass and `black` skip the unformatted lines
+  (#XXXX)
 
 ### Packaging
 
