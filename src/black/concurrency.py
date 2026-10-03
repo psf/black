@@ -86,6 +86,7 @@ def reformat_many(
     report: Report,
     workers: int | None,
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
 
@@ -143,6 +144,7 @@ def reformat_many(
                 loop=loop,
                 executor=executor,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
         )
     finally:
@@ -163,6 +165,7 @@ async def schedule_formatting(
     loop: asyncio.AbstractEventLoop,
     executor: Executor,
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
@@ -171,7 +174,7 @@ async def schedule_formatting(
     `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
-    cache = None if no_cache else Cache.read(mode)
+    cache = None if no_cache else Cache.read(mode, cache_dir)
     if cache is not None and write_back not in (
         WriteBack.DIFF,
         WriteBack.COLOR_DIFF,
