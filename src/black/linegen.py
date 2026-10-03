@@ -2175,6 +2175,16 @@ def remove_with_parens(
     #     ...                                         # testlist_gexp which then
     #                                                 # contains multiple asexpr_test(s)
     if node.type == syms.atom:
+        # Only the parentheses directly around the list of context managers are
+        # optional. Parentheses around a tuple used as a context expression
+        # belong to the expression, not to the statement: `with ((a, b)):` is a
+        # single context manager whose context is the tuple `(a, b)`, whereas
+        # `with (a, b):` is two context managers. Hiding them would silently
+        # rewrite the program, so leave such tuples alone.
+        if _holds_load_bearing_tuple(node.children[1]) or (
+            is_tuple(node) and parent.type != syms.with_stmt
+        ):
+            return
         if maybe_make_parens_invisible_in_atom(
             node,
             parent=parent,
@@ -2200,6 +2210,31 @@ def remove_with_parens(
             remove_brackets_around_comma=True,
         ):
             wrap_in_parentheses(node, node.children[0], visible=False)
+
+
+def _holds_load_bearing_tuple(node: LN) -> bool:
+    """Does `node` hold a parenthesized tuple whose parentheses are load-bearing?
+
+    A tuple used as the only context manager of a `with` statement is spelled
+    `with ((a, b)):` -- one context manager whose context is the tuple `(a, b)`.
+    Dropping the extra pair gives `with (a, b):`, which is *two* context
+    managers, so the parentheses must be kept. Tuples containing a walrus are
+    exempt: parentheses are mandatory around a named expression used as a with
+    item, so `with (x := a, y := b):` and `with ((x := a, y := b)):` already
+    mean the same thing.
+    """
+    while True:
+        if is_tuple(node):
+            return not is_tuple_containing_walrus(node)
+        if (
+            node.type == syms.atom
+            and len(node.children) == 3
+            and is_lpar_token(node.children[0])
+            and is_rpar_token(node.children[2])
+        ):
+            node = node.children[1]
+            continue
+        return False
 
 
 def _atom_has_magic_trailing_comma(node: LN, mode: Mode) -> bool:
