@@ -127,5 +127,5 @@ The action provides the following outputs:
 - `same_count`: Number of files that were left unchanged.
 - `failure_count`: Number of files that failed to reformat.
 
-These outputs are only accessible if the action version as well as `with.version` are both 26.10+.
-
+These outputs are only accessible if the action version as well as `with.version` are
+both 26.10+.
