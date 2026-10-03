@@ -104,8 +104,7 @@ jobs:
             || github.ref_name }}
 
       - name: Edit release PR
-        run: |
-          gh pr edit "$BRANCH" -F description.md
+        run: gh pr edit "$BRANCH" -F description.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
           BRANCH: |-

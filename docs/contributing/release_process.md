@@ -129,7 +129,7 @@ old _Black_ versions, then creates a PR with the changes for your review. The PR
 creation is authenticated in order to trigger test CI.
 
 ```{note}
-_Currently this workflow uses a GitHub API Token associated with @TODO's account._
+_Currently this workflow uses a GitHub API token associated with @JelleZijlstra's account._
 ```
 
 #### update
@@ -165,7 +165,7 @@ further release automation. Then, only if the release was stable, it updates the
 `stable` branch by force pushing it to the most recent tag.
 
 ```{note}
-_Currently this workflow uses a GitHub API Token associated with @TODO's account._
+_Currently this workflow uses a GitHub API token associated with @JelleZijlstra's account._
 ```
 
 #### new-changelog
@@ -175,7 +175,7 @@ not auto-merged to allow the releaser time to make sure all the release workflow
 succeed. The PR creation is authenticated in order to trigger test CI.
 
 ```{note}
-_Currently this workflow uses a GitHub API Token associated with @TODO's account._
+_Currently this workflow uses a GitHub API token associated with @JelleZijlstra's account._
 ```
 
 ### build and publish
@@ -215,7 +215,7 @@ of the official _Black_ Docker image to Docker Hub.
 This also runs on each push to `main`.
 
 ```{note}
-_Currently this workflow uses a Docker API Token associated with @cooperlees's account._
+_Currently this workflow uses a Docker API token associated with @cooperlees's account._
 ```
 
 [black-actions]: https://github.com/psf/black/actions

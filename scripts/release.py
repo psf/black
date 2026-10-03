@@ -271,10 +271,7 @@ def _handle_debug(debug: bool) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        help="Verbose debug output, even if a command disables it",
+        "-d", "--debug", action="store_true", help="Verbose debug output"
     )
 
     subparsers = parser.add_subparsers(dest="command")
