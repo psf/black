@@ -88,6 +88,8 @@
 
 ### Preview style
 
+- Add missing blank lines after classes whose last method has an ellipsis body (#5439)
+
 <!-- Changes that affect Black's preview style -->
 
 - Split only the brackets holding a magic trailing comma when more trailers follow them,
