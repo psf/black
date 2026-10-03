@@ -979,9 +979,15 @@ def reformat_one(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
-            if cache is not None and (
-                (write_back is WriteBack.YES and changed is not Changed.CACHED)
-                or (write_back is WriteBack.CHECK and changed is Changed.NO)
+            # Formatting only some lines doesn't make the whole file formatted, and
+            # the cache key doesn't include the line ranges, so don't record it.
+            if (
+                cache is not None
+                and not lines
+                and (
+                    (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
+                )
             ):
                 cache.write([src])
         report.done(src, changed)
