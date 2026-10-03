@@ -55,6 +55,7 @@ from black.nodes import (
     is_docstring,
     is_empty_tuple,
     is_generator,
+    is_ignore_pragma_comment_string,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -1050,8 +1051,13 @@ def right_hand_split_with_omits(
         # *current* transformation fits in the line length.  This is true only
         # for simple cases.  All others require running more transforms via
         # `transform_line()`.  This check doesn't know if those would succeed.
-        if is_line_short_enough(lines[0], mode=mode) or (
-            omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+        if (
+            is_line_short_enough(lines[0], mode=mode)
+            or (omit and _over_length_only_due_to_subscript_comment(lines[0], mode))
+            or (
+                Preview.relocate_trailing_ignore_pragmas in mode
+                and _over_length_only_due_to_ignore_pragma(lines[0], mode)
+            )
         ):
             if (
                 Preview.fix_magic_trailing_comma_trailer_split in mode
@@ -1064,7 +1070,7 @@ def right_hand_split_with_omits(
                 if fallback_omit is None:
                     fallback_omit = set(omit)
                 continue
-            yield from lines
+            yield from _relocate_trailing_ignore_pragmas(line, lines)
             return
 
     if fallback_omit is not None:
@@ -1075,7 +1081,85 @@ def right_hand_split_with_omits(
     # This mostly happens to multiline strings that are by definition
     # reported as not fitting a single line, as well as lines that contain
     # trailing commas (those have to be exploded).
-    yield from right_hand_split(line, mode, features=features)
+    yield from _relocate_trailing_ignore_pragmas(
+        line, list(right_hand_split(line, mode, features=features))
+    )
+
+
+def _is_single_physical_line(line: Line) -> bool:
+    """Return True if the leaves of `line` all come from one physical source line."""
+    first_line = next((leaf.lineno for leaf in line.leaves if leaf.lineno != 0), 0)
+    last_line = next(
+        (leaf.lineno for leaf in reversed(line.leaves) if leaf.lineno != 0), 0
+    )
+    return first_line == last_line
+
+
+def _trails_ignore_pragma(line: Line) -> bool:
+    """Return True if `line` was a single physical source line whose trailing
+    comment is a type-checker ignore pragma."""
+    if Preview.relocate_trailing_ignore_pragmas not in line.mode:
+        return False
+    if not line.leaves:
+        return False
+    comments = line.comments_after(line.leaves[-1])
+    if not any(is_ignore_pragma_comment_string(comment.value) for comment in comments):
+        return False
+    return _is_single_physical_line(line)
+
+
+def _relocate_trailing_ignore_pragmas(line: Line, lines: list[Line]) -> list[Line]:
+    """Move trailing type-checker ignore pragmas onto the first line of the split.
+
+    Ignore pragmas like `# pyright: ignore[...]` apply to the line where the
+    diagnostic originates, which is the first line of the split expression,
+    but the comment would otherwise end up on the last line, where the pragma
+    no longer suppresses anything.
+    """
+    if Preview.relocate_trailing_ignore_pragmas not in line.mode:
+        return lines
+    if len(lines) < 2:
+        return lines
+    head, tail = lines[0], lines[-1]
+    if (
+        not head.leaves
+        or not tail.leaves
+        # The comment must trail the very end of the line, so nothing but
+        # the closing bracket (real or invisible) follows the split point.
+        or tail.leaves[-1] is not line.leaves[-1]
+        # Only rewrite splits at a real bracket pair whose opening bracket
+        # starts the first line; a split at invisible parentheses puts the
+        # expression on a later line, where a first-line pragma is useless.
+        or head.leaves[-1] is not tail.leaves[0].opening_bracket
+        or not head.leaves[-1].value
+    ):
+        return lines
+    last_leaf = tail.leaves[-1]
+    comments = tail.comments_after(last_leaf)
+    pragma_comments = [
+        comment
+        for comment in comments
+        if is_ignore_pragma_comment_string(comment.value)
+    ]
+    if not pragma_comments:
+        return lines
+    # Only relocate comments that trailed a single physical source line;
+    # for lines that were already split, the placement is established
+    # formatting that should not churn.
+    if not _is_single_physical_line(line) or head.comments.get(id(head.leaves[-1])):
+        return lines
+    remaining = [
+        comment
+        for comment in comments
+        if not is_ignore_pragma_comment_string(comment.value)
+    ]
+    if remaining:
+        tail.comments[id(last_leaf)] = remaining
+    else:
+        del tail.comments[id(last_leaf)]
+    for comment in pragma_comments:
+        head.append(comment, preformatted=True)
+    return lines
 
 
 def _first_right_hand_split(
@@ -1100,7 +1184,14 @@ def _first_right_hand_split(
                 current_leaves = head_leaves if body_leaves else tail_leaves
         current_leaves.append(leaf)
         if current_leaves is tail_leaves:
-            if leaf.type in CLOSING_BRACKETS and id(leaf) not in omit:
+            if (
+                leaf.type in CLOSING_BRACKETS
+                and id(leaf) not in omit
+                # A split at an invisible (generated) bracket pair pushes the
+                # expression to a later line, where a trailing ignore pragma
+                # would no longer suppress anything.
+                and not (not leaf.value and _trails_ignore_pragma(line))
+            ):
                 opening_bracket = leaf.opening_bracket
                 closing_bracket = leaf
                 current_leaves = body_leaves
@@ -1272,11 +1363,16 @@ def _prefer_split_rhs_oop_over_rhs(
     Returns whether we should prefer the result from a split omitting optional parens
     (rhs_oop) over the original (rhs).
     """
-    # contains unsplittable type ignore
+    # contains unsplittable type ignore, or the head carries a type-checker
+    # ignore pragma
     if (
         rhs_oop.head.contains_unsplittable_type_ignore()
         or rhs_oop.body.contains_unsplittable_type_ignore()
         or rhs_oop.tail.contains_unsplittable_type_ignore()
+        or (
+            Preview.relocate_trailing_ignore_pragmas in mode
+            and _head_ends_with_ignore_pragma(rhs_oop.head)
+        )
     ):
         return True
 
@@ -2478,6 +2574,19 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
+def _fits_without_comments(line: Line, mode: Mode) -> bool:
+    """Return True if `line` fits `mode.line_length` once its comments are
+    ignored, i.e. any over-length is caused entirely by the comments."""
+    if not line.leaves:
+        return False
+    indent = "    " * line.depth
+    leaves_iter = iter(line.leaves)
+    first = next(leaves_iter)
+    text_without_comments = f"{first.prefix}{indent}{first.value}"
+    text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
+    return str_width(text_without_comments) <= mode.line_length
+
+
 def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
     """Return True if `line` only exceeds `mode.line_length` because of an inline
     comment attached to a subscript opening bracket (`[`).
@@ -2489,15 +2598,8 @@ def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
     the annotation in extra parens and migrates the comment outside the
     subscript, which then oscillates on the next formatter pass.
     """
-    if not line.leaves:
-        return False
     # The over-length must be caused entirely by a trailing comment.
-    indent = "    " * line.depth
-    leaves_iter = iter(line.leaves)
-    first = next(leaves_iter)
-    text_without_comments = f"{first.prefix}{indent}{first.value}"
-    text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
-    if str_width(text_without_comments) > mode.line_length:
+    if not _fits_without_comments(line, mode):
         return False
     # And the comment must be attached to a subscript opening bracket.
     for leaf_id, comments in line.comments.items():
@@ -2507,6 +2609,32 @@ def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
         if leaf is None or leaf.type != token.LSQB:
             return False
     return True
+
+
+def _head_ends_with_ignore_pragma(line: Line) -> bool:
+    """Return True if every comment attached after the last leaf of `line`
+    is a type-checker ignore pragma."""
+    if not line.leaves:
+        return False
+    comments = line.comments_after(line.leaves[-1])
+    return bool(comments) and all(
+        is_ignore_pragma_comment_string(comment.value) for comment in comments
+    )
+
+
+def _over_length_only_due_to_ignore_pragma(line: Line, mode: Mode) -> bool:
+    """Return True if `line` only exceeds `mode.line_length` because a
+    type-checker ignore pragma is attached after its last leaf.
+
+    The pragma belongs on this line: it applies to diagnostics that originate
+    here. Taking the FORCE_OPTIONAL_PARENTHESES "second opinion" would move
+    the expression to a later line, where the pragma would suppress nothing,
+    and would oscillate with the deeper-bracket split on the next formatter
+    pass.
+    """
+    if not _fits_without_comments(line, mode):
+        return False
+    return _head_ends_with_ignore_pragma(line)
 
 
 def run_transformer(
@@ -2542,6 +2670,10 @@ def run_transformer(
         # migrates the comment outside the subscript, which then oscillates with
         # a deeper-bracket split on the next formatter pass (issue #4733).
         or _over_length_only_due_to_subscript_comment(result[0], mode)
+        or (
+            Preview.relocate_trailing_ignore_pragmas in mode
+            and _over_length_only_due_to_ignore_pragma(result[0], mode)
+        )
         # If any leaves have no parents (which _can_ occur since
         # `transform(line)` potentially destroys the line's underlying node
         # structure), then we can't proceed. Doing so would cause the below
