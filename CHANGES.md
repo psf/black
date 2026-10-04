@@ -17,6 +17,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix the unstable `string_processing` feature removing backslash-newline sequences from
+  raw strings, which changed their value (#5482)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
