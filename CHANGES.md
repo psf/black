@@ -17,6 +17,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Do not split short expressions on delimiters (such as binary operators, comparisons,
+  or comprehensions) inside brackets when preceded by a standalone comment (#5455)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

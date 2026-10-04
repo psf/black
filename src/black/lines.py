@@ -100,8 +100,7 @@ class Line:
                 # when its opening bracket was split onto an earlier line (for
                 # example by a standalone comment inside the tuple), so verify
                 # against the tree here before dropping the comma.
-                leaf.parent is not None
-                and is_one_tuple(leaf.parent)
+                leaf.parent is not None and is_one_tuple(leaf.parent)
             ):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
@@ -1708,9 +1707,7 @@ def can_omit_invisible_parens(
         or (
             # don't use indexing for omitting optional parentheses;
             # it looks weird
-            last.type == token.RSQB
-            and last.parent
-            and last.parent.type != syms.trailer
+            last.type == token.RSQB and last.parent and last.parent.type != syms.trailer
         )
     ):
         if penultimate.type in OPENING_BRACKETS:
