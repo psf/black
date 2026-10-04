@@ -174,7 +174,12 @@ async def schedule_formatting(
     `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
-    cache = None if no_cache else Cache.read(mode, cache_dir)
+    if no_cache:
+        cache = None
+    elif cache_dir is None:
+        cache = Cache.read(mode)
+    else:
+        cache = Cache.read(mode, cache_dir)
     if cache is not None and write_back not in (
         WriteBack.DIFF,
         WriteBack.COLOR_DIFF,

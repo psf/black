@@ -60,15 +60,13 @@ class Cache:
     file_data: dict[str, FileData] = field(default_factory=dict)
 
     @classmethod
-    def read(cls, mode: Mode, cache_dir: Path | None = None) -> Self:
+    def read(cls, mode: Mode, cache_dir: Path = CACHE_DIR) -> Self:
         """Read the cache if it exists and is well-formed.
 
         If it is not well-formed, the call to write later should
         resolve the issue.
         """
-        cache_file = get_cache_file(
-            mode, CACHE_DIR if cache_dir is None else cache_dir
-        )
+        cache_file = get_cache_file(mode, cache_dir)
         try:
             exists = cache_file.exists()
         except OSError as e:

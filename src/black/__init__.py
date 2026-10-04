@@ -684,9 +684,16 @@ def main(
         ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
-    cache_dir = (
-        cache_module.CACHE_DIR if cache_dir is None else get_cache_dir(cache_dir)
-    )
+    if cache_dir is None:
+        cache_dir = cache_module.CACHE_DIR
+    else:
+        if (
+            not cache_dir.is_absolute()
+            and ctx.get_parameter_source("cache_dir") == ParameterSource.DEFAULT_MAP
+            and config is not None
+        ):
+            cache_dir = Path(config).resolve().parent / cache_dir
+        cache_dir = get_cache_dir(cache_dir)
     if not no_cache:
         try:
             cache_dir.mkdir(parents=True, exist_ok=True)
@@ -1000,7 +1007,12 @@ def reformat_one(
             ):
                 changed = Changed.YES
         else:
-            cache = None if no_cache else Cache.read(mode, cache_dir)
+            if no_cache:
+                cache = None
+            elif cache_dir is None:
+                cache = Cache.read(mode)
+            else:
+                cache = Cache.read(mode, cache_dir)
             if cache is not None and write_back not in (
                 WriteBack.DIFF,
                 WriteBack.COLOR_DIFF,
