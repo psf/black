@@ -209,10 +209,10 @@ class SourceFiles:
         )
 
         # Remove all comments
-        changes_string = re.sub(r"(?m)^<!--(?>(?:.|\n)*?-->)\n+", "", changes_string)
+        changes_string = re.sub(r"(?m)<!--(?>(?:.|\n)*?-->)\n*", "", changes_string)
 
         # Remove empty subheadings
-        changes_string = re.sub(r"(?m)^###.+\n+(?=#)", "", changes_string)
+        changes_string = re.sub(r"(?m)^(#+).+\n+(?=#)(?!\1#)", "", changes_string)
 
         with self.changes_path.open("w", encoding="utf-8") as cfp:
             cfp.write(changes_string)
@@ -258,47 +258,35 @@ class SourceFiles:
         return heading_split[1].strip()
 
 
-def _handle_debug(debug: bool) -> None:
-    """Turn on debugging if asked, otherwise default to INFO"""
-    log_level = logging.DEBUG if debug else logging.INFO
-    logging.basicConfig(
-        format="[%(asctime)s] %(levelname)s: %(message)s (%(filename)s:%(lineno)d)",
-        level=log_level,
-    )
-    LOG.debug(f"Log level: {logging.getLevelName(log_level)}")
+def add_subparser(name: str, help: str) -> argparse.ArgumentParser:
+    return subparsers.add_parser(name, help=help, description=help)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-d", "--debug", action="store_true", help="Verbose debug output"
-    )
-
-    subparsers = parser.add_subparsers(dest="command")
-
-    def add_parser(name: str, help: str) -> argparse.ArgumentParser:
-        return subparsers.add_parser(name, help=help, description=help)
-
-    add_parser("prepare", help="Prepare a release").add_argument(
-        "version", type=str, nargs="?", help="Override the next version"
-    )
-    add_parser("add", help="Add the Unreleased template to CHANGES.md")
-    add_parser(
-        "prerelease",
-        help="Returns the next prerelease version for the given stable version",
-    ).add_argument("version", type=str, help="The stable version")
-    add_parser("version", help="Returns the next version number")
-    add_parser("changes", help="Returns the latest changelog")
-
-    args = parser.parse_args()
-    return args
+parser = argparse.ArgumentParser()
+parser.add_argument("-d", "--debug", action="store_true", help="Verbose debug output")
+subparsers = parser.add_subparsers(dest="command")
+add_subparser("prepare", help="Prepare a release").add_argument(
+    "version", type=str, nargs="?", help="Override the next version"
+)
+add_subparser("add", help="Add the Unreleased template to CHANGES.md")
+add_subparser(
+    "prerelease",
+    help="Returns the next prerelease version for the given stable version",
+).add_argument("version", type=str, help="The stable version")
+add_subparser("version", help="Returns the next version number")
+add_subparser("changes", help="Returns the latest changelog")
 
 
 def main() -> int:
-    args = parse_args()
+    args = parser.parse_args()
 
     if (args.command == "prepare" or args.command == "add") or args.debug:
-        _handle_debug(args.debug)
+        log_level = logging.DEBUG if args.debug else logging.INFO
+        logging.basicConfig(
+            format="[%(asctime)s] %(levelname)s: %(message)s (%(filename)s:%(lineno)d)",
+            level=log_level,
+        )
+        LOG.debug(f"Log level: {logging.getLevelName(log_level)}")
 
     # Need parent.parent cause script is in scripts/ directory
     sf = SourceFiles(
@@ -323,6 +311,9 @@ def main() -> int:
             if not changes:
                 return 1
             print(changes)
+            return 0
+        case None:
+            parser.print_help()
             return 0
 
     LOG.error(f"Unknown command: {args.command}")
