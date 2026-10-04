@@ -3349,6 +3349,19 @@ class TestFileCollection:
         src = root / "selfneg"
         assert_collected_sources([src], [], root=root)
 
+    def test_nested_gitignore_negation_only_applies_to_what_it_names(self) -> None:
+        # https://github.com/psf/black/issues/5376
+        # Re-including a directory re-includes the directory, not the files inside
+        # it: git decides each file on the patterns that name that file. So the
+        # nested !playground/build_cache cannot rescue msg_pb2.py from the root's
+        # unrelated *_pb2.py, even though it does let Black see msg_other.py.
+        path = Path(DATA_DIR / "nested_gitignore_independent_exclusion_tests")
+        expected = [
+            path / "pkg/keep.py",
+            path / "pkg/playground/build_cache/msg_other.py",
+        ]
+        assert_collected_sources([path], expected, root=path)
+
     def test_invalid_gitignore(self) -> None:
         path = THIS_DIR / "data" / "invalid_gitignore_tests"
         empty_config = path / "pyproject.toml"

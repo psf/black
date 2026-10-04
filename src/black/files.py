@@ -317,6 +317,47 @@ def best_effort_relative_path(path: Path, root: Path) -> Path:
     return _cached_resolve(path).relative_to(root)
 
 
+def _pattern_matches_directly(pattern: Any, relative_path: str) -> bool:
+    """Return whether `pattern` names `relative_path` itself.
+
+    pathspec reports a match whenever a pattern matches the path *or* a directory
+    above it, because git prunes an excluded directory instead of testing the files
+    inside it. That is the right answer for the combined list of every pattern git
+    consults, but it is wrong for deciding whether one `.gitignore` has an opinion
+    about this particular path: a pattern that names a directory has already had its
+    say when that directory was visited, and must not also speak for the files under
+    it. Otherwise `!playground/build_cache` in a nested file would silently
+    re-include `playground/build_cache/msg_pb2.py`, which an unrelated `*_pb2.py` in
+    the root file still excludes.
+
+    pathspec compiles a gitignore pattern to ``^pattern(?:(?P<ps_d>/)|$)``, so a match
+    that captured the `ps_d` directory separator only covered a prefix of the path and
+    said nothing about the path itself. A match that did not capture it reached the end
+    of the path, which is exactly "this pattern names this path". The catch-all patterns
+    (`*`, `**`, `*/`, `**/`) are special-cased by pathspec into a bare regex with no such
+    group; they match whatever they are given and so always name the path directly.
+    """
+    result = pattern.match_file(relative_path)
+    if result is None or result.match is None:
+        return False
+    if "ps_d" not in result.match.re.groupindex:
+        return True
+    return bool(result.match.end() == len(relative_path))
+
+
+def _spec_direct_include(spec: GitIgnoreSpec, relative_path: str) -> bool | None:
+    """Return what `spec` decides about `relative_path`, or None if it has no say.
+
+    Within a single `.gitignore` the last pattern that names the path wins, so
+    `None` is only returned when no pattern names the path at all.
+    """
+    include: bool | None = None
+    for pattern in spec.patterns:
+        if _pattern_matches_directly(pattern, relative_path):
+            include = pattern.include
+    return include
+
+
 def _path_is_ignored(
     root_relative_path: str,
     root: Path,
@@ -324,15 +365,15 @@ def _path_is_ignored(
 ) -> bool:
     """Return whether the path is ignored by any of the .gitignore files in scope.
 
-    Git resolves this per path: the .gitignore file closest to the path wins, and
-    shallower ones are only consulted when no deeper file has a matching pattern.
-    A nested .gitignore is therefore able to re-include something an ancestor
-    excluded with a `!` pattern, which is what `git check-ignore` reports for both
-    the pattern that matched and the file it came from.
+    Git resolves this per path: of all the patterns in all the applicable
+    `.gitignore` files, the last one that names the path decides, and the files are
+    consulted from the root downwards. So a nested `.gitignore` can re-include
+    something an ancestor excluded with a `!` pattern, but only for the path it
+    actually names -- see `_pattern_matches_directly`.
 
     Because directories are resolved by this same function, an ignored directory is
     still pruned: it is only skipped when nothing deeper re-included it, and it is
-    descended into when a nested .gitignore does. That mirrors git, which also
+    descended into when a nested `.gitignore` does. That mirrors git, which also
     refuses to re-include a path whose parent directory stays excluded.
     """
     path = root / root_relative_path
@@ -340,20 +381,18 @@ def _path_is_ignored(
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
     # ensure that gitignore_dict is ordered from least specific to most specific, so
     # that walking it in reverse visits the most specific .gitignore first.
-    for gitignore_path, pattern in reversed(gitignore_dict.items()):
+    for gitignore_path, spec in reversed(gitignore_dict.items()):
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
             if is_dir:
                 relative_path = relative_path + "/"
         except ValueError:
             continue
-        # A `None` include means this .gitignore has no pattern matching the path at
-        # all, in which case the decision falls to a shallower .gitignore.
-        result = pattern.check_file(relative_path)
-        if result is None or result.include is None:
-            continue
-        # Within a single .gitignore, pathspec already applies last-match-wins.
-        return bool(result.include)
+        # `None` means this .gitignore names no part of the path, so the decision
+        # falls to a shallower one.
+        include = _spec_direct_include(spec, relative_path)
+        if include is not None:
+            return include
     return False
 
 
