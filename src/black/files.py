@@ -330,12 +330,13 @@ def _pattern_matches_directly(pattern: Any, relative_path: str) -> bool:
     re-include `playground/build_cache/msg_pb2.py`, which an unrelated `*_pb2.py` in
     the root file still excludes.
 
-    pathspec compiles a gitignore pattern to ``^pattern(?:(?P<ps_d>/)|$)``, so a match
-    that captured the `ps_d` directory separator only covered a prefix of the path and
-    said nothing about the path itself. A match that did not capture it reached the end
-    of the path, which is exactly "this pattern names this path". The catch-all patterns
-    (`*`, `**`, `*/`, `**/`) are special-cased by pathspec into a bare regex with no such
-    group; they match whatever they are given and so always name the path directly.
+    pathspec compiles a gitignore pattern to ``^pattern(?:(?P<ps_d>/)|$)``, so a
+    match that captured the `ps_d` directory separator only covered a prefix of
+    the path and said nothing about the path itself. A match that did not capture
+    it reached the end of the path, which is exactly "this pattern names this
+    path". The catch-all patterns (`*`, `**`, `*/`, `**/`) are special-cased by
+    pathspec into a bare regex with no such group; they match whatever they are
+    given and so always name the path directly.
     """
     result = pattern.match_file(relative_path)
     if result is None or result.match is None:
