@@ -23,7 +23,7 @@ small project; for a larger one, formatting one directory or package at a time m
 easier to coordinate.
 
 To keep new changes formatted, consider adding `black --check .` to CI and using the
-{doc}`pre-commit integration </integrations/source_version_control>` for local feedback.
+{doc}`pre-commit integration </integrations/pre-commit>` for local feedback.
 Configuration, formatting, and enforcement can be reviewed together or in separate pull
 requests. If you want to ignore the formatting commit in `git blame`, choose a merge
 method that preserves that commit separately from other changes. Separate pull requests

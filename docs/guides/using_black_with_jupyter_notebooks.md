@@ -117,8 +117,8 @@ repos:
         language_version: python3.11
 ```
 
-See the [source version control integration](../integrations/source_version_control.md)
-docs for more examples of using Black with pre-commit.
+See the [pre-commit integration](../integrations/pre-commit.md) docs for more examples
+of using Black with pre-commit.
 
 ### GitHub Actions
 

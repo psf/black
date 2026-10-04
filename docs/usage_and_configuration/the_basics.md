@@ -613,4 +613,4 @@ over to [File collection and discovery](./file_collection_and_discovery.md).
 
 Another good choice would be setting up an
 [integration with your editor](../integrations/editors.md) of choice or with
-[pre-commit for source version control](../integrations/source_version_control.md).
+[pre-commit for version control](../integrations/pre-commit.md).
