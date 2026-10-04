@@ -179,6 +179,10 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Fix superlinear runtime growth with the number of input files by replacing the
+  `asyncio.wait(..., return_when=FIRST_COMPLETED)` busy loop in `schedule_formatting`
+  with per-task done callbacks, so completion bookkeeping costs O(1) per file instead of
+  O(n) (#5450)
 - Improve performance on strings containing many consecutive backslashes (#5163)
 - Improve performance when merging implicitly concatenated f-strings whose expressions
   contain long string literals (#5165)
