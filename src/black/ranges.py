@@ -452,6 +452,12 @@ def _str_with_standalone_comments(node: LN) -> str:
 
 
 def _ends_with_comment(text: str) -> bool:
+    """Whether the last line of a STANDALONE_COMMENT value ends in a comment.
+
+    That is a comment-only last line (the end of a `# fmt: off` block), or code
+    followed by a `# fmt: skip` directive. Any other `#` after code is ignored, as
+    it may be inside a string.
+    """
     last_line = text.rpartition("\n")[2]
     if last_line.lstrip().startswith("#"):
         return True
