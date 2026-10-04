@@ -13,6 +13,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a long Jupyter notebook assignment magic (for example `x = !ls -la`) being wrapped
+  in parentheses, which IPython can no longer run; such cells are now left unchanged
+  (#5481)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
