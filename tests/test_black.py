@@ -135,6 +135,17 @@ def invokeBlack(
     assert result.exit_code == exit_code, msg
 
 
+def docstring_value(source: str) -> str:
+    # Not ast.get_docstring(): its default clean=True runs inspect.cleandoc,
+    # which trims exactly the whitespace these tests are about.
+    node = ast.parse(source).body[0]
+    assert isinstance(node, ast.FunctionDef)
+    expr = node.body[0]
+    assert isinstance(expr, ast.Expr)
+    assert isinstance(expr.value, ast.Constant)
+    return str(expr.value.value)
+
+
 def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
     """Black must own the error when its own output fails to parse.
 
@@ -798,6 +809,50 @@ class BlackTestCase(BlackBaseTestCase):
                 "2 files would be reformatted, 3 files would be left unchanged, 2"
                 " files would fail to reformat.",
             )
+
+    def test_report_write_github_outputs(self) -> None:
+        with TemporaryDirectory() as workspace:
+            output_file = Path(workspace) / "github_output"
+            report = Report()
+            report.done(Path("f1"), black.Changed.NO)
+            report.write_github_outputs(output_file)
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=false\n", content)
+            self.assertIn("change_count=0\n", content)
+            self.assertIn("same_count=1\n", content)
+            self.assertIn("failure_count=0\n", content)
+
+            output_file.unlink()
+            report_quiet = Report(quiet=True)
+            report_quiet.done(Path("f2"), black.Changed.YES)
+            report_quiet.write_github_outputs(output_file)
+            content_quiet = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=true\n", content_quiet)
+            self.assertIn("change_count=1\n", content_quiet)
+
+    def test_github_output_in_cli(self) -> None:
+        with TemporaryDirectory() as workspace:
+            output_file = Path(workspace) / "github_output"
+            src = Path(workspace) / "test.py"
+            src.write_text("x = 1\n", encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_file)}):
+                self.invokeBlack([str(src)])
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=false\n", content)
+
+            output_file.unlink()
+            src.write_text("x =   1\n", encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_file)}):
+                self.invokeBlack([str(src), "--quiet"])
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=true\n", content)
+
+            output_file.unlink()
+            src.write_text("x =   1\n", encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_file)}):
+                self.invokeBlack([str(src), "--check"], exit_code=1)
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=true\n", content)
 
     def test_report_normal(self) -> None:
         report = black.Report()
@@ -2491,6 +2546,41 @@ class BlackTestCase(BlackBaseTestCase):
             == "class A: ...\r"
         )
 
+    def test_docstring_with_non_newline_line_break(self) -> None:
+        # These tests are here instead of in the normal cases because a form feed
+        # and the Unicode separators are invisible in a diff.
+        #
+        # Only \n, \r and \r\n end a line for the Python parser, so the other
+        # characters str.splitlines() breaks on are ordinary characters of a
+        # docstring's value. Reformatting must not turn one of them into a
+        # newline, which would change the value of the docstring.
+        for line_break in ("\x0c", "\x0b", "\x85", "\u2028", "\u2029"):
+            for source in (
+                f'def f():\n    """a{line_break}b\n    c"""\n',
+                f'def f():\n    """a\n    b{line_break}c"""\n',
+            ):
+                formatted = black.format_str(source, mode=black.FileMode())
+                # Black's own AST check normalizes docstring whitespace away, so
+                # the docstring's value has to be compared directly here.
+                before = docstring_value(source)
+                after = docstring_value(formatted)
+                assert before == after, f"{line_break!r}: {source!r} -> {formatted!r}"
+                assert black.format_str(formatted, mode=black.FileMode()) == formatted
+
+    def test_docstring_still_splits_on_real_line_breaks(self) -> None:
+        # The counterpart to the test above: CR and CRLF *are* line breaks for
+        # the Python parser, so they must keep being treated as line endings.
+        # Without this, narrowing the split to LF alone passes the whole suite.
+        quotes = chr(34) * 3
+        for newline in ("\n", "\r\n", "\r"):
+            docstring = quotes + "a" + newline + "    b" + quotes
+            source = "def f():" + newline + "    " + docstring + newline
+            formatted = black.format_str(source, mode=black.FileMode())
+            value = docstring_value(formatted)
+            # Two docstring lines, not one: the break survived the round trip.
+            assert value.count("\n") == 1, f"{newline!r}: {value!r}"
+            assert formatted == black.format_str(formatted, mode=black.FileMode())
+
     def test_newline_type_detection(self) -> None:
         mode = Mode()
         newline_types = ["A\n", "A\r\n", "A\r"]
@@ -3343,6 +3433,65 @@ class TestFileCollection:
                     root=symlink_proj.resolve(),
                     force_exclude=r"target",
                     expected=[symlink_proj / "nested" / "another.py"],
+                )
+
+    def test_get_sources_force_exclude_with_parent_dir_path(self) -> None:
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve()
+            (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
+            (root / "src").mkdir()
+            (root / "generated").mkdir()
+            (root / "generated" / "gen.py").write_text("x = 1", encoding="utf-8")
+            (root / "other").mkdir()
+            (root / "other" / "ok.py").write_text("x = 1", encoding="utf-8")
+
+            srcs: list[str | Path] = [
+                "../generated/gen.py",
+                root / "src" / ".." / "generated" / "gen.py",
+            ]
+            with change_directory(root / "src"):
+                for src in srcs:
+                    assert_collected_sources(
+                        src=[src],
+                        root=root,
+                        force_exclude=r"^/generated/",
+                        expected=[],
+                    )
+                assert_collected_sources(
+                    src=["-"],
+                    root=root,
+                    force_exclude=r"^/generated/",
+                    stdin_filename="../generated/gen.py",
+                    expected=[],
+                )
+                assert_collected_sources(
+                    src=["../other/ok.py"],
+                    root=root,
+                    force_exclude=r"^/generated/",
+                    expected=["../other/ok.py"],
+                )
+
+    def test_get_sources_parent_dir_path_through_symlink(self) -> None:
+        # link/../../a/x/mod.py is root/a/x/mod.py on disk, but collapsing the
+        # ".." without following the symlink would leave the root.
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve() / "root"
+            (root / "a" / "b").mkdir(parents=True)
+            (root / "a" / "x").mkdir()
+            (root / "a" / "x" / "mod.py").write_text("x = 1", encoding="utf-8")
+            (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
+            symlink_or_skip(root / "link", root / "a" / "b")
+
+            # Windows removes ".." before following symlinks, so there the path
+            # points outside the root to a file that doesn't exist.
+            src = "link/../../a/x/mod.py"
+            expected = [] if sys.platform == "win32" else [src]
+            with change_directory(root):
+                assert_collected_sources(
+                    src=[src],
+                    root=root,
+                    force_exclude=r"^/generated/",
+                    expected=expected,
                 )
 
     def test_get_sources_with_stdin_symlink_outside_root(

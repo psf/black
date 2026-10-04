@@ -8,6 +8,11 @@ Python versions and line length) to `pyproject.toml`. Pinning the same _Black_ v
 in local development and CI also prevents contributors from producing different results
 during the rollout.
 
+If the project already has established string conventions, using
+`--skip-string-normalization` can reduce churn during the initial adoption. Treat this
+as an adoption aid rather than a recommended default for new projects, where _Black_'s
+standard string normalization keeps formatting consistent.
+
 Run the project's tests before and after formatting. Commit the formatting by itself,
 without refactors or other behavior changes, so that reviewers can verify it quickly and
 future history remains easy to follow. If formatting the entire repository at once is
