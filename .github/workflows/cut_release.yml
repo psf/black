@@ -109,7 +109,7 @@ jobs:
       - name: Create PR
         run: |
           gh pr create \
-            -t "Add new changelog" -b "" \
+            -t "Add new changelog" -b "<sub>This PR is automated</sub>" \
             -l "ci: skip news" -l "C: maintenance" \
             -a "$USER"
         env:

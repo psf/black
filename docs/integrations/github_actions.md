@@ -128,4 +128,4 @@ The action provides the following outputs:
 - `failure_count`: Number of files that failed to reformat.
 
 These outputs are only accessible if the action version as well as `with.version` are
-both 26.10+.
+both 26.10.0+.
