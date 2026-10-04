@@ -89,16 +89,18 @@ jobs:
 
       - name: Write PR description
         run: |
-          echo "<!-- Please don't edit this; it will be overridden -->" >> description.md
-          echo "Please follow the process in [the docs](https://black.readthedocs.io/en/latest/contributing/release_process.html#cutting-a-release) to cut a release." > description.md
-          echo "<details><summary>Changelog Diff</summary>" >> description.md
-          echo "" >> description.md
-          echo "\`\`\`diff" >> description.md
-          git diff origin/stable "origin/$BRANCH" -- CHANGES.md >> description.md
-          echo "\`\`\`" >> description.md
-          echo "" >> description.md
-          echo "</details>" >> description.md
-          echo "<sub>This PR is automated</sub>" >> description.md
+          {
+            echo "<!-- Please don't edit this; it will be overridden -->"
+            echo "Please follow the process in [the docs](https://black.readthedocs.io/en/latest/contributing/release_process.html#cutting-a-release) to cut a release."
+            echo "<details><summary>Changelog Diff</summary>"
+            echo
+            echo '```diff'
+            git diff origin/stable "origin/$BRANCH" -- CHANGES.md
+            echo '```'
+            echo
+            echo "</details>"
+            echo "<sub>This PR is automated</sub>"
+          } > description.md
         env:
           BRANCH: |-
             ${{ needs.create.outputs.version
