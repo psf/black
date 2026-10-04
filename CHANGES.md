@@ -6,12 +6,12 @@
 
 - `--line-ranges` no longer inserts an empty line after a docstring when the range
   covers only the docstring itself (#5312)
-- Fix `# fmt: skip` on a bracketed ternary like `a + b if c else d,` turning the
-  surrounding tuple into a call (#5464)
+- Fix `# fmt: skip` on a bracketed ternary turning the surrounding tuple into a call
+  (#5464)
 - Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695
   type parameters (#5429)
 - Fix an inline comment after the closing bracket of optional parentheses being moved
-  inside the brackets when the parenthesized expression contains own-line comments
+  inside the parentheses when the parenthesized expression contains own-line comments
   (#5395)
 - Fix unparseable output when `# fmt: skip` is placed on a bracket of an `if`, `while`,
   `for`, or `with` header (#5401, #5405)
@@ -21,15 +21,16 @@
   earlier on the line (#5381)
 - Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
 - Keep the parentheses around the target of an annotated assignment (e.g.
-  `(x): int = 5`), which cause CPython to include the name in `__annotations__` (#5321)
+  `(x): int = 5`), which prevent CPython from including the name in `__annotations__`
+  (#5321)
 - Stop treating a t-string in docstring position as a docstring (e.g. `t"  spam  "` as
   the first statement of a module, class or function) (#5287)
 - Fix unparseable output for a t-string whose replacement field contains a quote (e.g.
   `t'\'{a["b"]}\''`) (#5265)
 - Fix unparseable output for a triple-quoted string whose body ends in an
   already-escaped double quote (e.g. `'''\'''\"'''`) (#5262)
-- Fix `--skip-magic-trailing-comma` dropping the trailing comma from a single-element
-  tuple used as a lambda parameter default when split across multiple lines (#5246)
+- Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split
+  single-element tuple used as a lambda parameter default (#5246)
 - Fix unstable formatting when an inline comment sits on optional parentheses (e.g. a
   parenthesized assert message) (#5241)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma of a one-element
@@ -49,13 +50,13 @@
 - Respect `# fmt: skip` on a line that opens a bracket (e.g.
   `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
   contents (#5161)
-- Fix an AST safety error when separate `type: ignore` comments in a parenthesized
+- Fix an AST safety error when separate `# type: ignore` comments in a parenthesized
   attribute chain were merged onto one physical line (#5297)
 - Preserve comments and blank lines outside requested ranges when formatting with
   `--line-ranges` (#5175)
 - Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
   `async for` statements containing a semicolon (#5311)
-- Fix converting form feeds or other similar characters in docstrings into newlines
+- Stop converting form feeds or other similar characters in docstrings into newlines
   (#5461)
 - Fix `--skip-source-first-line` turning the skipped line's CRLF ending into `\r\r\n`
   when reformatting a file with CRLF line endings (#5438)
@@ -66,7 +67,7 @@
 
 - Add missing blank lines after classes whose last method has an ellipsis body (#5439)
 - Split only the brackets holding a magic trailing comma when more trailers follow them
-  (e.g. don't split `[1,][2](3)` inside `[2]`) (#5448)
+  (e.g. stop splitting inside the `[2]` of `[1,][2](3)`) (#5448)
 - Keep dictionary keys containing operators together on one line when the value can be
   wrapped onto a new line instead (#5435)
 - Remove redundant parentheses around individual variables in unpacking targets (e.g.
@@ -75,12 +76,12 @@
 - Remove redundant parentheses around generator expressions (#5304, #5369)
 - Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
   after an import (#5238)
-- Fix unnecessary parentheses around short RHS expressions in indexed assignments like
-  `x[key] = expr` (#5095)
+- Fix unnecessary parentheses around short right-hand expressions in indexed assignments
+  (e.g. `x[key] = expr`) (#5095)
 - Parenthesize tuple expressions in `yield` statements for consistency with function
   calls and returns (#5170)
-- Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
-  the right-hand side is a bracketed expression, and instead let the bracket explode
+- Stop splitting between a variable and its operator (`not in`, `==`, `is`, ...) when
+  the right-hand side is a bracketed expression, and instead split inside the brackets
   (#5135)
 - In `.pyi` stub files, enforce a blank line after a function or method that has a
   docstring-only body when another comment or statement follows it (#5158)
@@ -100,11 +101,11 @@
   merging a backslash-continued string on the same line (#5449)
 - Split long stringified return annotations even when the function has parameters
   (#5427)
-- Don't hug brackets when doing so would join two `type: ignore` comments onto one line
-  (#5271)
+- Don't hug brackets when doing so would join two `# type: ignore` comments onto one
+  line (#5271)
 - Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
   string (#5329)
-- Fix only the first part of an implicitly concatenated unmergable string (e.g.
+- Fix only the first part of an implicitly concatenated unmergeable string (e.g.
   `r"..." r"..."`) being wrapped in parentheses (#5434)
 
 ### Configuration
@@ -175,11 +176,11 @@
 - Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
   empty entry (e.g. a trailing comma) (#5428)
 - Allow optional whitespace around comma-separated versions and `pyi` in the
-  `X-Python-Variant` header in blackd (#5441)
+  `X-Python-Variant` header (#5441)
 
 ### Integrations
 
-- Remove unused migrate-black script (#5319)
+- Remove unused `migrate-black` script (#5319)
 - Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
   Action (#5399)
 - Add outputs (`is_formatted`, `change_count`, `same_count`, `failure_count`) to GitHub

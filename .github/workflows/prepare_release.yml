@@ -94,9 +94,9 @@ jobs:
             echo "Please follow the process in [the docs](https://black.readthedocs.io/en/latest/contributing/release_process.html#cutting-a-release) to cut a release."
             echo "<details><summary>Changelog Diff</summary>"
             echo
-            echo '```diff'
+            echo '`````diff'
             git diff origin/stable "origin/$BRANCH" -- CHANGES.md
-            echo '```'
+            echo '`````'
             echo
             echo "</details>"
             echo "<sub>This PR is automated</sub>"
