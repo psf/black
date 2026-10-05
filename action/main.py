@@ -107,6 +107,8 @@ def find_black_version_in_array(array: object) -> str | None:
         return None
     try:
         for item in array:
+            if not isinstance(item, str):
+                continue
             # Rudimentary PEP 508 parsing.
             item = item.split(";")[0]
             item = EXTRAS_RE.sub("", item).strip()
