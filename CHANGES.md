@@ -32,6 +32,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Add `--cache-dir` to configure the cache directory from the command line (#5433)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->

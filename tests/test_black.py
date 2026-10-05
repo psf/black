@@ -10,6 +10,7 @@ import multiprocessing
 import os
 import pickle
 import re
+import subprocess
 import sys
 import textwrap
 import types
@@ -1333,9 +1334,9 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(path), "--pyi"])
             actual = path.read_text(encoding="utf-8")
             # verify cache with --pyi is separate
-            pyi_cache = black.Cache.read(pyi_mode)
+            pyi_cache = black.Cache.read(pyi_mode, workspace)
             assert not pyi_cache.is_changed(path)
-            normal_cache = black.Cache.read(DEFAULT_MODE)
+            normal_cache = black.Cache.read(DEFAULT_MODE, workspace)
             assert normal_cache.is_changed(path)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(contents, actual)
@@ -1358,8 +1359,8 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
-            pyi_cache = black.Cache.read(pyi_mode)
-            normal_cache = black.Cache.read(reg_mode)
+            pyi_cache = black.Cache.read(pyi_mode, workspace)
+            normal_cache = black.Cache.read(reg_mode, workspace)
             for path in paths:
                 assert not pyi_cache.is_changed(path)
                 assert normal_cache.is_changed(path)
@@ -1383,9 +1384,9 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(path), *PY36_ARGS])
             actual = path.read_text(encoding="utf-8")
             # verify cache with --target-version is separate
-            py36_cache = black.Cache.read(py36_mode)
+            py36_cache = black.Cache.read(py36_mode, workspace)
             assert not py36_cache.is_changed(path)
-            normal_cache = black.Cache.read(reg_mode)
+            normal_cache = black.Cache.read(reg_mode, workspace)
             assert normal_cache.is_changed(path)
         self.assertEqual(actual, expected)
 
@@ -1406,8 +1407,8 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --target-version is separate
-            pyi_cache = black.Cache.read(py36_mode)
-            normal_cache = black.Cache.read(reg_mode)
+            pyi_cache = black.Cache.read(py36_mode, workspace)
+            normal_cache = black.Cache.read(reg_mode, workspace)
             for path in paths:
                 assert not pyi_cache.is_changed(path)
                 assert normal_cache.is_changed(path)
@@ -2643,6 +2644,131 @@ class TestCaching:
         monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
         assert get_cache_dir().parent == workspace2
 
+        # An explicit directory takes precedence over BLACK_CACHE_DIR.
+        workspace3 = tmp_path / "ws3"
+        assert get_cache_dir(workspace3).parent == workspace3
+
+    @pytest.mark.parametrize("multiple_files", [False, True])
+    def test_cache_dir_option(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        multiple_files: bool,
+    ) -> None:
+        env_cache_dir = tmp_path / "env-cache"
+        cli_cache_dir = tmp_path / "cli-cache"
+        source_dir = tmp_path / "src"
+        source_dir.mkdir()
+        sources = [source_dir / "one.py"]
+        if multiple_files:
+            sources.append(source_dir / "two.py")
+        for source in sources:
+            source.write_text("print('hello')", encoding="utf-8")
+
+        monkeypatch.setenv("BLACK_CACHE_DIR", str(env_cache_dir))
+        target = source_dir if multiple_files else sources[0]
+        with patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor):
+            invokeBlack([str(target), "--cache-dir", str(cli_cache_dir)])
+
+        cli_cache_file = get_cache_file(DEFAULT_MODE, get_cache_dir(cli_cache_dir))
+        env_cache_file = get_cache_file(DEFAULT_MODE, get_cache_dir())
+        assert cli_cache_file.exists()
+        assert any(cli_cache_file.parent.glob("Grammar*.pickle"))
+        assert any(cli_cache_file.parent.glob("PatternGrammar*.pickle"))
+        assert not env_cache_file.exists()
+
+    def test_cache_dir_option_does_not_write_grammar_cache_to_env(
+        self, tmp_path: Path
+    ) -> None:
+        env_cache_dir = tmp_path / "env-cache"
+        cli_cache_dir = tmp_path / "cli-cache"
+        env_version_dir = get_cache_dir(env_cache_dir)
+        env_version_dir.mkdir(parents=True)
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+        env = os.environ.copy()
+        env["BLACK_CACHE_DIR"] = str(env_cache_dir)
+
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "black",
+                str(source),
+                "--cache-dir",
+                str(cli_cache_dir),
+            ],
+            env=env,
+            check=True,
+            capture_output=True,
+        )
+
+        assert not list(env_version_dir.glob("*Grammar*.pickle"))
+        cli_version_dir = get_cache_dir(cli_cache_dir)
+        assert any(cli_version_dir.glob("Grammar*.pickle"))
+        assert any(cli_version_dir.glob("PatternGrammar*.pickle"))
+
+    def test_cache_dir_option_with_no_cache_does_not_create_directory(
+        self, tmp_path: Path
+    ) -> None:
+        cli_cache_dir = tmp_path / "cli-cache"
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+
+        invokeBlack([str(source), "--cache-dir", str(cli_cache_dir), "--no-cache"])
+
+        assert not cli_cache_dir.exists()
+
+    def test_relative_cache_dir_from_config_is_relative_to_config(
+        self, tmp_path: Path
+    ) -> None:
+        project = tmp_path / "project"
+        project.mkdir()
+        source = project / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+        config = project / "pyproject.toml"
+        config.write_text(
+            '[tool.black]\ncache-dir = ".black-cache"\n', encoding="utf-8"
+        )
+
+        with change_directory(tmp_path):
+            result = BlackRunner().invoke(black.main, [str(source)])
+
+        assert result.exit_code == 0
+        project_cache_dir = get_cache_dir(project / ".black-cache")
+        assert get_cache_file(DEFAULT_MODE, project_cache_dir).exists()
+        assert not (tmp_path / ".black-cache").exists()
+
+    def test_cache_dir_creation_error_disables_cache(self, tmp_path: Path) -> None:
+        blocked_parent = tmp_path / "blocked-parent"
+        blocked_parent.write_text("not a directory", encoding="utf-8")
+        blocked_cache_dir = blocked_parent / "cache"
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+
+        with (
+            patch.object(black.Cache, "read") as read_cache,
+            patch.object(black.pygram, "initialize") as initialize_grammar,
+        ):
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--verbose",
+                    "--config",
+                    str(THIS_DIR / "empty.toml"),
+                    str(source),
+                    "--cache-dir",
+                    str(blocked_cache_dir),
+                ],
+                catch_exceptions=False,
+            )
+
+        assert result.exit_code == 0
+        assert "Unable to use cache directory" in result.stderr
+        assert "Disabling the cache" in result.stderr
+        read_cache.assert_not_called()
+        initialize_grammar.assert_not_called()
+
     def test_cache_file_length(self) -> None:
         cases = [
             DEFAULT_MODE,
@@ -2660,7 +2786,7 @@ class TestCaching:
             ),
         ]
         for case in cases:
-            cache_file = get_cache_file(case)
+            cache_file = get_cache_file(case, Path())
             # Some common file systems enforce a maximum path length
             # of 143 (issue #4174). We can't do anything if the directory
             # path is too long, but ensure the name of the cache file itself
@@ -2670,7 +2796,7 @@ class TestCaching:
     def test_cache_file_path_ignores_python_cell_magic_separators(self) -> None:
         mode = replace(DEFAULT_MODE, python_cell_magics={"../../../tmp/pwned"})
         with cache_dir() as workspace:
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             assert cache_file.parent == workspace
             assert "/" not in cache_file.name
             assert ".." not in cache_file.name
@@ -2679,28 +2805,28 @@ class TestCaching:
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             cache_file.write_text("this is not a pickle", encoding="utf-8")
-            assert black.Cache.read(mode).file_data == {}
+            assert black.Cache.read(mode, workspace).file_data == {}
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
             invokeBlack([str(src)])
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             assert not cache.is_changed(src)
 
     def test_cache_empty_file(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
-            cache_file = get_cache_file(mode)
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode, workspace)
             cache_file.touch()
-            assert black.Cache.read(mode).file_data == {}
+            assert black.Cache.read(mode, workspace).file_data == {}
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([src])
             invokeBlack([str(src)])
             assert src.read_text(encoding="utf-8") == "print('hello')"
@@ -2716,12 +2842,12 @@ class TestCaching:
             one.write_text("print('hello')", encoding="utf-8")
             two = (workspace / "two.py").resolve()
             two.write_text("print('hello')", encoding="utf-8")
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([one])
             invokeBlack([str(workspace)])
             assert one.read_text(encoding="utf-8") == "print('hello')"
             assert two.read_text(encoding="utf-8") == 'print("hello")\n'
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             assert not cache.is_changed(one)
             assert not cache.is_changed(two)
 
@@ -2740,7 +2866,7 @@ class TestCaching:
                 if color:
                     cmd.append("--color")
                 invokeBlack(cmd)
-                cache_file = get_cache_file(mode)
+                cache_file = get_cache_file(mode, workspace)
                 assert cache_file.exists() is False
                 read_cache.assert_called_once()
                 write_cache.assert_not_called()
@@ -2765,12 +2891,12 @@ class TestCaching:
 
     def test_no_cache_when_stdin(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
+        with cache_dir() as workspace:
             result = BlackRunner().invoke(
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
             assert not result.exit_code
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             assert not cache_file.exists()
 
     def test_no_cache_flag_prevents_writes(self) -> None:
@@ -2779,7 +2905,7 @@ class TestCaching:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             # Pre-populate cache so the file is considered cached
             cache.write([src])
             with (
@@ -2802,7 +2928,7 @@ class TestCaching:
             two.write_text("print('hello')", encoding="utf-8")
 
             # Pre-populate cache for `one` so it would normally be skipped
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([one])
 
             with (
@@ -2822,17 +2948,17 @@ class TestCaching:
 
     def test_read_cache_no_cachefile(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
-            assert black.Cache.read(mode).file_data == {}
+        with cache_dir() as workspace:
+            assert black.Cache.read(mode, workspace).file_data == {}
 
     def test_write_cache_read_cache(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
-            write_cache = black.Cache.read(mode)
+            write_cache = black.Cache.read(mode, workspace)
             write_cache.write([src])
-            read_cache = black.Cache.read(mode)
+            read_cache = black.Cache.read(mode, workspace)
             assert not read_cache.is_changed(src)
 
     @pytest.mark.incompatible_with_mypyc
@@ -2904,7 +3030,7 @@ class TestCaching:
         mode = DEFAULT_MODE
         with cache_dir(exists=False) as workspace:
             assert not workspace.exists()
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([])
             assert workspace.exists()
 
@@ -2920,14 +3046,14 @@ class TestCaching:
             clean = (workspace / "clean.py").resolve()
             clean.write_text('print("hello")\n', encoding="utf-8")
             invokeBlack([str(workspace)], exit_code=123)
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             assert cache.is_changed(failing)
             assert not cache.is_changed(clean)
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
-            cache = black.Cache.read(mode)
+        with cache_dir() as workspace:
+            cache = black.Cache.read(mode, workspace)
             with patch.object(Path, "open") as mock:
                 mock.side_effect = OSError
                 cache.write([])
@@ -2938,11 +3064,11 @@ class TestCaching:
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([path])
-            one = black.Cache.read(mode)
+            one = black.Cache.read(mode, workspace)
             assert not one.is_changed(path)
-            two = black.Cache.read(short_mode)
+            two = black.Cache.read(short_mode, workspace)
             assert two.is_changed(path)
 
     def test_cache_key(self) -> None:
