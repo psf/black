@@ -60,6 +60,10 @@ Currently, the following features are included in the preview style:
 - `keep_dict_keys_with_operators`: Keep dictionary keys containing operators together on
   one line when the value can be wrapped onto a new line.
   ([see below](labels/keep-dict-keys-with-operators))
+- `keep_commented_expressions_together`: Do not split expressions on delimiters (such as
+  binary operators, comparisons, or comprehensions) inside brackets when preceded by a
+  standalone comment if the expression fits within the line length limit.
+  ([see below](labels/keep-commented-expressions-together))
 - `avoid_parens_for_unbreakable_rhs_in_assignments`: Avoid adding unnecessary
   parentheses around unbreakable right-hand side expressions in assignments (such as
   annotated assignments or subscript targets) when the expression cannot fit within the
@@ -146,6 +150,31 @@ self.message_user(
         "verbose_name": capfirst(verbose_name),
     },
 )
+```
+
+(labels/keep-commented-expressions-together)=
+
+### Keep commented expressions together
+
+Black previously split expressions containing delimiters (such as binary operators,
+comparisons, or comprehensions) across multiple lines when placed after a standalone
+comment inside brackets (such as lists or function calls), even if the expression was
+well within the line length limit:
+
+```python
+# Before
+foobar = [
+    # comment
+    pathlib.Path("foo")
+    / "bar"
+    / "baz",
+]
+
+# After (with --preview)
+foobar = [
+    # comment
+    pathlib.Path("foo") / "bar" / "baz",
+]
 ```
 
 (labels/remove-redundant-unpacking-parentheses)=

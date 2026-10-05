@@ -21,6 +21,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Do not split short expressions on delimiters (such as binary operators, comparisons,
+  or comprehensions) inside brackets when preceded by a standalone comment (#5455)
 - Fix the unstable `string_processing` feature removing backslash-newline sequences from
   raw strings, which changed their value (#5482)
 - Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in

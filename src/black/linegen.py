@@ -1612,6 +1612,22 @@ def delimiter_split(
 
     rhs: RHSResult | None = None
     if (
+        Preview.keep_commented_expressions_together in mode
+        and line.contains_standalone_comments()
+        and delimiter_priority != COMMA_PRIORITY
+    ):
+        first_comment_idx = next(
+            i for i, leaf in enumerate(line.leaves) if leaf.type == STANDALONE_COMMENT
+        )
+        first_delimiter_idx = next(
+            i
+            for i, leaf in enumerate(line.leaves)
+            if bt.delimiters.get(id(leaf)) == delimiter_priority
+        )
+        if first_comment_idx < first_delimiter_idx:
+            raise CannotSplit("Standalone comments should be split first")
+
+    if (
         Preview.hug_comparator in mode
         and delimiter_priority == COMPARATOR_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
