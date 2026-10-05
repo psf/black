@@ -45,6 +45,9 @@
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+- Fix the GitHub Action crashing on dependency-group includes when `use_pyproject` is
+  enabled (#5479)
+
 ### Documentation
 
 <!-- Major changes to documentation and policies.
@@ -235,8 +238,6 @@
   Action (#5399)
 - Add outputs (`is_formatted`, `change_count`, `same_count`, `failure_count`) to GitHub
   Action runs (#5408)
-- Fix the GitHub Action crashing on dependency-group includes when `use_pyproject` is
-  enabled (#5479)
 
 ### Documentation
 
