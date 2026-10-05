@@ -16,6 +16,7 @@ from black.nodes import (
     child_towards,
     first_leaf,
     is_docstring,
+    is_ignore_pragma_comment_string,
     is_import,
     is_multiline_string,
     is_one_sequence_between,
@@ -330,7 +331,11 @@ class Line:
 
         # If a 'type: ignore' is attached to the end of a line, we
         # can't split the line, because we can't know which of the
-        # subexpressions the ignore was meant to apply to.
+        # subexpressions the ignore was meant to apply to. Under the
+        # unsplittable_ignore_pragmas preview style, the same applies to
+        # other type-checker ignore pragmas such as '# pyright: ignore':
+        # a split moves the pragma onto the last line, where the checker
+        # no longer applies it to the expression.
         #
         # We only want this to apply to actual physical lines from the
         # original source, though: we don't want the presence of a
@@ -353,6 +358,10 @@ class Line:
             for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
                     if is_type_ignore_comment(comment, mode=self.mode):
+                        return True
+                    if Preview.unsplittable_ignore_pragmas in self.mode and (
+                        is_ignore_pragma_comment_string(comment.value)
+                    ):
                         return True
 
         return False

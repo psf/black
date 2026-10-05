@@ -21,6 +21,10 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Do not split lines that end with a type-checker ignore pragma (such as
+  `# pyright: ignore[...]`); instead keep them unsplit like lines ending with
+  `# type: ignore`, since a split moves the pragma where it no longer suppresses the
+  expression's diagnostics (#5467)
 - Do not split short expressions on delimiters (such as binary operators, comparisons,
   or comprehensions) inside brackets when preceded by a standalone comment (#5455)
 - Fix the unstable `string_processing` feature removing backslash-newline sequences from

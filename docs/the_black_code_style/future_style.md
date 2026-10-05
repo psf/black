@@ -69,6 +69,36 @@ Currently, the following features are included in the preview style:
   annotated assignments or subscript targets) when the expression cannot fit within the
   line length even with parentheses.
   ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
+- `unsplittable_ignore_pragmas`: Do not split a line that ends with a type-checker
+  ignore pragma (such as `# pyright: ignore[...]`), mirroring the existing handling of
+  `# type: ignore`.
+  ([see below](labels/unsplittable-ignore-pragmas))
+
+(labels/unsplittable-ignore-pragmas)=
+
+### Do not split lines with trailing ignore pragmas
+
+Type-checker ignore pragmas such as `# pyright: ignore[reportUnknownMemberType]`
+suppress the diagnostics reported on the line where the pragma appears. When Black
+splits such a line, the pragma ends up on the last line of the split, after the closing
+bracket, where it no longer suppresses the diagnostics of the expression. With this
+feature enabled, Black instead keeps the line unsplit, even if it exceeds the line
+length limit — the same trade-off it already makes for `# type: ignore`.
+
+For example:
+
+```python
+# Before
+asm_client: SecretsManagerClient = boto3.client(
+    "secretsmanager"
+)  # pyright: ignore[reportUnknownMemberType]
+
+# After
+asm_client: SecretsManagerClient = boto3.client("secretsmanager")  # pyright: ignore[reportUnknownMemberType]
+```
+
+`# type: ignore` keeps its existing dedicated handling and is unaffected by this
+feature.
 
 (labels/avoid-parens-for-unbreakable-rhs-in-assignments)=
 
