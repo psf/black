@@ -598,14 +598,8 @@ def _calculate_lines_mappings(
     # sources. Comparing the lines without indentation keeps them matched.
     matcher = difflib.SequenceMatcher(
         None,
-        [
-            line.strip()
-            for line in original_source.splitlines(keepends=True)
-        ],
-        [
-            line.strip()
-            for line in modified_source.splitlines(keepends=True)
-        ],
+        [line.strip() for line in original_source.splitlines(keepends=True)],
+        [line.strip() for line in modified_source.splitlines(keepends=True)],
     )
     matching_blocks = matcher.get_matching_blocks()
     lines_mappings: list[_LinesMapping] = []
