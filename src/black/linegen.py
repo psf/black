@@ -838,6 +838,11 @@ def transform_line(
                     string_paren_wrap,
                     right_hand_split_with_omits,
                 ]
+                if _is_implicit_concatenation_value(line):
+                    # Wrap the whole concatenation in parens instead of
+                    # splitting it apart first (#3855).
+                    transformers.remove(string_paren_wrap)
+                    transformers.insert(3, string_paren_wrap)
             else:
                 transformers = [
                     string_merge,
@@ -882,6 +887,23 @@ def transform_line(
             yield from _force_standalone_comment_split(line)
         else:
             yield line
+
+
+def _is_implicit_concatenation_value(line: Line) -> bool:
+    """Is `line` something like `a=STRING STRING`, where the only delimiters are
+    between the implicitly concatenated strings?"""
+    if line.leaves[0].type == token.STRING:
+        return False
+
+    exclude = set()
+    if line.leaves[-1].type == token.COMMA:
+        exclude.add(id(line.leaves[-1]))
+    try:
+        max_priority = line.bracket_tracker.max_delimiter_priority(exclude=exclude)
+    except ValueError:
+        return False
+
+    return max_priority == STRING_PRIORITY
 
 
 def should_split_funcdef_with_rhs(line: Line, mode: Mode) -> bool:
@@ -1200,6 +1222,10 @@ def _maybe_split_omitting_optional_parens(
                     rhs_oop, line, mode, features=features, omit=omit
                 )
                 return
+            elif Preview.avoid_parens_for_unbreakable_rhs_in_assignments in mode:
+                raise CannotSplit(
+                    "Alternative split not preferred, falling back to original RHS"
+                )
 
         except CannotSplit as e:
             # For chained assignments we want to use the previous successful split
@@ -1585,6 +1611,22 @@ def delimiter_split(
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     rhs: RHSResult | None = None
+    if (
+        Preview.keep_commented_expressions_together in mode
+        and line.contains_standalone_comments()
+        and delimiter_priority != COMMA_PRIORITY
+    ):
+        first_comment_idx = next(
+            i for i, leaf in enumerate(line.leaves) if leaf.type == STANDALONE_COMMENT
+        )
+        first_delimiter_idx = next(
+            i
+            for i, leaf in enumerate(line.leaves)
+            if bt.delimiters.get(id(leaf)) == delimiter_priority
+        )
+        if first_comment_idx < first_delimiter_idx:
+            raise CannotSplit("Standalone comments should be split first")
+
     if (
         Preview.hug_comparator in mode
         and delimiter_priority == COMPARATOR_PRIORITY

@@ -187,6 +187,42 @@ def test_magic_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.parametrize("fast", [True, False])
+@pytest.mark.parametrize(
+    "src",
+    (
+        pytest.param(
+            "installed_packages_in_this_environment = !pip list --format=freeze"
+            " --disable-pip-version-check",
+            id="System assignment",
+        ),
+        pytest.param(
+            "benchmark_result_for_the_training_loop = %timeit -o"
+            " train_model(dataset, epochs=10, batch_size=32)",
+            id="Line magic assignment",
+        ),
+        pytest.param(
+            "if True:\n    installed_packages_in_this_environment = !pip list"
+            " --format=freeze --disable-pip-version-check",
+            id="Indented system assignment",
+        ),
+    ),
+)
+def test_long_magic_assignment_is_not_wrapped_in_parentheses(
+    src: str, fast: bool
+) -> None:
+    # Wrapping the masked right-hand side in parentheses would put the magic
+    # inside them, where IPython no longer recognises it.
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=fast, mode=JUPYTER_MODE)
+
+
+def test_unmask_cell_raises_when_magic_is_no_longer_recognised() -> None:
+    replacement = Replacement(mask='b"dead"', src="!ls")
+    with pytest.raises(NothingChanged):
+        unmask_cell(f"x = (\n    {replacement.mask}\n)", [replacement])
+
+
 def test_cell_magic_with_magic() -> None:
     src = "%%timeit -n1\nls =!ls"
     result = format_cell(src, fast=True, mode=JUPYTER_MODE)

@@ -294,14 +294,14 @@ def _newer(a: str, b: str) -> bool:
 
 
 def load_packaged_grammar(
-    grammar_source: str, cache_dir: Path | None = None
+    grammar_source: str, cache_dir: Path | None = None, *, save: bool = True
 ) -> grammar.Grammar:
     """Loads a grammar by doing `load_grammar(grammar_source)`.
     This facilitates using a packaged grammar file when needed but preserves
     load_grammar's automatic regeneration behavior when possible.
     """
     gp = _generate_pickle_name(grammar_source, cache_dir) if cache_dir else None
-    return load_grammar(grammar_source, gp=gp)
+    return load_grammar(grammar_source, gp=gp, save=save)
 
 
 def main(*args: str) -> bool:
