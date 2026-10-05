@@ -114,3 +114,18 @@ Here's an example configuration:
     jupyter: true
     version: "21.5b1"
 ```
+
+### Outputs
+
+The action provides the following outputs:
+
+- `is_formatted`: Set to `"true"` if any files were reformatted (or in `--check` mode,
+  would be reformatted); `"false"` otherwise. This can be used to run subsequent steps
+  conditionally (for example, auto-committing formatted changes).
+- `change_count`: Number of files that were reformatted (or would be reformatted in
+  `--check` mode).
+- `same_count`: Number of files that were left unchanged.
+- `failure_count`: Number of files that failed to reformat.
+
+These outputs are only accessible if the action version as well as `with.version` are
+both 26.10.0+.
