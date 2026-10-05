@@ -2,7 +2,7 @@
 
 An overview on contributing to the _Black_ project.
 
-If you are making a large change, please first open an issue to discuss it beforehand.
+If you are making a large change, please open an issue first to discuss it beforehand.
 
 ## Overview
 
@@ -44,18 +44,18 @@ the root of the black repo:
 ## News / Changelog Requirement
 
 `Black` has CI that will check for an entry corresponding to your PR in `CHANGES.md`. If
-you feel your PR does not require a changelog entry, please state that in a comment and
-a maintainer can add a `ci: skip news` label bypass the check. Otherwise, please ensure
-you have a line in the following format added below the appropriate header:
+you feel your PR does not require a changelog entry, please state that and a maintainer
+can add the `ci: skip news` label to bypass the check. Otherwise, please ensure you have
+a line in the following format added below the appropriate header:
 
 ```md
 - `Black` is now more awesome (#X)
 ```
 
-Note that X should be your PR number, not issue number! To workout X, please use
+Note that X should be your PR number, not issue number! To workout X, you may use
 [Next PR Number](https://ichard26.github.io/next-pr-number/?owner=psf&name=black).
 
-The description should be no more than two sentances and should accurately describe the
+The description should be no more than two sentences and should accurately describe the
 user-facing change. Avoid referencing Black internals or the implementation details of
 the change.
 
@@ -64,18 +64,25 @@ add to the `CHANGES.md` for each commit.
 
 ## Style Changes
 
+If a change would affect the advertised code style, please modify
+[the documentation](https://black.readthedocs.io/en/latest/the_black_code_style/current_style.html)
+to reflect that change. Patches that fix unintended bugs in formatting don't need to be
+mentioned separately.
+
 Please familiarize yourself with our [stability policy](labels/stability-policy). Most
 style changes must be added to the `--preview` style. Exceptions are fixing crashes or
 changes that would not affect an already-formatted file.
 
-If a change would affect the advertised code style, please modify
-[the documentation](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html)
-to reflect that change. Patches that fix unintended bugs in formatting don't need to be
-mentioned separately.
+New formatting styles are implemented by adding a new item to the `Preview` enum in
+`mode.py`. The name of this style should accurately summarize the user-facing change in
+about 3-6 words and under 40 characters. All new formatting logic should be gated under
+a `Preview.FEATURE in mode` check.
+[The diff-shades check](https://black.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades)
+ensures this is implemented correctly.
 
-If the change is implemented with the `--preview` or `--unstable` flag, please include
+If the change is implemented under the `--preview` or `--unstable` style, please include
 the change in the
-[Future Style document](https://black.readthedocs.io/en/stable/the_black_code_style/future_style.html)
+[Future Style document](https://black.readthedocs.io/en/latest/the_black_code_style/future_style.html)
 instead. Additionally, please ensure you include the changelog entry under the dedicated
 "Preview style" heading.
 
