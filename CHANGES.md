@@ -19,6 +19,8 @@
 - Keep repeated lines outside the selected `--line-ranges` unchanged (#5436)
 - Fix `--line-ranges` formatting lines that follow a statement when formatting joins or
   re-indents that statement (#5484)
+- Fix `--line-ranges` crashing with an internal error when an unselected statement has a
+  `# fmt: skip` comment on the last line before a closing bracket (#5477)
 
 ### Preview style
 

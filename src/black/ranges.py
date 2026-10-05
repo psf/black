@@ -4,6 +4,7 @@ import difflib
 from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
 
+from black.comments import FMT_SKIP, contains_fmt_directive
 from black.nodes import (
     LN,
     STANDALONE_COMMENT,
@@ -445,6 +446,43 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
     replacements.apply()
 
 
+def _str_with_standalone_comments(node: LN) -> str:
+    """Like `str(node)`, but a nested STANDALONE_COMMENT that ends in a `# fmt: skip`
+    is followed by a newline.
+
+    A STANDALONE_COMMENT made by `# fmt: skip` handling can end with the comment and
+    has no trailing newline: the line generator puts one after it. Joining it
+    straight to the next leaf would append that leaf (e.g. a closing bracket) to the
+    comment's line and turn it into part of the comment.
+    """
+    leaves = list(node.leaves())
+    parts = []
+    for leaf, next_leaf in zip(leaves, [*leaves[1:], None], strict=True):
+        text = str(leaf)
+        if (
+            leaf.type == STANDALONE_COMMENT
+            and next_leaf is not None
+            and not str(next_leaf).startswith("\n")
+            and _ends_with_fmt_skip(text)
+        ):
+            text += "\n"
+        parts.append(text)
+    return "".join(parts)
+
+
+def _ends_with_fmt_skip(text: str) -> bool:
+    """Whether the last line of a STANDALONE_COMMENT value ends in a `# fmt: skip`.
+
+    Only that directive makes such a value end in a comment without a trailing
+    newline. Any other `#` is ignored: it may be inside a string.
+    """
+    last_line = text.rpartition("\n")[2]
+    comment_start = last_line.find("#")
+    return comment_start != -1 and contains_fmt_directive(
+        last_line[comment_start:], FMT_SKIP
+    )
+
+
 def _convert_node_to_standalone_comment(
     node: LN, replacements: "_NodeReplacements", lines_set: set[int]
 ) -> None:
@@ -480,7 +518,7 @@ def _convert_node_to_standalone_comment(
     # _convert_unchanged_line_by_line, which manages the newlines itself.)
     # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
     # generating the formatted code.
-    value = str(node)[:-1]
+    value = _str_with_standalone_comments(node)[:-1]
     replacements.record(
         [node],
         Leaf(
@@ -510,7 +548,7 @@ def _convert_nodes_to_standalone_comment(
         return
     first_lineno = first.lineno
     prefix = replacements.take_prefix(first)
-    value = "".join(str(node) for node in nodes)
+    value = "".join(_str_with_standalone_comments(node) for node in nodes)
     # The prefix comment on the NEWLINE leaf is the trailing comment of the statement.
     if newline.prefix:
         value += newline.prefix
