@@ -19,6 +19,8 @@
 
 - Fix the unstable `string_processing` feature removing backslash-newline sequences from
   raw strings, which changed their value (#5482)
+- Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
+  assignments (such as annotated assignments or subscript targets) (#5473)
 
 ### Configuration
 
@@ -47,6 +49,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Fix the GitHub Action crashing on dependency-group includes when `use_pyproject` is
+  enabled (#5479)
 
 ### Documentation
 
