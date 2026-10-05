@@ -2440,6 +2440,37 @@ class BlackTestCase(BlackBaseTestCase):
             """)
             assert expected == formatted
 
+    def test_line_ranges_at_start_of_file_stay_inside_joined_statement(self) -> None:
+        # Regression for https://github.com/psf/black/issues/4052: the lines that
+        # are joined away in the first pass must not select the lines below.
+        source = (
+            "def restrict_to_this_line(arg1,\n"
+            "  arg2,\n"
+            "  arg3):\n"
+            '  print  ( "This should not be formatted." )\n'
+            '  print  ( "This should not be formatted." )\n'
+        )
+
+        expected = (
+            "def restrict_to_this_line(arg1, arg2, arg3):\n"
+            '    print  ( "This should not be formatted." )\n'
+            '    print  ( "This should not be formatted." )\n'
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
+    def test_line_ranges_removed_at_start_of_file_stay_unformatted(self) -> None:
+        # Regression for https://github.com/psf/black/issues/4052: the leading lines
+        # that the first pass removes must not make the second pass format the file.
+        source = "\n\nx  =  1\n"
+        expected = "x  =  1\n"
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(2, 2)]) == expected
+        )
+
     def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
         # This regression stays inline because it requires literal trailing spaces,
         # which would fail `git diff --check` in a data case file.

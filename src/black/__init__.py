@@ -1360,6 +1360,11 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
+            if not lines:
+                # None of the requested lines survived the first pass, so there is
+                # nothing left to format. Passing the empty `lines` to the second
+                # pass would format the whole file instead.
+                return dst_contents
         try:
             dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
         except InvalidInput as exc:
