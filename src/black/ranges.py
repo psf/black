@@ -593,10 +593,13 @@ def _calculate_lines_mappings(
       original_source: the original source.
       modified_source: the modified source.
     """
+    # The first formatting pass re-indents the bodies of the statements it
+    # formats, so the same line can have a different indentation in the two
+    # sources. Comparing the lines without indentation keeps them matched.
     matcher = difflib.SequenceMatcher(
         None,
-        original_source.splitlines(keepends=True),
-        modified_source.splitlines(keepends=True),
+        [line.strip() for line in original_source.splitlines(keepends=True)],
+        [line.strip() for line in modified_source.splitlines(keepends=True)],
     )
     matching_blocks = matcher.get_matching_blocks()
     lines_mappings: list[_LinesMapping] = []
@@ -615,7 +618,10 @@ def _calculate_lines_mappings(
                         original_end=block.a,
                         modified_start=1,
                         modified_end=block.b,
-                        is_changed_block=False,
+                        # The lines before the first matching block are not part of
+                        # any matching block, so this range is a changed block. A line
+                        # that only exists on one side has no counterpart to map onto.
+                        is_changed_block=True,
                     )
                 )
         else:
