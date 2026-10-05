@@ -23,6 +23,6 @@ jobs:
         if: >
           contains(github.event.pull_request.labels.*.name, 'ci: skip news') != true
         run: |
-          grep -Pz '(?m)\((#\d+,\s+)*#${{ github.event.pull_request.number }}(,\s+#\d+)*\)\r?$' CHANGES.md || \
+          grep -P '\((#\d+,\s+)*#${{ github.event.pull_request.number }}(,\s+#\d+)*\)$' CHANGES.md || \
           (echo "Please add '(#${{ github.event.pull_request.number }})' change line to CHANGES.md (or if appropriate, ask a maintainer to add the 'ci: skip news' label)" && \
           exit 1)

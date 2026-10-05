@@ -13,12 +13,18 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix a long Jupyter notebook assignment magic (for example `x = !ls -la`) being wrapped
+  in parentheses, which IPython can no longer run; such cells are now left unchanged
+  (#5481)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
 - Do not split short expressions on delimiters (such as binary operators, comparisons,
   or comprehensions) inside brackets when preceded by a standalone comment (#5455)
+- Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
+  assignments (such as annotated assignments or subscript targets) (#5473)
 
 ### Configuration
 
@@ -47,6 +53,9 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Fix the GitHub Action crashing on dependency-group includes when `use_pyproject` is
+  enabled (#5479)
 
 ### Documentation
 

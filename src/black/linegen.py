@@ -1222,6 +1222,10 @@ def _maybe_split_omitting_optional_parens(
                     rhs_oop, line, mode, features=features, omit=omit
                 )
                 return
+            elif Preview.avoid_parens_for_unbreakable_rhs_in_assignments in mode:
+                raise CannotSplit(
+                    "Alternative split not preferred, falling back to original RHS"
+                )
 
         except CannotSplit as e:
             # For chained assignments we want to use the previous successful split
