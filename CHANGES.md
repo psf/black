@@ -5,12 +5,6 @@
 <!-- PR authors:
      Please include the PR number in the changelog entry, not the issue number -->
 
-- Add support for NO_COLOR environment variable to disable ANSI output (#5129)
-- No spurious target version warning when runtime version is included in a
-  --target-version flag (#5167)
-- `--line-ranges` no longer inserts an empty line after a docstring when the range
-  covers only the docstring itself (#5312)
-
 ### Highlights
 
 <!-- Include any especially major or disruptive changes here -->
@@ -19,162 +13,20 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix `# fmt: skip` on a bracketed ternary like `a + b if c else d,` turning the
-  surrounding tuple into a call (#5464)
-- Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695
-  type parameters (#5429)
-- Fix an inline comment after the closing bracket of optional parentheses being moved
-  inside the brackets when the parenthesized expression contains own-line comments
-  (#5395)
-- Fix unparseable output when `# fmt: skip` is placed on an opening bracket of an `if`,
-  `while`, `for`, or `with` header (#5405)
-- Fix crash when formatting parenthesized expressions with multiple inline comments and
-  `# fmt: skip` (#5414)
-- Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
-  earlier on the line (#5381)
-- Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
-- Keep the parentheses around the target of an annotated assignment (for example
-  `(x): int = 5`). They make the target non-simple, so CPython leaves the name out of
-  `__annotations__`; removing them changed that and tripped Black's AST safety check.
-  Nesting beyond the first pair is redundant and is still removed, so `((x)): int = 5`
-  becomes `(x): int = 5` (#5321)
-- Stop treating a t-string in docstring position as a docstring (for example
-  `t"  spam  "` as the first statement of a module, class or function). t-strings
-  evaluate to `Template`, never `str`, so stripping and reindenting one changed the
-  value of the template and tripped Black's AST safety check (#5287)
-- Fix unparseable output for a t-string whose replacement field contains a quote (for
-  example `t'\'{a["b"]}\''`). The guards that keep quote normalisation away from the
-  inside of an f-string replacement field were never reached for t-strings, so the
-  nested quotes were escaped and Black failed on its own output (#5265)
-- Fix unparseable output for a triple-quoted string whose body ends in an already
-  escaped double quote (for example `'''\'''\"'''`). Switching to `"""` escaped the
-  backslash instead of the quote, leaving the closing quotes bare, so Black failed on
-  its own output (#5262)
-- Fix dropping the required trailing comma from a single-element tuple used as a lambda
-  parameter default under `--skip-magic-trailing-comma` when a standalone comment forces
-  the tuple across multiple lines; removing the comma turned the tuple into a bare
-  expression and failed Black's AST safety check (#5246)
-- Fix unstable formatting when an inline comment sits on optional parentheses (for
-  example a parenthesized assert message or assignment RHS) (#5241)
-- Fix `--skip-magic-trailing-comma` dropping the trailing comma of a one-element
-  subscript (`a[x,]`) when the line is long enough to be split and contains a power
-  operator (#5272)
-- Fix crash when a standalone comment sits between tokens of a comprehension or lambda
-  (#5144)
-- Preserve paired `# fmt: skip` comments on parenthesized compound statement headers
-  (#5401)
-- Fix inline comments being dropped on the lines produced by that forced split, so a
-  trailing `# comment` or `# type: ignore` on a bracket inside such a comprehension is
-  kept instead of silently removed (#5330)
-- Respect the magic trailing comma in a PEP 695 type parameter list containing a
-  `*TypeVarTuple` or `**ParamSpec`, which previously collapsed back onto one line
-  (#5244)
-- Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`
-  statement after another standalone comment (#5189)
-- Fix a crash when splitting `case case if ...` match patterns at very small line
-  lengths (#5147)
-- Fix multiline docstring indentation when leading tabs are used inside indented
-  docstrings (#5148)
-- Respect `# fmt: skip` on a line that opens a bracket (e.g.
-  `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
-  contents: the whole statement is now preserved instead of being reformatted (and
-  previously crashing) (#5161)
-- Fix an AST safety error when separate `type: ignore` comments in a parenthesized
-  attribute chain were merged onto one physical line (#5297)
-- Preserve comments and blank lines outside requested ranges when formatting with
-  `--line-ranges` (#5175)
-- Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
-  `async for` statements containing a semicolon (#5311)
-- Fix changing the value of a docstring that contains a form feed or another character
-  that is not a line break for the Python parser. `Black` split the docstring on it and
-  reindented the lines after it, so the character became a newline (#5461)
-
 ### Preview style
-
-- Add missing blank lines after classes whose last method has an ellipsis body (#5439)
 
 <!-- Changes that affect Black's preview style -->
 
-- Preserve leaf line numbers in `append_leaves` so multi-line expressions with merged
-  strings and trailing `# type: ignore` comments are not treated as single-line
-  unsplittable expressions (#5466)
 - Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
   assignments (such as annotated assignments or subscript targets) (#5473)
-- Split only the brackets holding a magic trailing comma when more trailers follow them,
-  so `[1,][2](3)` no longer also splits inside `[2]` (#5448)
-- Keep dictionary keys containing operators together on one line when the value can be
-  wrapped onto a new line (#5435)
-- Fix `string_processing` duplicating an inline comment when it strips the parentheses
-  around a string or merges a backslash-continued string on the same line (#5449)
-- Split long stringified return annotations even when the function has parameters
-  (#5427)
-- Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
-  same-name decorated functions, such as `@overload`s or a property setter (#5430)
-- Remove redundant parentheses around individual variables in unpacking targets (for
-  example `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
-- Normalize uppercase `T` prefixes on t-strings to lowercase under `--preview` (#5425)
-- Remove redundant parentheses around generator expressions (#5304, #5369)
-- Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
-  after an import (#5238)
-- Fix unnecessary parentheses around short RHS expressions in indexed assignments like
-  `x[key] = expr` (#5095)
-- Parenthesize tuple expressions in `yield` statements for consistency with function
-  calls and returns (#5170)
-- Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
-  the right-hand side is a bracketed expression. Black now lets the bracket explode
-  instead. This fixes the awkward break that was showing up in comprehension `if`
-  clauses (#4514) as well as the same shape inside `if`, `elif`, `assert`, and
-  parenthesized expressions (#5135)
-- In `.pyi` stub files, enforce a blank line after a function or method that has a
-  docstring-only body when another comment or statement follows it (#5158)
-- Keep the parentheses around a lambda used as the iterable of a comprehension (e.g.
-  `[x for x in (lambda: 0) if x]`). They were previously stripped by
-  `wrap_comprehension_in`, which produced invalid code and crashed Black (#5176)
-- Collapse redundant nested parentheses around a lambda or conditional expression used
-  as a comprehension's iterable down to a single pair (e.g. `[x for x in ((lambda: 0))]`
-  becomes `[x for x in (lambda: 0)]`). Previously the inner pair was stripped too,
-  leaving the bare expression and crashing Black (#5200)
-- Don't hug brackets when doing so would join two `type: ignore` comments onto one line.
-  The AST records `type: ignore` per line, so merging them dropped a `TypeIgnore` entry
-  and Black failed its own equivalence check (#5271)
-- Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
-  string (#5329)
-- Fix `string_processing` producing invalid code by wrapping only the first part of an
-  implicitly concatenated string it cannot merge (such as `r"..." r"..."`) in
-  parentheses. The whole concatenation is now wrapped instead (#5434)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
-- Fix `--force-exclude` not excluding files whose path contains `..`, such as
-  `black ../generated/file.py` run from a subdirectory (#5471)
-- Fall back to the default configuration, with a warning, when the given sources share
-  no common project root (for example, they are on different drives on Windows) instead
-  of crashing (#5386)
-- Fix `find_project_root` returning a stale cached result when `--code` is used from
-  different working directories in the same process. The CWD fallback (used when no
-  `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
-  directory gets the correct `pyproject.toml` (#5152)
-- Add validation for --line-ranges values (#5107)
-- Ignore empty cache files like other malformed cache files instead of raising an
-  `EOFError` (#5192)
-- Reject non-string `include` and `force-exclude` values in `pyproject.toml` (#5193)
-- Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors instead
-  of crashing (#5211)
-- Ignore permission errors when reading cache (#5258)
-- Fix `--skip-source-first-line` turning the skipped line's CRLF ending into `\r\r\n`
-  when reformatting a file with CRLF line endings, and in `--diff` output (#5438)
-
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
-
-- Reduce the size of Linux standalone binaries by stripping debug symbols during the
-  PyInstaller release build (#5223)
-- Black is now released using GitHub
-  [Immutable Releases](https://docs.github.com/code-security/concepts/supply-chain-security/immutable-releases)
-  (#5296)
 
 ### Parser
 
@@ -184,100 +36,204 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- Fix superlinear runtime growth with the number of input files by replacing the
-  `asyncio.wait(..., return_when=FIRST_COMPLETED)` busy loop in `schedule_formatting`
-  with per-task done callbacks, so completion bookkeeping costs O(1) per file instead of
-  O(n) (#5450)
-- Improve performance on strings containing many consecutive backslashes (#5163)
-- Improve performance when merging implicitly concatenated f-strings whose expressions
-  contain long string literals (#5165)
-- Improve performance on files with many `# fmt: skip`/`# fmt: off` comments by no
-  longer re-walking the whole tree from the root for every directive (#5169)
-- Improve performance on deeply nested parenthesised expressions by no longer
-  re-scanning the whole atom for every nesting level in `max_delimiter_priority_in_atom`
-  (#5171)
-- Improve performance when merging long runs of implicitly concatenated strings by no
-  longer re-escaping the whole accumulated string on every merge step (#5173)
-  sibling-maps-incremental
-- Improve performance on code whose formatting rewrites large nodes (such as `--preview`
-  string processing) by maintaining the `blib2to3` sibling-node maps incrementally
-  rather than rebuilding them from scratch after every tree mutation (#5178)
-- Improve performance on long calls and collections by no longer scanning the whole line
-  to locate each bracket's opening pair in `is_one_sequence_between` (#5177)
-- Improve performance on functions and other blocks containing many `# fmt: skip`
-  comments by no longer scanning every leaf of the enclosing block for each directive
-  when checking for a semicolon-separated inline body (#5190)
-- Improve performance when merging large groups of implicitly concatenated strings by no
-  longer rebuilding a node's children list and sibling maps from scratch on every
-  `replace` call (#5194)
-- Improve performance on lines holding a multiline string inside a large collection (for
-  example a dict literal whose values are all triple-quoted strings) by locating the
-  string's enclosing nodes via leaf membership instead of re-rendering each enclosing
-  node to a string in `is_line_short_enough` (#5188)
-- Improve performance on files with many soft-keyword constructs (such as `match`/`case`
-  blocks) by discarding spent token-lookahead ranges in the parser instead of
-  re-scanning all of them for every token (#5186)
-- Improve performance when splitting long string literals (preview string processing) by
-  no longer re-scanning the whole string for `\N{...}` named escapes on every substring
-  (#5183)
-- Improve performance on large dict literals and long semicolon-separated statements by
-  wrapping a node's children in invisible parentheses in place instead of removing and
-  re-inserting each one, which scanned the whole child list every time (#5184)
-- Improve performance when copying a long line's leaves into a new line (for example
-  `--preview` string processing of `"%s ..." % (a, b, c, ...)` or a string with a
-  backslash continuation) by resuming the child lookup in `append_leaves` instead of
-  rescanning each leaf's parent from the start (#5199)
-- Improve performance of `--line-ranges` on files with many sibling blocks (a long
-  `if`/`elif` chain, a `match` with many cases, or many top-level definitions) by
-  splicing the unchanged blocks into each parent's child list in a single pass rather
-  than removing and re-inserting each one, which rescanned and shifted the whole child
-  list on every conversion (#5213)
-- Improve performance on files with many `# fmt: off`/`# fmt: on` blocks by resuming the
-  search for each converted block within its parent's child list from the previous
-  conversion's position instead of rescanning the whole list from the start on every
-  node removal (#5232)
-- Improve performance on deeply nested bracketed expressions by collecting each leaf
-  once in `get_leaves_inside_matching_brackets` instead of re-adding the whole span of
-  enclosed leaves for every surrounding bracket pair (#5242)
-- Improve performance on lists and subscripts holding one large expression that contains
-  no comparison or arithmetic sub-node (for example a long run of implicitly
-  concatenated strings inside `[]`) by caching the `is_complex_subscript` subtree walk
-  per node instead of re-walking the whole bracketed expression for every leaf (#5239)
-- Improve performance on deeply nested expressions (such as a long `a ** b ** c ** ...`
-  chain) by walking the `blib2to3` node tree iteratively in `pre_order`, `post_order`
-  and `leaves` instead of recursing with `yield from`, whose per-node generator
-  delegation made a full traversal quadratic in nesting depth (#5235)
-- Improve performance of `--preview` string merging on lines such as
-  `"%s ..." % (a, b, c, ...)` by copying the leaves that surround the merged string in
-  one `append_leaves` call instead of one call per leaf, which rescanned the shared
-  parent's child list from the start every time (#5220)
-- Improve performance on long `if`/`elif` chains and other compound statements with many
-  clauses (#5322)
-
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
 
-- Report parser failures using editor-friendly `path:line:column` locations (#5237)
-- Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
-  attribute, such as in Jupyter notebooks (#5411)
-- A `# fmt: off` region that keeps a different indent width from the rest of the file
-  can make Black's own output unparseable. That failure is now reported as an internal
-  error naming Black, instead of as a syntax error pointing at the user's file (#5383)
-
 ### _Blackd_
 
-<!-- Changes to blackd -->
-
-- Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
-  empty entry, such as a trailing comma (#5428)
-- Allow optional whitespace around comma-separated versions and `pyi` in the
-  `X-Python-Variant` header in blackd (#5441)
+<!-- Changes to Blackd -->
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
+### Documentation
+
+<!-- Major changes to documentation and policies.
+     Small docs changes don't need a changelog entry. -->
+
+## Version 26.10.0
+
+### Stable style
+
+- `--line-ranges` no longer inserts an empty line after a docstring when the range
+  covers only the docstring itself (#5312)
+- Fix `# fmt: skip` on a bracketed ternary turning the surrounding tuple into a call
+  (#5464)
+- Fix crash when `# fmt: skip` is placed on a one-line function or class with PEP 695
+  type parameters (#5429)
+- Fix an inline comment after the closing bracket of optional parentheses being moved
+  inside the parentheses when the parenthesized expression contains own-line comments
+  (#5395)
+- Fix unparseable output when `# fmt: skip` is placed on a bracket of an `if`, `while`,
+  `for`, or `with` header (#5401, #5405)
+- Fix crash when formatting parenthesized expressions with multiple inline comments and
+  `# fmt: skip` (#5414)
+- Fix parsing Jupyter notebook assignment magics when non-ASCII characters appear
+  earlier on the line (#5381)
+- Preserve blank lines that come immediately before a `# fmt: on` comment (#5300)
+- Keep the parentheses around the target of an annotated assignment (e.g.
+  `(x): int = 5`), which prevent CPython from including the name in `__annotations__`
+  (#5321)
+- Stop treating a t-string in docstring position as a docstring (e.g. `t"  spam  "` as
+  the first statement of a module, class or function) (#5287)
+- Fix unparseable output for a t-string whose replacement field contains a quote (e.g.
+  `t'\'{a["b"]}\''`) (#5265)
+- Fix unparseable output for a triple-quoted string whose body ends in an
+  already-escaped double quote (e.g. `'''\'''\"'''`) (#5262)
+- Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split
+  single-element tuple used as a lambda parameter default (#5246)
+- Fix unstable formatting when an inline comment sits on optional parentheses (e.g. a
+  parenthesized assert message) (#5241)
+- Fix `--skip-magic-trailing-comma` dropping the trailing comma of a one-element
+  subscript (`a[x,]`) when the line is long enough to be split and contains a power
+  operator (#5272)
+- Fix crash when a standalone comment sits between tokens of a comprehension or lambda
+  (#5144)
+- Fix inline comments on a bracket inside a comprehension being dropped (#5330)
+- Respect the magic trailing comma in a PEP 695 type parameter list containing a
+  `*TypeVarTuple` or `**ParamSpec` (#5244)
+- Fix crash when a comment-only `# fmt: off`/`# fmt: on` block is followed by a `with`
+  statement after another standalone comment (#5189)
+- Fix a crash when splitting `case case if ...` match patterns at very small line
+  lengths (#5147)
+- Fix multiline docstring indentation when leading tabs are used inside indented
+  docstrings (#5148)
+- Respect `# fmt: skip` on a line that opens a bracket (e.g.
+  `from x import (  # fmt: skip`) when a standalone comment is among the bracket's
+  contents (#5161)
+- Fix an AST safety error when separate `# type: ignore` comments in a parenthesized
+  attribute chain were merged onto one physical line (#5297)
+- Preserve comments and blank lines outside requested ranges when formatting with
+  `--line-ranges` (#5175)
+- Fix crash when `# fmt: skip` is used on one-line `async def`, `async with`, and
+  `async for` statements containing a semicolon (#5311)
+- Stop converting form feeds or other similar characters in docstrings into newlines
+  (#5461)
+- Fix `--skip-source-first-line` turning the skipped line's CRLF ending into `\r\r\n`
+  when reformatting a file with CRLF line endings (#5438)
+
+### Preview style
+
+#### New preview features
+
+- Add missing blank lines after classes whose last method has an ellipsis body (#5439)
+- Split only the brackets holding a magic trailing comma when more trailers follow them
+  (e.g. stop splitting inside the `[2]` of `[1,][2](3)`) (#5448)
+- Keep dictionary keys containing operators together on one line when the value can be
+  wrapped onto a new line instead (#5435)
+- Remove redundant parentheses around individual variables in unpacking targets (e.g.
+  `for (x), (y) in points:` becomes `for x, y in points:`) (#5416)
+- Normalize uppercase `T` prefixes on t-strings to lowercase (#5425)
+- Remove redundant parentheses around generator expressions (#5304, #5369)
+- Preserve two blank lines before a top-level class starting inside a `# fmt: off` block
+  after an import (#5238)
+- Fix unnecessary parentheses around short right-hand expressions in indexed assignments
+  (e.g. `x[key] = expr`) (#5095)
+- Parenthesize tuple expressions in `yield` statements for consistency with function
+  calls and returns (#5170)
+- Stop splitting between a variable and its operator (`not in`, `==`, `is`, ...) when
+  the right-hand side is a bracketed expression, and instead split inside the brackets
+  (#5135)
+- In `.pyi` stub files, enforce a blank line after a function or method that has a
+  docstring-only body when another comment or statement follows it (#5158)
+
+#### Updates to existing preview features
+
+- Fix crash in stub files when `# fmt: skip` is placed on a function in a group of
+  same-name decorated functions (e.g. `@overload`s or a property setter) (#5430)
+- Keep the parentheses around a lambda used as the iterable of a comprehension (e.g.
+  `[x for x in (lambda: 0) if x]`) (#5176, #5200)
+
+#### Updates to existing unstable features
+
+- Do not treat multi-line expressions with merged strings and trailing `# type: ignore`
+  comments as single-line unsplittable expressions (#5466)
+- Fix duplicated inline comment when stripping the parentheses around a string or
+  merging a backslash-continued string on the same line (#5449)
+- Split long stringified return annotations even when the function has parameters
+  (#5427)
+- Don't hug brackets when doing so would join two `# type: ignore` comments onto one
+  line (#5271)
+- Fix a crash when `# type: ignore` is lost during formatting of a long parenthesized
+  string (#5329)
+- Fix only the first part of an implicitly concatenated unmergeable string (e.g.
+  `r"..." r"..."`) being wrapped in parentheses (#5434)
+
+### Configuration
+
+- Add support for `NO_COLOR` environment variable to disable ANSI output (#5129)
+- Remove spurious target version warning when runtime version is included in a
+  `--target-version` flag (#5167)
+- Fix `--force-exclude` not excluding files whose path contains `..` (e.g.
+  `black ../generated/file.py` run from a subdirectory) (#5471)
+- Fall back to the default configuration, with a warning, when the given sources share
+  no common project root (e.g. they are on different drives on Windows) instead of
+  crashing (#5386)
+- Fix loading a stale cached `pyproject.toml` path when `--code` is used from different
+  working directories in the same process (#5152)
+- Add validation for `--line-ranges` values (#5107)
+- Ignore empty cache files instead of raising an `EOFError` (#5192)
+- Reject non-string `include` and `force-exclude` values in `pyproject.toml` (#5193)
+- Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors instead
+  of crashing (#5211)
+- Ignore permission errors when reading cache (#5258)
+
+### Packaging
+
+- Reduce the size of Linux standalone binaries by stripping debug symbols during the
+  PyInstaller release build (#5223)
+- Black is now released using GitHub
+  [Immutable Releases](https://docs.github.com/code-security/concepts/supply-chain-security/immutable-releases)
+  (#5296)
+
+### Performance
+
+- Fix superlinear runtime growth with the number of input files (#5450)
+- Improve performance on strings containing many consecutive backslashes (#5163)
+- Improve performance on files with many `# fmt: skip`/`# fmt: off`/`# fmt: on` comments
+  (#5169, #5190, #5232)
+- Improve performance on long calls and collections (#5177)
+- Improve performance on multiline strings inside large collections (e.g. a dict literal
+  with triple-quoted strings as values) (#5188)
+- Improve performance on files with many soft keywords (e.g. `match`/`case` blocks)
+  (#5186)
+- Improve performance on long semicolon-separated statements (in the stable style) and
+  large dict literals (in `--preview`) (#5184)
+- Improve performance of `--line-ranges` on files with many sibling blocks (a long
+  `if`/`elif` chain, a `match` with many cases, or many top-level definitions) (#5213)
+- Improve performance on deeply nested bracketed expressions (#5171, #5242)
+- Improve performance on lists and subscripts holding one long expression without
+  operators (e.g. a long run of implicitly concatenated strings inside `[]`) (#5239)
+- Improve performance on deeply chained operations (e.g. a long `a ** b ** c ** ...`
+  chain) (#5235)
+- Improve performance on long `if`/`elif` chains and other compound statements with many
+  clauses (#5322)
+- Improve performance of `string_processing`:
+  - when merging implicitly concatenated f-strings containing long string literals
+    (#5165)
+  - when merging long implicitly concatenated strings (#5173, #5194)
+  - when rewriting large nodes (e.g. `"%s ..." % (a, b, c, ...)`) (#5178, #5199, #5220)
+  - when splitting long string literals (#5183)
+
+### Output
+
+- Report parser failures using editor-friendly `path:line:column` locations (#5237)
+- Fix crash when writing formatted code or diffs to a `sys.stdout` that has no `buffer`
+  attribute (e.g. in Jupyter notebooks) (#5411)
+- Report parse failures on Black's own output as internal errors (#5383)
+
+### _Blackd_
+
+- Return HTTP 400 instead of 500 when the `X-Python-Variant` header is empty or has an
+  empty entry (e.g. a trailing comma) (#5428)
+- Allow optional whitespace around comma-separated versions and `pyi` in the
+  `X-Python-Variant` header (#5441)
+
+### Integrations
+
+- Remove unused `migrate-black` script (#5319)
 - Support PEP 440 version specifiers in `tool.black.required-version` for the GitHub
   Action (#5399)
 - Add outputs (`is_formatted`, `change_count`, `same_count`, `failure_count`) to GitHub
@@ -285,12 +241,8 @@
 
 ### Documentation
 
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
-
 - Document `vim-python-pep8-indent`, which provides an `indentexpr` for Black-style
   insert-mode indentation (#5288)
-- Fix Git commands for Vundle in editor integration documentation (#5398)
 
 ## Version 26.5.1
 
@@ -478,7 +430,7 @@ The following change was not in any previous stable release:
 
 - Regenerated the `_width_table.py` and added tests for the Khmer language (#4253)
 
-This release alo bumps `pathspec` to v1 and fixes inconsistencies with Git's
+This release also bumps `pathspec` to v1 and fixes inconsistencies with Git's
 `.gitignore` logic (#4958). Now, files will be ignored if a pattern matches them, even
 if the parent directory is directly unignored. For example, Black would previously
 format `exclude/not_this/foo.py` with this `.gitignore`:
@@ -489,7 +441,7 @@ exclude/
 ```
 
 Now, `exclude/not_this/foo.py` will remain ignored. To ensure `exclude/not_this/` and
-all of it's children are included in formatting (and in Git), use this `.gitignore`:
+all of its children are included in formatting (and in Git), use this `.gitignore`:
 
 ```
 */exclude/*

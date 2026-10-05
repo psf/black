@@ -14,11 +14,11 @@ would love to know whether that old bug report is still reproducible!
 
 You can get easily started by reading over this document and then responding to issues.
 
-If you contribute enough and have stayed for long enough, you may even be given
-Triage permissions!
+If you contribute enough and have stayed for long enough, you may even be given Triage
+permissions!
 ```
 
-## The basics
+## Triage basics
 
 _Black_ gets a whole bunch of different issues, they range from bug reports to user
 support issues. To triage is to identify, organize, and kickstart the issue's journey
@@ -40,15 +40,15 @@ resolved.
 The lifecycle of a bug report or user support issue typically goes something like this:
 
 1. _the issue is waiting for triage_
-2. **identified** - has been marked with a type label and other relevant labels, more
+1. **identified** - has been marked with a type label and other relevant labels, more
    details or a functional reproduction may be still needed (and therefore should be
    marked with `S: needs repro` or `S: awaiting response`)
-3. **confirmed** - the issue can be reproduced and necessary details have been provided
-4. **discussion** - initial triage has been done and now the general details on how the
+1. **confirmed** - the issue can be reproduced and necessary details have been provided
+1. **discussion** - initial triage has been done and now the general details on how the
    issue should be best resolved are being hashed out
-5. **awaiting fix** - no further discussion on the issue is necessary and a resolving PR
+1. **awaiting fix** - no further discussion on the issue is necessary and a resolving PR
    is the next step
-6. **closed** - the issue has been resolved, reasons include:
+1. **closed** - the issue has been resolved, reasons include:
    - the issue couldn't be reproduced
    - the issue has been fixed
    - duplicate of another pre-existing issue or is invalid
@@ -57,12 +57,12 @@ For enhancement, documentation, and style issues, the lifecycle looks very simil
 the details are different:
 
 1. _the issue is waiting for triage_
-2. **identified** - has been marked with a type label and other relevant labels
-3. **discussion** - the merits of the suggested changes are currently being discussed, a
+1. **identified** - has been marked with a type label and other relevant labels
+1. **discussion** - the merits of the suggested changes are currently being discussed, a
    PR would be acceptable but would be at significant risk of being rejected
-4. **accepted & awaiting PR** - it's been determined the suggested changes are OK and a
+1. **accepted & awaiting PR** - it's been determined the suggested changes are OK and a
    PR would be welcomed (`S: accepted`)
-5. **closed**: - the issue has been resolved, reasons include:
+1. **closed**: - the issue has been resolved, reasons include:
    - the suggested changes were implemented
    - it was rejected (due to technical concerns, ethos conflicts, etc.)
    - duplicate of a pre-existing issue or is invalid
@@ -153,7 +153,7 @@ Here's some of the most common issues and also pre-made responses you can use:
 ```text
 Black used to remove the trailing comma if the expression fits in a single line, but this was changed by #826 and #1288. Now a trailing comma tells Black to always explode the expression. This change was made mostly for the cases where you _know_ a collection or whatever will grow in the future. Having it always exploded as one element per line reduces diff noise when adding elements. Before the "magic trailing comma" feature, you couldn't anticipate a collection's growth reliably since collections that fitted in one line were ruthlessly collapsed regardless of your intentions. One of Black's goals is reducing diff noise, so this was a good pragmatic change.
 
-So no, this is not a bug, but an intended feature. Anyway, [here's the documentation](https://github.com/psf/black/blob/main/docs/the_black_code_style/current_style.md#the-magic-trailing-comma) on the "magic trailing comma", including the ability to skip this functionality with the `--skip-magic-trailing-comma` option. Hopefully that helps solve the possible confusion.
+So no, this is not a bug, but an intended feature. Anyway, [here's the documentation](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#the-magic-trailing-comma) on the "magic trailing comma", including the ability to skip this functionality with the `--skip-magic-trailing-comma` option. Hopefully that helps solve the possible confusion.
 ```
 
 ### "Black formatted code is violating Flake8's E203!"
