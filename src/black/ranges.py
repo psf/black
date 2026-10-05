@@ -634,10 +634,13 @@ def _calculate_lines_mappings(
 
     original_middle_end = len(original_lines) - suffix
     modified_middle_end = len(modified_lines) - suffix
+    # The first formatting pass re-indents the bodies of the statements it
+    # formats, so the same line can have a different indentation in the two
+    # sources. Comparing the lines without indentation keeps them matched.
     matcher = difflib.SequenceMatcher(
         None,
-        original_lines[prefix:original_middle_end],
-        modified_lines[prefix:modified_middle_end],
+        [line.strip() for line in original_lines[prefix:original_middle_end]],
+        [line.strip() for line in modified_lines[prefix:modified_middle_end]],
     )
     matching_blocks = []
     if prefix:
@@ -668,7 +671,10 @@ def _calculate_lines_mappings(
                         original_end=block.a,
                         modified_start=1,
                         modified_end=block.b,
-                        is_changed_block=False,
+                        # The lines before the first matching block are not part of
+                        # any matching block, so this range is a changed block. A line
+                        # that only exists on one side has no counterpart to map onto.
+                        is_changed_block=True,
                     )
                 )
         else:
