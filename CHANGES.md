@@ -9,6 +9,8 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- test (#5483)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
