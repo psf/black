@@ -71,8 +71,7 @@ Currently, the following features are included in the preview style:
   ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
 - `unsplittable_ignore_pragmas`: Do not split a line that ends with a type-checker
   ignore pragma (such as `# pyright: ignore[...]`), mirroring the existing handling of
-  `# type: ignore`.
-  ([see below](labels/unsplittable-ignore-pragmas))
+  `# type: ignore`. ([see below](labels/unsplittable-ignore-pragmas))
 
 (labels/unsplittable-ignore-pragmas)=
 
