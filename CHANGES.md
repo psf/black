@@ -21,6 +21,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix the unstable `string_processing` feature removing backslash-newline sequences from
+  raw strings, which changed their value (#5482)
 - Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
   assignments (such as annotated assignments or subscript targets) (#5473)
 

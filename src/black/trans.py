@@ -530,6 +530,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 string_leaf.type == token.STRING
                 and "\\\n" in string_leaf.value
                 and not has_triple_quotes(string_leaf.value)
+                # In a raw string, a backslash-newline is part of the value.
+                and "r" not in get_string_prefix(string_leaf.value).lower()
             ):
                 indices_to_transform.append(string_idx)
 
