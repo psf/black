@@ -2899,6 +2899,21 @@ class TestCaching:
             cache_file = get_cache_file(mode, workspace)
             assert not cache_file.exists()
 
+    @pytest.mark.parametrize("check", [False, True], ids=["format", "check"])
+    def test_no_cache_when_line_ranges(self, check: bool) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            # Only the first line is formatted.
+            src.write_text("x = 1\ny  =  2\n", encoding="utf-8")
+            args = [str(src), "--line-ranges=1-1"]
+            if check:
+                args.append("--check")
+            invokeBlack(args)
+            assert black.Cache.read(mode).is_changed(src)
+            # A full check must still see the unformatted second line.
+            invokeBlack([str(src), "--check"], exit_code=1)
+
     def test_no_cache_flag_prevents_writes(self) -> None:
         """--no-cache should neither read nor write the cache"""
         mode = DEFAULT_MODE

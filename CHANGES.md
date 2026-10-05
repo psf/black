@@ -33,6 +33,9 @@
 <!-- Changes to how Black can be configured -->
 
 - Add `--cache-dir` to configure the cache directory from the command line (#5433)
+- Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
+  which made a later full `black --check` pass and `black` skip the unformatted lines
+  (#5476)
 
 ### Packaging
 
