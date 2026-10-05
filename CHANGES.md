@@ -17,6 +17,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
+  assignments (such as annotated assignments or subscript targets) (#5473)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->

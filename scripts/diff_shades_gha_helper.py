@@ -31,9 +31,7 @@ from packaging.version import Version
 
 COMMENT_FILE: Final = ".pr-comment.md"
 DIFF_STEP_NAME: Final = "Generate HTML diff report"
-DOCS_URL: Final = (
-    "https://black.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades"
-)
+DOCS_URL: Final = "https://black.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades"  # noqa: B950
 SHA_LENGTH: Final = 10
 GH_API_TOKEN: Final = os.getenv("GITHUB_TOKEN")
 REPO: Final = os.getenv("GITHUB_REPOSITORY", default="psf/black")
