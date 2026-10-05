@@ -16,8 +16,9 @@
 - Fix a long Jupyter notebook assignment magic (for example `x = !ls -la`) being wrapped
   in parentheses, which IPython can no longer run; such cells are now left unchanged
   (#5481)
-- Fix `--line-ranges` formatting lines that follow the first statement of a file when
-  the first formatting pass joins or re-indents that statement (#5484)
+- Keep repeated lines outside the selected `--line-ranges` unchanged (#5436)
+- Fix `--line-ranges` formatting lines that follow a statement when formatting joins or
+  re-indents that statement (#5484)
 
 ### Preview style
 
