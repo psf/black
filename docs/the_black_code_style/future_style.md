@@ -71,8 +71,7 @@ Currently, the following features are included in the preview style:
   ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
 - `parenthesize_logical_operators`: Parenthesize logical expressions containing `and` or
   `or` when splitting across lines, rather than splitting inside a function call or
-  trailing bracket.
-  ([see below](labels/parenthesize-logical-operators))
+  trailing bracket. ([see below](labels/parenthesize-logical-operators))
 
 (labels/parenthesize-logical-operators)=
 
