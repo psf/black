@@ -185,8 +185,12 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
 
             source_line = lines[token.start_line - 1]
 
-            if lazy_stashed is not None and not (
-                token.type == TokenType.identifier and token_str in ("import", "from")
+            if (
+                lazy_stashed is not None
+                and not (
+                    token.type == TokenType.identifier
+                    and token_str in ("import", "from")
+                )
             ):
                 yield from emit_stashed_lazy(as_keyword=False)
 

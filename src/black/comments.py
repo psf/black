@@ -97,8 +97,12 @@ def generate_comments(
         comment_lineno = (
             line_ranges_first_lineno - prefix_line_count + pc.prefix_line_index
         )
-        should_preserve = preserve_comment_formatting and (
-            line_ranges_selected is None or comment_lineno not in line_ranges_selected
+        should_preserve = (
+            preserve_comment_formatting
+            and (
+                line_ranges_selected is None
+                or comment_lineno not in line_ranges_selected
+            )
         )
         if should_preserve:
             value = pc.leading_whitespace + pc.original_value
@@ -388,8 +392,9 @@ def convert_one_fmt_off_pair(
 
         # Skip STANDALONE_COMMENT nodes that were created by fmt:off/on/skip processing
         # to avoid reprocessing them in subsequent iterations
-        if leaf.type == STANDALONE_COMMENT and hasattr(
-            leaf, "fmt_pass_converted_first_leaf"
+        if (
+            leaf.type == STANDALONE_COMMENT
+            and hasattr(leaf, "fmt_pass_converted_first_leaf")
         ):
             continue
 
@@ -455,9 +460,10 @@ def _remove_preceding_newline_for_comment(result: str) -> str:
         return result
 
     newline_before_comment = result.rfind("\n", 0, comment_start)
-    if newline_before_comment >= 0 and result[
-        newline_before_comment + 1 :
-    ].lstrip().startswith("#"):
+    if (
+        newline_before_comment >= 0
+        and result[newline_before_comment + 1 :].lstrip().startswith("#")
+    ):
         return result[:newline_before_comment] + result[newline_before_comment + 1 :]
     return result
 
@@ -488,10 +494,15 @@ def _handle_regular_fmt_block(
     # This prevents multiple fmt: skip comments from being concatenated on one line
     def stringify_standalone_comment(node: Leaf, next_node: LN | None) -> str:
         node_str = str(node)
-        if not node_str.endswith("\n") and (
-            next_node is None
-            or (isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT)
-            or "\n" in next_node.prefix
+        if (
+            not node_str.endswith("\n")
+            and (
+                next_node is None
+                or (
+                    isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT
+                )
+                or "\n" in next_node.prefix
+            )
         ):
             node_str += "\n"
         return node_str
@@ -557,8 +568,9 @@ def _handle_regular_fmt_block(
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
-        if len(lines) > 0 and not any(
-            line[0] <= comment_lineno <= line[1] for line in lines
+        if (
+            len(lines) > 0
+            and not any(line[0] <= comment_lineno <= line[1] for line in lines)
         ):
             # keeping indentation of comment by preserving original whitespaces.
             fmt_off_prefix = prefix.split(comment.value)[0]
@@ -960,9 +972,12 @@ def _generate_ignored_nodes_from_fmt_skip(
                     bracket_depth -= 1
         if bracket_depth > 0:
             statement: LN = leaf
-            while statement.parent is not None and statement.parent.type not in (
-                syms.file_input,
-                syms.suite,
+            while (
+                statement.parent is not None
+                and statement.parent.type not in (
+                    syms.file_input,
+                    syms.suite,
+                )
             ):
                 statement = statement.parent
             ignored_nodes = [statement]

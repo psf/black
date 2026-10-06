@@ -57,9 +57,10 @@ def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
 
     grammars = []
     # If we have to parse both, try to parse async as a keyword first
-    if not supports_feature(
-        target_versions, Feature.ASYNC_IDENTIFIERS
-    ) and not supports_feature(target_versions, Feature.PATTERN_MATCHING):
+    if (
+        not supports_feature(target_versions, Feature.ASYNC_IDENTIFIERS)
+        and not supports_feature(target_versions, Feature.PATTERN_MATCHING)
+    ):
         # Python 3.7-3.9
         grammars.append(pygram.python_grammar_async_keywords)
     if not supports_feature(target_versions, Feature.ASYNC_KEYWORDS):
