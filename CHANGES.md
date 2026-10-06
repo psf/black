@@ -16,6 +16,11 @@
 - Fix a long Jupyter notebook assignment magic (for example `x = !ls -la`) being wrapped
   in parentheses, which IPython can no longer run; such cells are now left unchanged
   (#5481)
+- Keep repeated lines outside the selected `--line-ranges` unchanged (#5436)
+- Fix `--line-ranges` formatting lines that follow a statement when formatting joins or
+  re-indents that statement (#5484)
+- Fix `--line-ranges` crashing with an internal error when an unselected statement has a
+  `# fmt: skip` comment on the last line before a closing bracket (#5477)
 
 ### Preview style
 
@@ -38,6 +43,9 @@
   nested `.gitignore` can now re-include something an ancestor excluded with a `!`
   pattern, which Black previously skipped silently, so `black --check` passed on files
   git tracks (#5453)
+- Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
+  which made a later full `black --check` pass and `black` skip the unformatted lines
+  (#5476)
 
 ### Packaging
 

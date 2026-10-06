@@ -2440,6 +2440,58 @@ class BlackTestCase(BlackBaseTestCase):
             """)
             assert expected == formatted
 
+    def test_line_ranges_do_not_format_later_identical_lines(self) -> None:
+        original_line = 'print ( "format me" )\n'
+        formatted_line = 'print("format me")\n'
+        source = original_line * 5
+        expected = original_line + formatted_line * 2 + original_line * 2
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(2, 3)]) == expected
+        )
+
+    def test_disjoint_line_ranges_leave_repeated_middle_line_unchanged(self) -> None:
+        original_line = 'print ( "format me" )\n'
+        formatted_line = 'print("format me")\n'
+        source = original_line * 3
+        expected = formatted_line + original_line + formatted_line
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 1), (3, 3)])
+            == expected
+        )
+
+    def test_line_ranges_at_start_of_file_stay_inside_joined_statement(self) -> None:
+        # Regression for https://github.com/psf/black/issues/4052: the lines that
+        # are joined away in the first pass must not select the lines below.
+        source = (
+            "def restrict_to_this_line(arg1,\n"
+            "  arg2,\n"
+            "  arg3):\n"
+            '  print  ( "This should not be formatted." )\n'
+            '  print  ( "This should not be formatted." )\n'
+        )
+
+        expected = (
+            "def restrict_to_this_line(arg1, arg2, arg3):\n"
+            '    print  ( "This should not be formatted." )\n'
+            '    print  ( "This should not be formatted." )\n'
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
+    def test_line_ranges_removed_at_start_of_file_stay_unformatted(self) -> None:
+        # Regression for https://github.com/psf/black/issues/4052: the leading lines
+        # that the first pass removes must not make the second pass format the file.
+        source = "\n\nx  =  1\n"
+        expected = "x  =  1\n"
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(2, 2)]) == expected
+        )
+
     def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
         # This regression stays inline because it requires literal trailing spaces,
         # which would fail `git diff --check` in a data case file.
@@ -2898,6 +2950,21 @@ class TestCaching:
             assert not result.exit_code
             cache_file = get_cache_file(mode, workspace)
             assert not cache_file.exists()
+
+    @pytest.mark.parametrize("check", [False, True], ids=["format", "check"])
+    def test_no_cache_when_line_ranges(self, check: bool) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            # Only the first line is formatted.
+            src.write_text("x = 1\ny  =  2\n", encoding="utf-8")
+            args = [str(src), "--line-ranges=1-1"]
+            if check:
+                args.append("--check")
+            invokeBlack(args)
+            assert black.Cache.read(mode).is_changed(src)
+            # A full check must still see the unformatted second line.
+            invokeBlack([str(src), "--check"], exit_code=1)
 
     def test_no_cache_flag_prevents_writes(self) -> None:
         """--no-cache should neither read nor write the cache"""
