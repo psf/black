@@ -21,6 +21,10 @@
   re-indents that statement (#5484)
 - Fix `--line-ranges` crashing with an internal error when an unselected statement has a
   `# fmt: skip` comment on the last line before a closing bracket (#5477)
+- Fix removing the blank lines at the start of a file moving an encoding declaration
+  (for example `# -*- coding: latin-1 -*-`) onto the first two lines, where Python
+  starts using it and decodes the file differently. Up to two of those lines are now
+  kept (#5487)
 
 ### Preview style
 
