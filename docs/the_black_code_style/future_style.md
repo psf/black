@@ -69,6 +69,36 @@ Currently, the following features are included in the preview style:
   annotated assignments or subscript targets) when the expression cannot fit within the
   line length even with parentheses.
   ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
+- `parenthesize_expressions_with_comments`: Parenthesize expressions (such as function
+  calls) that exceed the line length when their parameters contain comments.
+  ([see below](labels/parenthesize-expressions-with-comments))
+
+(labels/parenthesize-expressions-with-comments)=
+
+### Parenthesizing expressions with parameter comments
+
+When an expression in an assignment (such as a function call) exceeds the line length
+and contains parameter comments, Black previously failed to wrap the expression in
+parentheses. With this feature enabled, Black wraps the expression so that the line fits
+within the line length limit:
+
+```python
+# Before
+configuration_variable_with_a_very_long_name = create_configured_service_instance_factory(
+    first_parameter,
+    # comment
+    second_parameter,
+)
+
+# After (with --preview)
+configuration_variable_with_a_very_long_name = (
+    create_configured_service_instance_factory(
+        first_parameter,
+        # comment
+        second_parameter,
+    )
+)
+```
 
 (labels/avoid-parens-for-unbreakable-rhs-in-assignments)=
 
@@ -91,7 +121,7 @@ class A:
 
     # But annotated assignment was unnecessarily wrapped:
     attr: str = (
-        "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+        "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
     )
 ```
 

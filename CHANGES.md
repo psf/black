@@ -32,6 +32,8 @@
   raw strings, which changed their value (#5482)
 - Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
   assignments (such as annotated assignments or subscript targets) (#5473)
+- Parenthesize expressions with parameter comments when they exceed the line length
+  under `--preview` (#5442)
 
 ### Configuration
 
