@@ -2542,11 +2542,11 @@ def run_transformer(
     # A visible optional paren after the transform means the split already used
     # it. Parens nested in the line (around dict values) can turn visible in a
     # sub-line's split instead, so they don't count.
-    optional_parens = line.bracket_tracker.invisible
-    if Preview.wrap_long_dict_values_in_parens in mode:
-        optional_parens = [
-            bracket for bracket in optional_parens if bracket.bracket_depth == 0
-        ]
+    optional_parens = [
+        bracket
+        for bracket in line.bracket_tracker.invisible
+        if bracket.bracket_depth == 0
+    ]
     result: list[Line] = []
     for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
