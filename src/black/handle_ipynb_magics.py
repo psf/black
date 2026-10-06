@@ -82,9 +82,12 @@ def validate_cell(src: str, mode: Mode) -> None:
         raise NothingChanged
 
     line = _get_code_start(src)
-    if line.startswith("%%") and (
-        line.split(maxsplit=1)[0][2:]
-        not in PYTHON_CELL_MAGICS | mode.python_cell_magics
+    if (
+        line.startswith("%%")
+        and (
+            line.split(maxsplit=1)[0][2:]
+            not in PYTHON_CELL_MAGICS | mode.python_cell_magics
+        )
     ):
         raise NothingChanged
 

@@ -124,8 +124,9 @@ def adjusted_lines(
     if len(lines) > 1:
         original_lines = original_source.splitlines(keepends=True)
         modified_lines = modified_source.splitlines(keepends=True)
-        if len(original_lines) == len(modified_lines) and all(
-            1 <= start <= end <= len(original_lines) for start, end in lines
+        if (
+            len(original_lines) == len(modified_lines)
+            and all(1 <= start <= end <= len(original_lines) for start, end in lines)
         ):
             selected_lines = {
                 line for start, end in lines for line in range(start - 1, end)
@@ -158,8 +159,9 @@ def adjusted_lines(
             start_mapping_index,
         )
         current_mapping_index = start_mapping_index
-        if start_mapping_index >= len(lines_mappings) or end_mapping_index >= len(
-            lines_mappings
+        if (
+            start_mapping_index >= len(lines_mappings)
+            or end_mapping_index >= len(lines_mappings)
         ):
             # Protect against invalid inputs.
             continue
@@ -368,9 +370,10 @@ class _TopLevelStatementsVisitor(Visitor[None]):
                 and semantic_parent.prev_sibling.type == ASYNC
             ):
                 semantic_parent = semantic_parent.parent
-        if semantic_parent is not None and not _get_line_range(
-            semantic_parent
-        ).intersection(self._lines_set):
+        if (
+            semantic_parent is not None
+            and not _get_line_range(semantic_parent).intersection(self._lines_set)
+        ):
             _convert_node_to_standalone_comment(
                 semantic_parent, self._replacements, self._lines_set
             )
@@ -478,8 +481,9 @@ def _ends_with_fmt_skip(text: str) -> bool:
     """
     last_line = text.rpartition("\n")[2]
     comment_start = last_line.find("#")
-    return comment_start != -1 and contains_fmt_directive(
-        last_line[comment_start:], FMT_SKIP
+    return (
+        comment_start != -1
+        and contains_fmt_directive(last_line[comment_start:], FMT_SKIP)
     )
 
 

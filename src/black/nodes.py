@@ -196,16 +196,22 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
         return DOUBLESPACE
 
     assert p is not None, f"INTERNAL ERROR: hand-made leaf without parent: {leaf!r}"
-    if t == token.COLON and p.type not in {
-        syms.subscript,
-        syms.subscriptlist,
-        syms.sliceop,
-    }:
+    if (
+        t == token.COLON
+        and p.type not in {
+            syms.subscript,
+            syms.subscriptlist,
+            syms.sliceop,
+        }
+    ):
         return NO
 
-    if t == token.LBRACE and p.type in (
-        syms.fstring_replacement_field,
-        syms.tstring_replacement_field,
+    if (
+        t == token.LBRACE
+        and p.type in (
+            syms.fstring_replacement_field,
+            syms.tstring_replacement_field,
+        )
     ):
         return NO
 
@@ -385,10 +391,13 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
 
             prevp_parent = prevp.parent
             assert prevp_parent is not None
-            if prevp.type == token.COLON and prevp_parent.type in {
-                syms.subscript,
-                syms.sliceop,
-            }:
+            if (
+                prevp.type == token.COLON
+                and prevp_parent.type in {
+                    syms.subscript,
+                    syms.sliceop,
+                }
+            ):
                 return NO
 
             elif prevp.type == token.EQUAL and prevp_parent.type == syms.argument:
@@ -715,10 +724,13 @@ def is_one_sequence_between(
         bracket_depth = leaf.bracket_depth
         if bracket_depth == depth and leaf.type == token.COMMA:
             commas += 1
-            if leaf.parent and leaf.parent.type in {
-                syms.arglist,
-                syms.typedargslist,
-            }:
+            if (
+                leaf.parent
+                and leaf.parent.type in {
+                    syms.arglist,
+                    syms.typedargslist,
+                }
+            ):
                 commas += 1
                 break
 
@@ -733,26 +745,29 @@ def is_walrus_assignment(node: LN) -> bool:
 
 def is_simple_decorator_trailer(node: LN, last: bool = False) -> bool:
     """Return True iff `node` is a trailer valid in a simple decorator"""
-    return node.type == syms.trailer and (
-        (
-            len(node.children) == 2
-            and node.children[0].type == token.DOT
-            and node.children[1].type == token.NAME
-        )
-        # last trailer can be an argument-less parentheses pair
-        or (
-            last
-            and len(node.children) == 2
-            and node.children[0].type == token.LPAR
-            and node.children[1].type == token.RPAR
-        )
-        # last trailer can be arguments
-        or (
-            last
-            and len(node.children) == 3
-            and node.children[0].type == token.LPAR
-            # and node.children[1].type == syms.argument
-            and node.children[2].type == token.RPAR
+    return (
+        node.type == syms.trailer
+        and (
+            (
+                len(node.children) == 2
+                and node.children[0].type == token.DOT
+                and node.children[1].type == token.NAME
+            )
+            # last trailer can be an argument-less parentheses pair
+            or (
+                last
+                and len(node.children) == 2
+                and node.children[0].type == token.LPAR
+                and node.children[1].type == token.RPAR
+            )
+            # last trailer can be arguments
+            or (
+                last
+                and len(node.children) == 3
+                and node.children[0].type == token.LPAR
+                # and node.children[1].type == syms.argument
+                and node.children[2].type == token.RPAR
+            )
         )
     )
 
@@ -946,15 +961,18 @@ def is_import(leaf: Leaf) -> bool:
 
 def is_with_or_async_with_stmt(leaf: Leaf) -> bool:
     """Return True if the given leaf starts a with or async with statement."""
-    return bool(
-        leaf.type == token.NAME
-        and leaf.value == "with"
-        and leaf.parent
-        and leaf.parent.type == syms.with_stmt
-    ) or bool(
-        leaf.type == token.ASYNC
-        and leaf.next_sibling
-        and leaf.next_sibling.type == syms.with_stmt
+    return (
+        bool(
+            leaf.type == token.NAME
+            and leaf.value == "with"
+            and leaf.parent
+            and leaf.parent.type == syms.with_stmt
+        )
+        or bool(
+            leaf.type == token.ASYNC
+            and leaf.next_sibling
+            and leaf.next_sibling.type == syms.with_stmt
+        )
     )
 
 
@@ -989,17 +1007,19 @@ def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
     """Return True if the given leaf is a type comment with ignore annotation."""
     t = leaf.type
     v = leaf.value
-    return t in {token.COMMENT, STANDALONE_COMMENT} and is_type_ignore_comment_string(
-        v, mode
+    return (
+        t in {token.COMMENT, STANDALONE_COMMENT}
+        and is_type_ignore_comment_string(v, mode)
     )
 
 
 def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
     ignore annotation."""
-    return is_type_comment_string(value, mode) and value.split(":", 1)[
-        1
-    ].lstrip().startswith("ignore")
+    return (
+        is_type_comment_string(value, mode)
+        and value.split(":", 1)[1].lstrip().startswith("ignore")
+    )
 
 
 def wrap_in_parentheses(
