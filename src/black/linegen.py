@@ -2568,6 +2568,14 @@ def run_transformer(
 ) -> list[Line]:
     if not line_str:
         line_str = line_to_string(line)
+    # A visible optional paren after the transform means the split already used
+    # it. Parens nested in the line (around dict values) can turn visible in a
+    # sub-line's split instead, so they don't count.
+    optional_parens = [
+        bracket
+        for bracket in line.bracket_tracker.invisible
+        if bracket.bracket_depth == 0
+    ]
     result: list[Line] = []
     for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
@@ -2580,7 +2588,7 @@ def run_transformer(
         Feature.FORCE_OPTIONAL_PARENTHESES in features_set
         or transform is not right_hand_split_with_omits
         or not line.bracket_tracker.invisible
-        or any(bracket.value for bracket in line.bracket_tracker.invisible)
+        or any(bracket.value for bracket in optional_parens)
         or line.contains_multiline_strings()
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()

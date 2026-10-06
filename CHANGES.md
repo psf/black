@@ -34,6 +34,8 @@
   raw strings, which changed their value (#5482)
 - Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
   assignments (such as annotated assignments or subscript targets) (#5473)
+- Fix `wrap_long_dict_values_in_parens` dropping the parentheses around a right-hand
+  side that contains a dictionary, leaving a line over the length limit (#5492)
 
 ### Configuration
 
