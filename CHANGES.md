@@ -56,7 +56,7 @@
 
 - Avoid quadratic runtime when splitting very long lines with many trailing bracket
   pairs (such as consecutive subscripts) (#5475)
-  
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
