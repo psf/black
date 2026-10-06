@@ -323,6 +323,15 @@ def unmask_cell(src: str, replacements: list[Replacement]) -> str:
         if src.count(replacement.mask) != 1:
             raise NothingChanged
         src = src.replace(replacement.mask, replacement.src, 1)
+    if replacements:
+        # Formatting can move a mask to where IPython no longer recognises the
+        # magic, e.g. into the parentheses around a long right-hand side.
+        try:
+            _, unmasked_replacements = mask_cell(src)
+        except SyntaxError:
+            raise NothingChanged from None
+        if [r.src for r in unmasked_replacements] != [r.src for r in replacements]:
+            raise NothingChanged
     return src
 
 

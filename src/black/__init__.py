@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import platform
 import re
 import sys
@@ -26,8 +27,9 @@ from mypy_extensions import mypyc_attr
 from pathspec import GitIgnoreSpec
 from pathspec.patterns.gitignore import GitIgnorePatternError
 
+import black.cache as cache_module
 from _black_version import version as __version__
-from black.cache import Cache
+from black.cache import Cache, get_cache_dir
 from black.comments import normalize_fmt_off
 from black.const import (
     DEFAULT_EXCLUDES,
@@ -78,6 +80,7 @@ from black.ranges import (
     sanitized_lines,
 )
 from black.report import Changed, NothingChanged, Report
+from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
@@ -543,11 +546,16 @@ def validate_regex(
     help="Read configuration options from a configuration file.",
 )
 @click.option(
+    "--cache-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Store the cache in this directory. Takes precedence over BLACK_CACHE_DIR.",
+)
+@click.option(
     "--no-cache",
     is_flag=True,
     help=(
         "Skip reading and writing the cache, forcing Black to reformat all"
-        " included files."
+        " included files. Overrides --cache-dir."
     ),
 )
 @click.pass_context
@@ -581,6 +589,7 @@ def main(
     workers: int | None,
     src: tuple[str, ...],
     config: str | None,
+    cache_dir: Path | None,
     no_cache: bool,
 ) -> None:
     """The uncompromising code formatter."""
@@ -675,6 +684,29 @@ def main(
         ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
+    if cache_dir is None:
+        cache_dir = cache_module.CACHE_DIR
+    else:
+        if (
+            not cache_dir.is_absolute()
+            and ctx.get_parameter_source("cache_dir") == ParameterSource.DEFAULT_MAP
+            and config is not None
+        ):
+            cache_dir = Path(config).resolve().parent / cache_dir
+        cache_dir = get_cache_dir(cache_dir)
+    if not no_cache:
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            no_cache = True
+            if verbose:
+                out(
+                    f"Unable to use cache directory `{cache_dir}`: {e}. "
+                    "Disabling the cache.",
+                    fg="blue",
+                )
+    if not no_cache:
+        pygram.initialize(cache_dir)
     if target_version:
         versions = set(target_version)
     else:
@@ -752,6 +784,8 @@ def main(
                 out("No Python files are present to be formatted. Nothing to do 😴")
             if "-" in src:
                 sys.stdout.write(sys.stdin.read())
+            if "GITHUB_OUTPUT" in os.environ:
+                report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
             ctx.exit(0)
 
         if len(sources) == 1:
@@ -763,6 +797,7 @@ def main(
                 report=report,
                 lines=lines,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
         else:
             from black.concurrency import reformat_many
@@ -778,6 +813,7 @@ def main(
                 report=report,
                 workers=workers,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
 
     if verbose or not quiet:
@@ -786,6 +822,8 @@ def main(
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
             click.echo(str(report), err=True)
+    if "GITHUB_OUTPUT" in os.environ:
+        report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
     ctx.exit(report.return_code)
 
 
@@ -939,6 +977,7 @@ def reformat_one(
     *,
     lines: Collection[tuple[int, int]] = (),
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -968,7 +1007,12 @@ def reformat_one(
             ):
                 changed = Changed.YES
         else:
-            cache = None if no_cache else Cache.read(mode)
+            if no_cache:
+                cache = None
+            elif cache_dir is None:
+                cache = Cache.read(mode)
+            else:
+                cache = Cache.read(mode, cache_dir)
             if cache is not None and write_back not in (
                 WriteBack.DIFF,
                 WriteBack.COLOR_DIFF,
@@ -979,9 +1023,15 @@ def reformat_one(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
-            if cache is not None and (
-                (write_back is WriteBack.YES and changed is not Changed.CACHED)
-                or (write_back is WriteBack.CHECK and changed is Changed.NO)
+            # Formatting only some lines doesn't make the whole file formatted, and
+            # the cache key doesn't include the line ranges, so don't record it.
+            if (
+                cache is not None
+                and not lines
+                and (
+                    (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
+                )
             ):
                 cache.write([src])
         report.done(src, changed)
@@ -1316,6 +1366,11 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
+            if not lines:
+                # None of the requested lines survived the first pass, so there is
+                # nothing left to format. Passing the empty `lines` to the second
+                # pass would format the whole file instead.
+                return dst_contents
         try:
             dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
         except InvalidInput as exc:

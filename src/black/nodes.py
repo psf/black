@@ -7,14 +7,14 @@ from typing import Final, Generic, Literal, TypeGuard, TypeVar, Union
 
 from mypy_extensions import mypyc_attr
 
-from black.cache import CACHE_DIR
 from black.mode import Mode, Preview
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import NL, Leaf, Node, type_repr
 
-pygram.initialize(CACHE_DIR)
+# The CLI cache directory is not known until Click parses the command line.
+pygram.initialize(save=False)
 syms: Final = pygram.python_symbols
 
 

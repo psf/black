@@ -22,19 +22,22 @@ run. The file is non-portable. The standard location on common operating systems
 `file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
 as .pyi, and whether string normalization was omitted.
 
-To override the location of these files on all systems, set the environment variable
-`BLACK_CACHE_DIR` to the preferred location. Alternatively on macOS and Linux, set
-`XDG_CACHE_HOME` to your preferred location. For example, if you want to put the cache
-in the directory you're running _Black_ from, set `BLACK_CACHE_DIR=.cache/black`.
-_Black_ will then write the above files to `.cache/black`. Note that `BLACK_CACHE_DIR`
-will take precedence over `XDG_CACHE_HOME` if both are set.
+To override the location of these files on all systems, pass `--cache-dir` or set the
+environment variable `BLACK_CACHE_DIR` to the preferred location. Alternatively on macOS
+and Linux, set `XDG_CACHE_HOME` to your preferred location. For example, if you want to
+put the cache in the directory you're running _Black_ from, pass
+`--cache-dir=.cache/black` or set `BLACK_CACHE_DIR=.cache/black`. _Black_ will then
+write the above files to `.cache/black`. The command-line option takes precedence over
+`BLACK_CACHE_DIR`, which takes precedence over `XDG_CACHE_HOME`.
 
 ### Disabling the cache with --no-cache
 
 If you need Black to always perform a fresh analysis and not consult or update the
 on-disk cache, use the `--no-cache` flag. When provided, Black will neither read from
 nor write to the per-user cache. This is useful for debugging, for CI runs where you
-want a deterministic fresh run, or when you suspect cache corruption.
+want a deterministic fresh run, or when you suspect cache corruption. If combined with
+`--cache-dir`, `--no-cache` takes precedence and the specified cache directory is not
+created or used.
 
 Example:
 

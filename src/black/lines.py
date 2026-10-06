@@ -100,8 +100,7 @@ class Line:
                 # when its opening bracket was split onto an earlier line (for
                 # example by a standalone comment inside the tuple), so verify
                 # against the tree here before dropping the comma.
-                leaf.parent is not None
-                and is_one_tuple(leaf.parent)
+                leaf.parent is not None and is_one_tuple(leaf.parent)
             ):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
@@ -347,7 +346,7 @@ class Line:
             (leaf.lineno for leaf in reversed(self.leaves) if leaf.lineno != 0), 0
         )
 
-        if first_line == last_line:
+        if first_line == last_line and first_line != 0:
             # We look at the last two leaves since a comma or an
             # invisible paren could have been added at the end of the
             # line.
@@ -1311,7 +1310,14 @@ class EmptyLineTracker:
             newlines = 1 if current_line.depth else 2
             # If a user has left no space after a dummy implementation, don't insert
             # new lines. This is useful for instance for @overload or Protocols.
-            if self.previous_line.is_stub_def and not user_had_newline:
+            if (
+                self.previous_line.is_stub_def
+                and not user_had_newline
+                and (
+                    Preview.blank_line_after_stub_method not in self.mode
+                    or self.previous_line.depth == current_line.depth
+                )
+            ):
                 newlines = 0
         if comment_to_add_newlines is not None:
             previous_block = comment_to_add_newlines.previous_block
@@ -1357,6 +1363,7 @@ def append_leaves(
     search_start: dict[int, int] = {}
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
+        new_leaf.lineno = old_leaf.lineno
         parent = old_leaf.parent
         if parent is not None:
             children = parent.children
@@ -1700,9 +1707,7 @@ def can_omit_invisible_parens(
         or (
             # don't use indexing for omitting optional parentheses;
             # it looks weird
-            last.type == token.RSQB
-            and last.parent
-            and last.parent.type != syms.trailer
+            last.type == token.RSQB and last.parent and last.parent.type != syms.trailer
         )
     ):
         if penultimate.type in OPENING_BRACKETS:
