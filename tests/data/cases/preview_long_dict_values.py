@@ -145,6 +145,20 @@ class Random:
         )
 
 
+class C:
+    def __init__(self) -> None:
+        self.a_long_class_attribute_to_use = (
+            A_LONG_TEMPLATE_CONSTANT_NAME_HERE.safe_substitute(
+                {
+                    "n": (
+                        "long text that breaks the ternary"
+                        if A_LONG_CONSTANT_NAME
+                        else ""
+                    ),
+                },
+            )
+        )
+
 # output
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
@@ -300,4 +314,19 @@ class Random:
                     }
                 },
             }
+        )
+
+
+class C:
+    def __init__(self) -> None:
+        self.a_long_class_attribute_to_use = (
+            A_LONG_TEMPLATE_CONSTANT_NAME_HERE.safe_substitute(
+                {
+                    "n": (
+                        "long text that breaks the ternary"
+                        if A_LONG_CONSTANT_NAME
+                        else ""
+                    ),
+                },
+            )
         )
