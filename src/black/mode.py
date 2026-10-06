@@ -272,6 +272,7 @@ class Preview(Enum):
     blank_line_after_stub_method = auto()
     keep_commented_expressions_together = auto()
     avoid_parens_for_unbreakable_rhs_in_assignments = auto()
+    parenthesize_logical_operators = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

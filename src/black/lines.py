@@ -4,7 +4,12 @@ from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import NamedTuple, Optional, TypeVar, Union, cast
 
-from black.brackets import COMMA_PRIORITY, DOT_PRIORITY, BracketTracker
+from black.brackets import (
+    COMMA_PRIORITY,
+    DOT_PRIORITY,
+    LOGIC_PRIORITY,
+    BracketTracker,
+)
 from black.comments import FMT_ON, contains_fmt_directive
 from black.mode import Mode, Preview
 from black.nodes import (
@@ -1675,6 +1680,11 @@ def can_omit_invisible_parens(
             # better. In this case, `rhs.body` is the context managers part of
             # the with statement. `rhs.head` is the `with (` part on the previous
             # line.
+            return False
+        if (
+            Preview.parenthesize_logical_operators in mode
+            and max_priority == LOGIC_PRIORITY
+        ):
             return False
         # Otherwise it may also read better, but we don't do it today and requires
         # careful considerations for all possible cases. See

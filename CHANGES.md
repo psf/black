@@ -32,6 +32,8 @@
   raw strings, which changed their value (#5482)
 - Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
   assignments (such as annotated assignments or subscript targets) (#5473)
+- Parenthesize logical expressions containing `and` or `or` when splitting across lines
+  rather than splitting inside a trailing function call (#3629)
 
 ### Configuration
 

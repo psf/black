@@ -69,6 +69,54 @@ Currently, the following features are included in the preview style:
   annotated assignments or subscript targets) when the expression cannot fit within the
   line length even with parentheses.
   ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
+- `parenthesize_logical_operators`: Parenthesize logical expressions containing `and` or
+  `or` when splitting across lines, rather than splitting inside a function call or
+  trailing bracket.
+  ([see below](labels/parenthesize-logical-operators))
+
+(labels/parenthesize-logical-operators)=
+
+### Parenthesize logical expressions across lines
+
+When a logical expression (such as in an `if` statement, `return` statement, or
+assignment) contains an `and` or `or` operator and exceeds the line length limit, Black
+previously split on the parentheses of a trailing function call rather than wrapping the
+logical expression in outer parentheses. This created an inconsistency where expressions
+with two operators or with an identifier at the end were parenthesized, but expressions
+ending in a function call were not.
+
+With this feature enabled, Black wraps the logical expression in parentheses and splits
+cleanly at the `and` or `or` operator:
+
+```python
+# Before
+if isinstance(very_long_expression, Sequence) and not isinstance(
+    very_long_expression, str
+):
+    ...
+
+def _is_valid(value):
+    return not isinstance(value, (str, bytes)) and isinstance(
+        value, Iterable
+    )
+```
+
+will become:
+
+```python
+# After (with --preview)
+if (
+    isinstance(very_long_expression, Sequence)
+    and not isinstance(very_long_expression, str)
+):
+    ...
+
+def _is_valid(value):
+    return (
+        not isinstance(value, (str, bytes))
+        and isinstance(value, Iterable)
+    )
+```
 
 (labels/avoid-parens-for-unbreakable-rhs-in-assignments)=
 
