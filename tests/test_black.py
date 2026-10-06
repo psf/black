@@ -3899,6 +3899,19 @@ class TestDeFactoAPI:
         with pytest.raises(black.NothingChanged):
             black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
 
+    def test_subscript_chain_long_line_performance(self) -> None:
+        # Issue #5270: consecutive subscript trailers should not trigger quadratic
+        # RHS omit search. Without pruning unreachable omits, right_hand_split is
+        # called quadratically (>2500 times for n=100). With prefix pruning, calls
+        # remain linearly bounded (O(n)).
+        n = 100
+        code = "x = a" + "".join(f"[{i}]" for i in range(n))
+        with patch(
+            "black.linegen.right_hand_split", wraps=black.linegen.right_hand_split
+        ) as mock_rhs:
+            black.format_str(code, mode=black.Mode())
+        assert mock_rhs.call_count < 2 * n
+
 
 class TestASTSafety(BlackBaseTestCase):
     def check_ast_equivalence(
