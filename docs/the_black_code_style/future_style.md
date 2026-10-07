@@ -83,16 +83,16 @@ parentheses. With this feature enabled, Black wraps the expression so that the l
 within the line length limit:
 
 ```python
-# Before
-configuration_variable_with_a_very_long_name = create_configured_service_instance_factory(
+# Before (with -l 30)
+long_variable_name = long_function_name(
     first_parameter,
     # comment
     second_parameter,
 )
 
-# After (with --preview)
-configuration_variable_with_a_very_long_name = (
-    create_configured_service_instance_factory(
+# After (with --preview -l 30)
+long_variable_name = (
+    long_function_name(
         first_parameter,
         # comment
         second_parameter,
@@ -121,7 +121,7 @@ class A:
 
     # But annotated assignment was unnecessarily wrapped:
     attr: str = (
-        "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+        "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
     )
 ```
 
