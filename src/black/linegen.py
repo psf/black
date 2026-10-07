@@ -572,7 +572,9 @@ class LineGenerator(Visitor[Line]):
                 # If docstring is one line, we don't put the closing quotes on a
                 # separate line because it looks ugly (#3320).
                 lines = docstring.splitlines()
-                last_line_length = len(lines[-1]) if docstring else 0
+                last_line_length = (
+                    len(lines[-1]) if docstring and not docstring.endswith("\n") else 0
+                )
 
                 # If adding closing quotes would cause the last line to exceed
                 # the maximum line length, and the closing quote is not

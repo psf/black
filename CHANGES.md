@@ -23,6 +23,8 @@
   `# fmt: skip` comment on the last line before a closing bracket (#5477)
 - Prevent moving an encoding declaration (for example `# -*- coding: latin-1 -*-`) onto
   the first two lines of a file (#5487)
+- Fix adding an extra trailing blank line inside a multi-line module docstring when its
+  last line is near the line length limit (#5494)
 
 ### Preview style
 
