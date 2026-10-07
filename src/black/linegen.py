@@ -1044,8 +1044,34 @@ def right_hand_split_with_omits(
     bracket pair instead.
     """
     fallback_omit: set[LeafID] | None = None
+    first_lines: list[Line] | None = None
+
+    prefix_lengths: dict[LeafID, int] = {}
+    curr_len = 4 * line.depth
+    for leaf in line.leaves:
+        prefix_lengths[id(leaf)] = curr_len
+        curr_len += len(leaf.prefix) + len(leaf.value)
+
     for omit in generate_trailers_to_omit(line, mode.line_length):
+        if omit:
+            target_opening: Leaf | None = None
+            for leaf in reversed(line.leaves):
+                if leaf.type in CLOSING_BRACKETS and id(leaf) not in omit:
+                    target_opening = leaf.opening_bracket
+                    break
+            # If the candidate split point is a concrete bracket whose prefix length
+            # from the start of the line already exceeds line_length, the head line
+            # is mathematically guaranteed to exceed line_length as well.
+            if (
+                target_opening is not None
+                and target_opening.value
+                and prefix_lengths.get(id(target_opening), 0) > mode.line_length
+            ):
+                continue
+
         lines = list(right_hand_split(line, mode, features, omit=omit))
+        if first_lines is None and not omit:
+            first_lines = lines
         # Note: this check is only able to figure out if the first line of the
         # *current* transformation fits in the line length.  This is true only
         # for simple cases.  All others require running more transforms via
@@ -1068,14 +1094,17 @@ def right_hand_split_with_omits(
             return
 
     if fallback_omit is not None:
-        yield from right_hand_split(line, mode, features, omit=fallback_omit)
+        yield from right_hand_split(line, mode, features=features, omit=fallback_omit)
         return
 
     # All splits failed, best effort split with no omits.
     # This mostly happens to multiline strings that are by definition
     # reported as not fitting a single line, as well as lines that contain
     # trailing commas (those have to be exploded).
-    yield from right_hand_split(line, mode, features=features)
+    if first_lines is not None:
+        yield from first_lines
+    else:
+        yield from right_hand_split(line, mode, features=features)
 
 
 def _first_right_hand_split(
@@ -2539,6 +2568,14 @@ def run_transformer(
 ) -> list[Line]:
     if not line_str:
         line_str = line_to_string(line)
+    # A visible optional paren after the transform means the split already used
+    # it. Parens nested in the line (around dict values) can turn visible in a
+    # sub-line's split instead, so they don't count.
+    optional_parens = [
+        bracket
+        for bracket in line.bracket_tracker.invisible
+        if bracket.bracket_depth == 0
+    ]
     result: list[Line] = []
     for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
@@ -2551,7 +2588,7 @@ def run_transformer(
         Feature.FORCE_OPTIONAL_PARENTHESES in features_set
         or transform is not right_hand_split_with_omits
         or not line.bracket_tracker.invisible
-        or any(bracket.value for bracket in line.bracket_tracker.invisible)
+        or any(bracket.value for bracket in optional_parens)
         or line.contains_multiline_strings()
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()

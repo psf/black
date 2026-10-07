@@ -2667,6 +2667,71 @@ class BlackTestCase(BlackBaseTestCase):
                 "Failed to properly detect encoding on second line",
             )
 
+    def test_ignored_encoding_declaration_stays_ignored(self) -> None:
+        # Python ignores an encoding declaration below the second line. Removing
+        # all the blank lines before it would move it onto the first two lines
+        # and change how the file is decoded, so up to two lines are retained.
+        for source, expected in (
+            (
+                "\n\n# -*- coding: latin-1 -*-\nx  =  1\n",
+                "\n\n# -*- coding: latin-1 -*-\nx = 1\n",
+            ),
+            (
+                "\n\n\n\n# -*- coding: latin-1 -*-\nx  =  1\n",
+                "\n\n# -*- coding: latin-1 -*-\nx = 1\n",
+            ),
+            (
+                "\n\n# comment\n# vim: set fileencoding=cp1252 :\nx  =  1\n",
+                "\n# comment\n# vim: set fileencoding=cp1252 :\nx = 1\n",
+            ),
+            (
+                "\n\n# coding: unknown-encoding\nx  =  1\n",
+                "\n\n# coding: unknown-encoding\nx = 1\n",
+            ),
+        ):
+            self.assertEqual(
+                black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
+                expected,
+            )
+
+    def test_ignored_encoding_declaration_stays_ignored_in_file(self) -> None:
+        # The file is written with the encoding it was read with, so the value
+        # of non-ASCII text only stays the same if the declaration stays ignored.
+        for prefix in (b"", b"\xef\xbb\xbf"):
+            source = '\n\n# -*- coding: latin-1 -*-\nx  =  "\xe9"\n'.encode()
+            expected = '\n\n# -*- coding: latin-1 -*-\nx = "\xe9"\n'.encode()
+            with TemporaryDirectory() as workspace:
+                path = Path(workspace) / "encoding.py"
+                path.write_bytes(prefix + source)
+                self.assertTrue(
+                    black.format_file_in_place(
+                        path,
+                        fast=False,
+                        mode=DEFAULT_MODE,
+                        write_back=black.WriteBack.YES,
+                    )
+                )
+                self.assertEqual(path.read_bytes(), prefix + expected)
+
+    def test_encoding_declaration_moved_without_effect(self) -> None:
+        # Leading blank lines are still removed when moving the declaration
+        # doesn't change how Python decodes the file.
+        for source, expected in (
+            (
+                "\n\n# -*- coding: utf-8 -*-\nx  =  1\n",
+                "# -*- coding: utf-8 -*-\nx = 1\n",
+            ),
+            (
+                "\n# -*- coding: latin-1 -*-\nx  =  1\n",
+                "# -*- coding: latin-1 -*-\nx = 1\n",
+            ),
+            ("\n\nx  =  1\n", "x = 1\n"),
+        ):
+            self.assertEqual(
+                black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
+                expected,
+            )
+
 
 class TestCaching:
     def test_get_cache_dir(
@@ -3833,6 +3898,19 @@ class TestDeFactoAPI:
 
         with pytest.raises(black.NothingChanged):
             black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
+
+    def test_subscript_chain_long_line_performance(self) -> None:
+        # Issue #5270: consecutive subscript trailers should not trigger quadratic
+        # RHS omit search. Without pruning unreachable omits, right_hand_split is
+        # called quadratically (>2500 times for n=100). With prefix pruning, calls
+        # remain linearly bounded (O(n)).
+        n = 100
+        code = "x = a" + "".join(f"[{i}]" for i in range(n))
+        with patch(
+            "black.linegen.right_hand_split", wraps=black.linegen.right_hand_split
+        ) as mock_rhs:
+            black.format_str(code, mode=black.Mode())
+        assert mock_rhs.call_count < 2 * n
 
 
 class TestASTSafety(BlackBaseTestCase):
