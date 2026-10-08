@@ -2356,14 +2356,14 @@ def maybe_make_parens_invisible_in_atom(
     can_remove_generator_parens = remove_generator_parens and is_generator(node)
     c1 = node.type not in (syms.atom, syms.expr)
     c2 = is_empty_tuple(node)
-    c3 = (not is_subscript and is_one_tuple(node))
-    c4 = (is_tuple(node) and parent.type == syms.asexpr_test)
+    c3 = not is_subscript and is_one_tuple(node)
+    c4 = is_tuple(node) and parent.type == syms.asexpr_test
     c5 = (
         is_tuple(node)
         and parent.type == syms.with_stmt
         and has_sibling_with_type(node, token.COMMA)
     )
-    c6 = (is_yield(node) and parent.type != syms.expr_stmt)
+    c6 = is_yield(node) and parent.type != syms.expr_stmt
     c7 = (
         not remove_brackets_around_comma
         and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
@@ -2381,8 +2381,8 @@ def maybe_make_parens_invisible_in_atom(
         )
     )
     c8 = is_tuple_containing_walrus(node)
-    c9 = (not allow_star_expr and is_tuple_containing_star(node))
-    c10 = (not can_remove_generator_parens and is_generator(node))
+    c9 = not allow_star_expr and is_tuple_containing_star(node)
+    c10 = not can_remove_generator_parens and is_generator(node)
     if c1 or c2 or c3 or c4 or c5 or c6 or c7 or c8 or c9 or c10:
         return False
 
