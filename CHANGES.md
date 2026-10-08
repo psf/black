@@ -25,6 +25,8 @@
   the first two lines of a file (#5487)
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
+- Avoid unnecessary line splits of trailers (such as indexing/subscripts) when an
+  earlier bracket split exceeds the line length only due to a trailing comment (#3681)
 
 ### Preview style
 
