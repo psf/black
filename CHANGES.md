@@ -25,6 +25,7 @@
   the first two lines of a file (#5487)
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->

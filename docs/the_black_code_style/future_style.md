@@ -72,9 +72,9 @@ Currently, the following features are included in the preview style:
 - `parenthesize_expressions_with_comments`: Parenthesize expressions (such as function
   calls) that exceed the line length when their parameters contain comments.
   ([see below](labels/parenthesize-expressions-with-comments))
-- `keep_trailers_on_bracket_comment_overflow`: Avoid splitting trailers (such as indexing
-  or subscripts) onto multiple lines when an earlier bracket split exceeds the line
-  length limit only due to a trailing comment.
+- `keep_trailers_on_bracket_comment_overflow`: Avoid splitting trailers (such as
+  indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
+  line length limit only due to a trailing comment.
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
 
 (labels/keep-trailers-on-bracket-comment-overflow)=
