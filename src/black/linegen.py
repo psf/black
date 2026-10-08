@@ -402,6 +402,31 @@ class LineGenerator(Visitor[Line]):
                         remove_generator_parens=True,
                     )
 
+        if Preview.remove_redundant_subscript_parentheses in self.mode:
+            for child in node.children:
+                if (
+                    child.type == syms.trailer
+                    and len(child.children) == 3
+                    and child.children[0].type == token.LSQB
+                    and child.children[2].type == token.RSQB
+                    and child.children[1].type == syms.atom
+                ):
+                    atom = child.children[1]
+                    if not is_empty_tuple(atom) and not is_generator(atom):
+                        maybe_make_parens_invisible_in_atom(
+                            atom,
+                            parent=child,
+                            mode=self.mode,
+                            features=self.features,
+                            remove_brackets_around_comma=True,
+                            is_subscript=True,
+                        )
+                        if is_atom_with_invisible_parens(atom):
+                            inner = atom.children[1]
+                            if inner.type == syms.testlist_gexp:
+                                inner.type = syms.subscriptlist
+                            atom.replace(inner)
+
         remove_await_parens(node, mode=self.mode, features=self.features)
 
         yield from self.visit_default(node)
@@ -2320,6 +2345,7 @@ def maybe_make_parens_invisible_in_atom(
     remove_brackets_around_comma: bool = False,
     allow_star_expr: bool = False,
     remove_generator_parens: bool = False,
+    is_subscript: bool = False,
 ) -> bool:
     """If it's safe, make the parens in the atom `node` invisible, recursively.
     Additionally, remove repeated, adjacent invisible parens from the atom `node`
@@ -2328,46 +2354,36 @@ def maybe_make_parens_invisible_in_atom(
     Returns whether the node should itself be wrapped in invisible parentheses.
     """
     can_remove_generator_parens = remove_generator_parens and is_generator(node)
-    if (
-        node.type not in (syms.atom, syms.expr)
-        or is_empty_tuple(node)
-        or is_one_tuple(node)
-        or (is_tuple(node) and parent.type == syms.asexpr_test)
-        or (
-            is_tuple(node)
-            and parent.type == syms.with_stmt
-            and has_sibling_with_type(node, token.COMMA)
-        )
-        or (is_yield(node) and parent.type != syms.expr_stmt)
-        or (
-            # This condition tries to prevent removing non-optional brackets
-            # around a tuple, however, can be a bit overzealous so we provide
-            # and option to skip this check for `for` and `with` statements.
-            not remove_brackets_around_comma
-            and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
-            and not can_remove_generator_parens
-            # Remove parentheses around multiple exception types in except and
-            # except* without as. See PEP 758 for details.
+    c1 = node.type not in (syms.atom, syms.expr)
+    c2 = is_empty_tuple(node)
+    c3 = (not is_subscript and is_one_tuple(node))
+    c4 = (is_tuple(node) and parent.type == syms.asexpr_test)
+    c5 = (
+        is_tuple(node)
+        and parent.type == syms.with_stmt
+        and has_sibling_with_type(node, token.COMMA)
+    )
+    c6 = (is_yield(node) and parent.type != syms.expr_stmt)
+    c7 = (
+        not remove_brackets_around_comma
+        and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+        and not can_remove_generator_parens
+        and not (
+            Feature.UNPARENTHESIZED_EXCEPT_TYPES in features
+            and is_tuple(node)
+            and node.parent is not None
+            and node.parent.type == syms.except_clause
             and not (
-                Feature.UNPARENTHESIZED_EXCEPT_TYPES in features
-                # is a tuple
-                and is_tuple(node)
-                # has a parent node
-                and node.parent is not None
-                # parent is an except clause
-                and node.parent.type == syms.except_clause
-                # is not immediately followed by as clause
-                and not (
-                    node.next_sibling is not None
-                    and is_name_token(node.next_sibling)
-                    and node.next_sibling.value == "as"
-                )
+                node.next_sibling is not None
+                and is_name_token(node.next_sibling)
+                and node.next_sibling.value == "as"
             )
         )
-        or is_tuple_containing_walrus(node)
-        or (not allow_star_expr and is_tuple_containing_star(node))
-        or (not can_remove_generator_parens and is_generator(node))
-    ):
+    )
+    c8 = is_tuple_containing_walrus(node)
+    c9 = (not allow_star_expr and is_tuple_containing_star(node))
+    c10 = (not can_remove_generator_parens and is_generator(node))
+    if c1 or c2 or c3 or c4 or c5 or c6 or c7 or c8 or c9 or c10:
         return False
 
     if is_walrus_assignment(node):
@@ -2408,6 +2424,7 @@ def maybe_make_parens_invisible_in_atom(
             features=features,
             remove_brackets_around_comma=remove_brackets_around_comma,
             remove_generator_parens=remove_generator_parens,
+            is_subscript=is_subscript,
         )
 
         if is_atom_with_invisible_parens(middle):
