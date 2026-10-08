@@ -19,6 +19,7 @@
 
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
+- Remove redundant parentheses in `getitem` and indexing operators (#5496)
 
 ### Configuration
 
