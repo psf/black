@@ -1,3 +1,4 @@
+# flags: --preview
 # Regression test for https://github.com/psf/black/issues/3681.
 def one():
     def two():

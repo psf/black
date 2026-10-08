@@ -1079,7 +1079,12 @@ def right_hand_split_with_omits(
         # for simple cases.  All others require running more transforms via
         # `transform_line()`.  This check doesn't know if those would succeed.
         if is_line_short_enough(lines[0], mode=mode) or (
-            omit and _over_length_only_due_to_bracket_comment(lines[0], mode)
+            omit
+            and (
+                _over_length_only_due_to_bracket_comment(lines[0], mode)
+                if Preview.keep_trailers_on_bracket_comment_overflow in mode
+                else _over_length_only_due_to_subscript_comment(lines[0], mode)
+            )
         ):
             if (
                 Preview.fix_magic_trailing_comma_trailer_split in mode

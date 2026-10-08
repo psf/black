@@ -25,9 +25,6 @@
   the first two lines of a file (#5487)
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
-- Avoid unnecessary line splits of trailers (such as indexing/subscripts) when an
-  earlier bracket split exceeds the line length only due to a trailing comment (#5498)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -42,6 +39,8 @@
   under `--preview` (#5442)
 - Fix `wrap_long_dict_values_in_parens` dropping the parentheses around a right-hand
   side that contains a dictionary, leaving a line over the length limit (#5492)
+- Avoid unnecessary line splits of trailers (such as indexing/subscripts) when an
+  earlier bracket split exceeds the line length only due to a trailing comment (#5498)
 
 ### Configuration
 
