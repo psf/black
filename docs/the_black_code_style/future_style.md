@@ -79,6 +79,8 @@ Currently, the following features are included in the preview style:
   indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
   line length limit only due to a trailing comment.
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+- `remove_redundant_subscript_parentheses`: Remove redundant parentheses in `getitem`
+  and indexing operators.
 
 (labels/keep-trailers-on-bracket-comment-overflow)=
 
