@@ -416,6 +416,16 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
         if t == token.STAR:
             return NO
 
+    elif p.type == syms.typeparams:
+        # PEP 695 type parameter lists hug the preceding name
+        if t == token.LSQB:
+            return NO
+
+    elif p.type in {syms.typevartuple, syms.paramspec}:
+        # PEP 695 `*Ts` and `**P`
+        if prev and prev.type in STARS:
+            return NO
+
     if Preview.simplify_power_operator_hugging in mode:
         # Power operator hugging
         if t == token.DOUBLESTAR and is_simple_exponentiation(p):
