@@ -2384,6 +2384,14 @@ def maybe_make_parens_invisible_in_atom(
             syms.del_stmt,
         ]:
             return False
+        if (
+            parent.type == syms.atom
+            and parent.children[0].type == token.LBRACE
+            and Feature.UNPARENTHESIZED_WALRUS_IN_SETS not in features
+        ):
+            # A named expression in a set literal needs its parentheses before
+            # Python 3.9.
+            return False
 
     first = node.children[0]
     last = node.children[-1]
