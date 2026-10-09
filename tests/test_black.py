@@ -2989,6 +2989,62 @@ class TestCaching:
                 write_cache.assert_not_called()
 
     @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
+    def test_cache_written_when_writeback_diff_and_unmodified(
+        self, color: bool
+    ) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            src.write_text('print("hello")\n', encoding="utf-8")
+            cmd = [str(src), "--diff"]
+            if color:
+                cmd.append("--color")
+            invokeBlack(cmd)
+            cache = black.Cache.read(mode, workspace)
+            assert not cache.is_changed(src)
+
+    @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
+    def test_cache_used_when_writeback_diff_already_cached(self, color: bool) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            src.write_text("print('hello')", encoding="utf-8")
+            cache = black.Cache.read(mode, workspace)
+            cache.write([src])
+            cmd = ["--config", str(THIS_DIR / "empty.toml"), str(src), "--diff"]
+            if color:
+                cmd.append("--color")
+            result = BlackRunner().invoke(black.main, cmd)
+            assert result.exit_code == 0
+            assert "1 file would be left unchanged" in result.output
+            assert "@@" not in result.output
+
+    @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
+    @event_loop()
+    def test_cache_multiple_files_when_writeback_diff(self, color: bool) -> None:
+        mode = DEFAULT_MODE
+        with (
+            cache_dir() as workspace,
+            patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor),
+        ):
+            one = (workspace / "one.py").resolve()
+            one.write_text('print("hello")\n', encoding="utf-8")
+            two = (workspace / "two.py").resolve()
+            two.write_text("print('world')", encoding="utf-8")
+            cache = black.Cache.read(mode, workspace)
+            cache.write([one])
+            cmd = ["--config", str(THIS_DIR / "empty.toml"), "--diff", str(workspace)]
+            if color:
+                cmd.append("--color")
+            result = BlackRunner().invoke(black.main, cmd)
+            assert result.exit_code == 0
+            expected = "1 file would be reformatted, 1 file would be left unchanged."
+            assert expected in result.output
+            cache = black.Cache.read(mode, workspace)
+            assert not cache.is_changed(one)
+            assert cache.is_changed(two)
+
+    @pytest.mark.parametrize("color", [False, True], ids=["no-color", "with-color"])
     @event_loop()
     def test_output_locking_when_writeback_diff(self, color: bool) -> None:
         with cache_dir() as workspace:
