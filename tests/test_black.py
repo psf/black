@@ -3504,6 +3504,40 @@ class TestFileCollection:
         )
         assert sorted(expected) == sorted(sources)
 
+    def test_nested_gitignore_negation_reincludes(self) -> None:
+        # https://github.com/psf/black/issues/5376
+        # The deepest gitignore with an opinion wins, so a negation there
+        # re-includes what an ancestor excluded.
+        path = Path(THIS_DIR / "data" / "gitignore_nested_negation")
+        include = re.compile(r"\.pyi?$")
+        exclude = re.compile(r"")
+        root_gitignore = black.files.get_gitignore(path)
+        packages_gitignore = black.files.get_gitignore(path / "packages")
+        report = black.Report()
+        expected: list[Path] = [
+            Path(path / "packages/playground/generated/settings.py"),
+            Path(path / "packages/playground/keep.py"),
+        ]
+        this_abs = THIS_DIR.resolve()
+        sources = list(
+            black.gen_python_files(
+                path.iterdir(),
+                this_abs,
+                include,
+                exclude,
+                None,
+                None,
+                report,
+                {
+                    path: root_gitignore,
+                    path / "packages": packages_gitignore,
+                },
+                verbose=False,
+                quiet=False,
+            )
+        )
+        assert sorted(expected) == sorted(sources)
+
     def test_nested_gitignore_directly_in_source_directory(self) -> None:
         # https://github.com/psf/black/issues/2598
         path = Path(DATA_DIR / "nested_gitignore_tests")

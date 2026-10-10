@@ -327,6 +327,7 @@ def _path_is_ignored(
     path = root / root_relative_path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
     # ensure that gitignore_dict is ordered from least specific to most specific.
+    ignored = False
     for gitignore_path, pattern in gitignore_dict.items():
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
@@ -334,9 +335,14 @@ def _path_is_ignored(
                 relative_path = relative_path + "/"
         except ValueError:
             break
-        if pattern.match_file(relative_path):
-            return True
-    return False
+        # A deeper gitignore overrides a shallower one, and within a single
+        # file the last matching pattern wins (which pathspec already applies).
+        # So the deepest file that has any opinion about this path decides,
+        # and a negation there re-includes what an ancestor excluded.
+        match = pattern.check_file(relative_path)
+        if match.include is not None:
+            ignored = match.include
+    return ignored
 
 
 def path_is_excluded(
