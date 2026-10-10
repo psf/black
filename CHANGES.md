@@ -15,7 +15,7 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Remove redundant parentheses around simple top-level expressions (#5516)
 
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)

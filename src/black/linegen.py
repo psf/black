@@ -320,8 +320,21 @@ class LineGenerator(Visitor[Line]):
         """Visit a statement without nested statements."""
         prev_type: int | None = None
         for i, child in enumerate(node.children):
-            if (prev_type is None or prev_type == token.SEMI) and is_arith_like(child):
-                wrap_in_parentheses(node, child, visible=False, index=i)
+            if prev_type is None or prev_type == token.SEMI:
+                if is_arith_like(child):
+                    wrap_in_parentheses(node, child, visible=False, index=i)
+                elif (
+                    Preview.remove_redundant_top_level_parentheses in self.mode
+                    and child.type == syms.atom
+                    and not is_walrus_assignment(child)
+                    and not _is_implicitly_concatenated_string(child)
+                ):
+                    maybe_make_parens_invisible_in_atom(
+                        child,
+                        parent=node,
+                        mode=self.mode,
+                        features=self.features,
+                    )
             prev_type = child.type
 
         if node.parent and node.parent.type in STATEMENT:
@@ -1875,6 +1888,23 @@ def _has_redundant_generator_parentheses(node: LN) -> bool:
     return is_generator(middle) or _has_redundant_generator_parentheses(middle)
 
 
+def _is_implicitly_concatenated_string(node: LN) -> bool:
+    """Return True if node wraps implicitly concatenated strings."""
+    if not isinstance(node, Node) or node.type != syms.atom or len(node.children) < 3:
+        return False
+    if not (is_lpar_token(node.children[0]) and is_rpar_token(node.children[-1])):
+        return False
+    middle = node.children[1]
+    if not (isinstance(middle, Node) and middle.type == syms.atom and middle.children):
+        return False
+    first_child = middle.children[0]
+    return (
+        first_child.type == token.STRING
+        or getattr(first_child, "type", None) == syms.fstring
+        or getattr(first_child, "type", None) == getattr(syms, "tstring", 999)
+    )
+
+
 def _normalize_unpacking_targets(
     node: LN,
     mode: Mode,
@@ -2338,7 +2368,14 @@ def maybe_make_parens_invisible_in_atom(
             and parent.type == syms.with_stmt
             and has_sibling_with_type(node, token.COMMA)
         )
-        or (is_yield(node) and parent.type != syms.expr_stmt)
+        or (
+            is_yield(node)
+            and parent.type != syms.expr_stmt
+            and (
+                parent.type != syms.simple_stmt
+                or Preview.remove_redundant_top_level_parentheses not in mode
+            )
+        )
         or (
             # This condition tries to prevent removing non-optional brackets
             # around a tuple, however, can be a bit overzealous so we provide
@@ -2367,6 +2404,9 @@ def maybe_make_parens_invisible_in_atom(
         or is_tuple_containing_walrus(node)
         or (not allow_star_expr and is_tuple_containing_star(node))
         or (not can_remove_generator_parens and is_generator(node))
+        or (
+            parent.type == syms.simple_stmt and _is_implicitly_concatenated_string(node)
+        )
     ):
         return False
 
@@ -2386,6 +2426,7 @@ def maybe_make_parens_invisible_in_atom(
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
+            syms.simple_stmt,
         ]:
             return False
 
