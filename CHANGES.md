@@ -82,7 +82,7 @@
 - When the GitHub Action reads version specifiers from `tool.black.required-version`, it
   now only accepts released versions of Black, as it already did for `black`
   requirements in dependency lists. Other values, such as URL references, are now
-  rejected. (#5509)
+  rejected. (#5510)
 
 ### Documentation
 
