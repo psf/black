@@ -48,6 +48,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Apply exclusions from an explicit ancestor `--config` to files in nested Git
+  repositories (#5437)
 - Add `--cache-dir` to configure the cache directory from the command line (#5433)
 - Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
   which made a later full `black --check` pass and `black` skip the unformatted lines
