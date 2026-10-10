@@ -20,6 +20,7 @@
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 
