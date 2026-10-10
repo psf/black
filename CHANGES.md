@@ -81,6 +81,9 @@ has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is pending.
   the first two lines of a file (#5487)
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
+- Preserve blank lines between imports and unselected statements when using
+  `--line-ranges`, and ensure a blank line is added between an unselected import and a
+  newly formatted statement (#5493)
 
 ### Preview style
 

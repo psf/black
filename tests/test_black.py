@@ -2519,6 +2519,34 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
         )
 
+    def test_line_ranges_blank_lines_after_imports(self) -> None:
+        source = "import os\n\n\nx = 1\n"
+        assert black.format_str(source, mode=black.FileMode(), lines=[(1, 1)]) == source
+
+        source_class = "import os\n\n\n\nclass Foo:\n    pass\n"
+        assert (
+            black.format_str(
+                source_class, mode=black.FileMode(preview=True), lines=[(1, 1)]
+            )
+            == source_class
+        )
+
+        source_unselected_import = "import os\nx =  1\n"
+        assert (
+            black.format_str(
+                source_unselected_import, mode=black.FileMode(), lines=[(2, 2)]
+            )
+            == "import os\n\nx = 1\n"
+        )
+
+        source_two_unselected = "import os\nx = 1\ny =  2\n"
+        assert (
+            black.format_str(
+                source_two_unselected, mode=black.FileMode(), lines=[(3, 3)]
+            )
+            == "import os\nx = 1\ny = 2\n"
+        )
+
     def test_line_ranges_with_multiple_sources(self) -> None:
         with TemporaryDirectory() as workspace:
             test1_file = Path(workspace) / "test1.py"
