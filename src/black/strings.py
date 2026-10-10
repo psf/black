@@ -25,6 +25,12 @@ UNICODE_ESCAPE_RE: Final = re.compile(
     r")?",
     re.VERBOSE,
 )
+# The line breaks the Python parser recognizes, and therefore the only ones that
+# may be treated as line endings inside a string. str.splitlines() also breaks
+# on form feed, vertical tab, NEL, the Unicode line and paragraph separators and
+# the C0 separators, all of which are ordinary characters of a string's value.
+# See output._splitlines_no_ff, which splits source code the same way.
+LINE_BREAK_RE: Final = re.compile(r"\r\n|[\r\n]")
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -53,7 +59,7 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
     docstrings need the same width to keep relative indentation stable.
     """
     lines = []
-    for line in s.splitlines():
+    for line in LINE_BREAK_RE.split(s):
         stripped_line = line.lstrip()
         if not stripped_line or stripped_line == line:
             lines.append(line)
@@ -61,8 +67,6 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
             prefix_length = len(line) - len(stripped_line)
             prefix = line[:prefix_length].expandtabs(4)
             lines.append(prefix + stripped_line)
-    if s.endswith("\n"):
-        lines.append("")
     return lines
 
 

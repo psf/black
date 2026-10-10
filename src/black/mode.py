@@ -265,8 +265,17 @@ class Preview(Enum):
     parenthesize_tuple_in_yield = auto()
     fmt_off_class_blank_lines = auto()
     remove_redundant_generator_parentheses = auto()
+    symmetric_collection_operations = auto()
     normalize_tstring_prefix = auto()
     remove_redundant_list_parentheses = auto()
+    remove_redundant_unpacking_parentheses = auto()
+    fix_magic_trailing_comma_trailer_split = auto()
+    keep_dict_keys_with_operators = auto()
+    blank_line_after_stub_method = auto()
+    keep_commented_expressions_together = auto()
+    avoid_parens_for_unbreakable_rhs_in_assignments = auto()
+    parenthesize_expressions_with_comments = auto()
+    keep_trailers_on_bracket_comment_overflow = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {

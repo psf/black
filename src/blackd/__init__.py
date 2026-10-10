@@ -295,13 +295,17 @@ def parse_mode(headers: MultiMapping[str]) -> black.Mode:
 
 
 def parse_python_variant_header(value: str) -> tuple[bool, set[black.TargetVersion]]:
+    value = value.strip()
     if value == "pyi":
         return True, set()
     else:
         versions = set()
         for version in value.split(","):
+            version = version.strip()
             if version.startswith("py"):
                 version = version[len("py") :]
+            if not version:
+                raise InvalidVariantHeader("expected e.g. '3.7', 'py3.5'")
             if "." in version:
                 major_str, *rest = version.split(".")
             else:

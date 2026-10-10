@@ -7,14 +7,14 @@ from typing import Final, Generic, Literal, TypeGuard, TypeVar, Union
 
 from mypy_extensions import mypyc_attr
 
-from black.cache import CACHE_DIR
 from black.mode import Mode, Preview
 from black.strings import get_string_prefix, has_triple_quotes
 from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import NL, Leaf, Node, type_repr
 
-pygram.initialize(CACHE_DIR)
+# The CLI cache directory is not known until Click parses the command line.
+pygram.initialize(save=False)
 syms: Final = pygram.python_symbols
 
 
@@ -414,6 +414,16 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
 
     elif p.type == syms.except_clause:
         if t == token.STAR:
+            return NO
+
+    elif p.type == syms.typeparams:
+        # PEP 695 type parameter lists hug the preceding name
+        if t == token.LSQB:
+            return NO
+
+    elif p.type in {syms.typevartuple, syms.paramspec}:
+        # PEP 695 `*Ts` and `**P`
+        if prev and prev.type in STARS:
             return NO
 
     if Preview.simplify_power_operator_hugging in mode:

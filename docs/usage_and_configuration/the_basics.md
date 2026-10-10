@@ -235,7 +235,13 @@ Do not consult or update Black's per-user cache during this run. When `--no-cach
 specified, Black will perform fresh analysis for all files and will neither read from
 nor write to the cache. This is helpful for reproducing formatting results from a clean
 run, debugging cache-related issues, or ensuring CI executes a fresh formatting analysis
-every time.
+every time. If combined with `--cache-dir`, `--no-cache` takes precedence and the
+specified cache directory is not created or used.
+
+#### `--cache-dir`
+
+Store Black's cache in the specified directory. This option takes precedence over the
+`BLACK_CACHE_DIR` environment variable.
 
 #### `--color` / `--no-color`
 
@@ -280,8 +286,8 @@ configuration file for consistent results across environments.
 
 ```console
 $ black --version
-black, 26.5.1 (compiled: yes)
-$ black --required-version 26.5.1 -c "format = 'this'"
+black, 26.10.1 (compiled: yes)
+$ black --required-version 26.10.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
@@ -344,7 +350,7 @@ recursive searches. An empty value means all files are included regardless of th
 Use forward slashes for directories on all platforms (Windows, too). Overrides all
 exclusions, including from `.gitignore` and command line options.
 
-Default Inclusions: `['.pyi', '.ipynb']`
+Default Inclusions: `['.py', '.pyi', '.ipynb']`
 
 #### `-W`, `--workers`
 
@@ -394,7 +400,7 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 26.5.1
+black, 26.10.1
 ```
 
 #### `--config`

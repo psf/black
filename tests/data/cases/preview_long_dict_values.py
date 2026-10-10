@@ -145,6 +145,20 @@ class Random:
         )
 
 
+class C:
+    def __init__(self) -> None:
+        self.a_long_class_attribute_to_use = (
+            A_LONG_TEMPLATE_CONSTANT_NAME_HERE.safe_substitute(
+                {
+                    "n": (
+                        "long text that breaks the ternary"
+                        if A_LONG_CONSTANT_NAME
+                        else ""
+                    ),
+                },
+            )
+        )
+
 # output
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
@@ -287,17 +301,34 @@ my_dict = {
 
 class Random:
     def func():
-        random_service.status.active_states.inactive = make_new_top_level_state_from_dict(
-            {
-                "topLevelBase": {
-                    "secondaryBase": {
-                        "timestamp": 1234,
-                        "latitude": 1,
-                        "longitude": 2,
-                        "actionTimestamp": (
-                            Timestamp(seconds=1530584000, nanos=0).ToJsonString()
-                        ),
-                    }
+        random_service.status.active_states.inactive = (
+            make_new_top_level_state_from_dict(
+                {
+                    "topLevelBase": {
+                        "secondaryBase": {
+                            "timestamp": 1234,
+                            "latitude": 1,
+                            "longitude": 2,
+                            "actionTimestamp": (
+                                Timestamp(seconds=1530584000, nanos=0).ToJsonString()
+                            ),
+                        }
+                    },
+                }
+            )
+        )
+
+
+class C:
+    def __init__(self) -> None:
+        self.a_long_class_attribute_to_use = (
+            A_LONG_TEMPLATE_CONSTANT_NAME_HERE.safe_substitute(
+                {
+                    "n": (
+                        "long text that breaks the ternary"
+                        if A_LONG_CONSTANT_NAME
+                        else ""
+                    ),
                 },
-            }
+            )
         )

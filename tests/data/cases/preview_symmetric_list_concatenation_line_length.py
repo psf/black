@@ -1,0 +1,12 @@
+# flags: --preview --line-length=60
+
+values = [first_value, second_value] + [third_value, fourth_value]
+short_values = [first_value] + [second_value]
+
+# output
+
+values = (
+    [first_value, second_value]
+    + [third_value, fourth_value]
+)
+short_values = [first_value] + [second_value]

@@ -3,8 +3,19 @@
 def frobnicate() -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":
     pass
 
-# splitting the string breaks if there's any parameters
+# split the string even when there are parameters
 def frobnicate(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":
+    pass
+
+# don't split strings followed by pragmas
+def with_type_ignore(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":  # type: ignore
+    pass
+
+def with_fmt_skip(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":  # fmt: skip
+    pass
+
+# don't try to split strings without spaces
+def with_unsplittable_string(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassNameWithoutAnySpacesWhatsoeverAndEvenMoreCharacters":
     pass
 
 # output
@@ -17,8 +28,25 @@ def frobnicate() -> (
     pass
 
 
-# splitting the string breaks if there's any parameters
-def frobnicate(
+# split the string even when there are parameters
+def frobnicate(a) -> (
+    "ThisIsTrulyUnreasonablyExtremelyLongClassName |"
+    " list[ThisIsTrulyUnreasonablyExtremelyLongClassName]"
+):
+    pass
+
+
+# don't split strings followed by pragmas
+def with_type_ignore(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":  # type: ignore
+    pass
+
+
+def with_fmt_skip(a) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":  # fmt: skip
+    pass
+
+
+# don't try to split strings without spaces
+def with_unsplittable_string(
     a,
-) -> "ThisIsTrulyUnreasonablyExtremelyLongClassName | list[ThisIsTrulyUnreasonablyExtremelyLongClassName]":
+) -> "ThisIsTrulyUnreasonablyExtremelyLongClassNameWithoutAnySpacesWhatsoeverAndEvenMoreCharacters":
     pass

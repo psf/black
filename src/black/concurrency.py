@@ -86,6 +86,7 @@ def reformat_many(
     report: Report,
     workers: int | None,
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Reformat multiple files using a ProcessPoolExecutor."""
 
@@ -143,6 +144,7 @@ def reformat_many(
                 loop=loop,
                 executor=executor,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
         )
     finally:
@@ -163,6 +165,7 @@ async def schedule_formatting(
     loop: asyncio.AbstractEventLoop,
     executor: Executor,
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Run formatting of `sources` in parallel using the provided `executor`.
 
@@ -171,11 +174,13 @@ async def schedule_formatting(
     `write_back`, `fast`, and `mode` options are passed to
     :func:`format_file_in_place`.
     """
-    cache = None if no_cache else Cache.read(mode)
-    if cache is not None and write_back not in (
-        WriteBack.DIFF,
-        WriteBack.COLOR_DIFF,
-    ):
+    if no_cache:
+        cache = None
+    elif cache_dir is None:
+        cache = Cache.read(mode)
+    else:
+        cache = Cache.read(mode, cache_dir)
+    if cache is not None:
         sources, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
@@ -201,32 +206,45 @@ async def schedule_formatting(
             ): src
             for src in sorted(sources)
         }
-        pending = tasks.keys()
+        pending = set(tasks)
         try:
             loop.add_signal_handler(signal.SIGINT, cancel, pending)
             loop.add_signal_handler(signal.SIGTERM, cancel, pending)
         except NotImplementedError:
             # There are no good alternatives for these on Windows.
             pass
+        # `asyncio.wait(..., return_when=FIRST_COMPLETED)` in a tight loop is
+        # quadratic in the number of files: every call re-registers completion
+        # callbacks on all pending tasks, so 10x the files means ~100x that
+        # bookkeeping (see #1951). A done callback per task costs O(1) per
+        # completion instead, and the queue preserves completion-order
+        # processing of results.
+        finished: asyncio.Queue[asyncio.Future[Any]] = asyncio.Queue()
+        for task in pending:
+            task.add_done_callback(finished.put_nowait)
         while pending:
-            done, _ = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
-            for task in done:
-                src = tasks.pop(task)
-                if task.cancelled():
-                    cancelled.append(task)
-                elif exc := task.exception():
-                    if report.verbose:
-                        traceback.print_exception(type(exc), exc, exc.__traceback__)
-                    report.failed(src, exc)
-                else:
-                    changed = Changed.YES if task.result() else Changed.NO
-                    # If the file was written back or was successfully checked as
-                    # well-formatted, store this information in the cache.
-                    if write_back is WriteBack.YES or (
-                        write_back is WriteBack.CHECK and changed is Changed.NO
-                    ):
-                        sources_to_cache.append(src)
-                    report.done(src, changed)
+            task = await finished.get()
+            pending.discard(task)
+            src = tasks.pop(task)
+            if task.cancelled():
+                cancelled.append(task)
+            elif exc := task.exception():
+                if report.verbose:
+                    traceback.print_exception(type(exc), exc, exc.__traceback__)
+                report.failed(src, exc)
+            else:
+                changed = Changed.YES if task.result() else Changed.NO
+                can_cache_unmodified = (
+                    write_back in (
+                        WriteBack.CHECK,
+                        WriteBack.DIFF,
+                        WriteBack.COLOR_DIFF,
+                    )
+                    and changed is Changed.NO
+                )
+                if write_back is WriteBack.YES or can_cache_unmodified:
+                    sources_to_cache.append(src)
+                report.done(src, changed)
         if cancelled:
             await asyncio.gather(*cancelled, return_exceptions=True)
         if sources_to_cache and not no_cache and cache is not None:

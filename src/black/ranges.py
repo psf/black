@@ -4,6 +4,7 @@ import difflib
 from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
 
+from black.comments import FMT_SKIP, contains_fmt_directive
 from black.nodes import (
     LN,
     STANDALONE_COMMENT,
@@ -120,6 +121,25 @@ def adjusted_lines(
       original_source: the original source.
       modified_source: the modified source.
     """
+    if len(lines) > 1:
+        original_lines = original_source.splitlines(keepends=True)
+        modified_lines = modified_source.splitlines(keepends=True)
+        if len(original_lines) == len(modified_lines) and all(
+            1 <= start <= end <= len(original_lines) for start, end in lines
+        ):
+            selected_lines = {
+                line for start, end in lines for line in range(start - 1, end)
+            }
+            # Equal-length edits confined to the requested ranges cannot shift
+            # their line numbers. Diffing repeated text can move them anyway.
+            if all(
+                index in selected_lines or original == modified
+                for index, (original, modified) in enumerate(
+                    zip(original_lines, modified_lines, strict=True)
+                )
+            ):
+                return sorted(lines)
+
     lines_mappings = _calculate_lines_mappings(original_source, modified_source)
 
     new_lines = []
@@ -426,6 +446,43 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
     replacements.apply()
 
 
+def _str_with_standalone_comments(node: LN) -> str:
+    """Like `str(node)`, but a nested STANDALONE_COMMENT that ends in a `# fmt: skip`
+    is followed by a newline.
+
+    A STANDALONE_COMMENT made by `# fmt: skip` handling can end with the comment and
+    has no trailing newline: the line generator puts one after it. Joining it
+    straight to the next leaf would append that leaf (e.g. a closing bracket) to the
+    comment's line and turn it into part of the comment.
+    """
+    leaves = list(node.leaves())
+    parts = []
+    for leaf, next_leaf in zip(leaves, [*leaves[1:], None], strict=True):
+        text = str(leaf)
+        if (
+            leaf.type == STANDALONE_COMMENT
+            and next_leaf is not None
+            and not str(next_leaf).startswith("\n")
+            and _ends_with_fmt_skip(text)
+        ):
+            text += "\n"
+        parts.append(text)
+    return "".join(parts)
+
+
+def _ends_with_fmt_skip(text: str) -> bool:
+    """Whether the last line of a STANDALONE_COMMENT value ends in a `# fmt: skip`.
+
+    Only that directive makes such a value end in a comment without a trailing
+    newline. Any other `#` is ignored: it may be inside a string.
+    """
+    last_line = text.rpartition("\n")[2]
+    comment_start = last_line.find("#")
+    return comment_start != -1 and contains_fmt_directive(
+        last_line[comment_start:], FMT_SKIP
+    )
+
+
 def _convert_node_to_standalone_comment(
     node: LN, replacements: "_NodeReplacements", lines_set: set[int]
 ) -> None:
@@ -461,7 +518,7 @@ def _convert_node_to_standalone_comment(
     # _convert_unchanged_line_by_line, which manages the newlines itself.)
     # Remove the '\n', as STANDALONE_COMMENT will have '\n' appended when
     # generating the formatted code.
-    value = str(node)[:-1]
+    value = _str_with_standalone_comments(node)[:-1]
     replacements.record(
         [node],
         Leaf(
@@ -491,7 +548,7 @@ def _convert_nodes_to_standalone_comment(
         return
     first_lineno = first.lineno
     prefix = replacements.take_prefix(first)
-    value = "".join(str(node) for node in nodes)
+    value = "".join(_str_with_standalone_comments(node) for node in nodes)
     # The prefix comment on the NEWLINE leaf is the trailing comment of the statement.
     if newline.prefix:
         value += newline.prefix
@@ -593,12 +650,49 @@ def _calculate_lines_mappings(
       original_source: the original source.
       modified_source: the modified source.
     """
+    original_lines = original_source.splitlines(keepends=True)
+    modified_lines = modified_source.splitlines(keepends=True)
+
+    # SequenceMatcher can align repeated unchanged lines at a different position,
+    # making a change in the middle look like an insertion at the start and a
+    # deletion at the end. Anchor the common edges before diffing the middle.
+    prefix = 0
+    while (
+        prefix < min(len(original_lines), len(modified_lines))
+        and original_lines[prefix] == modified_lines[prefix]
+    ):
+        prefix += 1
+
+    suffix = 0
+    while (
+        suffix < min(len(original_lines), len(modified_lines)) - prefix
+        and original_lines[-suffix - 1] == modified_lines[-suffix - 1]
+    ):
+        suffix += 1
+
+    original_middle_end = len(original_lines) - suffix
+    modified_middle_end = len(modified_lines) - suffix
+    # The first formatting pass re-indents the bodies of the statements it
+    # formats, so the same line can have a different indentation in the two
+    # sources. Comparing the lines without indentation keeps them matched.
     matcher = difflib.SequenceMatcher(
         None,
-        original_source.splitlines(keepends=True),
-        modified_source.splitlines(keepends=True),
+        [line.strip() for line in original_lines[prefix:original_middle_end]],
+        [line.strip() for line in modified_lines[prefix:modified_middle_end]],
     )
-    matching_blocks = matcher.get_matching_blocks()
+    matching_blocks = []
+    if prefix:
+        matching_blocks.append(difflib.Match(0, 0, prefix))
+    matching_blocks.extend(
+        difflib.Match(block.a + prefix, block.b + prefix, block.size)
+        for block in matcher.get_matching_blocks()
+        if block.size
+    )
+    if suffix:
+        matching_blocks.append(
+            difflib.Match(original_middle_end, modified_middle_end, suffix)
+        )
+    matching_blocks.append(difflib.Match(len(original_lines), len(modified_lines), 0))
     lines_mappings: list[_LinesMapping] = []
     # matching_blocks is a sequence of "same block of code ranges", see
     # https://docs.python.org/3/library/difflib.html#difflib.SequenceMatcher.get_matching_blocks
@@ -615,7 +709,10 @@ def _calculate_lines_mappings(
                         original_end=block.a,
                         modified_start=1,
                         modified_end=block.b,
-                        is_changed_block=False,
+                        # The lines before the first matching block are not part of
+                        # any matching block, so this range is a changed block. A line
+                        # that only exists on one side has no counterpart to map onto.
+                        is_changed_block=True,
                     )
                 )
         else:

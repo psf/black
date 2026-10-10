@@ -12,7 +12,7 @@ from typing import Any, ClassVar, Final, Literal, TypeVar, Union
 from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
-from black.lines import Line, append_leaves
+from black.lines import Line, append_leaves, line_to_string
 from black.mode import Feature, Mode
 from black.nodes import (
     CLOSING_BRACKETS,
@@ -530,6 +530,8 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 string_leaf.type == token.STRING
                 and "\\\n" in string_leaf.value
                 and not has_triple_quotes(string_leaf.value)
+                # In a raw string, a backslash-newline is part of the value.
+                and "r" not in get_string_prefix(string_leaf.value).lower()
             ):
                 indices_to_transform.append(string_idx)
 
@@ -540,7 +542,6 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             )
 
         new_line = line.clone()
-        new_line.comments = line.comments.copy()
         append_leaves(new_line, line, LL)
 
         for string_idx in indices_to_transform:
@@ -1058,7 +1059,6 @@ class StringParenStripper(StringTransformer):
         LL = line.leaves
 
         new_line = line.clone()
-        new_line.comments = line.comments.copy()
 
         previous_idx = -1
         # We need to sort the indices, since string_idx and its matching
@@ -1074,9 +1074,8 @@ class StringParenStripper(StringTransformer):
                 LL[lpar_or_rpar_idx].remove()  # Remove lpar.
                 replace_child(LL[idx], string_leaf)
                 new_line.append(string_leaf)
-                # replace comments
-                old_comments = new_line.comments.pop(id(LL[idx]), [])
-                new_line.comments.setdefault(id(string_leaf), []).extend(old_comments)
+                for comment_leaf in line.comments_after(LL[idx]):
+                    new_line.append(comment_leaf, preformatted=True)
             else:
                 LL[lpar_or_rpar_idx].remove()  # This is a rpar.
 
@@ -1972,6 +1971,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         * The line is a return/yield statement, which returns/yields a string.
           OR
+        * The line is a function definition with a stringified return annotation.
+          OR
         * The line is part of a ternary expression (e.g. `x = y if cond else
           z`) such that the line starts with `else <string>`, where <string> is
           some string.
@@ -2030,6 +2031,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         string_idx = (
             self._return_match(LL)
+            or self._return_annotation_match(LL)
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
@@ -2043,6 +2045,34 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             string_idx = self._prefer_paren_wrap_match(LL)
 
         if string_idx is not None:
+            # If the string is implicitly concatenated with a string on another
+            # line (e.g. raw strings, which StringMerger leaves alone), wrapping
+            # it in parens on its own would produce invalid code.
+            next_sibling = LL[string_idx].next_sibling
+            if next_sibling is not None and next_sibling.type == token.STRING:
+                if not any(leaf is next_sibling for leaf in LL):
+                    return TErr(
+                        "Cannot wrap a string that is implicitly concatenated with a"
+                        " string on another line."
+                    )
+
+                # Wrapping would move the first string's comments to the LPAR.
+                if line.comments:
+                    return TErr(
+                        "Cannot wrap an implicit concatenation that has comments."
+                    )
+
+                # If the first string fits on the line, splitting at the
+                # concatenation is enough.
+                tail = "".join(str(leaf) for leaf in LL[string_idx + 1 :])
+                if str_width(line_to_string(line)) - str_width(tail) <= (
+                    self.line_length
+                ):
+                    return TErr(
+                        "The first string of the implicit concatenation fits on"
+                        " the line."
+                    )
+
             string_value = line.leaves[string_idx].value
             # If the string has neither spaces nor East Asian stops...
             if not any(
@@ -2085,6 +2115,33 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             # The next visible leaf MUST contain a string...
             if is_valid_index(idx) and LL[idx].type == token.STRING:
                 return idx
+
+        return None
+
+    @staticmethod
+    def _return_annotation_match(LL: list[Leaf]) -> int | None:
+        """Return the string index for a stringified return annotation."""
+        is_valid_index = is_valid_index_factory(LL)
+
+        for i, leaf in enumerate(LL):
+            if leaf.type != token.RARROW:
+                continue
+
+            string_idx = (
+                i + 2 if is_valid_index(i + 1) and is_empty_lpar(LL[i + 1]) else i + 1
+            )
+            if not is_valid_index(string_idx) or LL[string_idx].type != token.STRING:
+                return None
+
+            idx = StringParser().parse(LL, string_idx)
+            if (
+                is_valid_index(idx)
+                and LL[idx].type == token.COLON
+                and idx == len(LL) - 1
+            ):
+                return string_idx
+
+            return None
 
         return None
 
@@ -2178,9 +2235,15 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
+                        # Skip any strings implicitly concatenated with it.
+                        while (
+                            is_valid_index(idx + 1) and LL[idx + 1].type == token.STRING
+                        ):
+                            idx += 1
+
                         # Skip the string trailer, if one exists.
                         string_parser = StringParser()
-                        idx = string_parser.parse(LL, string_idx)
+                        idx = string_parser.parse(LL, idx)
 
                         # The next leaf MAY be a comma iff this line is a part
                         # of a function argument...
@@ -2222,9 +2285,15 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                     if is_valid_index(idx) and LL[idx].type == token.STRING:
                         string_idx = idx
 
+                        # Skip any strings implicitly concatenated with it.
+                        while (
+                            is_valid_index(idx + 1) and LL[idx + 1].type == token.STRING
+                        ):
+                            idx += 1
+
                         # Skip the string trailer, if one exists.
                         string_parser = StringParser()
-                        idx = string_parser.parse(LL, string_idx)
+                        idx = string_parser.parse(LL, idx)
 
                         # That string MAY be followed by a comma...
                         if is_valid_index(idx) and LL[idx].type == token.COMMA:
@@ -2279,6 +2348,13 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         ends_with_comma = False
         if LL[comma_idx].type == token.COMMA:
             ends_with_comma = True
+        return_annotation_arrow_idx = (
+            string_idx - 2 if is_empty_lpar(LL[string_idx - 1]) else string_idx - 1
+        )
+        ends_with_return_annotation = (
+            LL[return_annotation_arrow_idx].type == token.RARROW
+            and LL[-1].type == token.COLON
+        )
 
         leaves_to_steal_comments_from = [LL[string_idx]]
         if ends_with_comma:
@@ -2335,6 +2411,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             right_leaves = LL[string_idx + 1 :]
             if ends_with_comma:
                 right_leaves.pop()
+            if ends_with_return_annotation:
+                right_leaves.pop()
 
             if old_parens_exist:
                 assert right_leaves and right_leaves[-1].type == token.RPAR, (
@@ -2382,6 +2460,12 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             comma_leaf = Leaf(token.COMMA, ",")
             replace_child(LL[comma_idx], comma_leaf)
             last_line.append(comma_leaf)
+        if ends_with_return_annotation:
+            append_leaves(last_line, line, [LL[-1]])
+
+        if old_rpar_leaf is not None:
+            for comment_leaf in line.comments_after(old_rpar_leaf):
+                last_line.append(comment_leaf, preformatted=True)
 
         yield Ok(last_line)
 

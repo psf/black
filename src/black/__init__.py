@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import platform
 import re
 import sys
@@ -26,8 +27,9 @@ from mypy_extensions import mypyc_attr
 from pathspec import GitIgnoreSpec
 from pathspec.patterns.gitignore import GitIgnorePatternError
 
+import black.cache as cache_module
 from _black_version import version as __version__
-from black.cache import Cache
+from black.cache import Cache, get_cache_dir
 from black.comments import normalize_fmt_off
 from black.const import (
     DEFAULT_EXCLUDES,
@@ -78,6 +80,7 @@ from black.ranges import (
     sanitized_lines,
 )
 from black.report import Changed, NothingChanged, Report
+from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
@@ -543,11 +546,16 @@ def validate_regex(
     help="Read configuration options from a configuration file.",
 )
 @click.option(
+    "--cache-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Store the cache in this directory. Takes precedence over BLACK_CACHE_DIR.",
+)
+@click.option(
     "--no-cache",
     is_flag=True,
     help=(
         "Skip reading and writing the cache, forcing Black to reformat all"
-        " included files."
+        " included files. Overrides --cache-dir."
     ),
 )
 @click.pass_context
@@ -581,6 +589,7 @@ def main(
     workers: int | None,
     src: tuple[str, ...],
     config: str | None,
+    cache_dir: Path | None,
     no_cache: bool,
 ) -> None:
     """The uncompromising code formatter."""
@@ -617,6 +626,20 @@ def main(
         find_project_root(src, stdin_filename) if code is None else (None, None)
     )
     ctx.obj["root"] = root
+
+    if (
+        code is None
+        and root is None
+        and not quiet
+        and ctx.get_parameter_source("config") != ParameterSource.COMMANDLINE
+    ):
+        err(
+            "No project root could be identified: the given sources share no"
+            " common parent directory (for example, they are on different"
+            " drives). Black will use its default configuration. Pass"
+            " --config to select a configuration file or --quiet to silence"
+            " this warning."
+        )
 
     if verbose:
         if root:
@@ -661,6 +684,29 @@ def main(
         ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
+    if cache_dir is None:
+        cache_dir = cache_module.CACHE_DIR
+    else:
+        if (
+            not cache_dir.is_absolute()
+            and ctx.get_parameter_source("cache_dir") == ParameterSource.DEFAULT_MAP
+            and config is not None
+        ):
+            cache_dir = Path(config).resolve().parent / cache_dir
+        cache_dir = get_cache_dir(cache_dir)
+    if not no_cache:
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            no_cache = True
+            if verbose:
+                out(
+                    f"Unable to use cache directory `{cache_dir}`: {e}. "
+                    "Disabling the cache.",
+                    fg="blue",
+                )
+    if not no_cache:
+        pygram.initialize(cache_dir)
     if target_version:
         versions = set(target_version)
     else:
@@ -717,7 +763,6 @@ def main(
             lines=lines,
         )
     else:
-        assert root is not None  # root is only None if code is not None
         try:
             sources = get_sources(
                 root=root,
@@ -739,6 +784,8 @@ def main(
                 out("No Python files are present to be formatted. Nothing to do 😴")
             if "-" in src:
                 sys.stdout.write(sys.stdin.read())
+            if "GITHUB_OUTPUT" in os.environ:
+                report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
             ctx.exit(0)
 
         if len(sources) == 1:
@@ -750,6 +797,7 @@ def main(
                 report=report,
                 lines=lines,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
         else:
             from black.concurrency import reformat_many
@@ -765,6 +813,7 @@ def main(
                 report=report,
                 workers=workers,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
 
     if verbose or not quiet:
@@ -773,12 +822,14 @@ def main(
         out(error_msg if report.return_code else "All done! ✨ 🍰 ✨")
         if code is None:
             click.echo(str(report), err=True)
+    if "GITHUB_OUTPUT" in os.environ:
+        report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
     ctx.exit(report.return_code)
 
 
 def get_sources(
     *,
-    root: Path,
+    root: Path | None,
     src: tuple[str, ...],
     quiet: bool,
     verbose: bool,
@@ -792,7 +843,9 @@ def get_sources(
     """Compute the set of files to be formatted."""
     sources: set[Path] = set()
 
-    assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
+    assert (
+        root is None or root.is_absolute()
+    ), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
     gitignore: dict[Path, GitIgnoreSpec] | None = None
@@ -812,14 +865,22 @@ def get_sources(
             path = Path(s)
             is_stdin = False
 
+        # When the sources share no common parent, there is no project root.
+        # Fall back to a per-source root so that exclusion, symlink, and
+        # gitignore handling still work for each source independently.
+        if root is None:
+            src_root = path.resolve() if path.is_dir() else path.resolve().parent
+        else:
+            src_root = root
+
         # Compare the logic here to the logic in `gen_python_files`.
         if is_stdin or path.is_file():
-            if resolves_outside_root_or_cannot_stat(path, root, report):
+            if resolves_outside_root_or_cannot_stat(path, src_root, report):
                 if verbose:
                     out(f'Skipping invalid source: "{path}"', fg="red")
                 continue
 
-            root_relative_path = best_effort_relative_path(path, root).as_posix()
+            root_relative_path = best_effort_relative_path(path, src_root).as_posix()
             root_relative_path = "/" + root_relative_path
 
             # Hard-exclude any files that matches the `--force-exclude` regex.
@@ -841,19 +902,19 @@ def get_sources(
                 out(f'Found input source: "{path}"', fg="blue")
             sources.add(path)
         elif path.is_dir():
-            path = root / (path.resolve().relative_to(root))
+            path = src_root / (path.resolve().relative_to(src_root))
             if verbose:
                 out(f'Found input source directory: "{path}"', fg="blue")
 
             if using_default_exclude:
                 gitignore = {
-                    root: root_gitignore,
+                    src_root: root_gitignore,
                     path: get_gitignore(path),
                 }
             sources.update(
                 gen_python_files(
                     path.iterdir(),
-                    root,
+                    src_root,
                     include,
                     exclude,
                     extend_exclude,
@@ -916,6 +977,7 @@ def reformat_one(
     *,
     lines: Collection[tuple[int, int]] = (),
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -945,20 +1007,32 @@ def reformat_one(
             ):
                 changed = Changed.YES
         else:
-            cache = None if no_cache else Cache.read(mode)
-            if cache is not None and write_back not in (
-                WriteBack.DIFF,
-                WriteBack.COLOR_DIFF,
-            ):
+            if no_cache:
+                cache = None
+            elif cache_dir is None:
+                cache = Cache.read(mode)
+            else:
+                cache = Cache.read(mode, cache_dir)
+            if cache is not None:
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
-            if cache is not None and (
-                (write_back is WriteBack.YES and changed is not Changed.CACHED)
-                or (write_back is WriteBack.CHECK and changed is Changed.NO)
+            can_cache_unmodified = (
+                write_back in (WriteBack.CHECK, WriteBack.DIFF, WriteBack.COLOR_DIFF)
+                and changed is Changed.NO
+            )
+            # Formatting only some lines doesn't make the whole file formatted, and
+            # the cache key doesn't include the line ranges, so don't record it.
+            if (
+                cache is not None
+                and not lines
+                and (
+                    (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                    or can_cache_unmodified
+                )
             ):
                 cache.write([src])
         report.done(src, changed)
@@ -1004,8 +1078,13 @@ def format_file_in_place(
         raise ValueError(
             f"File '{src}' cannot be parsed as valid Jupyter notebook."
         ) from None
-    src_contents = header.decode(encoding) + src_contents
-    dst_contents = header.decode(encoding) + dst_contents
+    header_str = header.decode(encoding)
+    if newline != "\n" and header_str.endswith(newline):
+        # The contents are written with `newline` translation, which would turn the
+        # header's original line ending into e.g. "\r\r\n".
+        header_str = header_str[: -len(newline)] + "\n"
+    src_contents = header_str + src_contents
+    dst_contents = header_str + dst_contents
 
     if write_back == WriteBack.YES:
         with open(src, "w", encoding=encoding, newline=newline) as f:
@@ -1288,7 +1367,36 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
-        dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
+            if not lines:
+                # None of the requested lines survived the first pass, so there is
+                # nothing left to format. Passing the empty `lines` to the second
+                # pass would format the whole file instead.
+                return dst_contents
+        try:
+            dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
+        except InvalidInput as exc:
+            # This pass parses Black's own output, so failing to parse it means
+            # Black produced the invalid code, not the user. Reported as an
+            # internal error rather than as a syntax error in the user's file,
+            # keeping the parse location, which points into Black's output.
+            log = dump_to_file(dst_contents)
+            exc.context = (
+                f"INTERNAL ERROR: {_black_info()} produced invalid code:\n"
+                f"{exc.context or 'cannot parse'}"
+            )
+            exc.details = (
+                f"{exc.details or ''}\n"
+                "Please report a bug on https://github.com/psf/black/issues.  "
+                f"This invalid output might be helpful: {log}"
+            )
+            exc.args = (
+                f"{exc.context}: {exc.lineno}:{exc.column}{exc.details}",
+                exc.lineno,
+                exc.column,
+                exc.context,
+                exc.details,
+            )
+            raise
     if lines:
         dst_contents = _restore_unselected_trailing_blank_lines(
             src_contents, dst_contents, lines
@@ -1378,7 +1486,41 @@ def _format_str_once(
     if not dst_contents:
         if "\n" in normalized_contents:
             return newline_type
-    return "".join(dst_contents).replace("\n", newline_type)
+    dst = "".join(dst_contents)
+    if not mode.is_ipynb:
+        dst = _keep_encoding_declaration_ignored(normalized_contents, dst)
+    return dst.replace("\n", newline_type)
+
+
+def _declared_encoding(contents: str) -> str | None:
+    """Return the encoding Python would decode `contents` with.
+
+    Only an encoding declaration on the first two lines counts (PEP 263). Returns
+    None if the declared encoding is invalid.
+    """
+    first_two_lines = "\n".join(contents.split("\n", 2)[:2])
+    try:
+        encoding, _ = tokenize.detect_encoding(
+            io.BytesIO(first_two_lines.encode("utf-8")).readline
+        )
+    except SyntaxError:
+        return None
+    return encoding
+
+
+def _keep_encoding_declaration_ignored(src_contents: str, dst_contents: str) -> str:
+    """Retain up to two blank lines so an ignored encoding declaration stays ignored.
+
+    Python ignores an encoding declaration below the second line. Removing the
+    blank lines at the start of the file can move one onto the first two lines,
+    where it takes effect and changes how the file is decoded.
+    """
+    src_encoding = _declared_encoding(src_contents)
+    for blank_lines in range(3):
+        retained = "\n" * blank_lines + dst_contents
+        if _declared_encoding(retained) == src_encoding:
+            return retained
+    return dst_contents
 
 
 def decode_bytes(
