@@ -40,6 +40,9 @@
   under `--preview` (#5442)
 - Fix `wrap_long_dict_values_in_parens` dropping the parentheses around a right-hand
   side that contains a dictionary, leaving a line over the length limit (#5492)
+- Fix the unstable `string_processing` feature adding a space after `*` or `**` in a PEP
+  695 type parameter (`* Ts = ...`) when it splits a string in the parameter's default
+  (#5504)
 - Avoid unnecessary line splits of trailers (such as indexing/subscripts) when an
   earlier bracket split exceeds the line length only due to a trailing comment (#5498)
 
@@ -51,6 +54,9 @@
 - Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
   which made a later full `black --check` pass and `black` skip the unformatted lines
   (#5476)
+- Respect a `.gitignore` that starts with a UTF-8 byte order mark. The mark became part
+  of the first pattern, so that pattern never matched and Black formatted files that git
+  ignores (#5497)
 
 ### Packaging
 
