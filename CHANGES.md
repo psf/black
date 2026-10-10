@@ -5,15 +5,14 @@
 ### Highlights
 
 This release fixes a security issue in Black's bundled GitHub Action. Repositories that
-use the action are encouraged to update to the latest version of Black immediately.
-This update is received automatically when using `psf/black@stable`, and is independent
-of the version of Black installed by the action.
+use the action are encouraged to update to the latest version of Black immediately. This
+update is received automatically when using `psf/black@stable`, and is independent of
+the version of Black installed by the action.
 
 When the GitHub Action reads version specifiers from `tool.black.required-version`, it
-now only accepts released versions of Black, as it already did for `black`
-requirements in dependency lists. Other values, such as URL references, are now
-rejected. This issue has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is
-pending.
+now only accepts released versions of Black, as it already did for `black` requirements
+in dependency lists. Other values, such as URL references, are now rejected. This issue
+has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is pending.
 
 ### Stable style
 
