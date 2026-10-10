@@ -17,6 +17,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Format long binary operations between collection displays symmetrically when both
+  operands fit on their own delimiter-split line (#5259)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
