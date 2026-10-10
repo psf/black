@@ -15,7 +15,7 @@
 
 ### Preview style
 
-- Remove redundant parentheses around simple top-level expressions (#4231)
+- Remove redundant parentheses around simple top-level expressions (#5516)
 
 ### Configuration
 
