@@ -76,6 +76,33 @@ Currently, the following features are included in the preview style:
   indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
   line length limit only due to a trailing comment.
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+- `remove_redundant_top_level_parentheses`: Remove redundant parentheses around simple
+  top-level expressions. ([see below](labels/remove-redundant-top-level-parentheses))
+
+(labels/remove-redundant-top-level-parentheses)=
+
+### Remove parentheses around simple top-level expressions
+
+Redundant outer parentheses are removed from simple top-level expression statements
+(such as `(x)`, `(1)`, `(yield 42)`, `([])`, `({})`, `(a + b)`):
+
+```python
+# Before
+(x)
+(1)
+(yield 42)
+([])
+({})
+(a + b)
+
+# After (with --preview)
+x
+1
+yield 42
+[]
+{}
+a + b
+```
 
 (labels/keep-trailers-on-bracket-comment-overflow)=
 

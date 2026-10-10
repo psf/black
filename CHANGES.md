@@ -15,7 +15,7 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
+- Remove redundant parentheses around simple top-level expressions (#4231)
 
 ### Configuration
 
