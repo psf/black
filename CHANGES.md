@@ -49,6 +49,9 @@
 - Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
   which made a later full `black --check` pass and `black` skip the unformatted lines
   (#5476)
+- Respect a `.gitignore` that starts with a UTF-8 byte order mark. The mark became part
+  of the first pattern, so that pattern never matched and Black formatted files that git
+  ignores (#5497)
 
 ### Packaging
 
