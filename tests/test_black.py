@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ast
 import asyncio
 import inspect
 import io
@@ -9,6 +10,7 @@ import multiprocessing
 import os
 import pickle
 import re
+import subprocess
 import sys
 import textwrap
 import types
@@ -132,6 +134,54 @@ def invokeBlack(
         f"exception: {result.exception}"
     )
     assert result.exit_code == exit_code, msg
+
+
+def docstring_value(source: str) -> str:
+    # Not ast.get_docstring(): its default clean=True runs inspect.cleandoc,
+    # which trims exactly the whitespace these tests are about.
+    node = ast.parse(source).body[0]
+    assert isinstance(node, ast.FunctionDef)
+    expr = node.body[0]
+    assert isinstance(expr, ast.Expr)
+    assert isinstance(expr.value, ast.Constant)
+    return str(expr.value.value)
+
+
+def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
+    """Black must own the error when its own output fails to parse.
+
+    Reindenting to 4 spaces stops at a ``# fmt: off`` region, so the result can
+    mix indent widths and fail the forced second pass. That parse failure is
+    Black's, but it used to surface as ``cannot parse: <user file>:<line>``,
+    which is exactly what a genuine syntax error in the user's source looks
+    like.
+    """
+    source = tmp_path / "reindent.py"
+    source.write_text(
+        'if __name__ == "__main__":\n'
+        "  foo = 3\n"
+        "  # fmt: off\n"
+        "  bar = 1\n"
+        "  baz  =  2\n"
+        "  # fmt: on\n"
+        "  qux = 4\n",
+        encoding="utf8",
+    )
+    # the file itself is valid Python; only Black's own output is not
+    ast.parse(source.read_text(encoding="utf8"))
+
+    result = BlackRunner().invoke(
+        black.main, ["--config", str(THIS_DIR / "empty.toml"), str(source)]
+    )
+
+    assert result.exit_code == 123
+    # the internal error must come first, so the parse location that follows is
+    # read as part of it rather than as a syntax error in the user's file
+    assert result.stderr.startswith("error: INTERNAL ERROR:")
+    assert "produced invalid code" in result.stderr
+    assert "https://github.com/psf/black/issues" in result.stderr
+    # the parse location is kept, it points into Black's output
+    assert f"cannot parse: {source}:" in result.stderr
 
 
 def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
@@ -450,6 +500,24 @@ class BlackTestCase(BlackBaseTestCase):
             ff(test_file, mode=mode, write_back=black.WriteBack.YES)
             self.assertEqual(test_file.read_bytes(), expected)
 
+    def test_skip_source_first_line_with_crlf_newlines(self) -> None:
+        code = b"Header will be skipped\r\ni = [1,2,3]\r\nj = [1,2,3]\r\n"
+        expected = b"Header will be skipped\r\ni = [1, 2, 3]\r\nj = [1, 2, 3]\r\n"
+        mode = replace(DEFAULT_MODE, skip_source_first_line=True)
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "skip_header.py"
+            test_file.write_bytes(code)
+            ff(test_file, mode=mode, write_back=black.WriteBack.YES)
+            self.assertEqual(test_file.read_bytes(), expected)
+
+            test_file.write_bytes(code)
+            output = io.StringIO(newline="")
+            with patch("sys.stdout", output):
+                ff(test_file, mode=mode, write_back=black.WriteBack.DIFF)
+            actual = output.getvalue()
+            self.assertIn(" Header will be skipped\r\n-i = [1,2,3]\r\n", actual)
+            self.assertNotIn("\r\r\n", actual)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
@@ -742,6 +810,50 @@ class BlackTestCase(BlackBaseTestCase):
                 "2 files would be reformatted, 3 files would be left unchanged, 2"
                 " files would fail to reformat.",
             )
+
+    def test_report_write_github_outputs(self) -> None:
+        with TemporaryDirectory() as workspace:
+            output_file = Path(workspace) / "github_output"
+            report = Report()
+            report.done(Path("f1"), black.Changed.NO)
+            report.write_github_outputs(output_file)
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=false\n", content)
+            self.assertIn("change_count=0\n", content)
+            self.assertIn("same_count=1\n", content)
+            self.assertIn("failure_count=0\n", content)
+
+            output_file.unlink()
+            report_quiet = Report(quiet=True)
+            report_quiet.done(Path("f2"), black.Changed.YES)
+            report_quiet.write_github_outputs(output_file)
+            content_quiet = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=true\n", content_quiet)
+            self.assertIn("change_count=1\n", content_quiet)
+
+    def test_github_output_in_cli(self) -> None:
+        with TemporaryDirectory() as workspace:
+            output_file = Path(workspace) / "github_output"
+            src = Path(workspace) / "test.py"
+            src.write_text("x = 1\n", encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_file)}):
+                self.invokeBlack([str(src)])
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=false\n", content)
+
+            output_file.unlink()
+            src.write_text("x =   1\n", encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_file)}):
+                self.invokeBlack([str(src), "--quiet"])
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=true\n", content)
+
+            output_file.unlink()
+            src.write_text("x =   1\n", encoding="utf-8")
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_file)}):
+                self.invokeBlack([str(src), "--check"], exit_code=1)
+            content = output_file.read_text(encoding="utf-8")
+            self.assertIn("is_formatted=true\n", content)
 
     def test_report_normal(self) -> None:
         report = black.Report()
@@ -1222,9 +1334,9 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(path), "--pyi"])
             actual = path.read_text(encoding="utf-8")
             # verify cache with --pyi is separate
-            pyi_cache = black.Cache.read(pyi_mode)
+            pyi_cache = black.Cache.read(pyi_mode, workspace)
             assert not pyi_cache.is_changed(path)
-            normal_cache = black.Cache.read(DEFAULT_MODE)
+            normal_cache = black.Cache.read(DEFAULT_MODE, workspace)
             assert normal_cache.is_changed(path)
         self.assertFormatEqual(expected, actual)
         black.assert_equivalent(contents, actual)
@@ -1247,8 +1359,8 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --pyi is separate
-            pyi_cache = black.Cache.read(pyi_mode)
-            normal_cache = black.Cache.read(reg_mode)
+            pyi_cache = black.Cache.read(pyi_mode, workspace)
+            normal_cache = black.Cache.read(reg_mode, workspace)
             for path in paths:
                 assert not pyi_cache.is_changed(path)
                 assert normal_cache.is_changed(path)
@@ -1272,9 +1384,9 @@ class BlackTestCase(BlackBaseTestCase):
             self.invokeBlack([str(path), *PY36_ARGS])
             actual = path.read_text(encoding="utf-8")
             # verify cache with --target-version is separate
-            py36_cache = black.Cache.read(py36_mode)
+            py36_cache = black.Cache.read(py36_mode, workspace)
             assert not py36_cache.is_changed(path)
-            normal_cache = black.Cache.read(reg_mode)
+            normal_cache = black.Cache.read(reg_mode, workspace)
             assert normal_cache.is_changed(path)
         self.assertEqual(actual, expected)
 
@@ -1295,8 +1407,8 @@ class BlackTestCase(BlackBaseTestCase):
                 actual = path.read_text(encoding="utf-8")
                 self.assertEqual(actual, expected)
             # verify cache with --target-version is separate
-            pyi_cache = black.Cache.read(py36_mode)
-            normal_cache = black.Cache.read(reg_mode)
+            pyi_cache = black.Cache.read(py36_mode, workspace)
+            normal_cache = black.Cache.read(reg_mode, workspace)
             for path in paths:
                 assert not pyi_cache.is_changed(path)
                 assert normal_cache.is_changed(path)
@@ -1472,6 +1584,73 @@ class BlackTestCase(BlackBaseTestCase):
                 assert (
                     output.getvalue() == expected
                 ), f"incorrect formatting of {repr(content)}"
+
+    def test_format_stdin_to_stdout_without_buffer(self) -> None:
+        # Text streams aren't required to expose `.buffer` (e.g. ipykernel's
+        # OutStream in Jupyter), see #2516.
+        src = "print ( 'hello' )"
+        for write_back, expected in (
+            (black.WriteBack.YES, 'print("hello")\n'),
+            (black.WriteBack.CHECK, ""),
+            (black.WriteBack.NO, ""),
+        ):
+            output = io.StringIO()
+            assert not hasattr(output, "buffer")
+            with patch("sys.stdout", output):
+                changed = black.format_stdin_to_stdout(
+                    fast=True, content=src, write_back=write_back, mode=DEFAULT_MODE
+                )
+            self.assertTrue(changed)
+            self.assertEqual(output.getvalue(), expected)
+            self.assertFalse(output.closed)
+
+        for write_back in (black.WriteBack.DIFF, black.WriteBack.COLOR_DIFF):
+            output = io.StringIO()
+            with patch("sys.stdout", output):
+                black.format_stdin_to_stdout(
+                    fast=True, content=src, write_back=write_back, mode=DEFAULT_MODE
+                )
+            actual = unstyle(output.getvalue())
+            self.assertIn("-print ( 'hello' )\n", actual)
+            self.assertIn('+print("hello")\n', actual)
+            self.assertFalse(output.closed)
+
+    def test_reformat_code_without_stdout_buffer(self) -> None:
+        output = io.StringIO()
+        report = MagicMock()
+        with patch("sys.stdout", output):
+            black.reformat_code(
+                "x = ( 1 )",
+                fast=True,
+                write_back=black.WriteBack.YES,
+                mode=DEFAULT_MODE,
+                report=report,
+            )
+        self.assertEqual(output.getvalue(), "x = 1\n")
+        report.failed.assert_not_called()
+
+    def test_format_file_in_place_diff_without_stdout_buffer(self) -> None:
+        for nl in ("\n", "\r\n"):
+            with TemporaryDirectory() as workspace:
+                test_file = Path(workspace) / "test.py"
+                test_file.write_bytes(f"x = ( 1 ){nl}".encode())
+                output = io.StringIO(newline="")
+                with patch("sys.stdout", output):
+                    changed = black.format_file_in_place(
+                        test_file,
+                        fast=True,
+                        mode=DEFAULT_MODE,
+                        write_back=black.WriteBack.DIFF,
+                    )
+                self.assertTrue(changed)
+                actual = output.getvalue()
+                self.assertIn(f"-x = ( 1 ){nl}", actual)
+                self.assertIn(f"+x = 1{nl}", actual)
+                if nl == "\n":
+                    self.assertNotIn("\r\n", actual)
+                self.assertFalse(output.closed)
+                # The file itself is left untouched.
+                self.assertEqual(test_file.read_bytes(), f"x = ( 1 ){nl}".encode())
 
     def test_cli_unstable(self) -> None:
         self.invokeBlack(["--unstable", "-c", "0"], exit_code=0)
@@ -1858,6 +2037,98 @@ class BlackTestCase(BlackBaseTestCase):
                 (src_dir.resolve(), "pyproject.toml"),
             )
 
+    @pytest.mark.incompatible_with_mypyc
+    def test_find_project_root_no_common_parent(self) -> None:
+        # Absolute vs relative paths share no parents on any platform. That is
+        # the same empty-intersection situation as C:\... and D:\... on Windows.
+        cases: list[tuple[str, ...]] = [("/work/app/a.py", "tmp/b.py")]
+        if sys.platform == "win32":
+            cases.append((r"C:\work\app\a.py", r"D:\tmp\b.py"))
+
+        for srcs in cases:
+            parents = [set(Path(src).parents) for src in srcs]
+            self.assertFalse(set.intersection(*parents))
+            with self.subTest(srcs=srcs):
+                self.assertEqual(
+                    black.files._find_project_root_cached(srcs), (None, None)
+                )
+
+        if sys.platform == "win32":
+            self.assertEqual(
+                black.find_project_root((r"C:\work\app\a.py", r"D:\tmp\b.py")),
+                (None, None),
+            )
+
+    @pytest.mark.incompatible_with_mypyc
+    @patch("black.files.find_user_pyproject_toml")
+    def test_find_pyproject_toml_no_common_parent(
+        self, find_user_pyproject_toml: MagicMock
+    ) -> None:
+        if system() != "Windows":
+            return
+
+        with TemporaryDirectory() as workspace:
+            user_config = Path(workspace) / "user-pyproject.toml"
+            user_config.write_text("[tool.black]", encoding="utf-8")
+            find_user_pyproject_toml.return_value = user_config
+
+            # Sources on different drives share no project root, so the
+            # project-level config is skipped and the user-level config
+            # applies, same as when the project root has no pyproject.toml.
+            result = black.files.find_pyproject_toml(
+                (r"C:\work\app\a.py", r"D:\tmp\b.py")
+            )
+            self.assertEqual(result, str(user_config))
+
+    @pytest.mark.incompatible_with_mypyc
+    @patch("black.files.find_user_pyproject_toml")
+    @patch("black.files.find_project_root")
+    @patch("black.find_project_root")
+    def test_no_common_parent_warns_and_formats(
+        self,
+        find_project_root: MagicMock,
+        files_find_project_root: MagicMock,
+        find_user_pyproject_toml: MagicMock,
+    ) -> None:
+        find_project_root.return_value = (None, None)
+        files_find_project_root.return_value = (None, None)
+        find_user_pyproject_toml.return_value = Path("does-not-exist")
+
+        runner = BlackRunner()
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            project1 = root / "project1"
+            project2 = root / "project2"
+            project1.mkdir()
+            project2.mkdir()
+            (project1 / "a.py").write_text("x=1\n", encoding="utf-8")
+            (project2 / "b.py").write_text("y=2\n", encoding="utf-8")
+
+            def invoke(args: list[str]) -> tuple[int, str]:
+                for path in (project1 / "a.py", project2 / "b.py"):
+                    path.write_text("x=1\n", encoding="utf-8")
+                result = runner.invoke(
+                    black.main,
+                    [str(project1), str(project2), *args],
+                    catch_exceptions=False,
+                )
+                return result.exit_code, result.output
+
+            exit_code, output = invoke([])
+            assert exit_code == 0, output
+            assert "No project root could be identified" in output
+            assert "reformatted" in output
+            assert "a.py" in output and "b.py" in output
+
+            exit_code, output = invoke(["--quiet"])
+            assert exit_code == 0, output
+            assert "No project root could be identified" not in output
+
+            exit_code, output = invoke(["--config", str(THIS_DIR / "empty.toml")])
+            assert exit_code == 0, output
+            assert "No project root could be identified" not in output
+            assert "reformatted" in output
+
     @patch(
         "black.files.find_user_pyproject_toml",
     )
@@ -2169,6 +2440,85 @@ class BlackTestCase(BlackBaseTestCase):
             """)
             assert expected == formatted
 
+    def test_line_ranges_do_not_format_later_identical_lines(self) -> None:
+        original_line = 'print ( "format me" )\n'
+        formatted_line = 'print("format me")\n'
+        source = original_line * 5
+        expected = original_line + formatted_line * 2 + original_line * 2
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(2, 3)]) == expected
+        )
+
+    def test_disjoint_line_ranges_leave_repeated_middle_line_unchanged(self) -> None:
+        original_line = 'print ( "format me" )\n'
+        formatted_line = 'print("format me")\n'
+        source = original_line * 3
+        expected = formatted_line + original_line + formatted_line
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 1), (3, 3)])
+            == expected
+        )
+
+    def test_line_ranges_at_start_of_file_stay_inside_joined_statement(self) -> None:
+        # Regression for https://github.com/psf/black/issues/4052: the lines that
+        # are joined away in the first pass must not select the lines below.
+        source = (
+            "def restrict_to_this_line(arg1,\n"
+            "  arg2,\n"
+            "  arg3):\n"
+            '  print  ( "This should not be formatted." )\n'
+            '  print  ( "This should not be formatted." )\n'
+        )
+
+        expected = (
+            "def restrict_to_this_line(arg1, arg2, arg3):\n"
+            '    print  ( "This should not be formatted." )\n'
+            '    print  ( "This should not be formatted." )\n'
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
+    def test_line_ranges_removed_at_start_of_file_stay_unformatted(self) -> None:
+        # Regression for https://github.com/psf/black/issues/4052: the leading lines
+        # that the first pass removes must not make the second pass format the file.
+        source = "\n\nx  =  1\n"
+        expected = "x  =  1\n"
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(2, 2)]) == expected
+        )
+
+    def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
+        # This regression stays inline because it requires literal trailing spaces,
+        # which would fail `git diff --check` in a data case file.
+        source = (
+            "   #  format whitespace   \n"
+            'print( "format me" )   \n'
+            "      \n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        expected = (
+            "#  format whitespace\n"
+            'print("format me")\n'
+            "\n"
+            "\n"
+            "   #  don't format whitespace   \n"
+            'print("don\'t format me"  )     \n'
+            "      \n"
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
     def test_line_ranges_with_multiple_sources(self) -> None:
         with TemporaryDirectory() as workspace:
             test1_file = Path(workspace) / "test1.py"
@@ -2249,6 +2599,41 @@ class BlackTestCase(BlackBaseTestCase):
             == "class A: ...\r"
         )
 
+    def test_docstring_with_non_newline_line_break(self) -> None:
+        # These tests are here instead of in the normal cases because a form feed
+        # and the Unicode separators are invisible in a diff.
+        #
+        # Only \n, \r and \r\n end a line for the Python parser, so the other
+        # characters str.splitlines() breaks on are ordinary characters of a
+        # docstring's value. Reformatting must not turn one of them into a
+        # newline, which would change the value of the docstring.
+        for line_break in ("\x0c", "\x0b", "\x85", "\u2028", "\u2029"):
+            for source in (
+                f'def f():\n    """a{line_break}b\n    c"""\n',
+                f'def f():\n    """a\n    b{line_break}c"""\n',
+            ):
+                formatted = black.format_str(source, mode=black.FileMode())
+                # Black's own AST check normalizes docstring whitespace away, so
+                # the docstring's value has to be compared directly here.
+                before = docstring_value(source)
+                after = docstring_value(formatted)
+                assert before == after, f"{line_break!r}: {source!r} -> {formatted!r}"
+                assert black.format_str(formatted, mode=black.FileMode()) == formatted
+
+    def test_docstring_still_splits_on_real_line_breaks(self) -> None:
+        # The counterpart to the test above: CR and CRLF *are* line breaks for
+        # the Python parser, so they must keep being treated as line endings.
+        # Without this, narrowing the split to LF alone passes the whole suite.
+        quotes = chr(34) * 3
+        for newline in ("\n", "\r\n", "\r"):
+            docstring = quotes + "a" + newline + "    b" + quotes
+            source = "def f():" + newline + "    " + docstring + newline
+            formatted = black.format_str(source, mode=black.FileMode())
+            value = docstring_value(formatted)
+            # Two docstring lines, not one: the break survived the round trip.
+            assert value.count("\n") == 1, f"{newline!r}: {value!r}"
+            assert formatted == black.format_str(formatted, mode=black.FileMode())
+
     def test_newline_type_detection(self) -> None:
         mode = Mode()
         newline_types = ["A\n", "A\r\n", "A\r"]
@@ -2282,6 +2667,71 @@ class BlackTestCase(BlackBaseTestCase):
                 "Failed to properly detect encoding on second line",
             )
 
+    def test_ignored_encoding_declaration_stays_ignored(self) -> None:
+        # Python ignores an encoding declaration below the second line. Removing
+        # all the blank lines before it would move it onto the first two lines
+        # and change how the file is decoded, so up to two lines are retained.
+        for source, expected in (
+            (
+                "\n\n# -*- coding: latin-1 -*-\nx  =  1\n",
+                "\n\n# -*- coding: latin-1 -*-\nx = 1\n",
+            ),
+            (
+                "\n\n\n\n# -*- coding: latin-1 -*-\nx  =  1\n",
+                "\n\n# -*- coding: latin-1 -*-\nx = 1\n",
+            ),
+            (
+                "\n\n# comment\n# vim: set fileencoding=cp1252 :\nx  =  1\n",
+                "\n# comment\n# vim: set fileencoding=cp1252 :\nx = 1\n",
+            ),
+            (
+                "\n\n# coding: unknown-encoding\nx  =  1\n",
+                "\n\n# coding: unknown-encoding\nx = 1\n",
+            ),
+        ):
+            self.assertEqual(
+                black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
+                expected,
+            )
+
+    def test_ignored_encoding_declaration_stays_ignored_in_file(self) -> None:
+        # The file is written with the encoding it was read with, so the value
+        # of non-ASCII text only stays the same if the declaration stays ignored.
+        for prefix in (b"", b"\xef\xbb\xbf"):
+            source = '\n\n# -*- coding: latin-1 -*-\nx  =  "\xe9"\n'.encode()
+            expected = '\n\n# -*- coding: latin-1 -*-\nx = "\xe9"\n'.encode()
+            with TemporaryDirectory() as workspace:
+                path = Path(workspace) / "encoding.py"
+                path.write_bytes(prefix + source)
+                self.assertTrue(
+                    black.format_file_in_place(
+                        path,
+                        fast=False,
+                        mode=DEFAULT_MODE,
+                        write_back=black.WriteBack.YES,
+                    )
+                )
+                self.assertEqual(path.read_bytes(), prefix + expected)
+
+    def test_encoding_declaration_moved_without_effect(self) -> None:
+        # Leading blank lines are still removed when moving the declaration
+        # doesn't change how Python decodes the file.
+        for source, expected in (
+            (
+                "\n\n# -*- coding: utf-8 -*-\nx  =  1\n",
+                "# -*- coding: utf-8 -*-\nx = 1\n",
+            ),
+            (
+                "\n# -*- coding: latin-1 -*-\nx  =  1\n",
+                "# -*- coding: latin-1 -*-\nx = 1\n",
+            ),
+            ("\n\nx  =  1\n", "x = 1\n"),
+        ):
+            self.assertEqual(
+                black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
+                expected,
+            )
+
 
 class TestCaching:
     def test_get_cache_dir(
@@ -2311,6 +2761,131 @@ class TestCaching:
         monkeypatch.setenv("BLACK_CACHE_DIR", str(workspace2))
         assert get_cache_dir().parent == workspace2
 
+        # An explicit directory takes precedence over BLACK_CACHE_DIR.
+        workspace3 = tmp_path / "ws3"
+        assert get_cache_dir(workspace3).parent == workspace3
+
+    @pytest.mark.parametrize("multiple_files", [False, True])
+    def test_cache_dir_option(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        multiple_files: bool,
+    ) -> None:
+        env_cache_dir = tmp_path / "env-cache"
+        cli_cache_dir = tmp_path / "cli-cache"
+        source_dir = tmp_path / "src"
+        source_dir.mkdir()
+        sources = [source_dir / "one.py"]
+        if multiple_files:
+            sources.append(source_dir / "two.py")
+        for source in sources:
+            source.write_text("print('hello')", encoding="utf-8")
+
+        monkeypatch.setenv("BLACK_CACHE_DIR", str(env_cache_dir))
+        target = source_dir if multiple_files else sources[0]
+        with patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor):
+            invokeBlack([str(target), "--cache-dir", str(cli_cache_dir)])
+
+        cli_cache_file = get_cache_file(DEFAULT_MODE, get_cache_dir(cli_cache_dir))
+        env_cache_file = get_cache_file(DEFAULT_MODE, get_cache_dir())
+        assert cli_cache_file.exists()
+        assert any(cli_cache_file.parent.glob("Grammar*.pickle"))
+        assert any(cli_cache_file.parent.glob("PatternGrammar*.pickle"))
+        assert not env_cache_file.exists()
+
+    def test_cache_dir_option_does_not_write_grammar_cache_to_env(
+        self, tmp_path: Path
+    ) -> None:
+        env_cache_dir = tmp_path / "env-cache"
+        cli_cache_dir = tmp_path / "cli-cache"
+        env_version_dir = get_cache_dir(env_cache_dir)
+        env_version_dir.mkdir(parents=True)
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+        env = os.environ.copy()
+        env["BLACK_CACHE_DIR"] = str(env_cache_dir)
+
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "black",
+                str(source),
+                "--cache-dir",
+                str(cli_cache_dir),
+            ],
+            env=env,
+            check=True,
+            capture_output=True,
+        )
+
+        assert not list(env_version_dir.glob("*Grammar*.pickle"))
+        cli_version_dir = get_cache_dir(cli_cache_dir)
+        assert any(cli_version_dir.glob("Grammar*.pickle"))
+        assert any(cli_version_dir.glob("PatternGrammar*.pickle"))
+
+    def test_cache_dir_option_with_no_cache_does_not_create_directory(
+        self, tmp_path: Path
+    ) -> None:
+        cli_cache_dir = tmp_path / "cli-cache"
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+
+        invokeBlack([str(source), "--cache-dir", str(cli_cache_dir), "--no-cache"])
+
+        assert not cli_cache_dir.exists()
+
+    def test_relative_cache_dir_from_config_is_relative_to_config(
+        self, tmp_path: Path
+    ) -> None:
+        project = tmp_path / "project"
+        project.mkdir()
+        source = project / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+        config = project / "pyproject.toml"
+        config.write_text(
+            '[tool.black]\ncache-dir = ".black-cache"\n', encoding="utf-8"
+        )
+
+        with change_directory(tmp_path):
+            result = BlackRunner().invoke(black.main, [str(source)])
+
+        assert result.exit_code == 0
+        project_cache_dir = get_cache_dir(project / ".black-cache")
+        assert get_cache_file(DEFAULT_MODE, project_cache_dir).exists()
+        assert not (tmp_path / ".black-cache").exists()
+
+    def test_cache_dir_creation_error_disables_cache(self, tmp_path: Path) -> None:
+        blocked_parent = tmp_path / "blocked-parent"
+        blocked_parent.write_text("not a directory", encoding="utf-8")
+        blocked_cache_dir = blocked_parent / "cache"
+        source = tmp_path / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+
+        with (
+            patch.object(black.Cache, "read") as read_cache,
+            patch.object(black.pygram, "initialize") as initialize_grammar,
+        ):
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "--verbose",
+                    "--config",
+                    str(THIS_DIR / "empty.toml"),
+                    str(source),
+                    "--cache-dir",
+                    str(blocked_cache_dir),
+                ],
+                catch_exceptions=False,
+            )
+
+        assert result.exit_code == 0
+        assert "Unable to use cache directory" in result.stderr
+        assert "Disabling the cache" in result.stderr
+        read_cache.assert_not_called()
+        initialize_grammar.assert_not_called()
+
     def test_cache_file_length(self) -> None:
         cases = [
             DEFAULT_MODE,
@@ -2328,7 +2903,7 @@ class TestCaching:
             ),
         ]
         for case in cases:
-            cache_file = get_cache_file(case)
+            cache_file = get_cache_file(case, Path())
             # Some common file systems enforce a maximum path length
             # of 143 (issue #4174). We can't do anything if the directory
             # path is too long, but ensure the name of the cache file itself
@@ -2338,7 +2913,7 @@ class TestCaching:
     def test_cache_file_path_ignores_python_cell_magic_separators(self) -> None:
         mode = replace(DEFAULT_MODE, python_cell_magics={"../../../tmp/pwned"})
         with cache_dir() as workspace:
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             assert cache_file.parent == workspace
             assert "/" not in cache_file.name
             assert ".." not in cache_file.name
@@ -2347,28 +2922,28 @@ class TestCaching:
     def test_cache_broken_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             cache_file.write_text("this is not a pickle", encoding="utf-8")
-            assert black.Cache.read(mode).file_data == {}
+            assert black.Cache.read(mode, workspace).file_data == {}
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
             invokeBlack([str(src)])
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             assert not cache.is_changed(src)
 
     def test_cache_empty_file(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
-            cache_file = get_cache_file(mode)
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode, workspace)
             cache_file.touch()
-            assert black.Cache.read(mode).file_data == {}
+            assert black.Cache.read(mode, workspace).file_data == {}
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([src])
             invokeBlack([str(src)])
             assert src.read_text(encoding="utf-8") == "print('hello')"
@@ -2384,12 +2959,12 @@ class TestCaching:
             one.write_text("print('hello')", encoding="utf-8")
             two = (workspace / "two.py").resolve()
             two.write_text("print('hello')", encoding="utf-8")
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([one])
             invokeBlack([str(workspace)])
             assert one.read_text(encoding="utf-8") == "print('hello')"
             assert two.read_text(encoding="utf-8") == 'print("hello")\n'
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             assert not cache.is_changed(one)
             assert not cache.is_changed(two)
 
@@ -2408,7 +2983,7 @@ class TestCaching:
                 if color:
                     cmd.append("--color")
                 invokeBlack(cmd)
-                cache_file = get_cache_file(mode)
+                cache_file = get_cache_file(mode, workspace)
                 assert cache_file.exists() is False
                 read_cache.assert_called_once()
                 write_cache.assert_not_called()
@@ -2433,13 +3008,28 @@ class TestCaching:
 
     def test_no_cache_when_stdin(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
+        with cache_dir() as workspace:
             result = BlackRunner().invoke(
                 black.main, ["-"], input=BytesIO(b"print('hello')")
             )
             assert not result.exit_code
-            cache_file = get_cache_file(mode)
+            cache_file = get_cache_file(mode, workspace)
             assert not cache_file.exists()
+
+    @pytest.mark.parametrize("check", [False, True], ids=["format", "check"])
+    def test_no_cache_when_line_ranges(self, check: bool) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            src = (workspace / "test.py").resolve()
+            # Only the first line is formatted.
+            src.write_text("x = 1\ny  =  2\n", encoding="utf-8")
+            args = [str(src), "--line-ranges=1-1"]
+            if check:
+                args.append("--check")
+            invokeBlack(args)
+            assert black.Cache.read(mode).is_changed(src)
+            # A full check must still see the unformatted second line.
+            invokeBlack([str(src), "--check"], exit_code=1)
 
     def test_no_cache_flag_prevents_writes(self) -> None:
         """--no-cache should neither read nor write the cache"""
@@ -2447,7 +3037,7 @@ class TestCaching:
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.write_text("print('hello')", encoding="utf-8")
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             # Pre-populate cache so the file is considered cached
             cache.write([src])
             with (
@@ -2470,7 +3060,7 @@ class TestCaching:
             two.write_text("print('hello')", encoding="utf-8")
 
             # Pre-populate cache for `one` so it would normally be skipped
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([one])
 
             with (
@@ -2490,17 +3080,17 @@ class TestCaching:
 
     def test_read_cache_no_cachefile(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
-            assert black.Cache.read(mode).file_data == {}
+        with cache_dir() as workspace:
+            assert black.Cache.read(mode, workspace).file_data == {}
 
     def test_write_cache_read_cache(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:
             src = (workspace / "test.py").resolve()
             src.touch()
-            write_cache = black.Cache.read(mode)
+            write_cache = black.Cache.read(mode, workspace)
             write_cache.write([src])
-            read_cache = black.Cache.read(mode)
+            read_cache = black.Cache.read(mode, workspace)
             assert not read_cache.is_changed(src)
 
     @pytest.mark.incompatible_with_mypyc
@@ -2572,7 +3162,7 @@ class TestCaching:
         mode = DEFAULT_MODE
         with cache_dir(exists=False) as workspace:
             assert not workspace.exists()
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([])
             assert workspace.exists()
 
@@ -2588,14 +3178,14 @@ class TestCaching:
             clean = (workspace / "clean.py").resolve()
             clean.write_text('print("hello")\n', encoding="utf-8")
             invokeBlack([str(workspace)], exit_code=123)
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             assert cache.is_changed(failing)
             assert not cache.is_changed(clean)
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
-        with cache_dir():
-            cache = black.Cache.read(mode)
+        with cache_dir() as workspace:
+            cache = black.Cache.read(mode, workspace)
             with patch.object(Path, "open") as mock:
                 mock.side_effect = OSError
                 cache.write([])
@@ -2606,11 +3196,11 @@ class TestCaching:
         with cache_dir() as workspace:
             path = (workspace / "file.py").resolve()
             path.touch()
-            cache = black.Cache.read(mode)
+            cache = black.Cache.read(mode, workspace)
             cache.write([path])
-            one = black.Cache.read(mode)
+            one = black.Cache.read(mode, workspace)
             assert not one.is_changed(path)
-            two = black.Cache.read(short_mode)
+            two = black.Cache.read(short_mode, workspace)
             assert two.is_changed(path)
 
     def test_cache_key(self) -> None:
@@ -2642,6 +3232,20 @@ class TestCaching:
             modes = [replace(DEFAULT_MODE, **{field.name: value}) for value in values]
             keys = [mode.get_cache_key() for mode in modes]
             assert len(set(keys)) == len(modes)
+
+
+def symlink_or_skip(link: Path, target: Path | str) -> None:
+    """Create a symlink, or skip the test where the platform forbids one.
+
+    Windows refuses symlink creation unless the process is elevated or
+    Developer Mode is enabled, so these tests cannot run for an ordinary
+    Windows contributor. Same treatment as test_broken_symlink, which has
+    guarded this since GH #287.
+    """
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError) as e:
+        pytest.skip(f"Can't create symlinks: {e}")
 
 
 def assert_collected_sources(
@@ -2909,6 +3513,24 @@ class TestFileCollection:
         expected = [root / "z.py"]
         assert_collected_sources([root], expected, root=root)
 
+    def test_gitignore_with_utf8_bom(self) -> None:
+        # Git skips a UTF-8 byte order mark at the start of a .gitignore, so the first
+        # pattern still applies. Some Windows tools save files with one.
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve()
+            (root / ".gitignore").write_bytes("ignored/\n".encode("utf-8-sig"))
+            (root / "ignored").mkdir()
+            (root / "ignored" / "a.py").write_text("a = 1\n", encoding="utf-8")
+            (root / "kept.py").write_text("b = 2\n", encoding="utf-8")
+            nested = root / "nested"
+            nested.mkdir()
+            (nested / ".gitignore").write_bytes("skip.py\n".encode("utf-8-sig"))
+            (nested / "skip.py").write_text("c = 3\n", encoding="utf-8")
+            (nested / "kept.py").write_text("d = 4\n", encoding="utf-8")
+
+            expected = [root / "kept.py", nested / "kept.py"]
+            assert_collected_sources([root], expected, root=root)
+
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
         src = [path]
@@ -3039,7 +3661,7 @@ class TestFileCollection:
             actual = tmp / "actual"
             actual.mkdir()
             symlink = tmp / "symlink"
-            symlink.symlink_to(actual)
+            symlink_or_skip(symlink, actual)
 
             actual_proj = actual / "project"
             actual_proj.mkdir()
@@ -3063,7 +3685,7 @@ class TestFileCollection:
 
                 # a few tricky tests for force_exclude
                 flat_symlink = symlink_proj / "symlink_module.py"
-                flat_symlink.symlink_to(actual_proj / "module.py")
+                symlink_or_skip(flat_symlink, actual_proj / "module.py")
                 assert_collected_sources(
                     src=[flat_symlink],
                     root=symlink_proj.resolve(),
@@ -3074,7 +3696,7 @@ class TestFileCollection:
                 target = actual_proj / "target"
                 target.mkdir()
                 (target / "another.py").write_text("print('hello')", encoding="utf-8")
-                (symlink_proj / "nested").symlink_to(target)
+                symlink_or_skip(symlink_proj / "nested", target)
 
                 assert_collected_sources(
                     src=[symlink_proj / "nested" / "another.py"],
@@ -3087,6 +3709,65 @@ class TestFileCollection:
                     root=symlink_proj.resolve(),
                     force_exclude=r"target",
                     expected=[symlink_proj / "nested" / "another.py"],
+                )
+
+    def test_get_sources_force_exclude_with_parent_dir_path(self) -> None:
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve()
+            (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
+            (root / "src").mkdir()
+            (root / "generated").mkdir()
+            (root / "generated" / "gen.py").write_text("x = 1", encoding="utf-8")
+            (root / "other").mkdir()
+            (root / "other" / "ok.py").write_text("x = 1", encoding="utf-8")
+
+            srcs: list[str | Path] = [
+                "../generated/gen.py",
+                root / "src" / ".." / "generated" / "gen.py",
+            ]
+            with change_directory(root / "src"):
+                for src in srcs:
+                    assert_collected_sources(
+                        src=[src],
+                        root=root,
+                        force_exclude=r"^/generated/",
+                        expected=[],
+                    )
+                assert_collected_sources(
+                    src=["-"],
+                    root=root,
+                    force_exclude=r"^/generated/",
+                    stdin_filename="../generated/gen.py",
+                    expected=[],
+                )
+                assert_collected_sources(
+                    src=["../other/ok.py"],
+                    root=root,
+                    force_exclude=r"^/generated/",
+                    expected=["../other/ok.py"],
+                )
+
+    def test_get_sources_parent_dir_path_through_symlink(self) -> None:
+        # link/../../a/x/mod.py is root/a/x/mod.py on disk, but collapsing the
+        # ".." without following the symlink would leave the root.
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve() / "root"
+            (root / "a" / "b").mkdir(parents=True)
+            (root / "a" / "x").mkdir()
+            (root / "a" / "x" / "mod.py").write_text("x = 1", encoding="utf-8")
+            (root / "pyproject.toml").write_text("[tool.black]", encoding="utf-8")
+            symlink_or_skip(root / "link", root / "a" / "b")
+
+            # Windows removes ".." before following symlinks, so there the path
+            # points outside the root to a file that doesn't exist.
+            src = "link/../../a/x/mod.py"
+            expected = [] if sys.platform == "win32" else [src]
+            with change_directory(root):
+                assert_collected_sources(
+                    src=[src],
+                    root=root,
+                    force_exclude=r"^/generated/",
+                    expected=expected,
                 )
 
     def test_get_sources_with_stdin_symlink_outside_root(
@@ -3102,7 +3783,7 @@ class TestFileCollection:
             target = tmp / "outside_root" / "a.py"
             target.parent.mkdir()
             target.write_text("print('hello')", encoding="utf-8")
-            (root / "a.py").symlink_to(target)
+            symlink_or_skip(root / "a.py", target)
 
             stdin_filename = str(root / "a.py")
             assert_collected_sources(
@@ -3188,7 +3869,7 @@ class TestFileCollection:
             tmp = Path(tempdir).resolve()
             (tmp / "exclude").mkdir()
             (tmp / "exclude" / "a.py").write_text("print('hello')", encoding="utf-8")
-            (tmp / "symlink.py").symlink_to(tmp / "exclude" / "a.py")
+            symlink_or_skip(tmp / "symlink.py", tmp / "exclude" / "a.py")
 
             stdin_filename = str(tmp / "symlink.py")
             expected = [f"__BLACK_STDIN_FILENAME__{stdin_filename}"]
@@ -3235,6 +3916,19 @@ class TestDeFactoAPI:
 
         with pytest.raises(black.NothingChanged):
             black.format_file_contents("x = 1\n", fast=True, mode=black.Mode())
+
+    def test_subscript_chain_long_line_performance(self) -> None:
+        # Issue #5270: consecutive subscript trailers should not trigger quadratic
+        # RHS omit search. Without pruning unreachable omits, right_hand_split is
+        # called quadratically (>2500 times for n=100). With prefix pruning, calls
+        # remain linearly bounded (O(n)).
+        n = 100
+        code = "x = a" + "".join(f"[{i}]" for i in range(n))
+        with patch(
+            "black.linegen.right_hand_split", wraps=black.linegen.right_hand_split
+        ) as mock_rhs:
+            black.format_str(code, mode=black.Mode())
+        assert mock_rhs.call_count < 2 * n
 
 
 class TestASTSafety(BlackBaseTestCase):

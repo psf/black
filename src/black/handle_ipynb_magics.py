@@ -299,7 +299,9 @@ def replace_magics(src: str) -> tuple[str, list[Replacement]]:
             mask = get_token(src, magic, existing_tokens)
             replacements.append(Replacement(mask=mask, src=magic))
             existing_tokens.add(mask)
-            line = line[:col_offset] + mask
+            # AST column offsets are UTF-8 byte offsets, not character indices.
+            prefix = line.encode("utf-8")[:col_offset].decode("utf-8")
+            line = prefix + mask
         new_srcs.append(line)
     return "\n".join(new_srcs), replacements
 
@@ -321,6 +323,15 @@ def unmask_cell(src: str, replacements: list[Replacement]) -> str:
         if src.count(replacement.mask) != 1:
             raise NothingChanged
         src = src.replace(replacement.mask, replacement.src, 1)
+    if replacements:
+        # Formatting can move a mask to where IPython no longer recognises the
+        # magic, e.g. into the parentheses around a long right-hand side.
+        try:
+            _, unmasked_replacements = mask_cell(src)
+        except SyntaxError:
+            raise NothingChanged from None
+        if [r.src for r in unmasked_replacements] != [r.src for r in replacements]:
+            raise NothingChanged
     return src
 
 

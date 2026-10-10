@@ -41,6 +41,19 @@ inputs:
       keeping GitHub Actions logs clean when using --diff or --check.
     required: false
     default: ""
+outputs:
+  is_formatted:
+    description: "Whether any files were reformatted or would be reformatted."
+    value: ${{ steps.black.outputs.is_formatted }}
+  change_count:
+    description: "Number of files that were reformatted or would be reformatted."
+    value: ${{ steps.black.outputs.change_count }}
+  same_count:
+    description: "Number of files that were left unchanged."
+    value: ${{ steps.black.outputs.same_count }}
+  failure_count:
+    description: "Number of files that failed to reformat."
+    value: ${{ steps.black.outputs.failure_count }}
 branding:
   color: "black"
   icon: "check-circle"
@@ -48,6 +61,7 @@ runs:
   using: composite
   steps:
     - name: black
+      id: black
       run: |
         # Even when black fails, do not close the shell
         set +e

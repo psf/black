@@ -2,29 +2,8 @@
 # "Version control integration" in docs/integrations/source_version_control.md
 exclude: ^(profiling/|tests/data/)
 repos:
-  - repo: local
-    hooks:
-      - id: check-pre-commit-rev-in-example
-        name: Check pre-commit rev in example
-        language: python
-        entry: python -m scripts.check_pre_commit_rev_in_example
-        files: '(CHANGES|source_version_control|using_black_with_jupyter_notebooks)\.md$'
-        additional_dependencies:
-          - beautifulsoup4>=4.14.2
-          - commonmark>=0.9.1
-          - pyyaml>=6.0.1
-
-      - id: check-version-in-the-basics-example
-        name: Check black version in the basics example
-        language: python
-        entry: python -m scripts.check_version_in_basics_example
-        files: '(CHANGES|the_basics)\.md$'
-        additional_dependencies:
-          - beautifulsoup4>=4.14.2
-          - commonmark>=0.9.1
-
   - repo: https://github.com/pycqa/isort
-    rev: 8.0.1
+    rev: 9.0.1
     hooks:
       - id: isort
 
@@ -39,10 +18,10 @@ repos:
         exclude: ^src/blib2to3/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.0
+    rev: v2.3.1
     hooks:
       - id: mypy
-        exclude: ^docs/conf.py$
+        exclude: ^docs/conf\.py$
         args: []
         additional_dependencies:
           - click>=8.0.0
@@ -67,13 +46,8 @@ repos:
           # diff-shades
           - urllib3
 
-          # version check
-          - beautifulsoup4>=4.14.2
-          - types-commonmark>=0.9.0
-          - types-pyyaml>=6.0.0
-
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.9.6
+    rev: v3.9.8
     hooks:
       - id: prettier
         types_or: [markdown, yaml, json]

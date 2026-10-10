@@ -1,0 +1,23 @@
+# flags: --minimum-version=3.14 --preview
+x = T"Text {name}"
+x = t"Text {name}"
+x = RT"Text {name}"
+x = Rt"Text {name}"
+x = rT"Text {name}"
+x = rt"Text {name}"
+x = TR"Text {name}"
+x = tR"Text {name}"
+x = Tr"Text {name}"
+x = tr"Text {name}"
+
+# output
+x = t"Text {name}"
+x = t"Text {name}"
+x = Rt"Text {name}"
+x = Rt"Text {name}"
+x = rt"Text {name}"
+x = rt"Text {name}"
+x = Rt"Text {name}"
+x = Rt"Text {name}"
+x = rt"Text {name}"
+x = rt"Text {name}"

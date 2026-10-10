@@ -61,14 +61,15 @@ class Converter(grammar.Grammar):
 
         """
         try:
-            f = open(filename)
+            with open(filename) as f:
+                lines = f.readlines()
         except OSError as err:
             print(f"Can't open {filename}: {err}")
             return False
         self.symbol2number = {}
         self.number2symbol = {}
         lineno = 0
-        for line in f:
+        for line in lines:
             lineno += 1
             mo = re.match(r"^#define\s+(\w+)\s+(\d+)$", line)
             if not mo and line.strip():
@@ -111,7 +112,8 @@ class Converter(grammar.Grammar):
 
         """
         try:
-            f = open(filename)
+            with open(filename) as fh:
+                f = iter(fh.readlines())
         except OSError as err:
             print(f"Can't open {filename}: {err}")
             return False

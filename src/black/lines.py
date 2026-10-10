@@ -104,8 +104,7 @@ class Line:
                 # when its opening bracket was split onto an earlier line (for
                 # example by a standalone comment inside the tuple), so verify
                 # against the tree here before dropping the comma.
-                leaf.parent is not None
-                and is_one_tuple(leaf.parent)
+                leaf.parent is not None and is_one_tuple(leaf.parent)
             ):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
@@ -317,6 +316,18 @@ class Line:
 
         return False
 
+    def contains_multiple_type_ignores_at_current_depth(self) -> bool:
+        count = 0
+        for leaf in self.leaves:
+            if leaf.bracket_depth != 0:
+                continue
+            for comment in self.comments_after(leaf):
+                if is_type_ignore_comment(comment, mode=self.mode):
+                    count += 1
+                    if count > 1:
+                        return True
+        return False
+
     def contains_unsplittable_type_ignore(self) -> bool:
         if not self.leaves:
             return False
@@ -339,7 +350,7 @@ class Line:
             (leaf.lineno for leaf in reversed(self.leaves) if leaf.lineno != 0), 0
         )
 
-        if first_line == last_line:
+        if first_line == last_line and first_line != 0:
             # We look at the last two leaves since a comma or an
             # invisible paren could have been added at the end of the
             # line.
@@ -421,16 +432,15 @@ class Line:
             and last_leaf.parent
             and len(list(last_leaf.parent.leaves())) <= 3
             and not is_type_comment(comment, mode=self.mode)
+            and not self.contains_standalone_comments()
         ):
             # Comments on an optional parens wrapping a single leaf should belong to
             # the wrapped node except if it's a type comment. Pinning the comment like
-            # this avoids unstable formatting caused by comment migration.
-            if len(self.leaves) < 2:
-                comment.type = STANDALONE_COMMENT
-                comment.prefix = ""
-                return False
-
-            last_leaf = self.leaves[-2]
+            # this avoids unstable formatting caused by comment migration. If the
+            # parens contain standalone comments they are going to stay visible, so
+            # the comment belongs to the closing paren, as it was written.
+            if len(self.leaves) >= 2:
+                last_leaf = self.leaves[-2]
         self.comments.setdefault(id(last_leaf), []).append(comment)
         return True
 
@@ -609,6 +619,10 @@ class EmptyLineTracker:
         if not isinstance(funcdef, Node) or funcdef.type != syms.funcdef:
             return None
         # Grammar: funcdef = 'def' NAME parameters ':' ...
+        # `# fmt: skip` turns the leaves of a one-line definition into a
+        # STANDALONE_COMMENT, so there may be no name left to read.
+        if len(funcdef.children) < 2 or funcdef.children[1].type != token.NAME:
+            return None
         name_node = funcdef.children[1]
         assert isinstance(name_node, Leaf)
         return name_node.value
@@ -848,7 +862,7 @@ class EmptyLineTracker:
         if suite is None or not isinstance(suite, Node):
             return False
         if_stmt = suite.parent
-        if if_stmt is None or not isinstance(if_stmt, Node):
+        if if_stmt is None:
             return False
 
         # Check if the if_stmt's next sibling is a same-name decorated function.
@@ -1018,7 +1032,7 @@ class EmptyLineTracker:
             # The blank lines that terminate a `# fmt: off` region live in the
             # prefix of the `# fmt: on` comment, not in the verbatim block, so
             # capping them here would edit formatting that was opted out of.
-            if not (
+            if not current_line.is_fmt_pass_converted() and not (
                 first_leaf.type == STANDALONE_COMMENT
                 and contains_fmt_directive(first_leaf.value, FMT_ON)
                 and self.previous_line is not None
@@ -1300,7 +1314,14 @@ class EmptyLineTracker:
             newlines = 1 if current_line.depth else 2
             # If a user has left no space after a dummy implementation, don't insert
             # new lines. This is useful for instance for @overload or Protocols.
-            if self.previous_line.is_stub_def and not user_had_newline:
+            if (
+                self.previous_line.is_stub_def
+                and not user_had_newline
+                and (
+                    Preview.blank_line_after_stub_method not in self.mode
+                    or self.previous_line.depth == current_line.depth
+                )
+            ):
                 newlines = 0
         if comment_to_add_newlines is not None:
             previous_block = comment_to_add_newlines.previous_block
@@ -1346,6 +1367,7 @@ def append_leaves(
     search_start: dict[int, int] = {}
     for old_leaf in leaves:
         new_leaf = Leaf(old_leaf.type, old_leaf.value)
+        new_leaf.lineno = old_leaf.lineno
         parent = old_leaf.parent
         if parent is not None:
             children = parent.children
@@ -1615,6 +1637,15 @@ def can_omit_invisible_parens(
     """
     line = rhs.body
 
+    # Multiple type ignores must stay on separate physical lines. Keeping the
+    # optional parens gives the line transformer a safe place to split them.
+    if (
+        line.contains_multiple_type_ignores_at_current_depth()
+        and not line.bracket_tracker.delimiters
+        and any(leaf.type == token.DOT for leaf in line.leaves)
+    ):
+        return False
+
     # Don't omit optional parens when the opening paren carries an inline comment.
     # Omitting them re-parents the comment onto a different leaf after the next
     # parse, which can make the RHS splitter choose a different shape on each
@@ -1765,9 +1796,7 @@ def can_omit_invisible_parens(
         or (
             # don't use indexing for omitting optional parentheses;
             # it looks weird
-            last.type == token.RSQB
-            and last.parent
-            and last.parent.type != syms.trailer
+            last.type == token.RSQB and last.parent and last.parent.type != syms.trailer
         )
     ):
         if penultimate.type in OPENING_BRACKETS:

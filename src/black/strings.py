@@ -9,6 +9,7 @@ from re import Match, Pattern
 from typing import Final
 
 from black._width_table import WIDTH_TABLE
+from black.mode import Mode, Preview
 from blib2to3.pytree import Leaf
 
 STRING_PREFIX_CHARS: Final = "fturbFTURB"  # All possible string prefix characters.
@@ -24,6 +25,12 @@ UNICODE_ESCAPE_RE: Final = re.compile(
     r")?",
     re.VERBOSE,
 )
+# The line breaks the Python parser recognizes, and therefore the only ones that
+# may be treated as line endings inside a string. str.splitlines() also breaks
+# on form feed, vertical tab, NEL, the Unicode line and paragraph separators and
+# the C0 separators, all of which are ordinary characters of a string's value.
+# See output._splitlines_no_ff, which splits source code the same way.
+LINE_BREAK_RE: Final = re.compile(r"\r\n|[\r\n]")
 
 
 def sub_twice(regex: Pattern[str], replacement: str, original: str) -> str:
@@ -52,7 +59,7 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
     docstrings need the same width to keep relative indentation stable.
     """
     lines = []
-    for line in s.splitlines():
+    for line in LINE_BREAK_RE.split(s):
         stripped_line = line.lstrip()
         if not stripped_line or stripped_line == line:
             lines.append(line)
@@ -60,8 +67,6 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
             prefix_length = len(line) - len(stripped_line)
             prefix = line[:prefix_length].expandtabs(4)
             lines.append(prefix + stripped_line)
-    if s.endswith("\n"):
-        lines.append("")
     return lines
 
 
@@ -142,7 +147,7 @@ def assert_is_leaf_string(string: str) -> None:
     ), f"{set(string[:quote_idx])} is NOT a subset of {set(STRING_PREFIX_CHARS)}."
 
 
-def normalize_string_prefix(s: str) -> str:
+def normalize_string_prefix(s: str, mode: Mode) -> str:
     """Make all string prefixes lowercase."""
     match = STRING_PREFIX_RE.match(s)
     assert match is not None, f"failed to match string {s!r}"
@@ -154,6 +159,8 @@ def normalize_string_prefix(s: str) -> str:
         .replace("u", "")
     )
 
+    if Preview.normalize_tstring_prefix in mode:
+        new_prefix = new_prefix.replace("T", "t")
     # Python syntax guarantees max 2 prefixes and that one of them is "r"
     if len(new_prefix) == 2 and new_prefix[0].lower() != "r":
         new_prefix = new_prefix[::-1]
