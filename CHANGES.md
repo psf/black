@@ -87,6 +87,10 @@
 
 - Fix the GitHub Action crashing on dependency-group includes when `use_pyproject` is
   enabled (#5479)
+- When the GitHub Action reads version specifiers from `tool.black.required-version`, it
+  now only accepts released versions of Black, as it already did for `black`
+  requirements in dependency lists. Other values, such as URL references, are now
+  rejected. (#5510)
 
 ### Documentation
 
