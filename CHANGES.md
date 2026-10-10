@@ -40,6 +40,9 @@
   under `--preview` (#5442)
 - Fix `wrap_long_dict_values_in_parens` dropping the parentheses around a right-hand
   side that contains a dictionary, leaving a line over the length limit (#5492)
+- Fix the unstable `string_processing` feature adding a space after `*` or `**` in a PEP
+  695 type parameter (`* Ts = ...`) when it splits a string in the parameter's default
+  (#5504)
 
 ### Configuration
 
