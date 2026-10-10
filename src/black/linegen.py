@@ -383,62 +383,64 @@ class LineGenerator(Visitor[Line]):
             ):
                 wrap_in_parentheses(node, leaf)
 
-        if Preview.remove_redundant_generator_parentheses in self.mode:
+        remove_generator_parens = (
+            Preview.remove_redundant_generator_parentheses in self.mode
+        )
+        remove_subscript_parens = (
+            Preview.remove_redundant_subscript_parentheses in self.mode
+        )
+        if remove_generator_parens or remove_subscript_parens:
             for child in node.children:
-                if (
-                    child.type == syms.trailer
-                    and len(child.children) == 3
-                    and is_lpar_token(child.children[0])
-                    and (
-                        is_generator(child.children[1])
-                        or _has_redundant_generator_parentheses(child.children[1])
-                    )
-                    and is_rpar_token(child.children[2])
-                ):
-                    maybe_make_parens_invisible_in_atom(
-                        child.children[1],
-                        parent=child,
-                        mode=self.mode,
-                        features=self.features,
-                        remove_generator_parens=True,
-                    )
-
-        if Preview.remove_redundant_subscript_parentheses in self.mode:
-            for child in node.children:
-                if (
-                    child.type == syms.trailer
-                    and len(child.children) == 3
-                    and child.children[0].type == token.LSQB
-                    and child.children[2].type == token.RSQB
-                    and child.children[1].type == syms.atom
-                ):
-                    atom = child.children[1]
-                    if not is_empty_tuple(atom) and not is_generator(atom):
+                if child.type == syms.trailer and len(child.children) == 3:
+                    if (
+                        remove_generator_parens
+                        and is_lpar_token(child.children[0])
+                        and (
+                            is_generator(child.children[1])
+                            or _has_redundant_generator_parentheses(child.children[1])
+                        )
+                        and is_rpar_token(child.children[2])
+                    ):
                         maybe_make_parens_invisible_in_atom(
-                            atom,
+                            child.children[1],
                             parent=child,
                             mode=self.mode,
                             features=self.features,
-                            remove_brackets_around_comma=True,
-                            is_subscript=True,
+                            remove_generator_parens=True,
                         )
-                        if is_atom_with_invisible_parens(atom):
-                            inner = atom.children[1]
-                            if inner.type == syms.testlist_gexp:
-                                inner.type = syms.subscriptlist
-                            first_paren = atom.children[0]
-                            last_paren = atom.children[-1]
-                            atom.replace(inner)
-                            if first_paren.prefix.strip():
-                                first_inner = first_leaf_of(inner)
-                                if first_inner:
-                                    first_inner.prefix = (
-                                        first_paren.prefix + first_inner.prefix
+                    elif (
+                        remove_subscript_parens
+                        and child.children[0].type == token.LSQB
+                        and child.children[2].type == token.RSQB
+                        and child.children[1].type == syms.atom
+                    ):
+                        atom = child.children[1]
+                        if not is_empty_tuple(atom) and not is_generator(atom):
+                            maybe_make_parens_invisible_in_atom(
+                                atom,
+                                parent=child,
+                                mode=self.mode,
+                                features=self.features,
+                                remove_brackets_around_comma=True,
+                                is_subscript=True,
+                            )
+                            if is_atom_with_invisible_parens(atom):
+                                inner = atom.children[1]
+                                if inner.type == syms.testlist_gexp:
+                                    inner.type = syms.subscriptlist
+                                first_paren = atom.children[0]
+                                last_paren = atom.children[-1]
+                                atom.replace(inner)
+                                if first_paren.prefix.strip():
+                                    first_inner = first_leaf_of(inner)
+                                    if first_inner:
+                                        first_inner.prefix = (
+                                            first_paren.prefix + first_inner.prefix
+                                        )
+                                if last_paren.prefix.strip():
+                                    child.children[-1].prefix = (
+                                        last_paren.prefix + child.children[-1].prefix
                                     )
-                            if last_paren.prefix.strip():
-                                child.children[-1].prefix = (
-                                    last_paren.prefix + child.children[-1].prefix
-                                )
 
         remove_await_parens(node, mode=self.mode, features=self.features)
 
