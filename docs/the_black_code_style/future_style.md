@@ -53,7 +53,7 @@ Currently, the following features are included in the preview style:
   generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
 - `symmetric_collection_operations`: Keep optional parentheses around long binary
   operations between collection displays when both operands fit on their own
-  delimiter-split line.
+  delimiter-split line. ([see below](labels/symmetric-collection-operations))
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
