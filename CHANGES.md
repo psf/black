@@ -56,6 +56,9 @@
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
 
+- Expand the guide for introducing Black to an existing project with rollout and
+  active-branch guidance (#5472)
+
 ## Version 26.10.1
 
 ### Highlights
