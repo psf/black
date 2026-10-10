@@ -18,7 +18,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
-  when using the unstable `string_processing` feature.
+  when using the unstable `string_processing` feature (#5515).
 
 ### Configuration
 
