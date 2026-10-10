@@ -46,6 +46,25 @@ d[
     )
 ]
 
+# Preserve comments
+a[
+    # comment before paren
+    (1, 2)
+]
+a[
+    (
+        # comment inside paren
+        1,
+        2,
+    )
+]
+a[(1, 2  # comment after 2
+)]
+a[
+    # comment before 1-tuple paren
+    (1,)  # comment after 1-tuple
+]
+
 # We should also handle multidimensional cases
 a[:, (1, 2)]
 a[(1, 2), :]
@@ -95,7 +114,25 @@ d[
     "g",
 ]
 
+# Preserve comments
+a[
+    # comment before paren
+    1,
+    2,
+]
+a[
+    # comment inside paren
+    1,
+    2,
+]
+a[1, 2]  # comment after 2
+a[
+    # comment before 1-tuple paren
+    1,  # comment after 1-tuple
+]
+
 # We should also handle multidimensional cases
 a[:, (1, 2)]
 a[(1, 2), :]
 a[(1, 2), (3, 4)]
+
