@@ -250,18 +250,6 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
-    def visit_typeparams(self, node: Node) -> Iterator[Line]:
-        yield from self.visit_default(node)
-        node.children[0].prefix = ""
-
-    def visit_typevartuple(self, node: Node) -> Iterator[Line]:
-        yield from self.visit_default(node)
-        node.children[1].prefix = ""
-
-    def visit_paramspec(self, node: Node) -> Iterator[Line]:
-        yield from self.visit_default(node)
-        node.children[1].prefix = ""
-
     def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_long_dict_values_in_parens in self.mode:
             for i, child in enumerate(node.children):
@@ -1079,7 +1067,12 @@ def right_hand_split_with_omits(
         # for simple cases.  All others require running more transforms via
         # `transform_line()`.  This check doesn't know if those would succeed.
         if is_line_short_enough(lines[0], mode=mode) or (
-            omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+            omit
+            and (
+                _over_length_only_due_to_bracket_comment(lines[0], mode)
+                if Preview.keep_trailers_on_bracket_comment_overflow in mode
+                else _over_length_only_due_to_subscript_comment(lines[0], mode)
+            )
         ):
             if (
                 Preview.fix_magic_trailing_comma_trailer_split in mode
@@ -2529,16 +2522,18 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
-def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
+def _over_length_only_due_to_bracket_comment(
+    line: Line, mode: Mode, allowed_brackets: Collection[int] = OPENING_BRACKETS
+) -> bool:
     """Return True if `line` only exceeds `mode.line_length` because of an inline
-    comment attached to a subscript opening bracket (`[`).
+    comment attached to an opening bracket.
 
-    This is the shape produced by the original of the issue #4733 reproducer:
-    a comment inside the annotation's subscript brackets renders at the end of
-    the head line after Black splits the statement, pushing it past the limit.
-    Taking the FORCE_OPTIONAL_PARENTHESES "second opinion" in that case wraps
-    the annotation in extra parens and migrates the comment outside the
-    subscript, which then oscillates on the next formatter pass.
+    This is the shape produced by issues #4733 and #3681:
+    a comment inside brackets renders at the end of the head line after Black
+    splits the statement, pushing it past the limit. If the line without the
+    comment fits within `mode.line_length`, rejecting an omit-based split does
+    not prevent the line from exceeding the limit and causes unnecessary
+    splitting of other trailers (issue #3681).
     """
     if not line.leaves:
         return False
@@ -2550,14 +2545,20 @@ def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
     text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
     if str_width(text_without_comments) > mode.line_length:
         return False
-    # And the comment must be attached to a subscript opening bracket.
+    # And the comment must be attached to an opening bracket.
     for leaf_id, comments in line.comments.items():
         if not comments:
             continue
         leaf = next((lf for lf in line.leaves if id(lf) == leaf_id), None)
-        if leaf is None or leaf.type != token.LSQB:
+        if leaf is None or leaf.type not in allowed_brackets:
             return False
     return True
+
+
+def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
+    return _over_length_only_due_to_bracket_comment(
+        line, mode, allowed_brackets={token.LSQB}
+    )
 
 
 def run_transformer(

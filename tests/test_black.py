@@ -3569,6 +3569,24 @@ class TestFileCollection:
         expected = [root / "z.py"]
         assert_collected_sources([root], expected, root=root)
 
+    def test_gitignore_with_utf8_bom(self) -> None:
+        # Git skips a UTF-8 byte order mark at the start of a .gitignore, so the first
+        # pattern still applies. Some Windows tools save files with one.
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve()
+            (root / ".gitignore").write_bytes("ignored/\n".encode("utf-8-sig"))
+            (root / "ignored").mkdir()
+            (root / "ignored" / "a.py").write_text("a = 1\n", encoding="utf-8")
+            (root / "kept.py").write_text("b = 2\n", encoding="utf-8")
+            nested = root / "nested"
+            nested.mkdir()
+            (nested / ".gitignore").write_bytes("skip.py\n".encode("utf-8-sig"))
+            (nested / "skip.py").write_text("c = 3\n", encoding="utf-8")
+            (nested / "kept.py").write_text("d = 4\n", encoding="utf-8")
+
+            expected = [root / "kept.py", nested / "kept.py"]
+            assert_collected_sources([root], expected, root=root)
+
     def test_empty_include(self) -> None:
         path = DATA_DIR / "include_exclude_tests"
         src = [path]
