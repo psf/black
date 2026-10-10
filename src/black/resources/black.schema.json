@@ -97,6 +97,7 @@
           "remove_redundant_generator_parentheses",
           "symmetric_collection_operations",
           "normalize_tstring_prefix",
+          "remove_redundant_list_parentheses",
           "remove_redundant_unpacking_parentheses",
           "fix_magic_trailing_comma_trailer_split",
           "keep_dict_keys_with_operators",

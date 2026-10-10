@@ -79,6 +79,26 @@ Currently, the following features are included in the preview style:
   indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
   line length limit only due to a trailing comment.
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+- `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
+  and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+
+(labels/remove-redundant-list-parentheses)=
+
+### Redundant list parentheses
+
+Black removes extra parentheses around list literals and list comprehensions:
+
+```python
+# Before
+([])
+([1, 2])
+foo(([1, 2]))
+
+# After (with --preview)
+[]
+[1, 2]
+foo([1, 2])
+```
 
 (labels/keep-trailers-on-bracket-comment-overflow)=
 
