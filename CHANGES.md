@@ -1,17 +1,20 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
+## Version 26.10.1
 
 ### Highlights
 
-<!-- Include any especially major or disruptive changes here -->
+This release fixes a security issue in Black's bundled GitHub Action. Repositories that
+use the action are encouraged to update to the latest version of Black immediately. This
+update is received automatically when using `psf/black@stable`, and is independent of
+the version of Black installed by the action.
+
+When the GitHub Action reads version specifiers from `tool.black.required-version`, it
+now only accepts released versions of Black, as it already did for `black` requirements
+in dependency lists. Other values, such as URL references, are now rejected. This issue
+has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is pending.
 
 ### Stable style
-
-<!-- Changes that affect Black's stable style -->
 
 - Fix a long Jupyter notebook assignment magic (for example `x = !ls -la`) being wrapped
   in parentheses, which IPython can no longer run; such cells are now left unchanged
@@ -27,8 +30,6 @@
   last line is near the line length limit (#5494)
 
 ### Preview style
-
-<!-- Changes that affect Black's preview style -->
 
 - Do not split short expressions on delimiters (such as binary operators, comparisons,
   or comprehensions) inside brackets when preceded by a standalone comment (#5455)
@@ -48,8 +49,6 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - Add `--cache-dir` to configure the cache directory from the command line (#5433)
 - Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
   which made a later full `black --check` pass and `black` skip the unformatted lines
@@ -58,32 +57,12 @@
   of the first pattern, so that pattern never matched and Black formatted files that git
   ignores (#5497)
 
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
 ### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 - Avoid quadratic runtime when splitting very long lines with many trailing bracket
   pairs (such as consecutive subscripts) (#5475)
 
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to Blackd -->
-
 ### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the GitHub Action crashing on dependency-group includes when `use_pyproject` is
   enabled (#5479)
@@ -91,11 +70,6 @@
   now only accepts released versions of Black, as it already did for `black`
   requirements in dependency lists. Other values, such as URL references, are now
   rejected. (#5510)
-
-### Documentation
-
-<!-- Major changes to documentation and policies.
-     Small docs changes don't need a changelog entry. -->
 
 ## Version 26.10.0
 
