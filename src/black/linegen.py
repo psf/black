@@ -33,6 +33,7 @@ from black.lines import (
     can_be_split,
     can_omit_invisible_parens,
     is_line_short_enough,
+    is_symmetric_binop,
     is_symmetric_collection_binop,
     line_to_string,
 )
@@ -1244,6 +1245,7 @@ def _maybe_split_omitting_optional_parens(
         and not rhs.closing_bracket.value
         and is_symmetric_collection_binop(rhs.body, mode.line_length)
     )
+    split_symmetric_binop = False
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
@@ -1263,10 +1265,14 @@ def _maybe_split_omitting_optional_parens(
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
             if _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode):
-                yield from _maybe_split_omitting_optional_parens(
-                    rhs_oop, line, mode, features=features, omit=omit
-                )
-                return
+                # Rather than exploding just the last operand, keep the optional
+                # parens and split before the operator.
+                split_symmetric_binop = _should_split_symmetric_binop(rhs, mode)
+                if not split_symmetric_binop:
+                    yield from _maybe_split_omitting_optional_parens(
+                        rhs_oop, line, mode, features=features, omit=omit
+                    )
+                    return
             elif Preview.avoid_parens_for_unbreakable_rhs_in_assignments in mode:
                 raise CannotSplit(
                     "Alternative split not preferred, falling back to original RHS"
@@ -1309,7 +1315,7 @@ def _maybe_split_omitting_optional_parens(
 
     ensure_visible(rhs.opening_bracket)
     ensure_visible(rhs.closing_bracket)
-    if split_symmetric_collection_binops:
+    if split_symmetric_collection_binops or split_symmetric_binop:
         rhs.body.should_split_rhs = True
     for result in (rhs.head, rhs.body, rhs.tail):
         if result:
@@ -1388,6 +1394,21 @@ def _prefer_split_rhs_oop_over_rhs(
             # the first line is short enough
             and is_line_short_enough(rhs_oop.head, mode=mode)
         )
+    )
+
+
+def _should_split_symmetric_binop(rhs: RHSResult, mode: Mode) -> bool:
+    """
+    Returns whether `rhs` should keep its optional parens and split before the
+    operator of the binary operation they wrap, rather than omit them.
+    """
+    return (
+        Preview.symmetric_binary_operations in mode
+        # the opening line still fits once the optional paren becomes visible
+        and is_line_short_enough(
+            rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+        )
+        and is_symmetric_binop(rhs.body, mode.line_length)
     )
 
 
