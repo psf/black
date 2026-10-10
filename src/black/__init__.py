@@ -27,8 +27,9 @@ from mypy_extensions import mypyc_attr
 from pathspec import GitIgnoreSpec
 from pathspec.patterns.gitignore import GitIgnorePatternError
 
+import black.cache as cache_module
 from _black_version import version as __version__
-from black.cache import Cache
+from black.cache import Cache, get_cache_dir
 from black.comments import normalize_fmt_off
 from black.const import (
     DEFAULT_EXCLUDES,
@@ -79,6 +80,7 @@ from black.ranges import (
     sanitized_lines,
 )
 from black.report import Changed, NothingChanged, Report
+from blib2to3 import pygram
 from blib2to3.pgen2 import token
 from blib2to3.pytree import Leaf, Node
 
@@ -544,11 +546,16 @@ def validate_regex(
     help="Read configuration options from a configuration file.",
 )
 @click.option(
+    "--cache-dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    help="Store the cache in this directory. Takes precedence over BLACK_CACHE_DIR.",
+)
+@click.option(
     "--no-cache",
     is_flag=True,
     help=(
         "Skip reading and writing the cache, forcing Black to reformat all"
-        " included files."
+        " included files. Overrides --cache-dir."
     ),
 )
 @click.pass_context
@@ -582,6 +589,7 @@ def main(
     workers: int | None,
     src: tuple[str, ...],
     config: str | None,
+    cache_dir: Path | None,
     no_cache: bool,
 ) -> None:
     """The uncompromising code formatter."""
@@ -676,6 +684,29 @@ def main(
         ctx.exit(1)
 
     write_back = WriteBack.from_configuration(check=check, diff=diff, color=color)
+    if cache_dir is None:
+        cache_dir = cache_module.CACHE_DIR
+    else:
+        if (
+            not cache_dir.is_absolute()
+            and ctx.get_parameter_source("cache_dir") == ParameterSource.DEFAULT_MAP
+            and config is not None
+        ):
+            cache_dir = Path(config).resolve().parent / cache_dir
+        cache_dir = get_cache_dir(cache_dir)
+    if not no_cache:
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            no_cache = True
+            if verbose:
+                out(
+                    f"Unable to use cache directory `{cache_dir}`: {e}. "
+                    "Disabling the cache.",
+                    fg="blue",
+                )
+    if not no_cache:
+        pygram.initialize(cache_dir)
     if target_version:
         versions = set(target_version)
     else:
@@ -766,6 +797,7 @@ def main(
                 report=report,
                 lines=lines,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
         else:
             from black.concurrency import reformat_many
@@ -781,6 +813,7 @@ def main(
                 report=report,
                 workers=workers,
                 no_cache=no_cache,
+                cache_dir=cache_dir,
             )
 
     if verbose or not quiet:
@@ -944,6 +977,7 @@ def reformat_one(
     *,
     lines: Collection[tuple[int, int]] = (),
     no_cache: bool = False,
+    cache_dir: Path | None = None,
 ) -> None:
     """Reformat a single file under `src` without spawning child processes.
 
@@ -973,20 +1007,32 @@ def reformat_one(
             ):
                 changed = Changed.YES
         else:
-            cache = None if no_cache else Cache.read(mode)
-            if cache is not None and write_back not in (
-                WriteBack.DIFF,
-                WriteBack.COLOR_DIFF,
-            ):
+            if no_cache:
+                cache = None
+            elif cache_dir is None:
+                cache = Cache.read(mode)
+            else:
+                cache = Cache.read(mode, cache_dir)
+            if cache is not None:
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
-            if cache is not None and (
-                (write_back is WriteBack.YES and changed is not Changed.CACHED)
-                or (write_back is WriteBack.CHECK and changed is Changed.NO)
+            can_cache_unmodified = (
+                write_back in (WriteBack.CHECK, WriteBack.DIFF, WriteBack.COLOR_DIFF)
+                and changed is Changed.NO
+            )
+            # Formatting only some lines doesn't make the whole file formatted, and
+            # the cache key doesn't include the line ranges, so don't record it.
+            if (
+                cache is not None
+                and not lines
+                and (
+                    (write_back is WriteBack.YES and changed is not Changed.CACHED)
+                    or can_cache_unmodified
+                )
             ):
                 cache.write([src])
         report.done(src, changed)
@@ -1321,6 +1367,11 @@ def format_str(
     if src_contents != dst_contents:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
+            if not lines:
+                # None of the requested lines survived the first pass, so there is
+                # nothing left to format. Passing the empty `lines` to the second
+                # pass would format the whole file instead.
+                return dst_contents
         try:
             dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
         except InvalidInput as exc:
@@ -1435,7 +1486,41 @@ def _format_str_once(
     if not dst_contents:
         if "\n" in normalized_contents:
             return newline_type
-    return "".join(dst_contents).replace("\n", newline_type)
+    dst = "".join(dst_contents)
+    if not mode.is_ipynb:
+        dst = _keep_encoding_declaration_ignored(normalized_contents, dst)
+    return dst.replace("\n", newline_type)
+
+
+def _declared_encoding(contents: str) -> str | None:
+    """Return the encoding Python would decode `contents` with.
+
+    Only an encoding declaration on the first two lines counts (PEP 263). Returns
+    None if the declared encoding is invalid.
+    """
+    first_two_lines = "\n".join(contents.split("\n", 2)[:2])
+    try:
+        encoding, _ = tokenize.detect_encoding(
+            io.BytesIO(first_two_lines.encode("utf-8")).readline
+        )
+    except SyntaxError:
+        return None
+    return encoding
+
+
+def _keep_encoding_declaration_ignored(src_contents: str, dst_contents: str) -> str:
+    """Retain up to two blank lines so an ignored encoding declaration stays ignored.
+
+    Python ignores an encoding declaration below the second line. Removing the
+    blank lines at the start of the file can move one onto the first two lines,
+    where it takes effect and changes how the file is decoded.
+    """
+    src_encoding = _declared_encoding(src_contents)
+    for blank_lines in range(3):
+        retained = "\n" * blank_lines + dst_contents
+        if _declared_encoding(retained) == src_encoding:
+            return retained
+    return dst_contents
 
 
 def decode_bytes(

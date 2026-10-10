@@ -47,6 +47,28 @@ pass
     assert lines == adjusted_lines(lines, source, source)
 
 
+@pytest.mark.parametrize("start,end", [(1, 2), (2, 3), (3, 4), (4, 5)])
+def test_repeated_lines_map_to_their_original_positions(start: int, end: int) -> None:
+    unformatted = 'print ( "format me" )\n'
+    formatted = 'print("format me")\n'
+    original = unformatted * 5
+    modified = unformatted * (start - 1) + formatted * 2 + unformatted * (5 - end)
+
+    assert adjusted_lines([(start, end)], original, modified) == [(start, end)]
+
+
+def test_repeated_lines_between_disjoint_ranges_stay_unselected() -> None:
+    unformatted = 'print ( "format me" )\n'
+    formatted = 'print("format me")\n'
+    original = unformatted * 3
+    modified = formatted + unformatted + formatted
+
+    assert adjusted_lines([(1, 1), (3, 3)], original, modified) == [
+        (1, 1),
+        (3, 3),
+    ]
+
+
 @pytest.mark.parametrize(
     "lines",
     [
@@ -91,8 +113,9 @@ pass
     "lines,adjusted",
     [
         (
+            # The first original line is removed, so it has no line to map onto.
             [(1, 1)],
-            [(1, 1)],
+            [],
         ),
         (
             [(1, 2)],
@@ -207,6 +230,38 @@ def test_diffs(lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]) ->
  9. def func(arg1, arg2, arg3):
 11.   pass
 12. # last line changed
+"""
+    assert adjusted == adjusted_lines(lines, original_source, modified_source)
+
+
+@pytest.mark.parametrize(
+    "lines,adjusted",
+    [
+        ([(1, 3)], [(1, 1)]),
+        ([(2, 3)], [(1, 1)]),
+        ([(4, 5)], [(2, 3)]),
+        ([(5, 5)], [(3, 3)]),
+    ],
+)
+def test_diff_at_the_start_of_the_file(
+    lines: list[tuple[int, int]], adjusted: list[tuple[int, int]]
+) -> None:
+    """Formatting the first statement of a file may join its lines.
+
+    Regression for https://github.com/psf/black/issues/4052: the lines that are
+    joined away must not be mapped onto the lines that follow the statement.
+    """
+    original_source = """\
+def restrict_to_this_line(arg1,
+  arg2,
+  arg3):
+    print  ( "This should not be formatted." )
+    print  ( "This should not be formatted." )
+"""
+    modified_source = """\
+def restrict_to_this_line(arg1, arg2, arg3):
+    print  ( "This should not be formatted." )
+    print  ( "This should not be formatted." )
 """
     assert adjusted == adjusted_lines(lines, original_source, modified_source)
 

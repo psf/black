@@ -22,8 +22,11 @@ editing those areas for other reasons until their formatting commit lands.
 Enable enforcement as soon as the formatting commit is merged. For example, add
 `black --check .` to CI and use the
 {doc}`pre-commit integration </integrations/source_version_control>` for local feedback.
-Keeping configuration and enforcement in the same pull request prevents new unformatted
-changes from accumulating during the transition.
+Configuration, formatting, and enforcement can go in one rollout pull request, but keep
+them in separate commits and use a merge method that preserves the formatting-only
+commit. If your project requires squash merges, use separate pull requests instead.
+Coordinate their merges so that new unformatted changes do not accumulate during the
+transition.
 
 ### Coordinating active branches
 

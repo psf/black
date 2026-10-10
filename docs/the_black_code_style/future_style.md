@@ -51,6 +51,9 @@ Currently, the following features are included in the preview style:
   definition starts inside a `# fmt: off` block after an import.
 - `remove_redundant_generator_parentheses`: Remove redundant parentheses around
   generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
+- `symmetric_collection_operations`: Keep optional parentheses around long binary
+  operations between collection displays when both operands fit on their own
+  delimiter-split line. ([see below](labels/symmetric-collection-operations))
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
@@ -60,6 +63,113 @@ Currently, the following features are included in the preview style:
 - `keep_dict_keys_with_operators`: Keep dictionary keys containing operators together on
   one line when the value can be wrapped onto a new line.
   ([see below](labels/keep-dict-keys-with-operators))
+- `keep_commented_expressions_together`: Do not split expressions on delimiters (such as
+  binary operators, comparisons, or comprehensions) inside brackets when preceded by a
+  standalone comment if the expression fits within the line length limit.
+  ([see below](labels/keep-commented-expressions-together))
+- `avoid_parens_for_unbreakable_rhs_in_assignments`: Avoid adding unnecessary
+  parentheses around unbreakable right-hand side expressions in assignments (such as
+  annotated assignments or subscript targets) when the expression cannot fit within the
+  line length even with parentheses.
+  ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
+- `parenthesize_expressions_with_comments`: Parenthesize expressions (such as function
+  calls) that exceed the line length when their parameters contain comments.
+  ([see below](labels/parenthesize-expressions-with-comments))
+- `keep_trailers_on_bracket_comment_overflow`: Avoid splitting trailers (such as
+  indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
+  line length limit only due to a trailing comment.
+  ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+
+(labels/keep-trailers-on-bracket-comment-overflow)=
+
+### Keep trailers when earlier bracket split exceeds length due to comments
+
+When an expression containing trailers (such as indexing or subscripts like `[0]`) is
+split at an opening bracket, but the line ending with that opening bracket exceeds the
+maximum line length solely because of a trailing comment (such as `# type: ignore`),
+Black previously rejected omitting the trailers and pointlessly exploded them across
+multiple lines even though the earlier line could not be shortened. With this feature
+enabled, Black keeps those trailers intact:
+
+```python
+# Before
+_zzzzzzz(
+    zzz.get_data("key")[0].get_nested(  # type: ignore
+        "nested_key"
+    )[
+        0
+    ]
+)
+
+# After (with --preview)
+_zzzzzzz(
+    zzz.get_data("key")[0].get_nested(  # type: ignore
+        "nested_key"
+    )[0]
+)
+```
+
+(labels/parenthesize-expressions-with-comments)=
+
+### Parenthesizing expressions with parameter comments
+
+When an expression in an assignment (such as a function call) exceeds the line length
+and contains parameter comments, Black previously failed to wrap the expression in
+parentheses. With this feature enabled, Black wraps the expression so that the line fits
+within the line length limit:
+
+```python
+# Before (with -l 30)
+long_variable_name = long_function_name(
+    first_parameter,
+    # comment
+    second_parameter,
+)
+
+# After (with --preview -l 30)
+long_variable_name = (
+    long_function_name(
+        first_parameter,
+        # comment
+        second_parameter,
+    )
+)
+```
+
+(labels/avoid-parens-for-unbreakable-rhs-in-assignments)=
+
+### Avoid unnecessary parentheses for unbreakable right-hand side in assignments
+
+When an assignment's target contains type annotations or brackets (e.g.
+`x: str = "long..."` or `x[0] = "long..."`) and the right-hand side is an unbreakable
+expression that exceeds the line length limit regardless, Black previously added outer
+parentheses around the right-hand side expression, creating an inconsistency with
+standard assignments (`x = "long..."`). With this feature enabled, Black avoids adding
+unnecessary parentheses in these cases.
+
+For example:
+
+```python
+# Before
+class A:
+    # Standard assignment was left unparenthesized:
+    raw = "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+
+    # But annotated assignment was unnecessarily wrapped:
+    attr: str = (
+        "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+    )
+```
+
+will be formatted consistently:
+
+```python
+# After (with --preview)
+class A:
+    raw = "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+
+    attr: str = "this_is_very_very_long_this_is_very_very_long_this_is_very_very_long_this_is_very_very_long"
+```
 
 (labels/keep-dict-keys-with-operators)=
 
@@ -108,6 +218,31 @@ self.message_user(
 )
 ```
 
+(labels/keep-commented-expressions-together)=
+
+### Keep commented expressions together
+
+Black previously split expressions containing delimiters (such as binary operators,
+comparisons, or comprehensions) across multiple lines when placed after a standalone
+comment inside brackets (such as lists or function calls), even if the expression was
+well within the line length limit:
+
+```python
+# Before
+foobar = [
+    # comment
+    pathlib.Path("foo")
+    / "bar"
+    / "baz",
+]
+
+# After (with --preview)
+foobar = [
+    # comment
+    pathlib.Path("foo") / "bar" / "baz",
+]
+```
+
 (labels/remove-redundant-unpacking-parentheses)=
 
 ### Redundant unpacking parentheses
@@ -153,6 +288,33 @@ any additional pair:
 
 # After (with --preview)
 [(item for item in items), fallback]
+```
+
+(labels/symmetric-collection-operations)=
+
+### Symmetric display operations
+
+When a binary operation between two collection displays is too long for one line and
+both operands fit on their own delimiter-split line, Black keeps optional parentheses
+around the expression so that the operands can be split symmetrically. This applies to
+every arithmetic, bitwise, and symbolic comparison operator between collection displays.
+If either display needs an internal split, including when an active magic trailing comma
+forces it onto multiple lines, Black retains the existing formatting.
+
+```python
+# Before
+names = ["Alice", "Bob", "Charlie", "Diana", "Edward"] + [
+    "Fiona",
+    "George",
+    "Harriet",
+    "Isabelle",
+]
+
+# After (with --preview)
+names = (
+    ["Alice", "Bob", "Charlie", "Diana", "Edward"]
+    + ["Fiona", "George", "Harriet", "Isabelle"]
+)
 ```
 
 (labels/wrap-comprehension-in)=

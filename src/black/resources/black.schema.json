@@ -95,11 +95,16 @@
           "parenthesize_tuple_in_yield",
           "fmt_off_class_blank_lines",
           "remove_redundant_generator_parentheses",
+          "symmetric_collection_operations",
           "normalize_tstring_prefix",
           "remove_redundant_unpacking_parentheses",
           "fix_magic_trailing_comma_trailer_split",
           "keep_dict_keys_with_operators",
-          "blank_line_after_stub_method"
+          "blank_line_after_stub_method",
+          "keep_commented_expressions_together",
+          "avoid_parens_for_unbreakable_rhs_in_assignments",
+          "parenthesize_expressions_with_comments",
+          "keep_trailers_on_bracket_comment_overflow"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
@@ -159,9 +164,13 @@
       "description": "Emit messages about files that were not changed or were ignored due to exclusion patterns. If Black is using a configuration file, a message detailing which one it is using will be emitted.",
       "default": false
     },
+    "cache-dir": {
+      "type": "string",
+      "description": "Store the cache in this directory. Takes precedence over BLACK_CACHE_DIR."
+    },
     "no-cache": {
       "type": "boolean",
-      "description": "Skip reading and writing the cache, forcing Black to reformat all included files.",
+      "description": "Skip reading and writing the cache, forcing Black to reformat all included files. Overrides --cache-dir.",
       "default": false
     }
   }

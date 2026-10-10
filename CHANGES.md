@@ -17,9 +17,15 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Format long binary operations between collection displays symmetrically when both
+  operands fit on their own delimiter-split line (#5259)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Enable the cache when using `--diff` to skip unmodified files and record unmodified
+  files as well-formatted (#5499)
 
 ### Packaging
 
@@ -52,6 +58,77 @@
 
 - Expand the guide for introducing Black to an existing project with rollout and
   active-branch guidance (#5472)
+
+## Version 26.10.1
+
+### Highlights
+
+This release fixes a security issue in Black's bundled GitHub Action. Repositories that
+use the action are encouraged to update to the latest version of Black immediately. This
+update is received automatically when using `psf/black@stable`, and is independent of
+the version of Black installed by the action.
+
+When the GitHub Action reads version specifiers from `tool.black.required-version`, it
+now only accepts released versions of Black, as it already did for `black` requirements
+in dependency lists. Other values, such as URL references, are now rejected. This issue
+has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is pending.
+
+### Stable style
+
+- Fix a long Jupyter notebook assignment magic (for example `x = !ls -la`) being wrapped
+  in parentheses, which IPython can no longer run; such cells are now left unchanged
+  (#5481)
+- Keep repeated lines outside the selected `--line-ranges` unchanged (#5436)
+- Fix `--line-ranges` formatting lines that follow a statement when formatting joins or
+  re-indents that statement (#5484)
+- Fix `--line-ranges` crashing with an internal error when an unselected statement has a
+  `# fmt: skip` comment on the last line before a closing bracket (#5477)
+- Prevent moving an encoding declaration (for example `# -*- coding: latin-1 -*-`) onto
+  the first two lines of a file (#5487)
+- Fix adding an extra trailing blank line inside a multi-line module docstring when its
+  last line is near the line length limit (#5494)
+
+### Preview style
+
+- Do not split short expressions on delimiters (such as binary operators, comparisons,
+  or comprehensions) inside brackets when preceded by a standalone comment (#5455)
+- Fix the unstable `string_processing` feature removing backslash-newline sequences from
+  raw strings, which changed their value (#5482)
+- Avoid adding unnecessary parentheses around unbreakable right-hand side expressions in
+  assignments (such as annotated assignments or subscript targets) (#5473)
+- Parenthesize expressions with parameter comments when they exceed the line length
+  under `--preview` (#5442)
+- Fix `wrap_long_dict_values_in_parens` dropping the parentheses around a right-hand
+  side that contains a dictionary, leaving a line over the length limit (#5492)
+- Fix the unstable `string_processing` feature adding a space after `*` or `**` in a PEP
+  695 type parameter (`* Ts = ...`) when it splits a string in the parameter's default
+  (#5504)
+- Avoid unnecessary line splits of trailers (such as indexing/subscripts) when an
+  earlier bracket split exceeds the line length only due to a trailing comment (#5498)
+
+### Configuration
+
+- Add `--cache-dir` to configure the cache directory from the command line (#5433)
+- Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
+  which made a later full `black --check` pass and `black` skip the unformatted lines
+  (#5476)
+- Respect a `.gitignore` that starts with a UTF-8 byte order mark. The mark became part
+  of the first pattern, so that pattern never matched and Black formatted files that git
+  ignores (#5497)
+
+### Performance
+
+- Avoid quadratic runtime when splitting very long lines with many trailing bracket
+  pairs (such as consecutive subscripts) (#5475)
+
+### Integrations
+
+- Fix the GitHub Action crashing on dependency-group includes when `use_pyproject` is
+  enabled (#5479)
+- When the GitHub Action reads version specifiers from `tool.black.required-version`, it
+  now only accepts released versions of Black, as it already did for `black`
+  requirements in dependency lists. Other values, such as URL references, are now
+  rejected. (#5510)
 
 ## Version 26.10.0
 
