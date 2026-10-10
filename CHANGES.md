@@ -43,6 +43,8 @@
 - Fix the unstable `string_processing` feature adding a space after `*` or `**` in a PEP
   695 type parameter (`* Ts = ...`) when it splits a string in the parameter's default
   (#5504)
+- Avoid unnecessary line splits of trailers (such as indexing/subscripts) when an
+  earlier bracket split exceeds the line length only due to a trailing comment (#5498)
 
 ### Configuration
 
