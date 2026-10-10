@@ -250,18 +250,6 @@ class LineGenerator(Visitor[Line]):
 
             yield from self.visit(child)
 
-    def visit_typeparams(self, node: Node) -> Iterator[Line]:
-        yield from self.visit_default(node)
-        node.children[0].prefix = ""
-
-    def visit_typevartuple(self, node: Node) -> Iterator[Line]:
-        yield from self.visit_default(node)
-        node.children[1].prefix = ""
-
-    def visit_paramspec(self, node: Node) -> Iterator[Line]:
-        yield from self.visit_default(node)
-        node.children[1].prefix = ""
-
     def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_long_dict_values_in_parens in self.mode:
             for i, child in enumerate(node.children):
@@ -572,7 +560,9 @@ class LineGenerator(Visitor[Line]):
                 # If docstring is one line, we don't put the closing quotes on a
                 # separate line because it looks ugly (#3320).
                 lines = docstring.splitlines()
-                last_line_length = len(lines[-1]) if docstring else 0
+                last_line_length = (
+                    len(lines[-1]) if docstring and not docstring.endswith("\n") else 0
+                )
 
                 # If adding closing quotes would cause the last line to exceed
                 # the maximum line length, and the closing quote is not
@@ -1044,14 +1034,45 @@ def right_hand_split_with_omits(
     bracket pair instead.
     """
     fallback_omit: set[LeafID] | None = None
+    first_lines: list[Line] | None = None
+
+    prefix_lengths: dict[LeafID, int] = {}
+    curr_len = 4 * line.depth
+    for leaf in line.leaves:
+        prefix_lengths[id(leaf)] = curr_len
+        curr_len += len(leaf.prefix) + len(leaf.value)
+
     for omit in generate_trailers_to_omit(line, mode.line_length):
+        if omit:
+            target_opening: Leaf | None = None
+            for leaf in reversed(line.leaves):
+                if leaf.type in CLOSING_BRACKETS and id(leaf) not in omit:
+                    target_opening = leaf.opening_bracket
+                    break
+            # If the candidate split point is a concrete bracket whose prefix length
+            # from the start of the line already exceeds line_length, the head line
+            # is mathematically guaranteed to exceed line_length as well.
+            if (
+                target_opening is not None
+                and target_opening.value
+                and prefix_lengths.get(id(target_opening), 0) > mode.line_length
+            ):
+                continue
+
         lines = list(right_hand_split(line, mode, features, omit=omit))
+        if first_lines is None and not omit:
+            first_lines = lines
         # Note: this check is only able to figure out if the first line of the
         # *current* transformation fits in the line length.  This is true only
         # for simple cases.  All others require running more transforms via
         # `transform_line()`.  This check doesn't know if those would succeed.
         if is_line_short_enough(lines[0], mode=mode) or (
-            omit and _over_length_only_due_to_subscript_comment(lines[0], mode)
+            omit
+            and (
+                _over_length_only_due_to_bracket_comment(lines[0], mode)
+                if Preview.keep_trailers_on_bracket_comment_overflow in mode
+                else _over_length_only_due_to_subscript_comment(lines[0], mode)
+            )
         ):
             if (
                 Preview.fix_magic_trailing_comma_trailer_split in mode
@@ -1068,14 +1089,17 @@ def right_hand_split_with_omits(
             return
 
     if fallback_omit is not None:
-        yield from right_hand_split(line, mode, features, omit=fallback_omit)
+        yield from right_hand_split(line, mode, features=features, omit=fallback_omit)
         return
 
     # All splits failed, best effort split with no omits.
     # This mostly happens to multiline strings that are by definition
     # reported as not fitting a single line, as well as lines that contain
     # trailing commas (those have to be exploded).
-    yield from right_hand_split(line, mode, features=features)
+    if first_lines is not None:
+        yield from first_lines
+    else:
+        yield from right_hand_split(line, mode, features=features)
 
 
 def _first_right_hand_split(
@@ -2498,16 +2522,18 @@ def generate_trailers_to_omit(line: Line, line_length: int) -> Iterator[set[Leaf
                 closing_bracket = leaf
 
 
-def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
+def _over_length_only_due_to_bracket_comment(
+    line: Line, mode: Mode, allowed_brackets: Collection[int] = OPENING_BRACKETS
+) -> bool:
     """Return True if `line` only exceeds `mode.line_length` because of an inline
-    comment attached to a subscript opening bracket (`[`).
+    comment attached to an opening bracket.
 
-    This is the shape produced by the original of the issue #4733 reproducer:
-    a comment inside the annotation's subscript brackets renders at the end of
-    the head line after Black splits the statement, pushing it past the limit.
-    Taking the FORCE_OPTIONAL_PARENTHESES "second opinion" in that case wraps
-    the annotation in extra parens and migrates the comment outside the
-    subscript, which then oscillates on the next formatter pass.
+    This is the shape produced by issues #4733 and #3681:
+    a comment inside brackets renders at the end of the head line after Black
+    splits the statement, pushing it past the limit. If the line without the
+    comment fits within `mode.line_length`, rejecting an omit-based split does
+    not prevent the line from exceeding the limit and causes unnecessary
+    splitting of other trailers (issue #3681).
     """
     if not line.leaves:
         return False
@@ -2519,14 +2545,20 @@ def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
     text_without_comments += "".join(str(leaf) for leaf in leaves_iter)
     if str_width(text_without_comments) > mode.line_length:
         return False
-    # And the comment must be attached to a subscript opening bracket.
+    # And the comment must be attached to an opening bracket.
     for leaf_id, comments in line.comments.items():
         if not comments:
             continue
         leaf = next((lf for lf in line.leaves if id(lf) == leaf_id), None)
-        if leaf is None or leaf.type != token.LSQB:
+        if leaf is None or leaf.type not in allowed_brackets:
             return False
     return True
+
+
+def _over_length_only_due_to_subscript_comment(line: Line, mode: Mode) -> bool:
+    return _over_length_only_due_to_bracket_comment(
+        line, mode, allowed_brackets={token.LSQB}
+    )
 
 
 def run_transformer(
@@ -2539,6 +2571,14 @@ def run_transformer(
 ) -> list[Line]:
     if not line_str:
         line_str = line_to_string(line)
+    # A visible optional paren after the transform means the split already used
+    # it. Parens nested in the line (around dict values) can turn visible in a
+    # sub-line's split instead, so they don't count.
+    optional_parens = [
+        bracket
+        for bracket in line.bracket_tracker.invisible
+        if bracket.bracket_depth == 0
+    ]
     result: list[Line] = []
     for transformed_line in transform(line, features, mode):
         if str(transformed_line).strip("\n") == line_str:
@@ -2551,7 +2591,7 @@ def run_transformer(
         Feature.FORCE_OPTIONAL_PARENTHESES in features_set
         or transform is not right_hand_split_with_omits
         or not line.bracket_tracker.invisible
-        or any(bracket.value for bracket in line.bracket_tracker.invisible)
+        or any(bracket.value for bracket in optional_parens)
         or line.contains_multiline_strings()
         or result[0].contains_uncollapsable_type_comments()
         or result[0].contains_unsplittable_type_ignore()
@@ -2566,7 +2606,14 @@ def run_transformer(
         # `transform(line)` potentially destroys the line's underlying node
         # structure), then we can't proceed. Doing so would cause the below
         # call to `append_leaves()` to fail.
-        or any(leaf.parent is None for leaf in line.leaves)
+        or any(
+            leaf.parent is None
+            for leaf in line.leaves
+            if (
+                Preview.parenthesize_expressions_with_comments not in mode
+                or leaf.type != STANDALONE_COMMENT
+            )
+        )
     ):
         return result
 
@@ -2576,6 +2623,13 @@ def run_transformer(
     second_opinion = run_transformer(
         line_copy, transform, mode, features_fop, line_str=line_str
     )
-    if all(is_line_short_enough(ln, mode=mode) for ln in second_opinion):
+    if all(
+        is_line_short_enough(ln, mode=mode)
+        for ln in second_opinion
+        if (
+            Preview.parenthesize_expressions_with_comments not in mode
+            or not ln.is_comment
+        )
+    ):
         result = second_opinion
     return result

@@ -1485,7 +1485,41 @@ def _format_str_once(
     if not dst_contents:
         if "\n" in normalized_contents:
             return newline_type
-    return "".join(dst_contents).replace("\n", newline_type)
+    dst = "".join(dst_contents)
+    if not mode.is_ipynb:
+        dst = _keep_encoding_declaration_ignored(normalized_contents, dst)
+    return dst.replace("\n", newline_type)
+
+
+def _declared_encoding(contents: str) -> str | None:
+    """Return the encoding Python would decode `contents` with.
+
+    Only an encoding declaration on the first two lines counts (PEP 263). Returns
+    None if the declared encoding is invalid.
+    """
+    first_two_lines = "\n".join(contents.split("\n", 2)[:2])
+    try:
+        encoding, _ = tokenize.detect_encoding(
+            io.BytesIO(first_two_lines.encode("utf-8")).readline
+        )
+    except SyntaxError:
+        return None
+    return encoding
+
+
+def _keep_encoding_declaration_ignored(src_contents: str, dst_contents: str) -> str:
+    """Retain up to two blank lines so an ignored encoding declaration stays ignored.
+
+    Python ignores an encoding declaration below the second line. Removing the
+    blank lines at the start of the file can move one onto the first two lines,
+    where it takes effect and changes how the file is decoded.
+    """
+    src_encoding = _declared_encoding(src_contents)
+    for blank_lines in range(3):
+        retained = "\n" * blank_lines + dst_contents
+        if _declared_encoding(retained) == src_encoding:
+            return retained
+    return dst_contents
 
 
 def decode_bytes(

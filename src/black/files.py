@@ -258,7 +258,9 @@ def get_gitignore(root: Path | None) -> GitIgnoreSpec:
     gitignore = root / ".gitignore"
     lines: list[str] = []
     if gitignore.is_file():
-        with gitignore.open(encoding="utf-8") as gf:
+        # Like git, skip a UTF-8 byte order mark. Otherwise it becomes part of the
+        # first pattern, which then never matches.
+        with gitignore.open(encoding="utf-8-sig") as gf:
             lines = gf.readlines()
     try:
         return GitIgnoreSpec.from_lines(lines)

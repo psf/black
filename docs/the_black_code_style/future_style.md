@@ -69,6 +69,69 @@ Currently, the following features are included in the preview style:
   annotated assignments or subscript targets) when the expression cannot fit within the
   line length even with parentheses.
   ([see below](labels/avoid-parens-for-unbreakable-rhs-in-assignments))
+- `parenthesize_expressions_with_comments`: Parenthesize expressions (such as function
+  calls) that exceed the line length when their parameters contain comments.
+  ([see below](labels/parenthesize-expressions-with-comments))
+- `keep_trailers_on_bracket_comment_overflow`: Avoid splitting trailers (such as
+  indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
+  line length limit only due to a trailing comment.
+  ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+
+(labels/keep-trailers-on-bracket-comment-overflow)=
+
+### Keep trailers when earlier bracket split exceeds length due to comments
+
+When an expression containing trailers (such as indexing or subscripts like `[0]`) is
+split at an opening bracket, but the line ending with that opening bracket exceeds the
+maximum line length solely because of a trailing comment (such as `# type: ignore`),
+Black previously rejected omitting the trailers and pointlessly exploded them across
+multiple lines even though the earlier line could not be shortened. With this feature
+enabled, Black keeps those trailers intact:
+
+```python
+# Before
+_zzzzzzz(
+    zzz.get_data("key")[0].get_nested(  # type: ignore
+        "nested_key"
+    )[
+        0
+    ]
+)
+
+# After (with --preview)
+_zzzzzzz(
+    zzz.get_data("key")[0].get_nested(  # type: ignore
+        "nested_key"
+    )[0]
+)
+```
+
+(labels/parenthesize-expressions-with-comments)=
+
+### Parenthesizing expressions with parameter comments
+
+When an expression in an assignment (such as a function call) exceeds the line length
+and contains parameter comments, Black previously failed to wrap the expression in
+parentheses. With this feature enabled, Black wraps the expression so that the line fits
+within the line length limit:
+
+```python
+# Before (with -l 30)
+long_variable_name = long_function_name(
+    first_parameter,
+    # comment
+    second_parameter,
+)
+
+# After (with --preview -l 30)
+long_variable_name = (
+    long_function_name(
+        first_parameter,
+        # comment
+        second_parameter,
+    )
+)
+```
 
 (labels/avoid-parens-for-unbreakable-rhs-in-assignments)=
 
