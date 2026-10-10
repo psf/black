@@ -144,7 +144,7 @@ class Converter(grammar.Grammar):
                     arcs.append((i, j))
                 lineno, line = lineno + 1, next(f)
                 assert line == "};\n", (lineno, line)
-                allarcs[(n, m)] = arcs
+                allarcs[n, m] = arcs
                 lineno, line = lineno + 1, next(f)
             mo = re.match(r"static state states_(\d+)\[(\d+)\] = {$", line)
             assert mo, (lineno, line)
