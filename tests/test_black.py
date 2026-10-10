@@ -3455,6 +3455,45 @@ class TestFileCollection:
         expected = [src / "a.py", src / "c.py"]
         assert_collected_sources([src], expected)
 
+    def test_nested_gitignore_negation_reincludes(self) -> None:
+        # https://github.com/psf/black/issues/5376
+        # https://github.com/psf/black/issues/3694
+        # The .gitignore closest to a path decides it, and only then do shallower
+        # ones get asked. So a nested .gitignore can re-include something an
+        # ancestor excluded, which is what git does.
+        path = Path(DATA_DIR / "nested_gitignore_negation_tests")
+        expected = [
+            # Re-included by pkg/.gitignore despite the root .gitignore.
+            path / "pkg/playground/build_cache/settings.py",
+            path / "pkg/playground/keep.py",
+            # pkg/.gitignore says nothing about pkg/other, so the root wins.
+            path / "pkg/other/keep.py",
+            # Nothing re-includes this one, with or without a nested .gitignore.
+            path / "solo/keep.py",
+        ]
+        assert_collected_sources([path], expected, root=path)
+
+    def test_nested_gitignore_negation_does_not_override_ignored_parent(self) -> None:
+        # A .gitignore cannot re-include a file whose parent directory is excluded,
+        # so selfneg/build_cache stays excluded despite its own !skipped.py. Git
+        # agrees: it never descends into a directory it has already excluded.
+        root = Path(DATA_DIR / "nested_gitignore_negation_tests")
+        src = root / "selfneg"
+        assert_collected_sources([src], [], root=root)
+
+    def test_nested_gitignore_negation_only_applies_to_what_it_names(self) -> None:
+        # https://github.com/psf/black/issues/5376
+        # Re-including a directory re-includes the directory, not the files inside
+        # it: git decides each file on the patterns that name that file. So the
+        # nested !playground/build_cache cannot rescue msg_pb2.py from the root's
+        # unrelated *_pb2.py, even though it does let Black see msg_other.py.
+        path = Path(DATA_DIR / "nested_gitignore_independent_exclusion_tests")
+        expected = [
+            path / "pkg/keep.py",
+            path / "pkg/playground/build_cache/msg_other.py",
+        ]
+        assert_collected_sources([path], expected, root=path)
+
     def test_invalid_gitignore(self) -> None:
         path = THIS_DIR / "data" / "invalid_gitignore_tests"
         empty_config = path / "pyproject.toml"
