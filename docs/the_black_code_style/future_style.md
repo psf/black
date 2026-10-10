@@ -81,6 +81,34 @@ Currently, the following features are included in the preview style:
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
 - `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
   and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+- `symmetric_binary_operations`: Keep optional parentheses around long binary operations
+  and split them before the operator, rather than inside the last operand, when both
+  operands fit on their own line. ([see below](labels/symmetric-binary-operations))
+
+(labels/symmetric-binary-operations)=
+
+### Symmetric binary operations
+
+When a binary operation between two operands is too long for one line and both operands
+fit on their own line, Black keeps optional parentheses around the expression and splits
+it before the operator, instead of splitting inside the last operand. This matches how
+operations with more than two operands are already formatted, and applies to every
+arithmetic and bitwise operator. If either operand needs an internal split, including
+when an active magic trailing comma forces it onto multiple lines, Black retains the
+existing formatting.
+
+```python
+# Before
+value = get_value_from_a_kinda_long_function_that_is_even_longer() + max(
+    offset, threshold
+)
+
+# After (with --preview)
+value = (
+    get_value_from_a_kinda_long_function_that_is_even_longer()
+    + max(offset, threshold)
+)
+```
 
 (labels/remove-redundant-list-parentheses)=
 

@@ -30,7 +30,8 @@ mixed_collection_operands = ["first_long_value", "second_long_value"] + ("third_
 list_equality = ["first_long_value", "second_long_value"] == ["third_long_value", "fourth_long_value"]
 list_comprehension_equality = [item for item in source_items] == [first_value, second_value, third_value]
 
-# Parenthesized scalars and generator expressions are not collection displays.
+# Parenthesized scalars and generator expressions are not collection displays, but
+# `symmetric_binary_operations` still splits them before the operator.
 parenthesized_scalars = (first_function_with_a_really_long_name(first_argument)) + (second_function_with_a_really_long_name(second_argument))
 generator_operands = (first_item for first_item in first_collection_with_a_really_long_name) + (second_item for second_item in second_collection_with_a_really_long_name)
 
@@ -55,7 +56,8 @@ values = [first_value, second_value, third_value] + [fourth_value, fifth_value, 
 # Chained concatenations already use the normal delimiter split.
 chained = ["first_long_value", "second_long_value"] + ["third_long_value", "fourth_long_value"] + ["fifth_long_value", "sixth_long_value"]
 
-# Mixed operands are not symmetric list concatenations.
+# Mixed operands are not symmetric list concatenations, but
+# `symmetric_binary_operations` still splits them before the operator.
 mixed_left = ["first_long_value", "second_long_value", "third_long_value"] + tuple_with_a_very_long_name
 mixed_right = list_with_a_very_long_name + ["first_long_value", "second_long_value", "third_long_value"]
 
@@ -166,13 +168,16 @@ list_comprehension_equality = (
     == [first_value, second_value, third_value]
 )
 
-# Parenthesized scalars and generator expressions are not collection displays.
-parenthesized_scalars = (first_function_with_a_really_long_name(first_argument)) + (
-    second_function_with_a_really_long_name(second_argument)
+# Parenthesized scalars and generator expressions are not collection displays, but
+# `symmetric_binary_operations` still splits them before the operator.
+parenthesized_scalars = (
+    (first_function_with_a_really_long_name(first_argument))
+    + (second_function_with_a_really_long_name(second_argument))
 )
 generator_operands = (
-    first_item for first_item in first_collection_with_a_really_long_name
-) + (second_item for second_item in second_collection_with_a_really_long_name)
+    (first_item for first_item in first_collection_with_a_really_long_name)
+    + (second_item for second_item in second_collection_with_a_really_long_name)
+)
 
 # Comments on an operand stay attached and formatting remains stable.
 commented = (
@@ -202,17 +207,16 @@ chained = (
     + ["fifth_long_value", "sixth_long_value"]
 )
 
-# Mixed operands are not symmetric list concatenations.
-mixed_left = [
-    "first_long_value",
-    "second_long_value",
-    "third_long_value",
-] + tuple_with_a_very_long_name
-mixed_right = list_with_a_very_long_name + [
-    "first_long_value",
-    "second_long_value",
-    "third_long_value",
-]
+# Mixed operands are not symmetric list concatenations, but
+# `symmetric_binary_operations` still splits them before the operator.
+mixed_left = (
+    ["first_long_value", "second_long_value", "third_long_value"]
+    + tuple_with_a_very_long_name
+)
+mixed_right = (
+    list_with_a_very_long_name
+    + ["first_long_value", "second_long_value", "third_long_value"]
+)
 
 # Short concatenations stay on one line.
 small = [1, 2] + [3, 4]

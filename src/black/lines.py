@@ -1604,6 +1604,66 @@ def is_symmetric_collection_binop(line: Line, line_length: int) -> bool:
     ):
         return False
 
+    return _binop_operands_fit(line, delimiter_index, line_length)
+
+
+def is_symmetric_binop(line: Line, line_length: int) -> bool:
+    """Is `line` an arithmetic or bitwise binary operation whose two operands
+    each fit on their own line?"""
+    bt = line.bracket_tracker
+    if not bt.delimiters:
+        return False
+
+    max_priority = bt.max_delimiter_priority()
+    if bt.delimiter_count_with_priority(max_priority) != 1:
+        return False
+
+    # Math operators are split *before* the delimiter, so BracketTracker keys
+    # them by the preceding leaf.
+    operator_index = next(
+        (
+            index + 1
+            for index, leaf in enumerate(line.leaves)
+            if bt.delimiters.get(id(leaf)) == max_priority
+        ),
+        len(line.leaves),
+    )
+    if operator_index >= len(line.leaves):
+        return False
+
+    operator = line.leaves[operator_index]
+    if operator.type not in MATH_OPERATORS or operator.parent is None:
+        return False
+
+    # The operation must make up the whole line. Otherwise splitting before the
+    # operator would misrepresent precedence, as in `not a + b` or `lambda: a + b`.
+    if (
+        first_leaf(operator.parent) is not line.leaves[0]
+        or last_leaf(operator.parent) is not line.leaves[-1]
+    ):
+        return False
+
+    # Operands that would still be split internally keep the existing formatting.
+    if line.magic_trailing_comma or line.contains_standalone_comments():
+        return False
+
+    # Moving type comments to another line could change what they apply to.
+    if any(
+        is_type_comment(comment, mode=line.mode)
+        for comments in line.comments.values()
+        for comment in comments
+    ):
+        return False
+
+    return _binop_operands_fit(line, operator_index, line_length)
+
+
+def _binop_operands_fit(line: Line, operator_index: int, line_length: int) -> bool:
+    """Do both operands of the binary operation in `line` fit on their own line?
+
+    The right operand's line starts with the operator at `operator_index`.
+    """
+
     def rendered_width(start: int, end: int) -> int | None:
         leaves = line.leaves[start:end]
         rendered = "    " * line.depth
@@ -1614,8 +1674,8 @@ def is_symmetric_collection_binop(line: Line, line_length: int) -> bool:
             return None
         return str_width(rendered)
 
-    left_width = rendered_width(0, delimiter_index)
-    right_width = rendered_width(delimiter_index, len(line.leaves))
+    left_width = rendered_width(0, operator_index)
+    right_width = rendered_width(operator_index, len(line.leaves))
     return (
         left_width is not None
         and right_width is not None

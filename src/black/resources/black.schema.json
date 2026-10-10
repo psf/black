@@ -105,7 +105,8 @@
           "keep_commented_expressions_together",
           "avoid_parens_for_unbreakable_rhs_in_assignments",
           "parenthesize_expressions_with_comments",
-          "keep_trailers_on_bracket_comment_overflow"
+          "keep_trailers_on_bracket_comment_overflow",
+          "symmetric_binary_operations"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
