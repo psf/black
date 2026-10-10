@@ -21,6 +21,10 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Emit a clear error instead of a confusing `OSError: AF_UNIX path too long` traceback
+  when running `--diff` in environments where the temporary directory path is too long
+  (#5513)
+
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
