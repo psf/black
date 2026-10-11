@@ -59,6 +59,7 @@ class Feature(Enum):
     T_STRINGS = 22
     LAZY_IMPORTS = 23
     UNPACKING_IN_COMPREHENSIONS = 24
+    UNPARENTHESIZED_WALRUS_IN_SETS = 25
     FORCE_OPTIONAL_PARENTHESES = 50
 
     # __future__ flags
@@ -131,6 +132,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         Feature.PATTERN_MATCHING,
     },
     TargetVersion.PY311: {
@@ -147,6 +149,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
@@ -165,6 +168,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
@@ -184,6 +188,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
@@ -204,6 +209,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
@@ -226,6 +232,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PARENTHESIZED_CONTEXT_MANAGERS,
+        Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         Feature.PATTERN_MATCHING,
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
