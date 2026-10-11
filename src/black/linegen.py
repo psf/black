@@ -33,6 +33,7 @@ from black.lines import (
     can_be_split,
     can_omit_invisible_parens,
     is_line_short_enough,
+    is_symmetric_collection_binop,
     line_to_string,
 )
 from black.mode import Feature, Mode, Preview
@@ -55,6 +56,7 @@ from black.nodes import (
     is_docstring,
     is_empty_tuple,
     is_generator,
+    is_list,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -597,6 +599,17 @@ class LineGenerator(Visitor[Line]):
         if (
             Preview.remove_redundant_generator_parentheses in self.mode
             and _has_redundant_generator_parentheses(node)
+        ):
+            maybe_make_parens_invisible_in_atom(
+                node,
+                parent=node.parent or node,
+                mode=self.mode,
+                features=self.features,
+            )
+
+        if (
+            Preview.remove_redundant_list_parentheses in self.mode
+            and _has_redundant_list_parentheses(node)
         ):
             maybe_make_parens_invisible_in_atom(
                 node,
@@ -1223,6 +1236,14 @@ def _maybe_split_omitting_optional_parens(
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
+    split_symmetric_collection_binops = (
+        Preview.symmetric_collection_operations in mode
+        and rhs.opening_bracket.type == token.LPAR
+        and not rhs.opening_bracket.value
+        and rhs.closing_bracket.type == token.RPAR
+        and not rhs.closing_bracket.value
+        and is_symmetric_collection_binop(rhs.body, mode.line_length)
+    )
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
@@ -1288,6 +1309,8 @@ def _maybe_split_omitting_optional_parens(
 
     ensure_visible(rhs.opening_bracket)
     ensure_visible(rhs.closing_bracket)
+    if split_symmetric_collection_binops:
+        rhs.body.should_split_rhs = True
     for result in (rhs.head, rhs.body, rhs.tail):
         if result:
             yield result
@@ -1862,6 +1885,20 @@ def _has_redundant_generator_parentheses(node: LN) -> bool:
 
     middle = node.children[1]
     return is_generator(middle) or _has_redundant_generator_parentheses(middle)
+
+
+def _has_redundant_list_parentheses(node: LN) -> bool:
+    """Whether `node` adds parentheses around a list."""
+    if (
+        node.type != syms.atom
+        or len(node.children) != 3
+        or not is_lpar_token(node.children[0])
+        or not is_rpar_token(node.children[-1])
+    ):
+        return False
+
+    middle = node.children[1]
+    return is_list(middle) or _has_redundant_list_parentheses(middle)
 
 
 def _normalize_unpacking_targets(
