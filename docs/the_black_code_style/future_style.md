@@ -787,7 +787,11 @@ foo(
 
 _Black_ will split long string literals and merge short ones. Parentheses are used where
 appropriate. When split, parts of f-strings that don't need formatting are converted to
-plain strings. f-strings will not be merged if they contain internal quotes and it would
-change their quotation mark style. Line continuation backslashes are converted into
-parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
-this feature is tracked in [this issue](https://github.com/psf/black/issues/2188).
+plain strings. Short raw strings are merged only when their prefixes and quotation marks
+match and the resulting line fits within the line length limit. Their backslashes are
+preserved; raw f-strings are not merged, and raw groups whose estimated merged line
+exceeds the line length limit remain separate. f-strings will not be merged if they
+contain internal quotes and it would change their quotation mark style. Line
+continuation backslashes are converted into parenthesized strings. Unnecessary
+parentheses are stripped. The stability and status of this feature is tracked in
+[this issue](https://github.com/psf/black/issues/2188).
