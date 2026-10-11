@@ -26,7 +26,8 @@
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
 - Keep the parentheses around a walrus that is the only item in a set (for example
-  `{(x := f())}`) when targeting Python 3.8, which can't parse it without them (#5502)
+  `{(x := f())}`) when targeting Python 3.9 or older, since Python 3.8 and 3.9.0 can't
+  parse it without them (#5502)
 
 ### Preview style
 

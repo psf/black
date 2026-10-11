@@ -117,7 +117,6 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.UNPACKING_ON_FLOW,
         Feature.ANN_ASSIGN_EXTENDED_RHS,
         Feature.PARENTHESIZED_CONTEXT_MANAGERS,
-        Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
     },
     TargetVersion.PY310: {
         Feature.F_STRINGS,

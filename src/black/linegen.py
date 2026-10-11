@@ -2390,7 +2390,7 @@ def maybe_make_parens_invisible_in_atom(
             and Feature.UNPARENTHESIZED_WALRUS_IN_SETS not in features
         ):
             # A named expression in a set literal needs its parentheses before
-            # Python 3.9.
+            # Python 3.10 (3.9.1 accepts it, but 3.9.0 doesn't).
             return False
 
     first = node.children[0]
