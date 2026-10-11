@@ -18,7 +18,6 @@
 
 - Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
   `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
-- Do not let standalone comments break fluent method chaining formatting (#5644)
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638)
@@ -130,6 +129,7 @@
   contains standalone comments (#5638, #5657)
 - Retain user-written parens around `in` clauses of comprehensions if they have
   delimiters (#4881)
+- Do not let standalone comments break fluent method chaining formatting (#5644)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
   binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
