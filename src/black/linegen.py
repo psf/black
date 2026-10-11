@@ -1559,6 +1559,34 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
     return line
 
 
+def _has_comment_between_method_calls(line: Line) -> bool:
+    """Return whether a standalone comment separates a call from a method call."""
+    previous: Leaf | None = None
+    comment_follows_call = False
+    for leaf in line.leaves:
+        if leaf.type == STANDALONE_COMMENT:
+            if (
+                previous is not None
+                and previous.type == token.RPAR
+                and previous.parent is not None
+                and previous.parent.type == syms.trailer
+            ):
+                comment_follows_call = True
+            continue
+
+        if comment_follows_call:
+            if (
+                leaf.type == token.DOT
+                and leaf.parent is not None
+                and leaf.parent.type == syms.trailer
+            ):
+                return True
+            comment_follows_call = False
+        previous = leaf
+
+    return False
+
+
 MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
 
 
@@ -1654,6 +1682,10 @@ def delimiter_split(
     if (
         delimiter_priority == DOT_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and not (
+            Preview.split_commented_method_chains in mode
+            and _has_comment_between_method_calls(line)
+        )
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 

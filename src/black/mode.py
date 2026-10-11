@@ -276,6 +276,7 @@ class Preview(Enum):
     avoid_parens_for_unbreakable_rhs_in_assignments = auto()
     parenthesize_expressions_with_comments = auto()
     keep_trailers_on_bracket_comment_overflow = auto()
+    split_commented_method_chains = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
