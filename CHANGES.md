@@ -20,6 +20,8 @@
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
+  sets when the line length is very small or the code is deeply nested (#5521)
 
 ### Configuration
 

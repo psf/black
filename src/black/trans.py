@@ -1546,7 +1546,6 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         QUOTE = LL[string_idx].value[-1]
 
         is_valid_index = is_valid_index_factory(LL)
-        insert_str_child = insert_str_child_factory(LL[string_idx])
 
         prefix = get_string_prefix(LL[string_idx].value).lower()
 
@@ -1611,6 +1610,11 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
                 f" {line.depth}"
             )
             return
+
+        # This removes the string from the node structure, so it must come after
+        # the check above. Otherwise, bailing out would leave the string's
+        # siblings looking at the wrong neighbors.
+        insert_str_child = insert_str_child_factory(LL[string_idx])
 
         # Check if StringMerger registered any custom splits.
         custom_splits = self.pop_custom_splits(LL[string_idx].value)
