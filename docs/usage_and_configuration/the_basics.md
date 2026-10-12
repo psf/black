@@ -343,6 +343,10 @@ programmatically on changed files, such as in a pre-commit hook or editor plugin
 The name of the file when passing it through stdin. Useful to make sure Black will
 respect the `--force-exclude` option on some editors that rely on using stdin.
 
+The filename also determines the input type: a `.pyi` suffix enables stub formatting,
+and a `.ipynb` suffix enables notebook formatting. For example, use
+`black --stdin-filename example.pyi -` when piping a stub through stdin.
+
 #### `--include`
 
 A regular expression that matches files and directories that should be included on
