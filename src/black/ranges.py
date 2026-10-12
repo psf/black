@@ -4,7 +4,7 @@ import difflib
 from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
 
-from black.comments import FMT_SKIP, contains_fmt_directive
+from black.comments import FMT_ON, FMT_SKIP, contains_fmt_directive
 from black.nodes import (
     LN,
     STANDALONE_COMMENT,
@@ -447,13 +447,14 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
 
 
 def _str_with_standalone_comments(node: LN) -> str:
-    """Like `str(node)`, but a nested STANDALONE_COMMENT that ends in a `# fmt: skip`
-    is followed by a newline.
+    """Like `str(node)`, but a nested STANDALONE_COMMENT that ends in a comment is
+    followed by a newline.
 
-    A STANDALONE_COMMENT made by `# fmt: skip` handling can end with the comment and
-    has no trailing newline: the line generator puts one after it. Joining it
-    straight to the next leaf would append that leaf (e.g. a closing bracket) to the
-    comment's line and turn it into part of the comment.
+    A STANDALONE_COMMENT made by `# fmt: skip` handling, or by a `# fmt: off` /
+    `# fmt: on` block holding only comments, can end with a comment and has no
+    trailing newline: the line generator puts one after it. Joining it straight to
+    the next leaf would append that leaf (e.g. a closing bracket, or the whole next
+    statement) to the comment's line and turn it into part of the comment.
     """
     leaves = list(node.leaves())
     parts = []
@@ -463,7 +464,7 @@ def _str_with_standalone_comments(node: LN) -> str:
             leaf.type == STANDALONE_COMMENT
             and next_leaf is not None
             and not str(next_leaf).startswith("\n")
-            and _ends_with_fmt_skip(text)
+            and (_ends_with_fmt_skip(text) or _ends_with_fmt_on_line(text))
         ):
             text += "\n"
         parts.append(text)
@@ -473,14 +474,23 @@ def _str_with_standalone_comments(node: LN) -> str:
 def _ends_with_fmt_skip(text: str) -> bool:
     """Whether the last line of a STANDALONE_COMMENT value ends in a `# fmt: skip`.
 
-    Only that directive makes such a value end in a comment without a trailing
-    newline. Any other `#` is ignored: it may be inside a string.
+    Any other `#` is ignored: it may be inside a string.
     """
     last_line = text.rpartition("\n")[2]
     comment_start = last_line.find("#")
     return comment_start != -1 and contains_fmt_directive(
         last_line[comment_start:], FMT_SKIP
     )
+
+
+def _ends_with_fmt_on_line(text: str) -> bool:
+    """Whether the last line of a STANDALONE_COMMENT value is a `# fmt: on` comment.
+
+    That's how a `# fmt: off` / `# fmt: on` block holding only comments ends. Only
+    a line that is entirely the directive counts, so text inside a string doesn't.
+    """
+    last_line = text.rpartition("\n")[2].strip()
+    return last_line.startswith("#") and contains_fmt_directive(last_line, FMT_ON)
 
 
 def _convert_node_to_standalone_comment(
