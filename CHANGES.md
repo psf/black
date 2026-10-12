@@ -57,6 +57,8 @@
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
 
+- Document how `--stdin-filename` selects stub and notebook formatting (#5527)
+
 ## Version 26.10.1
 
 ### Highlights
