@@ -266,6 +266,7 @@ class Preview(Enum):
     fmt_off_class_blank_lines = auto()
     remove_redundant_generator_parentheses = auto()
     symmetric_collection_operations = auto()
+    parenthesize_operator_chains = auto()
     normalize_tstring_prefix = auto()
     remove_redundant_list_parentheses = auto()
     remove_redundant_unpacking_parentheses = auto()
