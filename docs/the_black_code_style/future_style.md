@@ -345,10 +345,11 @@ names = (
 ### Parenthesize operator chains
 
 When an expression with binary operators (such as arithmetic or comparison operators)
-exceeds the maximum line length, and both operands fit on their own delimiter-split line,
-Black keeps optional parentheses around the expression so that it splits at the operator
-rather than breaking inside a call or sub-expression. If either operand is too long to fit
-on a single line or has an active magic trailing comma, Black retains the previous split behavior.
+exceeds the maximum line length, and both operands fit on their own delimiter-split
+line, Black keeps optional parentheses around the expression so that it splits at the
+operator rather than breaking inside a call or sub-expression. If either operand is too
+long to fit on a single line or has an active magic trailing comma, Black retains the
+previous split behavior.
 
 ```python
 # Before
