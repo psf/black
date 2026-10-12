@@ -13,7 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Treat `# ruff:ignore` / `# ruff: ignore` as unsplittable pragmas like `# type: ignore`, and recognize `# ruff:` in `contains_pragma_comment` (#5528)
+- Treat `# ruff:ignore` / `# ruff: ignore` as unsplittable pragmas like
+  `# type: ignore`, and recognize `# ruff:` in `contains_pragma_comment` (#5528)
 
 ### Preview style
 
