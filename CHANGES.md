@@ -21,7 +21,7 @@
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
 - Parenthesize and split operator chains when both operands fit on their own
-  delimiter-split line (#4455)
+  delimiter-split line (#5523)
 
 ### Configuration
 
