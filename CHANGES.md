@@ -13,6 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Normalize hex codes in unicode escape sequences in f-strings (#5526)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
