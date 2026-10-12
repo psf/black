@@ -13,6 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
+  subscript that isn't the last element of a collection or argument list (#5522)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
