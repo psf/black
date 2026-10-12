@@ -16,7 +16,7 @@
 - Fix `--line-ranges` appending an unselected statement to the `# fmt: on` line of a
   `# fmt: off` / `# fmt: on` block that holds only comments, which turned the statement
   into part of the comment: it was silently deleted with `--fast`, and Black failed
-  otherwise (#XXXX)
+  otherwise (#5525)
 
 ### Preview style
 
