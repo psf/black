@@ -1016,10 +1016,21 @@ def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
 
 def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
-    ignore annotation."""
-    return is_type_comment_string(value, mode) and value.split(":", 1)[
+    ignore annotation.
+
+    Also treats ``# ruff:ignore`` / ``# ruff: ignore`` the same way, so Black
+    does not split a line when the ignore applies to the whole statement
+    (see https://github.com/psf/black/issues/5260).
+    """
+    if is_type_comment_string(value, mode) and value.split(":", 1)[
         1
-    ].lstrip().startswith("ignore")
+    ].lstrip().startswith("ignore"):
+        return True
+    if value.startswith("#"):
+        rest = value[1:].lstrip()
+        if rest.startswith("ruff:"):
+            return rest[5:].lstrip().startswith("ignore")
+    return False
 
 
 def wrap_in_parentheses(
