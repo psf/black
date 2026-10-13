@@ -13,6 +13,11 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--line-ranges` appending an unselected statement to the `# fmt: on` line of a
+  `# fmt: off` / `# fmt: on` block that holds only comments, which turned the statement
+  into part of the comment: it was silently deleted with `--fast`, and Black failed
+  otherwise. The blank lines after such a block are now kept as well (#5525)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
