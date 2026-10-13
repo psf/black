@@ -3511,6 +3511,16 @@ class TestFileCollection:
         expected = [src / "a.py", src / "c.py"]
         assert_collected_sources([src], expected)
 
+    def test_nested_gitignore_negation_reincludes(self) -> None:
+        # https://github.com/psf/black/issues/5376
+        # Root ignores tmpbuild/; packages/.gitignore reincludes playground/tmpbuild.
+        path = Path(DATA_DIR / "nested_gitignore_negation_tests")
+        expected = [
+            path / "packages" / "playground" / "keep.py",
+            path / "packages" / "playground" / "tmpbuild" / "settings.py",
+        ]
+        assert_collected_sources([path], expected)
+
     def test_invalid_gitignore(self) -> None:
         path = THIS_DIR / "data" / "invalid_gitignore_tests"
         empty_config = path / "pyproject.toml"
