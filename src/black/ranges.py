@@ -455,6 +455,11 @@ def _str_with_standalone_comments(node: LN) -> str:
     trailing newline: the line generator puts one after it. Joining it straight to
     the next leaf would append that leaf (e.g. a closing bracket, or the whole next
     statement) to the comment's line and turn it into part of the comment.
+
+    A block holding only comments always loses the newline that ends its `# fmt: on`
+    line, so it's always added back: if the next leaf starts with a newline, that one
+    is a blank line of its own. After a `# fmt: skip` the newline may still be at the
+    start of the next leaf, so it's only added when it's missing.
     """
     leaves = list(node.leaves())
     parts = []
@@ -463,8 +468,10 @@ def _str_with_standalone_comments(node: LN) -> str:
         if (
             leaf.type == STANDALONE_COMMENT
             and next_leaf is not None
-            and not str(next_leaf).startswith("\n")
-            and (_ends_with_fmt_skip(text) or _ends_with_fmt_on_line(text))
+            and (
+                _ends_with_fmt_on_line(text)
+                or (not str(next_leaf).startswith("\n") and _ends_with_fmt_skip(text))
+            )
         ):
             text += "\n"
         parts.append(text)
