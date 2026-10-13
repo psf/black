@@ -1547,6 +1547,18 @@ def _can_add_trailing_comma(leaf: Leaf, features: Collection[Feature]) -> bool:
     return True
 
 
+def _has_unmatched_closing_bracket(line: Line) -> bool:
+    depth = 0
+    for leaf in line.leaves:
+        if leaf.type in OPENING_BRACKETS:
+            depth += 1
+        elif leaf.type in CLOSING_BRACKETS:
+            if depth == 0:
+                return True
+            depth -= 1
+    return False
+
+
 def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) -> Line:
     if (
         safe
@@ -1704,7 +1716,9 @@ def delimiter_split(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
     )
     lowest_depth = sys.maxsize
-    trailing_comma_safe = True
+    # If the opening bracket was split onto an earlier line, this line isn't a whole
+    # collection and a trailing comma at its end would land outside of it.
+    trailing_comma_safe = not _has_unmatched_closing_bracket(line)
 
     def append_to_line(leaf: Leaf) -> Iterator[Line]:
         """Append `leaf` to current line or to new line if appending impossible."""
