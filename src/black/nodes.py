@@ -1022,6 +1022,23 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     ].lstrip().startswith("ignore")
 
 
+def is_ruff_comment_string(value: str) -> bool:
+    """Return True if the given string looks like a `# ruff:` directive.
+
+    Ruff directives (e.g. `# ruff: ignore[...]`) are line-based, so splitting
+    the line could modify their behavior, just like `# type: ignore`.
+    """
+    return value.startswith("#") and value[1:].lstrip().startswith("ruff:")
+
+
+def is_ruff_comment(leaf: Leaf, mode: Mode) -> bool:
+    """Return True if the given leaf is a `# ruff:` directive comment."""
+    del mode  # unused, kept for signature parity with is_type_ignore_comment
+    t = leaf.type
+    v = leaf.value
+    return t in {token.COMMENT, STANDALONE_COMMENT} and is_ruff_comment_string(v)
+
+
 def wrap_in_parentheses(
     parent: Node, child: LN, *, visible: bool = True, index: int | None = None
 ) -> None:
