@@ -14,9 +14,9 @@
 <!-- Changes that affect Black's stable style -->
 
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
-  one of its parameter defaults (#XXXX)
+  one of its parameter defaults (#5533)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
-  subscript (`a[x,]`) used as a lambda parameter default (#XXXX)
+  subscript (`a[x,]`) used as a lambda parameter default (#5533)
 
 ### Preview style
 
