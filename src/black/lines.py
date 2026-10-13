@@ -23,6 +23,7 @@ from black.nodes import (
     is_multiline_string,
     is_one_sequence_between,
     is_one_tuple,
+    is_ruff_comment,
     is_tuple,
     is_type_comment,
     is_type_ignore_comment,
@@ -332,7 +333,8 @@ class Line:
         if not self.leaves:
             return False
 
-        # If a 'type: ignore' is attached to the end of a line, we
+        # If a 'type: ignore' (or line-based tool directive such as
+        # 'ruff: ignore') is attached to the end of a line, we
         # can't split the line, because we can't know which of the
         # subexpressions the ignore was meant to apply to.
         #
@@ -356,7 +358,9 @@ class Line:
             # line.
             for node in self.leaves[-2:]:
                 for comment in self.comments.get(id(node), []):
-                    if is_type_ignore_comment(comment, mode=self.mode):
+                    if is_type_ignore_comment(
+                        comment, mode=self.mode
+                    ) or is_ruff_comment(comment, mode=self.mode):
                         return True
 
         return False
