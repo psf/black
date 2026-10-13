@@ -1726,6 +1726,38 @@ class BlackTestCase(BlackBaseTestCase):
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
+    def test_force_excluded_stdin_is_echoed_unchanged(self) -> None:
+        # Content passed through stdin for a file that `--force-exclude` excludes is
+        # written back byte for byte, whatever its line endings or encoding.
+        args = [
+            "--config",
+            str(THIS_DIR / "empty.toml"),
+            "--force-exclude",
+            r"excluded\.py",
+            "--stdin-filename",
+            "excluded.py",
+        ]
+        for contents in (
+            b"x  =  1\ny = 2\n",
+            b"x  =  1\r\ny = 2\r\n",
+            b"# -*- coding: latin-1 -*-\ns  =  '\xe9t\xe9'\n",
+        ):
+            runner = BlackRunner()
+            result = runner.invoke(black.main, [*args, "-"], input=BytesIO(contents))
+            self.assertEqual(result.exit_code, 0, result.stderr_bytes)
+            self.assertEqual(result.stdout_bytes, contents)
+
+        # Like an unchanged file, an excluded one produces no output when checking.
+        for options in (["--check"], ["--diff"], ["--check", "--diff"]):
+            runner = BlackRunner()
+            result = runner.invoke(
+                black.main,
+                [*args, *options, "-"],
+                input=BytesIO(b"x  =  1\n"),
+            )
+            self.assertEqual(result.exit_code, 0, result.stderr_bytes)
+            self.assertEqual(result.stdout_bytes, b"")
+
     def test_normalize_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.py"
