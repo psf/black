@@ -79,6 +79,8 @@ Currently, the following features are included in the preview style:
   indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
   line length limit only due to a trailing comment.
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+- `ruff_ignore_pragma`: Treat `# ruff: ignore` comments like `# type: ignore`, so a line
+  is not split just to move the comment off the statement it applies to.
 - `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
   and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
 
