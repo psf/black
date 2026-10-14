@@ -24,7 +24,6 @@ from mypy_extensions import mypyc_attr
 from black import WriteBack, format_file_in_place
 from black.cache import Cache
 from black.mode import Mode
-from black.output import err
 from black.report import Changed, Report
 
 
@@ -49,8 +48,7 @@ def maybe_use_uvloop() -> asyncio.AbstractEventLoop:
 
 
 def cancel(tasks: Iterable[asyncio.Future[Any]]) -> None:
-    """asyncio signal handler that cancels all `tasks` and reports to stderr."""
-    err("Aborted!")
+    """asyncio signal handler that cancels all `tasks`."""
     for task in tasks:
         task.cancel()
 
@@ -245,10 +243,12 @@ async def schedule_formatting(
                 if write_back is WriteBack.YES or can_cache_unmodified:
                     sources_to_cache.append(src)
                 report.done(src, changed)
-        if cancelled:
-            await asyncio.gather(*cancelled, return_exceptions=True)
         if sources_to_cache and not no_cache and cache is not None:
             cache.write(sources_to_cache)
+        if cancelled:
+            await asyncio.gather(*cancelled, return_exceptions=True)
+            # Some files were never formatted, so don't report the run as a success.
+            raise KeyboardInterrupt
     finally:
         if manager is not None:
             manager.shutdown()
