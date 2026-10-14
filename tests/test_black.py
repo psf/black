@@ -3575,7 +3575,10 @@ class TestFileCollection:
         # Black must keep walking when negation patterns exist.
         with TemporaryDirectory() as tempdir:
             root = Path(tempdir).resolve()
-            (root / ".gitignore").write_text("*\n!*/\n!*.py\n!.gitignore\n", encoding="utf-8")
+            (root / ".gitignore").write_text(
+                "*\n!*/\n!*.py\n!.gitignore\n",
+                encoding="utf-8",
+            )
             (root / "file1.py").write_text("x = 1\n", encoding="utf-8")
             nested = root / "pkg"
             nested.mkdir()
