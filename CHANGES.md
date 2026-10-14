@@ -45,7 +45,7 @@
 <!-- Changes to Black's terminal output and error messages -->
 
 - Fix `--check` passing when formatting multiple files is interrupted with Ctrl+C or
-  SIGTERM. The run is now reported as aborted and exits with code 1 (#XXXX)
+  SIGTERM. The run is now reported as aborted and exits with code 1 (#5542)
 
 ### _Blackd_
 
