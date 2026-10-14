@@ -26,7 +26,8 @@
 <!-- Changes to how Black can be configured -->
 
 - Walk directories that `.gitignore` ignores when negation patterns are present, so
-  patterns like `*` / `!*/` / `!*.py` include nested Python files like git (#3694)
+  patterns like `*` / `!*/` / `!*.py` include nested Python files like git
+  (#3694)
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 
