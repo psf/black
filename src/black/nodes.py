@@ -1018,15 +1018,13 @@ def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
     ignore annotation.
 
-    Also treats ``# ruff:ignore`` / ``# ruff: ignore`` the same way, so Black
-    does not split a line when the ignore applies to the whole statement
-    (see https://github.com/psf/black/issues/5260).
+    With the ruff_ignore_pragma preview feature, ``# ruff:ignore`` counts too.
     """
     if is_type_comment_string(value, mode) and value.split(":", 1)[
         1
     ].lstrip().startswith("ignore"):
         return True
-    if value.startswith("#"):
+    if Preview.ruff_ignore_pragma in mode and value.startswith("#"):
         rest = value[1:].lstrip()
         if rest.startswith("ruff:"):
             return rest[5:].lstrip().startswith("ignore")

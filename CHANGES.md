@@ -13,13 +13,12 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Treat `# ruff:ignore` / `# ruff: ignore` as unsplittable pragmas like
-  `# type: ignore`, and recognize `# ruff:` in `contains_pragma_comment` (#5528)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Treat `# ruff: ignore` comments like `# type: ignore`, so Black does not split a line
+  just to move the comment off the statement it applies to (#5528)
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
