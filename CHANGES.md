@@ -13,8 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix crash when `# fmt: skip` on an opening bracket is followed by more code after
-  the closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
+- Fix crash when `# fmt: skip` on an opening bracket is followed by more code after the
+  closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 
 ### Preview style
 
