@@ -3569,6 +3569,30 @@ class TestFileCollection:
         expected = [root / "z.py"]
         assert_collected_sources([root], expected, root=root)
 
+    def test_gitignore_star_with_directory_and_py_negations(self) -> None:
+        # `*` + `!*/` + `!*.py` (as in git): un-ignore dirs so nested *.py are found.
+        # Regression for #3694 — pathspec still reports dirs as ignored for `!*/`, so
+        # Black must keep walking when negation patterns exist.
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve()
+            (root / ".gitignore").write_text(
+                "*\n!*/\n!*.py\n!.gitignore\n",
+                encoding="utf-8",
+            )
+            (root / "file1.py").write_text("x = 1\n", encoding="utf-8")
+            nested = root / "pkg"
+            nested.mkdir()
+            (nested / "file2.py").write_text("x = 1\n", encoding="utf-8")
+            deeper = nested / "sub"
+            deeper.mkdir()
+            (deeper / "file3.py").write_text("x = 1\n", encoding="utf-8")
+            expected = [
+                root / "file1.py",
+                nested / "file2.py",
+                deeper / "file3.py",
+            ]
+            assert_collected_sources([root], expected, root=root)
+
     def test_gitignore_with_utf8_bom(self) -> None:
         # Git skips a UTF-8 byte order mark at the start of a .gitignore, so the first
         # pattern still applies. Some Windows tools save files with one.
