@@ -81,6 +81,9 @@ Currently, the following features are included in the preview style:
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
 - `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
   and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+- `remove_redundant_comparison_parentheses`: Remove redundant parentheses around
+  operands in comparison expressions.
+  ([see below](labels/remove-redundant-comparison-parentheses))
 
 (labels/remove-redundant-list-parentheses)=
 
@@ -98,6 +101,26 @@ foo(([1, 2]))
 []
 [1, 2]
 foo([1, 2])
+```
+
+(labels/remove-redundant-comparison-parentheses)=
+
+### Redundant comparison parentheses
+
+Black removes redundant parentheses around operands in comparison expressions:
+
+```python
+# Before
+assert name == ("CommonName")
+x = (1) < (2) <= (3)
+if (foo()) == (bar()):
+    pass
+
+# After (with --preview)
+assert name == "CommonName"
+x = 1 < 2 <= 3
+if foo() == bar():
+    pass
 ```
 
 (labels/keep-trailers-on-bracket-comment-overflow)=

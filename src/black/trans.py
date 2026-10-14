@@ -2065,8 +2065,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 # If the first string fits on the line, splitting at the
                 # concatenation is enough.
                 tail = "".join(str(leaf) for leaf in LL[string_idx + 1 :])
-                if str_width(line_to_string(line)) - str_width(tail) <= (
-                    self.line_length
+                if (
+                    str_width(line_to_string(line)) - str_width(tail)
+                    <= self.line_length
                 ):
                     return TErr(
                         "The first string of the implicit concatenation fits on"

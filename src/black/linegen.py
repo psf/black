@@ -8,7 +8,7 @@ from collections.abc import Collection, Iterable, Iterator
 from dataclasses import replace
 from enum import Enum, auto
 from functools import partial, wraps
-from typing import Union, cast
+from typing import Final, Union, cast
 
 from black.brackets import (
     COMMA_PRIORITY,
@@ -206,6 +206,11 @@ class LineGenerator(Visitor[Line]):
             node.insert_child(0, lpar)
             node.append_child(rpar)
 
+        yield from self.visit_default(node)
+
+    def visit_comparison(self, node: Node) -> Iterator[Line]:
+        if Preview.remove_redundant_comparison_parentheses in self.mode:
+            _normalize_comparison_operands(node, mode=self.mode, features=self.features)
         yield from self.visit_default(node)
 
     def visit_INDENT(self, node: Leaf) -> Iterator[Line]:
@@ -1931,6 +1936,92 @@ def _normalize_unpacking_targets(
         for child in node.children:
             if isinstance(child, Node):
                 _normalize_unpacking_targets(child, mode=mode, features=features)
+
+
+_DISALLOWED_COMPARISON_INNER_TYPES: Final = {
+    syms.comparison,
+    syms.not_test,
+    syms.and_test,
+    syms.or_test,
+    syms.test,
+    syms.lambdef,
+    syms.namedexpr_test,
+    syms.testlist_gexp,
+    syms.yield_expr,
+    syms.old_lambdef,
+    syms.old_test,
+}
+
+_BINARY_OP_TYPES: Final = {
+    syms.arith_expr,
+    syms.term,
+    syms.expr,
+    syms.xor_expr,
+    syms.and_expr,
+    syms.shift_expr,
+}
+
+
+def _is_binary_power(node: LN) -> bool:
+    """Whether node is an exponentiation expression (e.g. `a ** b`)."""
+    return (
+        isinstance(node, Node)
+        and node.type == syms.power
+        and any(child.type == token.DOUBLESTAR for child in node.children)
+    )
+
+
+def _is_parenthesized_atom(node: LN) -> bool:
+    """Whether node is an atom enclosed in parentheses."""
+    return (
+        node.type == syms.atom
+        and len(node.children) == 3
+        and is_lpar_token(node.children[0])
+        and is_rpar_token(node.children[-1])
+    )
+
+
+def _can_remove_comparison_parens(node: LN) -> bool:
+    """Whether parentheses around comparison operand `node` can be safely removed."""
+    if not _is_parenthesized_atom(node):
+        return False
+
+    if is_empty_tuple(node) or is_one_tuple(node) or is_tuple(node):
+        return False
+
+    middle = node.children[1]
+
+    if is_generator(middle):
+        return False
+
+    if is_empty_tuple(middle) or is_one_tuple(middle) or is_tuple(middle):
+        return False
+
+    if middle.type in _DISALLOWED_COMPARISON_INNER_TYPES:
+        return False
+
+    if middle.type in _BINARY_OP_TYPES:
+        return False
+
+    if _is_binary_power(middle):
+        return False
+
+    if _is_parenthesized_atom(middle):
+        return _can_remove_comparison_parens(middle)
+
+    return True
+
+
+def _normalize_comparison_operands(
+    node: Node, mode: Mode, features: Collection[Feature]
+) -> None:
+    """Remove redundant parentheses around operands in a comparison expression."""
+    for i in range(0, len(node.children), 2):
+        operand = node.children[i]
+        if _can_remove_comparison_parens(operand):
+            maybe_make_parens_invisible_in_atom(
+                operand, parent=node, mode=mode, features=features
+            )
 
 
 def normalize_invisible_parens(
