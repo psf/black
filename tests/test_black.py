@@ -10,12 +10,13 @@ import multiprocessing
 import os
 import pickle
 import re
+import signal
 import subprocess
 import sys
 import textwrap
 import types
 from collections.abc import Callable, Iterator, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import fields, replace
 from importlib.metadata import version as imp_version
@@ -3237,6 +3238,60 @@ class TestCaching:
             cache = black.Cache.read(mode, workspace)
             assert cache.is_changed(failing)
             assert not cache.is_changed(clean)
+
+    @pytest.mark.parametrize(
+        "executor, workers",
+        [("ProcessPoolExecutor", "2"), ("ThreadPoolExecutor", "1")],
+        ids=["process-pool", "thread-pool"],
+    )
+    @pytest.mark.parametrize(
+        "output", ["", "--check", "--diff"], ids=["format", "check", "diff"]
+    )
+    @event_loop()
+    def test_interrupted_run_is_not_reported_as_success(
+        self, output: str, executor: str, workers: str
+    ) -> None:
+        if sys.platform == "win32":
+            pytest.skip("Signal handlers aren't supported on Windows")
+
+        class InterruptingExecutor(Executor):
+            def __init__(self, max_workers: int) -> None:
+                self.submitted = 0
+
+            def submit(
+                self, fn: Callable[..., Any], /, *args: Any, **kwargs: Any
+            ) -> Future[Any]:
+                future: Future[Any] = Future()
+                self.submitted += 1
+                if self.submitted == 1:
+                    future.set_result(fn(*args, **kwargs))
+                else:
+                    # Leave the file pending and interrupt Black like Ctrl+C would.
+                    asyncio.get_running_loop().call_soon(
+                        os.kill, os.getpid(), signal.SIGINT
+                    )
+                return future
+
+        mode = DEFAULT_MODE
+        with (
+            cache_dir() as workspace,
+            patch(f"black.concurrency.{executor}", new=InterruptingExecutor),
+        ):
+            clean = (workspace / "clean.py").resolve()
+            clean.write_text('print("hello")\n', encoding="utf-8")
+            pending = (workspace / "pending.py").resolve()
+            pending.write_text("print('hello')\n", encoding="utf-8")
+            args = ["--config", str(THIS_DIR / "empty.toml"), "--workers", workers]
+            if output:
+                args.append(output)
+            result = BlackRunner().invoke(black.main, [*args, str(workspace)])
+            assert result.exit_code == 1
+            assert "Aborted!" in result.stderr
+            assert "All done!" not in result.stderr
+            assert pending.read_text(encoding="utf-8") == "print('hello')\n"
+            cache = black.Cache.read(mode, workspace)
+            assert not cache.is_changed(clean)
+            assert cache.is_changed(pending)
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
