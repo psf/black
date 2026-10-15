@@ -1013,16 +1013,17 @@ def reformat_one(
                 cache = Cache.read(mode)
             else:
                 cache = Cache.read(mode, cache_dir)
-            if cache is not None and write_back not in (
-                WriteBack.DIFF,
-                WriteBack.COLOR_DIFF,
-            ):
+            if cache is not None:
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
+            can_cache_unmodified = (
+                write_back in (WriteBack.CHECK, WriteBack.DIFF, WriteBack.COLOR_DIFF)
+                and changed is Changed.NO
+            )
             # Formatting only some lines doesn't make the whole file formatted, and
             # the cache key doesn't include the line ranges, so don't record it.
             if (
@@ -1030,7 +1031,7 @@ def reformat_one(
                 and not lines
                 and (
                     (write_back is WriteBack.YES and changed is not Changed.CACHED)
-                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
+                    or can_cache_unmodified
                 )
             ):
                 cache.write([src])

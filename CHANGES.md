@@ -17,6 +17,10 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Format long binary operations between collection displays symmetrically when both
+  operands fit on their own delimiter-split line (#5259)
+- Remove redundant parentheses around lists and list comprehensions (#5431)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
@@ -30,6 +34,8 @@
 - Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
   which made a later full `black --check` pass and `black` skip the unformatted lines
   (#5476)
+- Enable the cache when using `--diff` to skip unmodified files and record unmodified
+  files as well-formatted (#5499)
 
 ### Packaging
 

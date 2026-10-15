@@ -180,10 +180,7 @@ async def schedule_formatting(
         cache = Cache.read(mode)
     else:
         cache = Cache.read(mode, cache_dir)
-    if cache is not None and write_back not in (
-        WriteBack.DIFF,
-        WriteBack.COLOR_DIFF,
-    ):
+    if cache is not None:
         sources, cached = cache.filtered_cached(sources)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
@@ -237,11 +234,15 @@ async def schedule_formatting(
                 report.failed(src, exc)
             else:
                 changed = Changed.YES if task.result() else Changed.NO
-                # If the file was written back or was successfully checked as
-                # well-formatted, store this information in the cache.
-                if write_back is WriteBack.YES or (
-                    write_back is WriteBack.CHECK and changed is Changed.NO
-                ):
+                can_cache_unmodified = (
+                    write_back in (
+                        WriteBack.CHECK,
+                        WriteBack.DIFF,
+                        WriteBack.COLOR_DIFF,
+                    )
+                    and changed is Changed.NO
+                )
+                if write_back is WriteBack.YES or can_cache_unmodified:
                     sources_to_cache.append(src)
                 report.done(src, changed)
         if cancelled:

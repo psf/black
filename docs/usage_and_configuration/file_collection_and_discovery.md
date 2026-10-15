@@ -7,8 +7,8 @@ time.
 
 ## Ignoring unmodified files
 
-_Black_ remembers files it has already formatted, unless the `--diff` flag is used or
-code is passed via standard input. This information is stored per-user. The exact
+_Black_ remembers files it has already formatted, unless code is passed via standard
+input or the `--no-cache` flag is used. This information is stored per-user. The exact
 location of the file depends on the _Black_ version and the system on which _Black_ is
 run. The file is non-portable. The standard location on common operating systems is:
 
