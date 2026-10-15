@@ -21,7 +21,7 @@
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
-  is enabled (#3466)
+  is enabled (#5544)
 
 ### Configuration
 
