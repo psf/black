@@ -2836,25 +2836,72 @@ class TestCaching:
 
         assert not cli_cache_dir.exists()
 
-    def test_relative_cache_dir_from_config_is_relative_to_config(
-        self, tmp_path: Path
+    @pytest.mark.parametrize("absolute", [False, True])
+    def test_project_config_cache_dir_is_ignored(
+        self, tmp_path: Path, absolute: bool
     ) -> None:
         project = tmp_path / "project"
         project.mkdir()
         source = project / "source.py"
         source.write_text("print('hello')", encoding="utf-8")
+        project_cache_dir = get_cache_dir(project / ".black-cache")
+        project_cache_dir.mkdir(parents=True)
+        project_cache_file = get_cache_file(DEFAULT_MODE, project_cache_dir)
+        project_cache_file.write_bytes(b"untrusted cache data")
+
+        config_cache_dir = str(project / ".black-cache") if absolute else ".black-cache"
+        config_cache_dir = config_cache_dir.replace("\\", "/")
         config = project / "pyproject.toml"
         config.write_text(
-            '[tool.black]\ncache-dir = ".black-cache"\n', encoding="utf-8"
+            f'[tool.black]\ncache-dir = "{config_cache_dir}"\n', encoding="utf-8"
         )
 
-        with change_directory(tmp_path):
+        original_pickle_load = pickle.load
+
+        def load_untrusted_project_cache(file: Any, *args: Any, **kwargs: Any) -> Any:
+            if Path(file.name).resolve().is_relative_to(project_cache_dir.resolve()):
+                raise AssertionError("Black read a cache file from the project")
+            return original_pickle_load(file, *args, **kwargs)
+
+        default_cache_dir = get_cache_dir(tmp_path / "default-cache")
+        with (
+            change_directory(tmp_path),
+            patch("black.cache.CACHE_DIR", default_cache_dir),
+            patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor),
+            patch("pickle.load", new=load_untrusted_project_cache),
+        ):
             result = BlackRunner().invoke(black.main, [str(source)])
 
-        assert result.exit_code == 0
-        project_cache_dir = get_cache_dir(project / ".black-cache")
-        assert get_cache_file(DEFAULT_MODE, project_cache_dir).exists()
-        assert not (tmp_path / ".black-cache").exists()
+        assert result.exit_code == 0, result.output
+        assert get_cache_file(DEFAULT_MODE, default_cache_dir).exists()
+        assert list(default_cache_dir.glob("Grammar*.pickle"))
+        assert list(default_cache_dir.glob("PatternGrammar*.pickle"))
+        assert project_cache_file.read_bytes() == b"untrusted cache data"
+        assert not list(project_cache_dir.glob("Grammar*.pickle"))
+        assert not list(project_cache_dir.glob("PatternGrammar*.pickle"))
+
+    def test_relative_cache_dir_from_user_config_is_relative_to_config(
+        self, tmp_path: Path
+    ) -> None:
+        user_config = tmp_path / ".black"
+        user_config.write_text(
+            '[tool.black]\ncache-dir = ".black-cache"\n', encoding="utf-8"
+        )
+        source_dir = tmp_path / "project"
+        source_dir.mkdir()
+        source = source_dir / "source.py"
+        source.write_text("print('hello')", encoding="utf-8")
+        expected_cache_dir = get_cache_dir(user_config.parent / ".black-cache")
+
+        with (
+            patch("black.files.find_user_pyproject_toml", return_value=user_config),
+            patch("black.find_user_pyproject_toml", return_value=user_config),
+            patch("concurrent.futures.ProcessPoolExecutor", new=ThreadPoolExecutor),
+        ):
+            result = BlackRunner().invoke(black.main, [str(source)])
+
+        assert result.exit_code == 0, result.output
+        assert get_cache_file(DEFAULT_MODE, expected_cache_dir).exists()
 
     def test_cache_dir_creation_error_disables_cache(self, tmp_path: Path) -> None:
         blocked_parent = tmp_path / "blocked-parent"
