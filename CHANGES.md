@@ -13,8 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Do not add blank lines before `# endregion` comments; the marker now stays attached
-  to the code it closes (#5545)
+- Do not add blank lines before `# endregion` comments; the marker now stays attached to
+  the code it closes (#5545)
 
 ### Preview style
 
