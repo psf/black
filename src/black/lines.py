@@ -590,6 +590,21 @@ class _DecoratedFuncInfo(NamedTuple):
     is_multi: bool
 
 
+def _is_endregion_comment(line: Line) -> bool:
+    """Is this line a standalone ``# endregion`` folding marker?
+
+    Editors such as VS Code and PyCharm fold code between ``# region``
+    and ``# endregion`` comments. An endregion marker closes the block
+    above it; it does not introduce the code below it.
+    """
+    if not line.is_comment:
+        return False
+    text = line.leaves[0].value.lstrip("#").strip().lower()
+    return text == "endregion" or text.startswith(
+        ("endregion ", "endregion:", "endregion\t")
+    )
+
+
 @dataclass
 class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
@@ -941,7 +956,7 @@ class EmptyLineTracker:
         )
 
         # Maintain the semantic_leading_comment state.
-        if current_line.is_comment:
+        if current_line.is_comment and not _is_endregion_comment(current_line):
             if self.previous_line is None or (
                 not self.previous_line.is_decorator
                 # `or before` means this comment already has an empty line before
@@ -1043,6 +1058,9 @@ class EmptyLineTracker:
         else:
             before = 0
 
+        # The author's own spacing, before the class/def rules below
+        # overwrite it with the spacing a definition would require.
+        author_before = before
         user_had_newline = bool(before)
         depth = current_line.depth
 
@@ -1162,6 +1180,14 @@ class EmptyLineTracker:
                     before = 1
                 else:
                     before = 2
+
+        if _is_endregion_comment(current_line):
+            # An ``# endregion`` marker closes the block above it, so it
+            # must not be separated from that block by the blank lines
+            # that precede a top-level class or function (or that follow
+            # one). Preserve the author's spacing, capped as usual,
+            # instead of inserting blank lines that were not there.
+            return author_before, 0
 
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
             return self._maybe_empty_lines_for_class_or_def(
