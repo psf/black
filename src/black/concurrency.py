@@ -227,7 +227,7 @@ async def schedule_formatting(
             pending.discard(task)
             src = tasks.pop(task)
             if task.cancelled():
-                cancelled.append(task)
+                cancelled.append((task, src))
             elif exc := task.exception():
                 if report.verbose:
                     traceback.print_exception(type(exc), exc, exc.__traceback__)
@@ -246,7 +246,18 @@ async def schedule_formatting(
                     sources_to_cache.append(src)
                 report.done(src, changed)
         if cancelled:
-            await asyncio.gather(*cancelled, return_exceptions=True)
+            await asyncio.gather(*(task for task, _ in cancelled), return_exceptions=True)
+            # Count interrupted files as failures so the overall exit code is
+            # non-zero and the summary doesn't print "All done". Previously the
+            # cancelled tasks were collected but never surfaced anywhere, so
+            # `black --check` on many files could exit 0 after Ctrl+C /
+            # SIGTERM even though some files had never been checked (see
+            # issue #5541). We only hit this branch when a signal handler
+            # explicitly cancelled the pending work; already-finished results
+            # are still reported normally above.
+            interrupted = KeyboardInterrupt("run was interrupted before this file was checked")
+            for _, src in cancelled:
+                report.failed(src, interrupted)
         if sources_to_cache and not no_cache and cache is not None:
             cache.write(sources_to_cache)
     finally:
