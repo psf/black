@@ -20,6 +20,9 @@
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Put each string literal of an implicit string concatenation of two or more
+  literals on its own line inside the surrounding brackets, instead of joining
+  them onto a single line (#5554)
 
 ### Configuration
 
