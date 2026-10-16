@@ -296,7 +296,7 @@ Oh no! 💥 💔 💥 The required version does not match the running version!
 You can also pass just the major version:
 
 ```console
-$ black --required-version 22 -c "format = 'this'"
+$ black --required-version 26 -c "format = 'this'"
 format = "this"
 $ black --required-version 31 -c "still = 'beta?!'"
 Oh no! 💥 💔 💥 The required version does not match the running version!
