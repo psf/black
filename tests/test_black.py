@@ -1775,6 +1775,32 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
+    def test_cli_rejects_non_table_black_config(self) -> None:
+        for value in ('["--line-length", "88"]', '"line-length = 88"', "88", "false"):
+            for explicit_config in (True, False):
+                with self.subTest(value=value, explicit_config=explicit_config):
+                    with TemporaryDirectory() as workspace:
+                        root = Path(workspace)
+                        (root / ".git").mkdir()
+                        config = root / "pyproject.toml"
+                        config.write_text(
+                            f"[tool]\nblack = {value}\n", encoding="utf-8"
+                        )
+                        source = root / "example.py"
+                        source.write_text("x=1\n", encoding="utf-8")
+                        args = [str(source)]
+                        if explicit_config:
+                            args = ["--config", str(config), *args]
+
+                        result = BlackRunner().invoke(
+                            black.main, args, catch_exceptions=False
+                        )
+
+                        assert result.exit_code == 1
+                        assert "Error reading configuration file" in result.stderr
+                        assert "Config key tool.black must be a table" in result.stderr
+                        assert source.read_text(encoding="utf-8") == "x=1\n"
+
     def test_spellcheck_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
         result = BlackRunner().invoke(

@@ -44,6 +44,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Report a clear configuration error instead of crashing when `tool.black` is not a TOML
+  table (#5548).
+
 ### _Blackd_
 
 <!-- Changes to Blackd -->
