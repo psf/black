@@ -548,7 +548,18 @@ def _convert_nodes_to_standalone_comment(
         return
     first_lineno = first.lineno
     prefix = replacements.take_prefix(first)
-    value = "".join(_str_with_standalone_comments(node) for node in nodes)
+    parts = []
+    for node in nodes:
+        text = _str_with_standalone_comments(node)
+        if (
+            isinstance(node, Leaf)
+            and node.type == STANDALONE_COMMENT
+            and node.fmt_pass_converted_first_leaf is None
+        ):
+            # A comment-only fmt:off/on block ends with the `# fmt: on` comment
+            text += "\n"
+        parts.append(text)
+    value = "".join(parts)
     # The prefix comment on the NEWLINE leaf is the trailing comment of the statement.
     if newline.prefix:
         value += newline.prefix
