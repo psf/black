@@ -15,7 +15,7 @@
 
 - Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
-  is outside the selected `--line-ranges` (#XXXX)
+  is outside the selected `--line-ranges` (#5549)
 
 ### Preview style
 
