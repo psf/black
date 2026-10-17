@@ -130,5 +130,5 @@ Set the `jupyter` option to `true`.
     jupyter: true
 ```
 
-See the [GitHub Actions integration](../integrations/source_version_control.md) docs for
+See the [GitHub Actions integration](../integrations/github_actions.md) docs for
 more examples of using Black with GitHub Actions.
