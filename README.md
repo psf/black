@@ -32,6 +32,7 @@ Watch the [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 
 **[Read the documentation on ReadTheDocs!](https://black.readthedocs.io/en/stable)**
 
+[![Live demo by Demoshell](https://build.demoshell.com/v1/embed/badge.svg)](https://build.demoshell.com/launch?snapshot=demoshell%2Ftui%3Ablack&utm_source=badge)
 ---
 
 ## Installation and usage
