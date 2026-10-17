@@ -13,6 +13,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
+  line endings and does not end with a newline, e.g. a notebook piped to `black -`
+  (#5559)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
