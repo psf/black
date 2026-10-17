@@ -604,3 +604,19 @@ def test_unable_to_replace_magics(monkeypatch: MonkeyPatch) -> None:
         AssertionError, match="Black was not able to replace IPython magic"
     ):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
+def test_stdin_crlf_without_trailing_newline() -> None:
+    # Notebooks saved on Windows use CRLF endings and often lack a final newline,
+    # so the trailing-newline fixup in `format_stdin_to_stdout()` runs. stdout is
+    # written with newline translation, so the fixup must add "\n" rather than the
+    # detected "\r\n", which used to produce "\r\r\n".
+    nb = get_case_path("jupyter", "notebook_without_changes.ipynb")
+    contents = nb.read_text(encoding="utf8").rstrip("\n").replace("\n", "\r\n")
+    result = runner.invoke(
+        main,
+        ["-", "--ipynb", f"--config={EMPTY_CONFIG}"],
+        input=contents.encode(),
+    )
+    assert result.exit_code == 0
+    assert result.stdout_bytes == contents.encode() + b"\r\n"
