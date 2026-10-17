@@ -57,6 +57,8 @@
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
 
+- Render the `--no-cache` example as a console command (#5552)
+
 ## Version 26.10.1
 
 ### Highlights
