@@ -379,7 +379,7 @@ using will be emitted.
 
 ```console
 $ black src/ -v
-Using configuration from /tmp/pyproject.toml.
+Using configuration from project root.
 src/blib2to3 ignored: matches the --extend-exclude regular expression
 src/_black_version.py wasn't modified on disk since last run.
 src/black/__main__.py wasn't modified on disk since last run.
@@ -391,7 +391,7 @@ reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
 Oh no! 💥 💔 💥
-3 files reformatted, 2 files left unchanged, 1 file failed to reformat
+3 files reformatted, 2 files left unchanged, 1 file failed to reformat.
 ```
 
 #### `--version`
