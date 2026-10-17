@@ -1726,6 +1726,16 @@ class BlackTestCase(BlackBaseTestCase):
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
+    def test_preserves_line_endings_via_stdin_when_echoing_the_source(self) -> None:
+        # Black writes the source back to stdout when it cannot format it, so a
+        # formatting pipeline does not lose the file. That happens through the same
+        # trailing-newline fixup as a successful run, which must add "\n" and not
+        # the detected "\r\n" (the stream translates "\n" itself).
+        contents = b"def f(:\r\n    pass"
+        result = BlackRunner().invoke(black.main, ["-"], input=BytesIO(contents))
+        self.assertEqual(result.exit_code, 123)
+        self.assertEqual(result.stdout_bytes, contents + b"\r\n")
+
     def test_normalize_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.py"
