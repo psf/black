@@ -24,6 +24,9 @@ Currently, the following features are included in the preview style:
   "hugging" logic (removing whitespace around `**` in simple expressions), which applies
   also in the rare case the exponentiation is split into separate lines.
   ([see below](labels/simplify-power-operator))
+- `split_implicit_string_concatenations`: Put each string literal of an implicit string
+  concatenation of two or more literals on its own line inside the surrounding brackets,
+  instead of joining them onto a single line.
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
 - `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
