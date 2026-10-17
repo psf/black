@@ -287,6 +287,7 @@ configuration file for consistent results across environments.
 ```console
 $ black --version
 black, 26.10.1 (compiled: yes)
+Python (CPython) 3.13.7
 $ black --required-version 26.10.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
@@ -400,7 +401,8 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 26.10.1
+black, 26.10.1 (compiled: yes)
+Python (CPython) 3.13.7
 ```
 
 #### `--config`
