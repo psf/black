@@ -178,11 +178,28 @@ class Line:
             second_leaf: Leaf | None = self.leaves[1]
         except IndexError:
             second_leaf = None
-        return (first_leaf.type == token.NAME and first_leaf.value == "def") or (
-            first_leaf.type == token.ASYNC
-            and second_leaf is not None
-            and second_leaf.type == token.NAME
-            and second_leaf.value == "def"
+        return (
+            (first_leaf.type == token.NAME and first_leaf.value == "def")
+            or (
+                first_leaf.type == token.ASYNC
+                and second_leaf is not None
+                and second_leaf.type == token.NAME
+                and second_leaf.value == "def"
+            )
+            or self.is_cdef_block
+        )
+
+    @property
+    def is_cdef_block(self) -> bool:
+        """Is this the header of a `cdef`, `cpdef` or `ctypedef` function, struct,
+        extern block, class and so on? Those take a body, like `def` does.
+        """
+        return (
+            len(self.leaves) > 2
+            and self.leaves[0].parent is not None
+            and self.leaves[0].parent.type == syms.cdef_stmt
+            and self.leaves[0].type == token.NAME
+            and self.leaves[-1].type == token.COLON
         )
 
     @property

@@ -81,6 +81,57 @@ Currently, the following features are included in the preview style:
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
 - `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
   and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+- `cython_support`: Format Cython files (`.pyx`, `.pxd` and `.pxi`).
+  ([see below](labels/cython-support))
+
+(labels/cython-support)=
+
+### Cython files
+
+With this feature enabled, Black formats the files with a `.pyx`, `.pxd` or `.pxi`
+suffix that you pass to it as Cython rather than Python. They are not formatted when
+Black looks for files in a directory, unless the `--include` option matches them, for
+example `--include '\.(pyi?|pyx|pxd|pxi)$'`.
+
+Black parses them with a Cython grammar, which is the Python grammar with some extra
+rules. The following is supported:
+
+- `cimport` and `from ... cimport ...`
+- `cdef`, `cpdef` and `ctypedef` declarations of variables, functions, structs, unions,
+  enums, classes and `extern from` blocks, and `cdef:` blocks of declarations
+- C types in declarations and in the arguments of `def` functions, including pointers,
+  `unsigned long`, `np.ndarray[double, ndim=2]` and `double[:, ::1]`
+- the `except` and `nogil` clauses after the arguments of a function
+- the `<type>value` cast, `&value` and `sizeof(type)`
+
+String prefixes are normalised as in Python, except that `u` is kept, because with
+`language_level=2` a string without it is bytes.
+
+The `*` of a pointer goes with the name (`cdef char *name`) in declarations and with the
+type in casts (`<char*>value`):
+
+```python
+# Before
+from libc.stdlib cimport malloc,free
+cdef char* buf = <char *> malloc(10)
+cdef int add(int a,int b):
+    return a+b
+
+# After (with --preview)
+from libc.stdlib cimport malloc, free
+
+cdef char *buf = <char*>malloc(10)
+
+
+cdef int add(int a, int b):
+    return a + b
+```
+
+Other Cython syntax, such as fused types, function pointers, C++ templates, `property`
+blocks, `include`, and the `DEF`, `IF` and `ELIF` statements, is not supported yet and
+makes Black fail on the file. Black cannot check that its output is equivalent to its
+input, as it does for Python code, because Python's `ast` module cannot parse Cython. It
+does check that formatting the output again changes nothing.
 
 (labels/remove-redundant-list-parentheses)=
 

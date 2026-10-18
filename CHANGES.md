@@ -27,6 +27,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Add `cython_support`: format Cython files (`.pyx`, `.pxd` and `.pxi`), with support
+  for `cimport`, `cdef`, `cpdef` and `ctypedef` declarations, typed function arguments,
+  casts and `cdef extern from` blocks (#5563)
 
 ### Configuration
 

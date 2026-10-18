@@ -37,8 +37,8 @@ def type_repr(type_num: int) -> str | int:
 
         # printing tokens is possible but not as useful
         # from .pgen2 import token // token.__dict__.items():
-        for name in dir(pygram.python_symbols):
-            val = getattr(pygram.python_symbols, name)
+        for name in dir(pygram.cython_symbols):
+            val = getattr(pygram.cython_symbols, name)
             if type(val) == int:
                 _type_reprs[val] = name
     return _type_reprs.setdefault(type_num, type_num)

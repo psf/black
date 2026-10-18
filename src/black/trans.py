@@ -16,6 +16,7 @@ from black.lines import Line, append_leaves, is_line_short_enough, line_to_strin
 from black.mode import Feature, Mode
 from black.nodes import (
     CLOSING_BRACKETS,
+    CYTHON_POINTER_PARENTS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     is_empty_lpar,
@@ -113,6 +114,8 @@ def hug_power_op(
         should_hug = (
             (0 < idx < len(line.leaves) - 1)
             and leaf.type == token.DOUBLESTAR
+            # `char **argv` in Cython is not a power
+            and not (leaf.parent and leaf.parent.type in CYTHON_POINTER_PARENTS)
             and is_simple_operand(idx - 1, kind=-1)
             and line.leaves[idx - 1].value != "lambda"
             and is_simple_operand(idx + 1, kind=1)
