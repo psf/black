@@ -1,4 +1,55 @@
+import pytest
+
+from black import Mode
+from black.mode import Preview
 from black.trans import iter_fexpr_spans
+from tests.util import assert_format
+
+
+@pytest.mark.parametrize(
+    "operator",
+    ["+=", "-=", "*=", "@=", "/=", "//=", "%=", "**=", "<<=", ">>=", "&=", "|=", "^="],
+)
+@pytest.mark.parametrize("string", ["directory subdirectory file.txt", "foo bar"])
+def test_string_splitting_augmented_assignment(operator: str, string: str) -> None:
+    target = "x" if string.startswith("directory") else "variable"
+    source = f'{target} {operator} "{string}"\n'
+    strings = (
+        '    "directory"\n    " subdirectory"\n    " file.txt"\n'
+        if string.startswith("directory")
+        else '    "foo bar"\n'
+    )
+    expected = f"{target} {operator} (\n{strings})\n"
+    mode = Mode(
+        line_length=20, preview=True, enabled_features={Preview.string_processing}
+    )
+    assert_format(source, expected, mode=mode)
+    stable_expected = source if string.startswith("directory") else expected
+    assert_format(source, stable_expected, mode=Mode(line_length=20))
+
+
+@pytest.mark.parametrize(
+    "operator",
+    ["+", "-", "*", "@", "/", "//", "%", "**", "<<", ">>", "&", "|", "^"],
+)
+def test_string_splitting_overloaded_binary_operator(operator: str) -> None:
+    source = f'x {operator} "directory subdirectory file.txt"\n'
+    expected = (
+        f'x {operator} (\n    "directory"\n    " subdirectory"\n    " file.txt"\n)\n'
+    )
+    mode = Mode(
+        line_length=20, preview=True, enabled_features={Preview.string_processing}
+    )
+    assert_format(source, expected, mode=mode)
+
+
+@pytest.mark.parametrize("operator", ["*", "@", "/", "//", "%", "**"])
+def test_string_splitting_preserves_operator_precedence(operator: str) -> None:
+    source = f'x {operator} "directory subdirectory file.txt" % y\n'
+    mode = Mode(
+        line_length=20, preview=True, enabled_features={Preview.string_processing}
+    )
+    assert_format(source, source, mode=mode)
 
 
 def test_fexpr_spans() -> None:

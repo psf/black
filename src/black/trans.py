@@ -15,7 +15,10 @@ from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves, line_to_string
 from black.mode import Feature, Mode
 from black.nodes import (
+    ASSIGNMENTS,
     CLOSING_BRACKETS,
+    COMPARATORS,
+    MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     is_empty_lpar,
@@ -1112,17 +1115,7 @@ class BaseStringSplitter(StringTransformer):
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
-    STRING_OPERATORS: Final = [
-        token.EQEQUAL,
-        token.GREATER,
-        token.GREATEREQUAL,
-        token.LESS,
-        token.LESSEQUAL,
-        token.NOTEQUAL,
-        token.PERCENT,
-        token.PLUS,
-        token.STAR,
-    ]
+    STRING_OPERATORS: Final = COMPARATORS | (MATH_OPERATORS - {token.TILDE})
 
     @abstractmethod
     def do_splitter_match(self, line: Line) -> TMatchResult:
@@ -1246,7 +1239,7 @@ class BaseStringSplitter(StringTransformer):
                 # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
                 offset += 3
 
-            if P.type in [token.COLON, token.EQUAL, token.PLUSEQUAL, token.NAME]:
+            if P.type == token.NAME or P.value in ASSIGNMENTS:
                 # This conditional branch is meant to handle dictionary keys,
                 # variable assignments, 'return STRING' statement lines, and
                 # 'else STRING' ternary expression lines.
@@ -1954,7 +1947,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
         string_op_leaves = []
         i = 0
-        while LL[i].type in self.STRING_OPERATORS + [token.NAME]:
+        while LL[i].type in self.STRING_OPERATORS or LL[i].type == token.NAME:
             prefix_leaf = Leaf(LL[i].type, str(LL[i]).strip())
             string_op_leaves.append(prefix_leaf)
             i += 1
@@ -1982,6 +1975,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         * The line is an assignment statement (e.g. `x = <string>` or `x +=
           <string>`) such that the variable is being assigned the value of some
           string.
+          OR
+        * The line ends with a binary operator followed by a string, including
+          operators overloaded by the left operand.
           OR
         * The line is a dictionary key assignment where some valid key is being
           assigned the value of some string.
@@ -2035,6 +2031,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
+            or self._binary_match(LL)
             or self._dict_or_lambda_match(LL)
         )
 
@@ -2227,8 +2224,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             is_valid_index = is_valid_index_factory(LL)
 
             for i, leaf in enumerate(LL):
-                # We MUST find either an '=' or '+=' symbol...
-                if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
+                # An assignment operator must be followed by the target string.
+                if leaf.value in ASSIGNMENTS and leaf.type != token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
                     # That symbol MUST be followed by a string...
@@ -2257,6 +2254,35 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                         # But no more leaves are allowed...
                         if not is_valid_index(idx):
                             return string_idx
+
+        return None
+
+    @staticmethod
+    def _binary_match(LL: list[Leaf]) -> int | None:
+        """Find a string at the end of a binary expression's right operand."""
+        is_valid_index = is_valid_index_factory(LL)
+        for i, leaf in enumerate(LL):
+            if leaf.type not in MATH_OPERATORS or leaf.type == token.TILDE:
+                continue
+
+            idx = i + 1
+            if is_valid_index(idx) and is_empty_lpar(LL[idx]):
+                idx += 1
+            if not is_valid_index(idx) or LL[idx].type != token.STRING:
+                continue
+
+            string_idx = idx
+            while is_valid_index(idx + 1) and LL[idx + 1].type == token.STRING:
+                idx += 1
+            trailer_idx = idx + 1
+            while is_valid_index(trailer_idx) and is_empty_par(LL[trailer_idx]):
+                trailer_idx += 1
+            if is_valid_index(trailer_idx) and LL[trailer_idx].type == token.PERCENT:
+                # StringParser includes %-formatting in the trailer. Wrapping
+                # it here could reassociate, for example, x % STRING % y.
+                continue
+            if StringParser().parse(LL, idx) == len(LL):
+                return string_idx
 
         return None
 
@@ -2342,7 +2368,6 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         string_idx = string_indices[0]
 
         is_valid_index = is_valid_index_factory(LL)
-        insert_str_child = insert_str_child_factory(LL[string_idx])
 
         comma_idx = -1
         ends_with_comma = False
@@ -2375,6 +2400,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         append_leaves(first_line, line, left_leaves)
 
+        # Keep the operand in the tree while calculating the operator's spacing.
+        # Removing it early can make an exponentiation look simple enough to hug.
+        insert_str_child = insert_str_child_factory(LL[string_idx])
         lpar_leaf = Leaf(token.LPAR, "(")
         if old_parens_exist:
             replace_child(LL[string_idx - 1], lpar_leaf)
