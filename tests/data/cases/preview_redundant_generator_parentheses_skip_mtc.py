@@ -6,6 +6,19 @@ consume((
     normalize(record) for record in records_loaded_from_the_database_for_today_and_yesterday
 ))
 
+# Nested redundant parentheses.
+consume((((normalize(record) for record in records_loaded_from_the_database_for_today_and_yesterday))),)
+
+# Comments inside the generator's parentheses are kept.
+consume((  # inline comment
+    normalize(record) for record in records_loaded_from_the_database_for_today_and_yesterday
+))
+
+consume((
+    # own line comment
+    normalize(record) for record in records_loaded_from_the_database_for_today_and_yesterday
+))
+
 # output
 # Removing the trailing comma leaves redundant parentheses around the generator.
 consume(
@@ -14,6 +27,24 @@ consume(
 )
 
 consume(
+    normalize(record)
+    for record in records_loaded_from_the_database_for_today_and_yesterday
+)
+
+# Nested redundant parentheses.
+consume(
+    normalize(record)
+    for record in records_loaded_from_the_database_for_today_and_yesterday
+)
+
+# Comments inside the generator's parentheses are kept.
+consume(  # inline comment
+    normalize(record)
+    for record in records_loaded_from_the_database_for_today_and_yesterday
+)
+
+consume(
+    # own line comment
     normalize(record)
     for record in records_loaded_from_the_database_for_today_and_yesterday
 )
