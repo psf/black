@@ -1,4 +1,4 @@
-# flags: --unstable
+# flags: --unstable --minimum-version=3.12
 f"{ 1 +  2 }"
 f"{1+2*3}"
 f"{foo(  a, b,  c  )}"
