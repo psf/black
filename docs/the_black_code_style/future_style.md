@@ -798,7 +798,7 @@ this feature is tracked in [this issue](https://github.com/psf/black/issues/2188
 
 ### Format expressions inside f-strings
 
-_Black_ now formats expressions inside f-string replacement fields (`{ ... }`),
-applying standard spacing and formatting to operators, function arguments, and
-comprehensions. Debug specifiers (`f"{x=}"`) and replacement fields containing comments
-are preserved untouched.
+_Black_ now formats expressions inside f-string replacement fields (`{ ... }`), applying
+standard spacing and formatting to operators, function arguments, and comprehensions.
+Debug specifiers (`f"{x=}"`) and replacement fields containing comments are preserved
+untouched.
