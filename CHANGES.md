@@ -20,6 +20,8 @@
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Fix unstable formatting of a call whose sole argument is a generator in redundant
+  parentheses, e.g. with `--skip-magic-trailing-comma` (#5564)
 
 ### Configuration
 
