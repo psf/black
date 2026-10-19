@@ -17,6 +17,15 @@ for (
     first
 ), second = 1, 2
 
+# User-written multiline parentheses around a starred or annotated target.
+[*(
+    rest
+), last] = values
+
+(
+    annotated
+): int = 1
+
 # output
 # Splitting on an element's redundant parentheses must not make them stick.
 first, second = (
@@ -37,3 +46,8 @@ for first, second in points:
     # comment
     first
 ), second = (1, 2)
+
+# User-written multiline parentheses around a starred or annotated target.
+[*rest, last] = values
+
+(annotated): int = 1
