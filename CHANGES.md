@@ -36,6 +36,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix parsing of unpacking in a generator expression passed as the only argument to a
+  call, such as `sum(*x for x in y)` (PEP 798) (#5568)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
