@@ -20,6 +20,8 @@
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Fix unstable formatting when an unpacking target's redundant parentheses are split
+  across lines (#5563)
 
 ### Configuration
 
