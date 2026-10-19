@@ -54,7 +54,7 @@ f'{y * x} \'{z}\''
 
 # We must bail out if changing the quotes would introduce backslashes in f-string
 # expressions. xref: https://github.com/psf/black/issues/2348
-f"\"{b}\"{' ' * (long-len(b)+1)}: \"{sts}\",\n"
+f"\"{b}\"{' ' * (long - len(b) + 1)}: \"{sts}\",\n"
 f"\"{a}\"{'hello' * b}\"{c}\""
 
 # output
@@ -110,5 +110,5 @@ f"{y * x} '{z}'"
 
 # We must bail out if changing the quotes would introduce backslashes in f-string
 # expressions. xref: https://github.com/psf/black/issues/2348
-f"\"{b}\"{' ' * (long-len(b)+1)}: \"{sts}\",\n"
+f"\"{b}\"{' ' * (long - len(b) + 1)}: \"{sts}\",\n"
 f"\"{a}\"{'hello' * b}\"{c}\""
