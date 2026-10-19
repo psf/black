@@ -254,7 +254,11 @@ class LineGenerator(Visitor[Line]):
 
     def visit_argument(self, node: Node) -> Iterator[Line]:
         """Add potential parentheses around long keyword argument values."""
-        if len(node.children) == 3 and node.children[1].type == token.EQUAL:
+        if (
+            Preview.wrap_long_keyword_argument_values_in_parens in self.mode
+            and len(node.children) == 3
+            and node.children[1].type == token.EQUAL
+        ):
             value = node.children[2]
             value_leaves = list(value.leaves())
             value_text = "".join(
@@ -267,6 +271,7 @@ class LineGenerator(Visitor[Line]):
             value_width = str_width(value_text)
             if (
                 value_text
+                and not can_be_split(Line(mode=self.mode, leaves=value_leaves))
                 and not any(
                     leaf.type == token.STRING or leaf.type in OPENING_BRACKETS
                     for leaf in value_leaves
