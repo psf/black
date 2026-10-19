@@ -203,12 +203,15 @@ $ echo $?
 1
 
 $ black test.py --check
-error: cannot format test.py: INTERNAL ERROR: Black 26.10.1 on Python (CPython) 3.13.7 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kjdr1oog.log
+error: cannot format test.py: INTERNAL ERROR: Black <version> on Python (<implementation>) <version> produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kjdr1oog.log
 Oh no! 💥 💔 💥
 1 file would fail to reformat.
 $ echo $?
 123
 ```
+
+In the internal error message, `<version>` and `<implementation>` stand for the
+installed Black and Python versions and the Python implementation.
 
 #### `--diff`
 
