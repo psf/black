@@ -38,13 +38,17 @@ consume(
 )
 
 # Comments inside the generator's parentheses are kept.
-consume(  # inline comment
-    normalize(record)
-    for record in records_loaded_from_the_database_for_today_and_yesterday
+consume(
+    (  # inline comment
+        normalize(record)
+        for record in records_loaded_from_the_database_for_today_and_yesterday
+    )
 )
 
 consume(
-    # own line comment
-    normalize(record)
-    for record in records_loaded_from_the_database_for_today_and_yesterday
+    (
+        # own line comment
+        normalize(record)
+        for record in records_loaded_from_the_database_for_today_and_yesterday
+    )
 )
