@@ -379,6 +379,10 @@ class BlackTestCase(BlackBaseTestCase):
         )
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY315, versions)
+        self.assertIn(
+            black.Feature.UNPACKING_IN_COMPREHENSIONS,
+            black.get_features_used(black.lib2to3_parse("f(*x for x in y)\n")),
+        )
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("cases", "expression.py")

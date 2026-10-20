@@ -36,6 +36,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix parsing of unpacking in a generator expression passed as the only argument to a
+  call, such as `sum(*x for x in y)` (PEP 798) (#5568)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
@@ -50,6 +53,9 @@
 ### _Blackd_
 
 <!-- Changes to Blackd -->
+
+- Return HTTP 400 for an unknown request charset or input that cannot be decoded using
+  the requested charset, instead of HTTP 500 (#5519)
 
 ### Integrations
 

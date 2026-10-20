@@ -1753,7 +1753,12 @@ def get_features_used(
 
 
 def is_unpacking_comprehension(node: LN) -> bool:
-    if node.type not in {syms.listmaker, syms.testlist_gexp, syms.dictsetmaker}:
+    if node.type not in {
+        syms.listmaker,
+        syms.testlist_gexp,
+        syms.dictsetmaker,
+        syms.argument,
+    }:
         return False
 
     if not any(
@@ -1762,7 +1767,7 @@ def is_unpacking_comprehension(node: LN) -> bool:
         return False
 
     first_child = node.children[0]
-    return first_child.type == syms.star_expr or first_child.type == token.DOUBLESTAR
+    return first_child.type in {syms.star_expr, token.STAR, token.DOUBLESTAR}
 
 
 def _contains_asexpr(node: Node | Leaf) -> bool:
