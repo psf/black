@@ -702,6 +702,8 @@ demoted from the `--preview` to the `--unstable` style, users can use the
 
 The unstable style additionally includes the following features:
 
+- `format_fstring_expressions`: Format expressions inside f-strings.
+  ([see below](labels/format-fstring-expressions))
 - `hug_parens_with_braces_and_square_brackets`: More compact formatting of nested
   brackets. ([see below](labels/hug-parens))
 - `string_processing`: Split long string literals and related changes.
@@ -791,3 +793,12 @@ plain strings. f-strings will not be merged if they contain internal quotes and 
 change their quotation mark style. Line continuation backslashes are converted into
 parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
 this feature is tracked in [this issue](https://github.com/psf/black/issues/2188).
+
+(labels/format-fstring-expressions)=
+
+### Format expressions inside f-strings
+
+_Black_ now formats expressions inside f-string replacement fields (`{ ... }`), applying
+standard spacing and formatting to operators, function arguments, and comprehensions.
+Debug specifiers (`f"{x=}"`) and replacement fields containing comments are preserved
+untouched.

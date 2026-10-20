@@ -1452,6 +1452,7 @@ def _format_str_once(
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
+            Feature.PEP_701,
         }
         if supports_feature(versions, feature)
     }

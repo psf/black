@@ -634,6 +634,36 @@ class LineGenerator(Visitor[Line]):
 
         yield from self.visit_default(node)
 
+    def _is_debug_fstring_replacement_field(self, node: LN) -> bool:
+        if node.type != syms.fstring_replacement_field:
+            return False
+        return any(
+            isinstance(ch, Leaf) and ch.type == token.EQUAL for ch in node.children
+        )
+
+    def _replacement_field_contains_comment(self, node: LN) -> bool:
+        return any("#" in leaf.prefix for leaf in node.leaves())
+
+    def _format_fstring_replacement_fields_in_place(self, node: Node) -> None:
+        for child in list(node.children):
+            if child.type == syms.fstring_replacement_field:
+                if not self._is_debug_fstring_replacement_field(
+                    child
+                ) and not self._replacement_field_contains_comment(child):
+                    dummy_line = Line(mode=self.mode)
+                    for leaf in child.leaves():
+                        leaf.prefix = ""
+                        dummy_line.append(leaf)
+                    leaves = list(child.leaves())
+                    if (
+                        len(leaves) > 2
+                        and leaves[1].value.startswith("{")
+                        and not leaves[1].prefix
+                    ):
+                        leaves[1].prefix = " "
+            elif isinstance(child, Node):
+                self._format_fstring_replacement_fields_in_place(child)
+
     def visit_fstring(self, node: Node) -> Iterator[Line]:
         # If the fstring was converted to a STANDALONE_COMMENT by
         # normalize_fmt_off (e.g. it was inside a # fmt: off block),
@@ -641,14 +671,18 @@ class LineGenerator(Visitor[Line]):
         if any(child.type == STANDALONE_COMMENT for child in node.children):
             yield from self.visit_default(node)
             return
-        # currently we don't want to format and split f-strings at all.
-        string_leaf = fstring_tstring_to_string(node)
-        node.replace(string_leaf)
-        if "\\" in string_leaf.value and any(
+
+        if Preview.format_fstring_expressions in self.mode:
+            self._format_fstring_replacement_fields_in_place(node)
+
+        has_backslash_in_replacement = any(
             "\\" in str(child)
             for child in node.children
             if child.type == syms.fstring_replacement_field
-        ):
+        )
+        string_leaf = fstring_tstring_to_string(node)
+        node.replace(string_leaf)
+        if has_backslash_in_replacement:
             # string normalization doesn't account for nested quotes,
             # causing breakages. skip normalization when nested quotes exist
             yield from self.visit_default(string_leaf)
@@ -674,39 +708,6 @@ class LineGenerator(Visitor[Line]):
             yield from self.visit_default(string_leaf)
             return
         yield from self.visit_STRING(string_leaf)
-
-        # TODO: Uncomment Implementation to format f-string children
-        # fstring_start = node.children[0]
-        # fstring_end = node.children[-1]
-        # assert isinstance(fstring_start, Leaf)
-        # assert isinstance(fstring_end, Leaf)
-
-        # quote_char = fstring_end.value[0]
-        # quote_idx = fstring_start.value.index(quote_char)
-        # prefix, quote = (
-        #     fstring_start.value[:quote_idx],
-        #     fstring_start.value[quote_idx:]
-        # )
-
-        # if not is_docstring(node, self.mode):
-        #     prefix = normalize_string_prefix(prefix, self.mode)
-
-        # assert quote == fstring_end.value
-
-        # is_raw_fstring = "r" in prefix or "R" in prefix
-        # middles = [
-        #     leaf
-        #     for leaf in node.leaves()
-        #     if leaf.type == token.FSTRING_MIDDLE
-        # ]
-
-        # if self.mode.string_normalization:
-        #     middles, quote = normalize_fstring_quotes(quote, middles, is_raw_fstring)
-
-        # fstring_start.value = prefix + quote
-        # fstring_end.value = quote
-
-        # yield from self.visit_default(node)
 
     def visit_comp_for(self, node: Node) -> Iterator[Line]:
         if (

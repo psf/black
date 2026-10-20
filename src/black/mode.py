@@ -53,7 +53,7 @@ class Feature(Enum):
     DEBUG_F_STRINGS = 16
     PARENTHESIZED_CONTEXT_MANAGERS = 17
     TYPE_PARAMS = 18
-    # FSTRING_PARSING = 19  # unused
+    PEP_701 = 19
     TYPE_PARAM_DEFAULTS = 20
     UNPARENTHESIZED_EXCEPT_TYPES = 21
     T_STRINGS = 22
@@ -169,6 +169,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.EXCEPT_STAR,
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
+        Feature.PEP_701,
     },
     TargetVersion.PY313: {
         Feature.F_STRINGS,
@@ -189,6 +190,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.VARIADIC_GENERICS,
         Feature.TYPE_PARAMS,
         Feature.TYPE_PARAM_DEFAULTS,
+        Feature.PEP_701,
     },
     TargetVersion.PY314: {
         Feature.F_STRINGS,
@@ -211,6 +213,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.TYPE_PARAM_DEFAULTS,
         Feature.UNPARENTHESIZED_EXCEPT_TYPES,
         Feature.T_STRINGS,
+        Feature.PEP_701,
     },
     TargetVersion.PY315: {
         Feature.F_STRINGS,
@@ -235,6 +238,7 @@ VERSION_TO_FEATURES: dict[TargetVersion, set[Feature]] = {
         Feature.T_STRINGS,
         Feature.LAZY_IMPORTS,
         Feature.UNPACKING_IN_COMPREHENSIONS,
+        Feature.PEP_701,
     },
 }
 
@@ -276,6 +280,7 @@ class Preview(Enum):
     avoid_parens_for_unbreakable_rhs_in_assignments = auto()
     parenthesize_expressions_with_comments = auto()
     keep_trailers_on_bracket_comment_overflow = auto()
+    format_fstring_expressions = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
@@ -283,6 +288,8 @@ UNSTABLE_FEATURES: set[Preview] = {
     Preview.string_processing,
     # See issue #4036 (crash), #4098, #4099 (proposed tweaks)
     Preview.hug_parens_with_braces_and_square_brackets,
+    # Issue #567: Format expressions inside f-strings
+    Preview.format_fstring_expressions,
 }
 
 

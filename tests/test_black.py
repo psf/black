@@ -477,6 +477,76 @@ class BlackTestCase(BlackBaseTestCase):
         black.assert_equivalent(source, not_normalized)
         black.assert_stable(source, not_normalized, mode=mode)
 
+    def test_format_fstring_expressions_gating(self) -> None:
+        source = (
+            'f"{ 1 +  2 }"\nf"{foo(  a, b,  c  )}"\nf"{  value  :.2f}"\nf"{  x  =  }"\n'
+        )
+        expected_unstable = (
+            'f"{1 + 2}"\nf"{foo(a, b, c)}"\nf"{value:.2f}"\nf"{  x  =  }"\n'
+        )
+
+        # 1. Stable mode: must remain completely unchanged
+        stable_mode = black.Mode()
+        actual_stable = fs(source, mode=stable_mode)
+        self.assertFormatEqual(source, actual_stable)
+        black.assert_equivalent(source, actual_stable)
+        black.assert_stable(source, actual_stable, mode=stable_mode)
+
+        # 2. Preview mode (without unstable): must also remain completely unchanged
+        preview_mode = black.Mode(preview=True)
+        actual_preview = fs(source, mode=preview_mode)
+        self.assertFormatEqual(source, actual_preview)
+        black.assert_equivalent(source, actual_preview)
+        black.assert_stable(source, actual_preview, mode=preview_mode)
+
+        # 3. Unstable mode: f-string expressions formatted, debug specifiers preserved
+        unstable_mode = black.Mode(unstable=True)
+        actual_unstable = fs(source, mode=unstable_mode)
+        self.assertFormatEqual(expected_unstable, actual_unstable)
+        black.assert_equivalent(source, actual_unstable)
+        black.assert_stable(source, actual_unstable, mode=unstable_mode)
+
+        # 4. Preview mode with feature explicitly enabled: same as unstable mode
+        explicit_mode = black.Mode(
+            preview=True,
+            enabled_features={black.Preview.format_fstring_expressions},
+        )
+        actual_explicit = fs(source, mode=explicit_mode)
+        self.assertFormatEqual(expected_unstable, actual_explicit)
+        black.assert_equivalent(source, actual_explicit)
+        black.assert_stable(source, actual_explicit, mode=explicit_mode)
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 12),
+        reason="PEP 701 f-string syntax requires Python 3.12+",
+    )
+    def test_format_fstring_expressions_gating_pep701(self) -> None:
+        source = 'f"{value:{width + 2}}"\nf"""{\n    2 + 2  # comment\n}"""\n'
+        expected_unstable = (
+            'f"{value:{width + 2}}"\nf"""{\n    2 + 2  # comment\n}"""\n'
+        )
+
+        # 1. Stable mode
+        stable_mode = black.Mode()
+        actual_stable = fs(source, mode=stable_mode)
+        self.assertFormatEqual(source, actual_stable)
+        black.assert_equivalent(source, actual_stable)
+        black.assert_stable(source, actual_stable, mode=stable_mode)
+
+        # 2. Preview mode
+        preview_mode = black.Mode(preview=True)
+        actual_preview = fs(source, mode=preview_mode)
+        self.assertFormatEqual(source, actual_preview)
+        black.assert_equivalent(source, actual_preview)
+        black.assert_stable(source, actual_preview, mode=preview_mode)
+
+        # 3. Unstable mode: nested format specs formatted, comments preserved
+        unstable_mode = black.Mode(unstable=True)
+        actual_unstable = fs(source, mode=unstable_mode)
+        self.assertFormatEqual(expected_unstable, actual_unstable)
+        black.assert_equivalent(source, actual_unstable)
+        black.assert_stable(source, actual_unstable, mode=unstable_mode)
+
     def test_skip_source_first_line(self) -> None:
         source, _ = read_data("miscellaneous", "invalid_header")
         tmp_file = Path(black.dump_to_file(source))

@@ -902,7 +902,7 @@ log.info(
 )
 
 log.info(
-    f'Skipping: {desc["db_id"]} {foo("bar",x=123)} {"foo" != "bar"} {(x := "abc=")}'
+    f'Skipping: {desc["db_id"]} {foo("bar", x=123)} {"foo" != "bar"} {(x := "abc=")}'
     f' {pos_share=} {desc["status"]} {desc["exposure_max"]}'
 )
 
