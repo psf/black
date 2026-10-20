@@ -45,9 +45,7 @@
 <!-- Changes to Black's terminal output and error messages -->
 
 - Write the content of a file passed through stdin that is excluded with
-  `--force-exclude` back unchanged. It was decoded and re-encoded as text, which turned
-  LF line endings into CRLF on Windows and failed on files that aren't UTF-8. With
-  `--check` or `--diff`, nothing is written to stdout anymore (#5530)
+  `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
 
 ### _Blackd_
 
