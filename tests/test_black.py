@@ -380,6 +380,10 @@ class BlackTestCase(BlackBaseTestCase):
         )
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY315, versions)
+        self.assertIn(
+            black.Feature.UNPACKING_IN_COMPREHENSIONS,
+            black.get_features_used(black.lib2to3_parse("f(*x for x in y)\n")),
+        )
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("cases", "expression.py")
@@ -1727,6 +1731,38 @@ class BlackTestCase(BlackBaseTestCase):
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
+    def test_force_excluded_stdin_is_echoed_unchanged(self) -> None:
+        # Content passed through stdin for a file that `--force-exclude` excludes is
+        # written back byte for byte, whatever its line endings or encoding.
+        args = [
+            "--config",
+            str(THIS_DIR / "empty.toml"),
+            "--force-exclude",
+            r"excluded\.py",
+            "--stdin-filename",
+            "excluded.py",
+        ]
+        for contents in (
+            b"x  =  1\ny = 2\n",
+            b"x  =  1\r\ny = 2\r\n",
+            b"# -*- coding: latin-1 -*-\ns  =  '\xe9t\xe9'\n",
+        ):
+            runner = BlackRunner()
+            result = runner.invoke(black.main, [*args, "-"], input=BytesIO(contents))
+            self.assertEqual(result.exit_code, 0, result.stderr_bytes)
+            self.assertEqual(result.stdout_bytes, contents)
+
+        # Like an unchanged file, an excluded one produces no output when checking.
+        for options in (["--check"], ["--diff"], ["--check", "--diff"]):
+            runner = BlackRunner()
+            result = runner.invoke(
+                black.main,
+                [*args, *options, "-"],
+                input=BytesIO(b"x  =  1\n"),
+            )
+            self.assertEqual(result.exit_code, 0, result.stderr_bytes)
+            self.assertEqual(result.stdout_bytes, b"")
+
     def test_normalize_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.py"
@@ -1775,6 +1811,32 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_cli_rejects_non_table_black_config(self) -> None:
+        for value in ('["--line-length", "88"]', '"line-length = 88"', "88", "false"):
+            for explicit_config in (True, False):
+                with self.subTest(value=value, explicit_config=explicit_config):
+                    with TemporaryDirectory() as workspace:
+                        root = Path(workspace)
+                        (root / ".git").mkdir()
+                        config = root / "pyproject.toml"
+                        config.write_text(
+                            f"[tool]\nblack = {value}\n", encoding="utf-8"
+                        )
+                        source = root / "example.py"
+                        source.write_text("x=1\n", encoding="utf-8")
+                        args = [str(source)]
+                        if explicit_config:
+                            args = ["--config", str(config), *args]
+
+                        result = BlackRunner().invoke(
+                            black.main, args, catch_exceptions=False
+                        )
+
+                        assert result.exit_code == 1
+                        assert "Error reading configuration file" in result.stderr
+                        assert "Config key tool.black must be a table" in result.stderr
+                        assert source.read_text(encoding="utf-8") == "x=1\n"
 
     def test_spellcheck_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
