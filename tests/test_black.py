@@ -1740,7 +1740,6 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(result.exit_code, 123)
         self.assertEqual(result.stdout_bytes, contents + b"\r\n")
 
-
     def test_force_excluded_stdin_is_echoed_unchanged(self) -> None:
         # Content passed through stdin for a file that `--force-exclude` excludes is
         # written back byte for byte, whatever its line endings or encoding.
