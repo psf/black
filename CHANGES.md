@@ -13,6 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Treat `# ruff:` directives as pragma comments: lines ending with them are no longer
+  split or merged, matching `# type: ignore` behavior (#5260)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
