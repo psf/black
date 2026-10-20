@@ -56,6 +56,8 @@
 
 - Write the content of a file passed through stdin that is excluded with
   `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
+- Fix `--check` passing when formatting multiple files is interrupted with Ctrl+C or
+  SIGTERM. The run is now reported as aborted and exits with code 1 (#5542)
 
 ### _Blackd_
 
