@@ -47,6 +47,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Write the content of a file passed through stdin that is excluded with
+  `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
+
 ### _Blackd_
 
 <!-- Changes to Blackd -->

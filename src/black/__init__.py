@@ -782,8 +782,8 @@ def main(
         if not sources:
             if verbose or not quiet:
                 out("No Python files are present to be formatted. Nothing to do 😴")
-            if "-" in src:
-                sys.stdout.write(sys.stdin.read())
+            if "-" in src and write_back is WriteBack.YES:
+                _echo_stdin_unchanged()
             if "GITHUB_OUTPUT" in os.environ:
                 report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
             ctx.exit(0)
@@ -1186,6 +1186,22 @@ def _write_to_stdout(
     wrapped = wrap_stream_for_windows(f) if wrap_for_windows else f
     wrapped.write(content)
     f.detach()
+
+
+def _echo_stdin_unchanged() -> None:
+    """Copy stdin to stdout byte for byte.
+
+    Going through the text streams instead would fail on input that isn't in their
+    encoding (e.g. a latin-1 file) and, on Windows, turn LF line endings into CRLF.
+    """
+    in_buffer = getattr(sys.stdin, "buffer", None)
+    out_buffer = getattr(sys.stdout, "buffer", None)
+    if in_buffer is None or out_buffer is None:
+        sys.stdout.write(sys.stdin.read())
+        return
+
+    out_buffer.write(in_buffer.read())
+    out_buffer.flush()
 
 
 def check_stability_and_equivalence(
