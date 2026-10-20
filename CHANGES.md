@@ -48,6 +48,9 @@
 
 <!-- Changes to Blackd -->
 
+- Return HTTP 400 for an unknown request charset or input that cannot be decoded using
+  the requested charset, instead of HTTP 500 (#5519)
+
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
