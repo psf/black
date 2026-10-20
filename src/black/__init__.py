@@ -1145,9 +1145,11 @@ def format_stdin_to_stdout(
 
     finally:
         if write_back == WriteBack.YES:
-            # Make sure there's a newline after the content
+            # Make sure there's a newline after the content. `_write_to_stdout()`
+            # translates "\n" into `newline` itself, so append a bare "\n" here;
+            # appending `newline` would write e.g. "\r\r\n" for CRLF input.
             if dst and dst[-1] != "\n" and dst[-1] != "\r":
-                dst += newline
+                dst += "\n"
             _write_to_stdout(dst, encoding=encoding, newline=newline)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
