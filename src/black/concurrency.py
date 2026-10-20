@@ -24,6 +24,7 @@ from mypy_extensions import mypyc_attr
 from black import WriteBack, format_file_in_place
 from black.cache import Cache
 from black.mode import Mode
+from black.output import err
 from black.report import Changed, Report
 
 
@@ -48,7 +49,8 @@ def maybe_use_uvloop() -> asyncio.AbstractEventLoop:
 
 
 def cancel(tasks: Iterable[asyncio.Future[Any]]) -> None:
-    """asyncio signal handler that cancels all `tasks`."""
+    """asyncio signal handler that cancels all `tasks` and reports to stderr."""
+    err("Aborting...")
     for task in tasks:
         task.cancel()
 

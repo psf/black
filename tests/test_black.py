@@ -3286,6 +3286,7 @@ class TestCaching:
                 args.append(output)
             result = BlackRunner().invoke(black.main, [*args, str(workspace)])
             assert result.exit_code == 1
+            assert "Aborting..." in result.stderr
             assert "Aborted!" in result.stderr
             assert "All done!" not in result.stderr
             assert pending.read_text(encoding="utf-8") == "print('hello')\n"
