@@ -41,7 +41,9 @@ created or used.
 
 Example:
 
+```console
 python -m black --no-cache .
+```
 
 ## .gitignore
 
