@@ -12,7 +12,7 @@ from typing import Any, ClassVar, Final, Literal, TypeVar, Union
 from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
-from black.lines import Line, append_leaves, line_to_string
+from black.lines import Line, append_leaves, is_line_short_enough, line_to_string
 from black.mode import Feature, Mode
 from black.nodes import (
     ASSIGNMENTS,
@@ -902,7 +902,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         return Ok(None)
 
 
-class StringParenStripper(StringTransformer):
+class StringParenStripper(StringTransformer, CustomSplitMapMixin):
     """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
@@ -1018,6 +1018,19 @@ class StringParenStripper(StringTransformer):
                     token.LPAR,
                     token.DOT,
                 }:
+                    continue
+
+                # Keep the parens if stripping them would leave an already
+                # too-long line with a merged string group glued to an `=`
+                # prefix (e.g. a def parameter default). Black cannot split
+                # such a line after the fact, while the parens let the layout
+                # split the group at its custom breakpoints. See #3497.
+                if (
+                    not is_line_short_enough(line, mode=line.mode)
+                    and is_valid_index(string_idx - 2)
+                    and LL[string_idx - 2].type == token.EQUAL
+                    and self.has_custom_splits(LL[string_idx].value)
+                ):
                     continue
 
                 string_indices.append(string_idx)

@@ -134,10 +134,12 @@ def find_pyproject_toml(
 def parse_pyproject_toml(path_config: str) -> dict[str, Any]:
     """Parse a pyproject toml file, pulling out relevant parts for Black.
 
-    If parsing fails, will raise a tomllib.TOMLDecodeError.
+    If parsing fails or the Black configuration is not a table, raises ValueError.
     """
     pyproject_toml = _load_toml(path_config)
     config: dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
+    if not isinstance(config, dict):
+        raise ValueError("Config key tool.black must be a table")
     config = {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}
 
     if "target_version" not in config:
