@@ -3839,6 +3839,33 @@ class TestFileCollection:
         outside_root_symlink.resolve.assert_called_once()
         ignored_symlink.resolve.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "option", ["--exclude", "--extend-exclude", "--force-exclude"]
+    )
+    @pytest.mark.parametrize("link_directory", [False, True])
+    @pytest.mark.parametrize("pattern", [r"^/vendor/", r"dependency\.py$"])
+    def test_recursive_symlink_to_excluded_target(
+        self, tmp_path: Path, option: str, link_directory: bool, pattern: str
+    ) -> None:
+        root = tmp_path.resolve()
+        (root / "pyproject.toml").write_text("[tool.black]\n", encoding="utf-8")
+        vendor = root / "vendor"
+        vendor.mkdir()
+        target = vendor / "dependency.py"
+        target.write_text("x=1\n", encoding="utf-8")
+        link = root / ("linked" if link_directory else "linked.py")
+        symlink_or_skip(link, vendor if link_directory else target)
+        (root / "keep.py").write_text("x = 1\n", encoding="utf-8")
+
+        result = BlackRunner().invoke(
+            black.main,
+            ["--check", "--diff", "--no-cache", option, pattern, str(root)],
+        )
+
+        assert result.exit_code == 0, result.output
+        assert target.read_text(encoding="utf-8") == "x=1\n"
+        assert "would reformat" not in result.output
+
     def test_get_sources_symlink_and_force_exclude(self) -> None:
         with TemporaryDirectory() as tempdir:
             tmp = Path(tempdir).resolve()
