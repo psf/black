@@ -65,7 +65,7 @@
 
 - `BlackDClient` now defaults to `http://localhost:45484`, the default port of the
   `blackd` server itself, instead of `http://localhost:9090` which `blackd` only listens
-  on when it is passed `--bind-port 9090`
+  on when it is passed `--bind-port 9090` (#5576)
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using
   the requested charset, instead of HTTP 500 (#5519)
 
