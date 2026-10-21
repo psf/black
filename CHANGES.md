@@ -75,6 +75,8 @@
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
 
+- Fix the major-version example for `--required-version` (#5571)
+
 ## Version 26.10.1
 
 ### Highlights
