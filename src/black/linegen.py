@@ -1799,7 +1799,7 @@ def _contains_bracketed_implicit_concat(line: Line) -> bool:
     """Does `line` contain a visible bracket pair whose immediate contents
     include an implicit string concatenation?"""
     openers: list[Leaf] = []
-    for leaf, nxt in zip(line.leaves, line.leaves[1:]):
+    for leaf, nxt in zip(line.leaves, line.leaves[1:], strict=False):
         if leaf.type in OPENING_BRACKETS:
             openers.append(leaf)
         elif leaf.type in CLOSING_BRACKETS and openers:
