@@ -65,6 +65,9 @@
 
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using
   the requested charset, instead of HTTP 500 (#5519)
+- Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
+  for a `X-Diff` request, instead of prepending it as raw text in front of the diff
+  (#5573)
 
 ### Integrations
 

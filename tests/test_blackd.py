@@ -230,6 +230,35 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.read(), expected_result)
 
+    async def test_blackd_skip_first_source_line_with_diff(self) -> None:
+        source = b"#!/usr/bin/env python\ni = [1,2,3]\n"
+        response = await self.client.post(
+            "/",
+            data=source,
+            headers={
+                blackd.SKIP_SOURCE_FIRST_LINE: "true",
+                blackd.DIFF_HEADER: "true",
+            },
+        )
+        self.assertEqual(response.status, 200)
+
+        diff_header = re.compile(
+            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
+        )
+        actual = diff_header.sub(DETERMINISTIC_HEADER, await response.text())
+
+        # The skipped line must stay inside the patch as context, so that the body is
+        # a diff of the whole source rather than a raw source line in front of it.
+        self.assertEqual(
+            actual,
+            "--- [Deterministic header]\n"
+            "+++ [Deterministic header]\n"
+            "@@ -1,2 +1,2 @@\n"
+            " #!/usr/bin/env python\n"
+            "-i = [1,2,3]\n"
+            "+i = [1, 2, 3]\n",
+        )
+
     async def test_blackd_preview(self) -> None:
         response = await self.client.post(
             "/", data=b'print("hello")\n', headers={blackd.PREVIEW: "true"}
