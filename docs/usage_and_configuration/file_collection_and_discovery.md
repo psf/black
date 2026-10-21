@@ -13,14 +13,19 @@ location of the file depends on the _Black_ version and the system on which _Bla
 run. The file is non-portable. The standard location on common operating systems is:
 
 - Windows:
-  `C:\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.<file-mode>.pickle`
+  `C:\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<mode-key>.pickle`
 - macOS:
-  `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.<file-mode>.pickle`
+  `/Users/<username>/Library/Caches/black/<version>/cache.<mode-key>.pickle`
 - Linux:
-  `/home/<username>/.cache/black/<version>/cache.<line-length>.<file-mode>.pickle`
+  `/home/<username>/.cache/black/<version>/cache.<mode-key>.pickle`
 
-`file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
-as .pyi, and whether string normalization was omitted.
+`mode-key` is built by `Mode.get_cache_key()`: a dot-separated list of the settings the
+files were formatted with — the target versions, the line length, and `1`/`0` values for
+string normalization, `.pyi` mode, notebook mode, `--skip-source-first-line`,
+`--magic-trailing-comma`, `--preview` and `--unstable` — followed by a short hash of the
+enabled preview features and the cell magics. Formatting with different options therefore
+reads and writes a different cache file. A default run on a source file produces a name
+like `cache.-.88.1.0.0.0.1.0.0.c3641f8544d7c02f3580b07c0f9887f0.pickle`.
 
 To override the location of these files on all systems, pass `--cache-dir` or set the
 environment variable `BLACK_CACHE_DIR` to the preferred location. Alternatively on macOS
