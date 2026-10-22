@@ -89,6 +89,17 @@ assert a == (
     b
 )
 
+# Multiline operands
+assert (
+    await metadata_verify(_verify_mirror_config(tmp_path), Args())  # type: ignore[arg-type]
+) == 0
+assert ifd.tobytes() == (
+    # number of tags == 1
+    b"\x01\x00"
+    # tag id (2 bytes), type (2 bytes), count (4 bytes), value (4 bytes)
+    b"\x11\x01\x04\x00\x02\x00\x00\x00\x12\x00\x00\x00"
+)
+
 # output
 
 # Issue #2581 exact repro
@@ -173,14 +184,21 @@ assert (a < b) == (c < d)
 
 # Comments
 assert (
-    (
-        # comment
-        a
-    ) == b
+    # comment
+    a
+) == b
+assert a == (
+    # comment
+    b
 )
+
+# Multiline operands
 assert (
-    a == (
-        # comment
-        b
-    )
+    await metadata_verify(_verify_mirror_config(tmp_path), Args())  # type: ignore[arg-type]
+) == 0
+assert ifd.tobytes() == (
+    # number of tags == 1
+    b"\x01\x00"
+    # tag id (2 bytes), type (2 bytes), count (4 bytes), value (4 bytes)
+    b"\x11\x01\x04\x00\x02\x00\x00\x00\x12\x00\x00\x00"
 )

@@ -1116,39 +1116,39 @@ temp_msg = (
 
 assert (
     str(suffix_arr)
-    == "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
-    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
-    " 'ykangaroo$']"
+    == "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 )
 assert (
     str(suffix_arr)
-    != "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
-    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
-    " 'ykangaroo$']"
+    != "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 )
 assert (
     str(suffix_arr)
-    <= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
-    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
-    " 'ykangaroo$']"
+    <= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 )
 assert (
     str(suffix_arr)
-    >= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
-    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
-    " 'ykangaroo$']"
+    >= "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 )
 assert (
     str(suffix_arr)
-    < "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
-    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
-    " 'ykangaroo$']"
+    < "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 )
 assert (
     str(suffix_arr)
-    > "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', 'grykangaroo$',"
-    " 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', 'o$', 'oo$', 'roo$', 'rykangaroo$',"
-    " 'ykangaroo$']"
+    > "['$', 'angaroo$', 'angrykangaroo$', 'aroo$', 'garoo$', "
+    "'grykangaroo$', 'kangaroo$', 'ngaroo$', 'ngrykangaroo$', "
+    "'o$', 'oo$', 'roo$', 'rykangaroo$', 'ykangaroo$']"
 )
 assert (
     str(suffix_arr)

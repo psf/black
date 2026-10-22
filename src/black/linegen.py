@@ -2002,7 +2002,7 @@ def _normalize_comparison_operands(
     """Remove redundant parentheses around operands in a comparison expression."""
     for i in range(0, len(node.children), 2):
         operand = node.children[i]
-        if operand.type == syms.atom:
+        if operand.type == syms.atom and not _is_atom_multiline(operand):
             maybe_make_parens_invisible_in_atom(
                 operand, parent=node, mode=mode, features=features
             )
