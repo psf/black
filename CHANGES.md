@@ -27,6 +27,8 @@
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
 - Fix crash on bytes literals containing `\u`, `\U` or `\N{...}`, which are not escape
   sequences in bytes and were changed by the escape normalization (#5583)
+- Keep comments at the end of a `# fmt: off` region inside brackets unchanged, instead
+  of moving a trailing comment to its own line or re-indenting them (#5585)
 
 ### Preview style
 
@@ -41,6 +43,9 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Remove redundant parentheses around operands in comparison expressions (#5539)
+- Avoid adding redundant parentheses around unsplittable strings when string processing
+  is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant
   parentheses, e.g. with `--skip-magic-trailing-comma` (#5564)
 - Don't remove the parentheses around an implicitly concatenated string in a function
@@ -53,6 +58,7 @@
 
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
+- Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
 - Emit a clear error instead of a confusing `OSError: AF_UNIX path too long` traceback
   when running `--diff` in environments where the temporary directory path is too long
   (#5513)

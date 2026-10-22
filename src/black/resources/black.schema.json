@@ -107,6 +107,7 @@
           "avoid_parens_for_unbreakable_rhs_in_assignments",
           "parenthesize_expressions_with_comments",
           "keep_trailers_on_bracket_comment_overflow",
+          "remove_redundant_comparison_parentheses",
           "remove_redundant_top_level_parentheses"
         ]
       },
