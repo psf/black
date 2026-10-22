@@ -34,6 +34,8 @@
 
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
+- Infer only the matching minor version from a compatible-release `requires-python` with
+  a patch component, such as `~=3.11.0`, instead of every later Python 3 version (#5578)
 
 ### Packaging
 
