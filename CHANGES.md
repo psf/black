@@ -39,6 +39,8 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Avoid adding redundant parentheses around unsplittable strings when string processing
+  is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant
   parentheses, e.g. with `--skip-magic-trailing-comma` (#5564)
 - Don't remove the parentheses around an implicitly concatenated string in a function
