@@ -83,6 +83,9 @@
 
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using
   the requested charset, instead of HTTP 500 (#5519)
+- The import error raised when `blackd` cannot start now names `aiohttp`, the package
+  the `[d]` extra actually installs, instead of `aiohttp_cors`, which Black stopped
+  using in #2500 (#5581)
 
 ### Integrations
 
