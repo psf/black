@@ -195,7 +195,7 @@ argument: ( test [comp_for] |
             test 'as' test |
             test '=' asexpr_test |
            '**' test |
-            '*' test )
+            '*' test [comp_for] )
 
 comp_iter: comp_for | comp_if
 comp_for: [ASYNC] 'for' exprlist 'in' or_test [comp_iter]

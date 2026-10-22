@@ -13,13 +13,27 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
+  line endings and does not end with a newline, e.g. a notebook piped to `black -`
+  (#5559)
+
 ### Preview style
 
 - Remove redundant parentheses around simple top-level expressions (#5516)
 
+- Format long binary operations between collection displays symmetrically when both
+  operands fit on their own delimiter-split line (#5259)
+- Remove redundant parentheses around lists and list comprehensions (#5431)
+- Don't remove the parentheses around an implicitly concatenated string in a function
+  argument default value when they are needed to keep the line within the line length
+  limit (#5558)
+
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
+
+- Enable the cache when using `--diff` to skip unmodified files and record unmodified
+  files as well-formatted (#5499)
 
 ### Packaging
 
@@ -29,6 +43,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix parsing of unpacking in a generator expression passed as the only argument to a
+  call, such as `sum(*x for x in y)` (PEP 798) (#5568)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
@@ -37,9 +54,17 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Write the content of a file passed through stdin that is excluded with
+  `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
+- Fix `--check` passing when formatting multiple files is interrupted with Ctrl+C or
+  SIGTERM. The run is now reported as aborted and exits with code 1 (#5542)
+
 ### _Blackd_
 
 <!-- Changes to Blackd -->
+
+- Return HTTP 400 for an unknown request charset or input that cannot be decoded using
+  the requested charset, instead of HTTP 500 (#5519)
 
 ### Integrations
 

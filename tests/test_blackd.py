@@ -60,6 +60,41 @@ class BlackDTestCase(AioHTTPTestCase):
             msg=f"Expected error to start with 'cannot parse', got {repr(content)}",
         )
 
+    async def test_blackd_request_invalid_encoding(self) -> None:
+        response = await self.client.post("/", data=b"name = '\xff'")
+        self.assertEqual(response.status, 400)
+        self.assertIn("decode", await response.text())
+        self.assertEqual(
+            response.headers.get(blackd.BLACK_VERSION_HEADER), black.__version__
+        )
+
+    async def test_blackd_request_unknown_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"x=1",
+            headers={"Content-Type": "text/plain; charset=unknown-charset"},
+        )
+        self.assertEqual(response.status, 400)
+        self.assertIn("unknown encoding", await response.text())
+
+    async def test_blackd_request_undecodable_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"x=1",
+            headers={"Content-Type": "text/plain; charset=undefined"},
+        )
+        self.assertEqual(response.status, 400)
+        self.assertIn("undefined", await response.text())
+
+    async def test_blackd_request_non_utf8_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"name = '\xe9'",
+            headers={"Content-Type": "text/plain; charset=iso-8859-1"},
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.read(), b'name = "\xe9"\n')
+
     async def test_blackd_unsupported_version(self) -> None:
         response = await self.client.post(
             "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
