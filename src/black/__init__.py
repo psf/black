@@ -502,7 +502,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Stop emitting all non-critical output. Error messages will still be emitted"
-        " (which can silenced by 2>/dev/null)."
+        " (which can be silenced by 2>/dev/null)."
     ),
 )
 @click.option(
