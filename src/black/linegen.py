@@ -402,6 +402,13 @@ class LineGenerator(Visitor[Line]):
                         features=self.features,
                         remove_generator_parens=True,
                     )
+                    atom = child.children[1]
+                    if is_atom_with_invisible_parens(atom) and not any(
+                        "#" in leaf.prefix for leaf in atom.leaves()
+                    ):
+                        # Drop the now invisible parens so the generator splits
+                        # the same way as one passed without parentheses.
+                        atom.replace(atom.children[1])
 
         remove_await_parens(node, mode=self.mode, features=self.features)
 

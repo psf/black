@@ -23,9 +23,11 @@
 
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
-- Remove redundant parentheses around lists and list comprehensions (#5431)
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
+- Remove redundant parentheses around lists and list comprehensions (#5431)
+- Fix unstable formatting of a call whose sole argument is a generator in redundant
+  parentheses, e.g. with `--skip-magic-trailing-comma` (#5564)
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
