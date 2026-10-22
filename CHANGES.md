@@ -25,6 +25,8 @@
   one of its parameter defaults (#5533)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
+- Fix crash on bytes literals containing `\u`, `\U` or `\N{...}`, which are not escape
+  sequences in bytes and were changed by the escape normalization (#5583)
 
 ### Preview style
 
