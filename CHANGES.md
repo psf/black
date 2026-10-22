@@ -30,6 +30,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove redundant parentheses around simple top-level expressions (#5516)
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
   when using the unstable `string_processing` feature (#5515)
 - Format long binary operations between collection displays symmetrically when both
