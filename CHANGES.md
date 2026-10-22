@@ -30,6 +30,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Remove redundant parentheses around simple top-level expressions (#5516)
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
   when using the unstable `string_processing` feature (#5515)
 - Format long binary operations between collection displays symmetrically when both
@@ -38,13 +39,16 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Avoid adding redundant parentheses around unsplittable strings when string processing
+  is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant
   parentheses, e.g. with `--skip-magic-trailing-comma` (#5564)
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
-- Split long strings after overloaded binary and augmented assignment operators in the
-  unstable `string_processing` feature (#5562)
+- Split long strings after overloaded binary and augmented assignment operators,
+  including middle operands of operator chains, in the unstable `string_processing`
+  feature (#5562)
 
 ### Configuration
 

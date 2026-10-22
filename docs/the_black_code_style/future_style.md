@@ -81,8 +81,35 @@ Currently, the following features are included in the preview style:
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
 - `remove_redundant_subscript_parentheses`: Remove redundant parentheses in subscripts
   and indexing operators.
+- `remove_redundant_top_level_parentheses`: Remove redundant parentheses around simple
+  top-level expressions. ([see below](labels/remove-redundant-top-level-parentheses))
 - `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
   and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+
+(labels/remove-redundant-top-level-parentheses)=
+
+### Remove parentheses around simple top-level expressions
+
+Redundant outer parentheses are removed from simple top-level expression statements
+(such as `(x)`, `(1)`, `(yield 42)`, `([])`, `({})`, `(a + b)`):
+
+```python
+# Before
+(x)
+(1)
+(yield 42)
+([])
+({})
+(a + b)
+
+# After (with --preview)
+x
+1
+yield 42
+[]
+{}
+a + b
+```
 
 (labels/remove-redundant-list-parentheses)=
 
@@ -799,4 +826,19 @@ parentheses are stripped. The stability and status of this feature is tracked in
 [this issue](https://github.com/psf/black/issues/2188).
 
 Long strings on the right-hand side of binary and augmented assignment operators are
-also split, including operators overloaded by objects such as `pathlib.Path`.
+also split, including operators overloaded by objects such as `pathlib.Path`. Middle
+operands of operator chains can also be wrapped and split. Subsequent operators remain
+outside the added parentheses, preserving the expression's original precedence and
+associativity:
+
+```python
+# Before, with --unstable --line-length=20
+x % "directory subdirectory file.txt" % y
+
+# After, with the same flags
+x % (
+    "directory"
+    " subdirectory"
+    " file.txt"
+) % y
+```
