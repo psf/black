@@ -12,7 +12,7 @@ from typing import Any, ClassVar, Final, Literal, TypeVar, Union
 from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
-from black.lines import Line, append_leaves, line_to_string
+from black.lines import Line, append_leaves, is_line_short_enough, line_to_string
 from black.mode import Feature, Mode
 from black.nodes import (
     CLOSING_BRACKETS,
@@ -675,6 +675,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
             naked_string = string[len(string_prefix) + 1 : -1]
+            if "r" in string_prefix:
+                # Escaping quotes would change a raw string's value. Validation
+                # ensures all raw substrings already use the same delimiter.
+                return naked_string
             naked_string = re.sub(
                 "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE, r"\1\\" + QUOTE, naked_string
             )
@@ -777,8 +781,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         self.add_custom_splits(string_leaf.value, custom_splits)
         return num_of_strings, string_leaf
 
-    @staticmethod
-    def _validate_msg(line: Line, string_idx: int) -> TResult[None]:
+    def _validate_msg(self, line: Line, string_idx: int) -> TResult[None]:
         """Validate (M)erge (S)tring (G)roup
 
         Transform-time string validation logic for _merge_string_group(...).
@@ -794,7 +797,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 - The string group has an inline comment that appears to be a pragma.
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
-                - The string group consists of raw strings.
+                - Raw strings in the group use different quote types.
                 - The string group would merge f-strings with different quote types
                   and internal quotes.
                 - The string group is stringified type annotations. We don't want to
@@ -842,8 +845,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             num_of_strings += 1
             prefix = get_string_prefix(leaf.value).lower()
-            if "r" in prefix:
-                return TErr("StringMerger does NOT merge raw strings.")
+            if "r" in prefix and leaf.value[-1] != QUOTE:
+                return TErr("Cannot merge raw strings with different quote types.")
+            if "r" in prefix and "f" in prefix:
+                return TErr("Cannot merge raw f-strings.")
 
             set_of_prefixes.add(prefix)
 
@@ -896,10 +901,22 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         if len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}:
             return TErr(f"Too many different prefixes ({set_of_prefixes}).")
 
+        if any("r" in prefix for prefix in set_of_prefixes):
+            # Keep long raw groups intact: merging and splitting them again can
+            # introduce unnecessary parentheses around an existing concatenation.
+            prefix = next(iter(set_of_prefixes))
+            merged_length = str_width(str(line).rstrip()) - (num_of_strings - 1) * (
+                len(prefix) + 3
+            )
+            if merged_length > self.line_length:
+                return TErr(
+                    "Cannot merge a raw string group exceeding the line length."
+                )
+
         return Ok(None)
 
 
-class StringParenStripper(StringTransformer):
+class StringParenStripper(StringTransformer, CustomSplitMapMixin):
     """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
@@ -1015,6 +1032,19 @@ class StringParenStripper(StringTransformer):
                     token.LPAR,
                     token.DOT,
                 }:
+                    continue
+
+                # Keep the parens if stripping them would leave an already
+                # too-long line with a merged string group glued to an `=`
+                # prefix (e.g. a def parameter default). Black cannot split
+                # such a line after the fact, while the parens let the layout
+                # split the group at its custom breakpoints. See #3497.
+                if (
+                    not is_line_short_enough(line, mode=line.mode)
+                    and is_valid_index(string_idx - 2)
+                    and LL[string_idx - 2].type == token.EQUAL
+                    and self.has_custom_splits(LL[string_idx].value)
+                ):
                     continue
 
                 string_indices.append(string_idx)

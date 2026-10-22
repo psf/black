@@ -11,6 +11,7 @@ import logging
 import os
 import signal
 import sys
+import tempfile
 import traceback
 from collections.abc import Iterable
 from concurrent.futures import Executor, ProcessPoolExecutor, ThreadPoolExecutor
@@ -50,7 +51,7 @@ def maybe_use_uvloop() -> asyncio.AbstractEventLoop:
 
 def cancel(tasks: Iterable[asyncio.Future[Any]]) -> None:
     """asyncio signal handler that cancels all `tasks` and reports to stderr."""
-    err("Aborted!")
+    err("Aborting...")
     for task in tasks:
         task.cancel()
 
@@ -156,6 +157,20 @@ def reformat_many(
             executor.shutdown()
 
 
+def _is_tempdir_too_long_for_unix_sockets() -> bool:
+    """Return True if temp directory path is too long for Unix domain sockets.
+
+    On POSIX systems, Unix domain sockets created by multiprocessing.Manager()
+    must fit within sockaddr_un.sun_path (104 bytes on macOS/BSD, 108 bytes on Linux).
+    multiprocessing adds ~35 characters (/pymp-XXXXXXXX/listener-YYYYYYYY).
+    """
+    if sys.platform == "win32":
+        return False
+    else:
+        max_socket_path_length = 108 if sys.platform.startswith("linux") else 104
+        return len(tempfile.gettempdir()) + 35 >= max_socket_path_length
+
+
 async def schedule_formatting(
     sources: set[Path],
     fast: bool,
@@ -194,8 +209,23 @@ async def schedule_formatting(
     if write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
         # For diff output, we need locks to ensure we don't interleave output
         # from different processes.
-        manager = Manager()
-        lock = manager.Lock()
+        if _is_tempdir_too_long_for_unix_sockets():
+            err(
+                "Cannot start multiprocessing manager for --diff because the temporary"
+                " directory path is too long for Unix domain sockets (AF_UNIX path"
+                " limit). Please set TMPDIR to a shorter path."
+            )
+            sys.exit(1)
+
+        try:
+            manager = Manager()
+            lock = manager.Lock()
+        except (OSError, EOFError) as e:
+            err(
+                f"Cannot start multiprocessing manager for --diff: {e}. "
+                "Please set TMPDIR to a shorter path."
+            )
+            sys.exit(1)
 
     try:
         tasks = {
@@ -245,10 +275,12 @@ async def schedule_formatting(
                 if write_back is WriteBack.YES or can_cache_unmodified:
                     sources_to_cache.append(src)
                 report.done(src, changed)
-        if cancelled:
-            await asyncio.gather(*cancelled, return_exceptions=True)
         if sources_to_cache and not no_cache and cache is not None:
             cache.write(sources_to_cache)
+        if cancelled:
+            await asyncio.gather(*cancelled, return_exceptions=True)
+            # Some files were never formatted, so don't report the run as a success.
+            raise KeyboardInterrupt
     finally:
         if manager is not None:
             manager.shutdown()
