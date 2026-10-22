@@ -26,6 +26,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Merge adjacent short raw string literals with matching prefixes and quotation marks
+  when using the unstable `string_processing` feature (#5515)
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
