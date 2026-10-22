@@ -502,7 +502,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Stop emitting all non-critical output. Error messages will still be emitted"
-        " (which can silenced by 2>/dev/null)."
+        " (which can be silenced by 2>/dev/null)."
     ),
 )
 @click.option(
@@ -1480,6 +1480,7 @@ def _format_str_once(
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
+            Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         }
         if supports_feature(versions, feature)
     }
