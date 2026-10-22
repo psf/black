@@ -99,6 +99,7 @@
           "normalize_tstring_prefix",
           "remove_redundant_list_parentheses",
           "remove_redundant_unpacking_parentheses",
+          "remove_redundant_subscript_parentheses",
           "fix_magic_trailing_comma_trailer_split",
           "keep_dict_keys_with_operators",
           "blank_line_after_stub_method",
@@ -106,7 +107,8 @@
           "avoid_parens_for_unbreakable_rhs_in_assignments",
           "parenthesize_expressions_with_comments",
           "keep_trailers_on_bracket_comment_overflow",
-          "remove_redundant_comparison_parentheses"
+          "remove_redundant_comparison_parentheses",
+          "remove_redundant_top_level_parentheses"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
@@ -158,7 +160,7 @@
     },
     "quiet": {
       "type": "boolean",
-      "description": "Stop emitting all non-critical output. Error messages will still be emitted (which can silenced by 2>/dev/null).",
+      "description": "Stop emitting all non-critical output. Error messages will still be emitted (which can be silenced by 2>/dev/null).",
       "default": false
     },
     "verbose": {
