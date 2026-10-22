@@ -2599,13 +2599,9 @@ def maybe_make_parens_invisible_in_atom(
         or is_tuple_containing_walrus(node)
         or (not allow_star_expr and is_tuple_containing_star(node))
         or (not can_remove_generator_parens and is_generator(node))
+        or (parent.type == syms.comparison and _is_disallowed_comparison_operand(node))
         or (
-            parent.type == syms.comparison
-            and _is_disallowed_comparison_operand(node)
-        )
-        or (
-            parent.type == syms.simple_stmt
-            and _is_implicitly_concatenated_string(node)
+            parent.type == syms.simple_stmt and _is_implicitly_concatenated_string(node)
         )
     ):
         return False
