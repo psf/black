@@ -34,6 +34,7 @@
 
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
+- Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
 
 ### Packaging
 
@@ -58,7 +59,6 @@
   `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
 - Fix `--check` passing when formatting multiple files is interrupted with Ctrl+C or
   SIGTERM. The run is now reported as aborted and exits with code 1 (#5542)
-- Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
 
 ### _Blackd_
 
