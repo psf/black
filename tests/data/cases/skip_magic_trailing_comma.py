@@ -27,6 +27,17 @@ foo(lambda x=(
     1,
 ): x]
 
+# Same for a single-element subscript, but not for one with more elements.
+foo(lambda x=a[
+    # comment
+    1,
+]: x)
+[lambda x=a[
+    # comment
+    1,
+    2,
+]: x]
+
 # Trailing commas in multiple chained non-nested parens.
 zero(
     one,
@@ -92,6 +103,18 @@ foo(
     lambda x=(
     # comment
     1,): x
+]
+
+# Same for a single-element subscript, but not for one with more elements.
+foo(
+    lambda x=a[
+    # comment
+    1,]: x
+)
+[
+    lambda x=a[
+    # comment
+    1, 2]: x
 ]
 
 # Trailing commas in multiple chained non-nested parens.

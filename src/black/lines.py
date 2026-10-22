@@ -21,6 +21,7 @@ from black.nodes import (
     is_generator,
     is_import,
     is_multiline_string,
+    is_one_element_subscript,
     is_one_sequence_between,
     is_one_tuple,
     is_tuple,
@@ -98,13 +99,14 @@ class Line:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf
             elif self.has_magic_trailing_comma(leaf) and not (
-                # A one-element tuple's trailing comma is syntactically required,
-                # not magic, so it must never be removed. This is normally caught
-                # by has_magic_trailing_comma, but that check misses the tuple
-                # when its opening bracket was split onto an earlier line (for
-                # example by a standalone comment inside the tuple), so verify
-                # against the tree here before dropping the comma.
-                leaf.parent is not None and is_one_tuple(leaf.parent)
+                # The trailing comma of a one-element tuple or subscript is
+                # syntactically required, not magic, so it must never be removed.
+                # This is normally caught by has_magic_trailing_comma, but that
+                # check misses it when the opening bracket was split onto an
+                # earlier line (for example by a standalone comment inside the
+                # brackets), so verify against the tree here before dropping it.
+                leaf.parent is not None
+                and (is_one_tuple(leaf.parent) or is_one_element_subscript(leaf.parent))
             ):
                 self.remove_trailing_comma()
         if not self.append_comment(leaf):
