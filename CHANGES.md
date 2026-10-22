@@ -93,10 +93,6 @@
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
 
-- The `--quiet` help text said error output "can silenced by 2>/dev/null"; it now reads
-  "can be silenced", in the option's help string and in the generated
-  `black.schema.json` (#5582)
-
 ## Version 26.10.1
 
 ### Highlights
