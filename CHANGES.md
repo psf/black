@@ -43,6 +43,9 @@
 
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
+- Emit a clear error instead of a confusing `OSError: AF_UNIX path too long` traceback
+  when running `--diff` in environments where the temporary directory path is too long
+  (#5513)
 
 ### Packaging
 
