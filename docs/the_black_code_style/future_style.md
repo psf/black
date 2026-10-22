@@ -51,6 +51,8 @@ Currently, the following features are included in the preview style:
   definition starts inside a `# fmt: off` block after an import.
 - `remove_redundant_generator_parentheses`: Remove redundant parentheses around
   generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
+- `wrap_long_keyword_argument_values_in_parens`: Add parentheses around long keyword
+  argument values when needed.
 - `symmetric_collection_operations`: Keep optional parentheses around long binary
   operations between collection displays when both operands fit on their own
   delimiter-split line. ([see below](labels/symmetric-collection-operations))
