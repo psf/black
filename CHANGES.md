@@ -56,6 +56,7 @@
 
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
+- Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
 - Emit a clear error instead of a confusing `OSError: AF_UNIX path too long` traceback
   when running `--diff` in environments where the temporary directory path is too long
   (#5513)
