@@ -25,6 +25,8 @@
   one of its parameter defaults (#5533)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
+- Keep comments at the end of a `# fmt: off` region inside brackets unchanged, instead
+  of moving a trailing comment to its own line or re-indenting them (#5585)
 
 ### Preview style
 
