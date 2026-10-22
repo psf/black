@@ -10,7 +10,8 @@ from typing import Final
 
 from black._width_table import WIDTH_TABLE
 from black.mode import Mode, Preview
-from blib2to3.pytree import Leaf
+from blib2to3.pgen2 import token
+from blib2to3.pytree import Leaf, Node
 
 STRING_PREFIX_CHARS: Final = "fturbFTURB"  # All possible string prefix characters.
 STRING_PREFIX_RE: Final = re.compile(
@@ -330,13 +331,7 @@ def normalize_fstring_quotes(
     return middles, new_quote
 
 
-def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
-    """Replace hex codes in Unicode escape sequences with lowercase representation."""
-    text = leaf.value
-    prefix = get_string_prefix(text)
-    if "r" in prefix.lower():
-        return
-
+def _normalize_unicode_escape_sequences_in_text(text: str) -> str:
     def replace(m: Match[str]) -> str:
         groups = m.groupdict()
         back_slashes = groups["backslashes"]
@@ -358,7 +353,67 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
             # \N{}
             return back_slashes + "N{" + groups["N"].upper() + "}"
 
-    leaf.value = re.sub(UNICODE_ESCAPE_RE, replace, text)
+    return re.sub(UNICODE_ESCAPE_RE, replace, text)
+
+
+def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
+    """Replace hex codes in Unicode escape sequences with lowercase representation."""
+    text = leaf.value
+    prefix = get_string_prefix(text)
+    if "r" in prefix.lower():
+        return
+
+    leaf.value = _normalize_unicode_escape_sequences_in_text(text)
+
+
+def _normalize_fstring_field_node(node: Leaf | Node) -> None:
+    from black.nodes import syms
+
+    if isinstance(node, Leaf):
+        if node.type == token.STRING:
+            normalize_unicode_escape_sequences(node)
+        return
+
+    if node.type in (syms.fstring, syms.tstring):
+        normalize_fstring_unicode_escape_sequences(node)
+        return
+
+    for child in node.children:
+        _normalize_fstring_field_node(child)
+
+
+def normalize_fstring_unicode_escape_sequences(node: Node) -> None:
+    """Replace hex codes in Unicode escape sequences with lowercase representation
+    within an f-string or t-string node."""
+    from black.nodes import syms
+
+    if not node.children:
+        return
+
+    first_child = node.children[0]
+    is_raw_fstring = (
+        isinstance(first_child, Leaf) and "r" in first_child.value.rstrip("'\"").lower()
+    )
+
+    for child in node.children:
+        if child.type in (token.FSTRING_MIDDLE, token.TSTRING_MIDDLE):
+            if not is_raw_fstring:
+                assert isinstance(child, Leaf)
+                child.value = _normalize_unicode_escape_sequences_in_text(child.value)
+        elif child.type in (
+            syms.fstring_replacement_field,
+            syms.tstring_replacement_field,
+        ):
+            # If this is a debug f-string (e.g. f"{foo=}"), do not touch the
+            # expression before '=', as Python preserves the exact source expression.
+            if any(
+                isinstance(c, Leaf) and c.type == token.EQUAL and c.value == "="
+                for c in child.children
+            ):
+                continue
+
+            for subchild in child.children:
+                _normalize_fstring_field_node(subchild)
 
 
 @lru_cache(maxsize=4096)
