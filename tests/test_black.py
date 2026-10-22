@@ -523,6 +523,30 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertIn(" Header will be skipped\r\n-i = [1,2,3]\r\n", actual)
             self.assertNotIn("\r\r\n", actual)
 
+    def test_skip_source_first_line_via_stdin(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            code = nl.join(["This is not valid Python syntax", "i = [1,2,3]", ""])
+            expected = nl.join(["This is not valid Python syntax", "i = [1, 2, 3]", ""])
+            result = BlackRunner().invoke(
+                black.main,
+                ["-", "-x", f"--config={EMPTY_CONFIG}"],
+                input=BytesIO(code.encode()),
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(result.stdout_bytes, expected.encode())
+
+            result = BlackRunner().invoke(
+                black.main,
+                ["-", "-x", "--diff", f"--config={EMPTY_CONFIG}"],
+                input=BytesIO(code.encode()),
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn(
+                f" This is not valid Python syntax{nl}-i = [1,2,3]{nl}".encode(),
+                result.stdout_bytes,
+            )
+            self.assertNotIn(b"\r\r\n", result.stdout_bytes)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
