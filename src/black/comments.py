@@ -14,6 +14,7 @@ from black.nodes import (
     container_of,
     first_leaf_of,
     is_type_comment_string,
+    last_leaf,
     make_simple_prefix,
     preceding_leaf,
     syms,
@@ -431,6 +432,7 @@ def convert_one_fmt_off_pair(
                 is_fmt_skip,
                 lines,
                 leaf,
+                mode,
                 search_hints,
             )
             return idx
@@ -469,12 +471,16 @@ def _handle_regular_fmt_block(
     is_fmt_skip: bool,
     lines: Collection[tuple[int, int]],
     leaf: Leaf,
+    mode: Mode,
     search_hints: dict[int, int] | None = None,
 ) -> None:
     """Handle fmt blocks with actual AST nodes."""
     first = ignored_nodes[0]  # Can be a container node with the `leaf`.
     parent = first.parent
     prefix = first.prefix
+    trailing_comments = (
+        "" if is_fmt_skip else _take_comments_ending_fmt_off(ignored_nodes[-1], mode)
+    )
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         first.prefix = prefix[comment.consumed :]
@@ -544,7 +550,7 @@ def _handle_regular_fmt_block(
         else:
             parts.append(str(node))
 
-    hidden_value = "".join(parts)
+    hidden_value = "".join(parts) + trailing_comments
     comment_lineno = leaf.lineno - comment.newlines
     leaf_is_ignored = any(
         ignored is leaf
@@ -605,6 +611,49 @@ def _handle_regular_fmt_block(
             fmt_pass_converted_first_leaf=first_leaf_of(first),
         ),
     )
+
+
+def _take_comments_ending_fmt_off(last_ignored: LN, mode: Mode) -> str:
+    """Detach the comments that end a `# fmt: off` region inside brackets.
+
+    The comments between the last ignored node and `# fmt: on` live in the prefix of
+    the leaf after the region. So do all of its comments when that leaf is a closing
+    bracket and the region runs to the end of the bracket without a `# fmt: on`.
+    Return that part of the prefix and remove it from the leaf, so it is kept
+    verbatim instead of being formatted.
+    """
+    last = last_leaf(last_ignored)
+    if last is None or last.type in {token.NEWLINE, token.DEDENT}:
+        # The region ends at statement level, where comments before `# fmt: on`
+        # are left to the blank line handling.
+        return ""
+
+    node: LN | None = last_ignored
+    while node is not None and node.next_sibling is None:
+        node = node.parent
+    if node is None or node.next_sibling is None:
+        return ""
+
+    next_leaf = first_leaf_of(node.next_sibling)
+    if next_leaf is None:
+        return ""
+
+    consumed = 0
+    fmt_on = False
+    for comment in list_comments(next_leaf.prefix, is_endmarker=False, mode=mode):
+        if contains_fmt_directive(comment.value, FMT_ON):
+            fmt_on = True
+            break
+        consumed = comment.consumed
+    if not consumed or not (fmt_on or next_leaf.type in CLOSING_BRACKETS):
+        return ""
+
+    # A comment always ends its line before the next leaf. Leave that newline in the
+    # prefix, so whatever follows (`# fmt: on` or the leaf) stays on its own line.
+    consumed -= 1
+    trailing_comments = next_leaf.prefix[:consumed]
+    next_leaf.prefix = next_leaf.prefix[consumed:]
+    return trailing_comments
 
 
 def generate_ignored_nodes(
