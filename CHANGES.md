@@ -13,6 +13,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
+  line endings and does not end with a newline, e.g. a notebook piped to `black -`
+  (#5559)
+
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
@@ -22,6 +26,9 @@
 - Remove redundant parentheses around lists and list comprehensions (#5431)
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
+- Don't remove the parentheses around an implicitly concatenated string in a function
+  argument default value when they are needed to keep the line within the line length
+  limit (#5558)
 
 ### Configuration
 
@@ -38,6 +45,9 @@
 
 <!-- Changes to the parser or to version autodetection -->
 
+- Fix parsing of unpacking in a generator expression passed as the only argument to a
+  call, such as `sum(*x for x in y)` (PEP 798) (#5568)
+
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
@@ -46,9 +56,17 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Write the content of a file passed through stdin that is excluded with
+  `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
+- Fix `--check` passing when formatting multiple files is interrupted with Ctrl+C or
+  SIGTERM. The run is now reported as aborted and exits with code 1 (#5542)
+
 ### _Blackd_
 
 <!-- Changes to Blackd -->
+
+- Return HTTP 400 for an unknown request charset or input that cannot be decoded using
+  the requested charset, instead of HTTP 500 (#5519)
 
 ### Integrations
 
@@ -87,6 +105,9 @@ has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is pending.
   the first two lines of a file (#5487)
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
+- Keep the parentheses around a walrus that is the only item in a set (for example
+  `{(x := f())}`) when targeting Python 3.9 or older, since Python 3.8 and 3.9.0 can't
+  parse it without them (#5502)
 
 ### Preview style
 

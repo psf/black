@@ -203,7 +203,7 @@ $ echo $?
 1
 
 $ black test.py --check
-error: cannot format test.py: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kjdr1oog.log
+error: cannot format test.py: INTERNAL ERROR: Black 26.10.1 on Python (CPython) 3.13.7 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kjdr1oog.log
 Oh no! 💥 💔 💥
 1 file would fail to reformat.
 $ echo $?
@@ -344,6 +344,10 @@ programmatically on changed files, such as in a pre-commit hook or editor plugin
 The name of the file when passing it through stdin. Useful to make sure Black will
 respect the `--force-exclude` option on some editors that rely on using stdin.
 
+The filename also determines the input type: a `.pyi` suffix enables stub formatting,
+and a `.ipynb` suffix enables notebook formatting. For example, use
+`black --stdin-filename example.pyi -` when piping a stub through stdin.
+
 #### `--include`
 
 A regular expression that matches files and directories that should be included on
@@ -358,6 +362,9 @@ Default Inclusions: `['.py', '.pyi', '.ipynb']`
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
 This option controls the number of parallel workers. This can also be specified via the
 `BLACK_NUM_WORKERS` environment variable. Defaults to the number of CPUs in the system.
+On Windows the number of workers used is capped at 60, even when a higher value is set
+via this option or the environment variable, to work around
+[CPython issue 26903](https://bugs.python.org/issue26903).
 
 #### `-q`, `--quiet`
 
