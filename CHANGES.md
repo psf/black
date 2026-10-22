@@ -23,7 +23,7 @@
 
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
-- Remove redundant parentheses in `getitem` and indexing operators (#5496)
+- Remove redundant parentheses in subscripts and indexing operators (#5496)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
