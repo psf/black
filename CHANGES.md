@@ -21,6 +21,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long method chains consistently when a standalone comment separates two calls
+  (#5518)
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses around lists and list comprehensions (#5431)

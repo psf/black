@@ -57,6 +57,8 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
+- `split_commented_method_chains`: Split long method chains consistently when a
+  standalone comment separates two calls.
 - `fix_magic_trailing_comma_trailer_split`: When a magic trailing comma forces a line to
   split, split only at the brackets holding that comma. Trailers after them, such as
   `[1,][2](3)`, stay on the closing line.
