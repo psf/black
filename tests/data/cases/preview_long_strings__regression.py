@@ -590,6 +590,18 @@ value = some_value if condition else r"Lorem ipsum dolor sit amet, consectetur a
 # If the first string already fits, split at the concatenation without parens.
 some_function_name(argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod " r"tempor incididunt")
 
+# Regression test for https://github.com/psf/black/issues/3497.
+# Keep the parens around a long implicit concatenation used as a def parameter
+# default so it stays splittable.
+def open_file_from_long_file_path(
+    file_path = (
+        "some/really/long/file/path/because/it/has/filehash/as/part/of/path/"
+        "460e96a3b663f41a8412527424278bc60eb208ec5be1f5943e5dff2fe428a2da/"
+        "file.txt"
+    ),
+):
+    pass
+
 
 # output
 
@@ -1330,3 +1342,16 @@ some_function_name(
     argument=r"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod "
     r"tempor incididunt"
 )
+
+
+# Regression test for https://github.com/psf/black/issues/3497.
+# Keep the parens around a long implicit concatenation used as a def parameter
+# default so it stays splittable.
+def open_file_from_long_file_path(
+    file_path=(
+        "some/really/long/file/path/because/it/has/filehash/as/part/of/path/"
+        "460e96a3b663f41a8412527424278bc60eb208ec5be1f5943e5dff2fe428a2da/"
+        "file.txt"
+    ),
+):
+    pass
