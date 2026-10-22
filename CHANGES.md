@@ -75,8 +75,6 @@
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
 
-- Document that `--workers` is capped at 60 on Windows (#5575)
-
 ## Version 26.10.1
 
 ### Highlights
