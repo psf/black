@@ -15,6 +15,7 @@
 
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
+- Normalize hex codes in unicode escape sequences in f-strings (#5526)
 - Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
   line endings and does not end with a newline, e.g. a notebook piped to `black -`
   (#5559)

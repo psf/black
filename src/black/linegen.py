@@ -82,6 +82,7 @@ from black.numerics import normalize_numeric_literal
 from black.strings import (
     fix_multiline_docstring,
     get_string_prefix,
+    normalize_fstring_unicode_escape_sequences,
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
@@ -648,6 +649,7 @@ class LineGenerator(Visitor[Line]):
         if any(child.type == STANDALONE_COMMENT for child in node.children):
             yield from self.visit_default(node)
             return
+        normalize_fstring_unicode_escape_sequences(node)
         # currently we don't want to format and split f-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
@@ -668,6 +670,7 @@ class LineGenerator(Visitor[Line]):
         if any(child.type == STANDALONE_COMMENT for child in node.children):
             yield from self.visit_default(node)
             return
+        normalize_fstring_unicode_escape_sequences(node)
         # currently we don't want to format and split t-strings at all.
         string_leaf = fstring_tstring_to_string(node)
         node.replace(string_leaf)
