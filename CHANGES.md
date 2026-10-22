@@ -25,6 +25,9 @@
   one of its parameter defaults (#5533)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
+- Fix crash when `# fmt: skip` follows the closing parenthesis of a multi-line `from`
+  import and another statement on the same line, such as `); import c  # fmt: skip`
+  (#5584)
 
 ### Preview style
 
