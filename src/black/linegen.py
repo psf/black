@@ -1926,7 +1926,7 @@ def _normalize_unpacking_targets(
         syms.star_expr,
     ):
         for child in node.children:
-            if child.type == syms.atom and not _is_atom_multiline(child):
+            if child.type == syms.atom and not _atom_has_inner_comments(child):
                 maybe_make_parens_invisible_in_atom(
                     child,
                     parent=node,
@@ -2328,6 +2328,17 @@ def _is_parenthesized_annotation_target(node: Node, child: Node) -> bool:
         target = target.children[1]
 
     return isinstance(target, Leaf) and target.type == token.NAME
+
+
+def _atom_has_inner_comments(node: LN) -> bool:
+    """Check if there are comments inside an atom's brackets."""
+    if not isinstance(node, Node) or len(node.children) < 3:
+        return False
+
+    # The first child's prefix holds comments before the opening bracket.
+    return any(
+        "#" in leaf.prefix for child in node.children[1:] for leaf in child.leaves()
+    )
 
 
 def _is_atom_multiline(node: LN) -> bool:
