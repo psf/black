@@ -1,0 +1,69 @@
+# Cython additions to Grammar.txt.
+#
+# This file is appended to Grammar.txt to build the grammar used for .pyx, .pxd and
+# .pxi files (see pygram.get_cython_grammar). A rule defined here replaces the rule of
+# the same name in Grammar.txt; everything else is the Python grammar.
+#
+# A C type is not parsed into a tree. It is a flat run of names, '*', '&', '.' and
+# '[...]' trailers (cdecl_atoms), the last name being the declared one: `unsigned int
+# *p`, `np.ndarray[double, ndim=2] a`. Only the formatter's spacing rules look at it.
+#
+# Not supported yet: fused types specialisation, function pointer and other complex
+# declarators, C++ templates and namespaces, DEF/IF/ELIF compile-time statements,
+# `except?`, `property` blocks, `include` and `not None` arguments.
+
+import_name: ('import' | 'cimport') dotted_as_names
+import_from: ('from' ('.'* dotted_name | '.'+)
+              ('import' | 'cimport') ('*' | '(' import_as_names ')' | import_as_names))
+
+compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated | async_stmt | match_stmt | cdef_stmt
+decorated: decorators (classdef | funcdef | async_funcdef | cdef_stmt)
+
+# Same as in Grammar.txt, but a default value may also be `*` (`cdef f(int a=*)`, in
+# a .pxd file: the value is in the .pyx file).
+typedargslist: tfpdef ['=' (test | '*')] (',' tfpdef ['=' (test | '*')])* ',' '/' [
+                     ',' [((tfpdef ['=' (test | '*')] ',')* ('*' [tname_star] (',' tname ['=' (test | '*')])*
+                            [',' ['**' tname [',']]] | '**' tname [','])
+                     | tfpdef ['=' (test | '*')] (',' tfpdef ['=' (test | '*')])* [','])]
+                ] | ((tfpdef ['=' (test | '*')] ',')* ('*' [tname_star] (',' tname ['=' (test | '*')])*
+                     [',' ['**' tname [',']]] | '**' tname [','])
+                     | tfpdef ['=' (test | '*')] (',' tfpdef ['=' (test | '*')])* [','])
+
+# `def f(int a, char *b=NULL, np.ndarray[double] c)`
+tname: cdecl_atoms [':' test]
+
+cdecl_atoms: NAME cdecl_atom*
+cdecl_declarator: cdecl_atom+
+cdecl_atom: NAME | '*' | '**' | '&' | cdecl_trailer
+cdecl_trailer: '[' [cdecl_item (',' cdecl_item)* [',']] ']' | '.' NAME
+cdecl_item: subscript ['=' test]
+
+# <type>expr and &expr
+factor: ('+'|'-'|'~'|'&') factor | cast | power
+cast: '<' cdecl_atoms '>' factor
+
+# sizeof(char *); the operand has to be a type or a simple name
+atom: ('(' [yield_expr|testlist_gexp] ')' |
+       '[' [listmaker] ']' |
+       '{' [dictsetmaker] '}' |
+       '`' testlist1 '`' |
+       NAME | NUMBER | (STRING | fstring | tstring)+ | '.' '.' '.' | sizeof_expr)
+sizeof_expr: 'sizeof' '(' cdecl_atoms ')'
+
+# cdef int x = 1, *y
+# cdef int f(int a) except -1 nogil:
+# cdef struct S: / cdef enum: / enum: NAME / cdef extern from "h":
+# cdef: (a block of declarations)
+# cdef class C(B):
+# ctypedef unsigned char uchar
+cdef_stmt: ('cdef' | 'cpdef' | 'ctypedef') (':' cdef_suite | classdef | cdecl_atoms cdef_tail)
+cdef_tail: (parameters [cdef_modifiers] (':' suite | NEWLINE)
+            | 'from' (STRING | '*') (NAME | STRING)* ':' cdef_suite
+            | ':' (cdef_suite | cdecl_atoms cdef_tail)
+            | ['=' test] (',' cdecl_declarator ['=' test])* [','] NEWLINE)
+cdef_modifiers: ('except' ['*' | test] | 'with' NAME | NAME)+
+
+# The body of a struct, enum, extern block or cdef: block holds declarations without
+# the cdef keyword, and in an extern block a string of verbatim C code.
+cdef_suite: NEWLINE INDENT (cdef_line | cdef_stmt)+ DEDENT
+cdef_line: cdecl_atoms cdef_tail | pass_stmt NEWLINE | STRING NEWLINE

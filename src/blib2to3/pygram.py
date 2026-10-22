@@ -5,10 +5,13 @@
 
 # Python imports
 import os
+import re
+from collections.abc import Mapping
+from io import StringIO
 from typing import Union
 
 # Local imports
-from .pgen2 import driver
+from .pgen2 import driver, pgen
 from .pgen2.grammar import Grammar
 
 # Moved into initialize because mypyc can't handle __file__ (XXX bug)
@@ -149,6 +152,27 @@ class _python_symbols(Symbols):
     yield_stmt: int
 
 
+class _cython_symbols(_python_symbols):
+    """The Python symbols, numbered as in the Python grammar, plus Cython's own."""
+
+    cast: int
+    cdecl_atom: int
+    cdecl_atoms: int
+    cdecl_declarator: int
+    cdecl_item: int
+    cdecl_trailer: int
+    cdef_line: int
+    cdef_modifiers: int
+    cdef_stmt: int
+    cdef_suite: int
+    cdef_tail: int
+    sizeof_expr: int
+
+    def __init__(self, numbers: Mapping[str, int]) -> None:
+        for name, symbol in numbers.items():
+            setattr(self, name, symbol)
+
+
 class _pattern_symbols(Symbols):
     Alternative: int
     Alternatives: int
@@ -164,7 +188,42 @@ python_grammar_async_keywords: Grammar
 python_grammar_soft_keywords: Grammar
 pattern_grammar: Grammar
 python_symbols: _python_symbols
+cython_symbols: _cython_symbols
+_cython_numbers: dict[str, int]
 pattern_symbols: _pattern_symbols
+
+
+def _CYTHON_GRAMMAR_FILE() -> str:
+    # In a function because mypyc can't handle __file__ at module level.
+    return os.path.join(os.path.dirname(__file__), "CythonGrammar.txt")
+
+
+_cython_grammar: Grammar | None = None
+
+
+def get_cython_grammar() -> Grammar:
+    """Return the grammar for Cython: Python 3.10+ plus the rules of CythonGrammar.txt.
+
+    It is built on first use, as only .pyx, .pxd and .pxi files need it.
+    """
+    global _cython_grammar
+    if _cython_grammar is None:
+        with open(
+            os.path.join(os.path.dirname(__file__), "Grammar.txt"), encoding="utf-8"
+        ) as f:
+            text = f.read()
+        with open(_CYTHON_GRAMMAR_FILE(), encoding="utf-8") as f:
+            text += "\n" + f.read()
+        generator = pgen.ParserGenerator("CythonGrammar.txt", StringIO(text))
+        order = sorted(_cython_numbers, key=_cython_numbers.__getitem__)
+        grammar = generator.make_grammar(order)
+        assert grammar.symbol2number == _cython_numbers
+        grammar.soft_keywords.clear()
+        grammar.soft_keywords.update(python_grammar_soft_keywords.soft_keywords)
+        grammar.async_keywords = True
+        grammar.version = (3, 10)
+        _cython_grammar = grammar
+    return _cython_grammar
 
 
 def initialize(
@@ -174,6 +233,8 @@ def initialize(
     global python_grammar_async_keywords
     global python_grammar_soft_keywords
     global python_symbols
+    global cython_symbols
+    global _cython_numbers
     global pattern_grammar
     global pattern_symbols
 
@@ -191,6 +252,17 @@ def initialize(
     python_grammar.soft_keywords.clear()
 
     python_symbols = _python_symbols(python_grammar)
+
+    # Cython's symbols are numbered after the Python ones so that the two grammars
+    # agree on the number of every Python symbol. Work them out from the rule names
+    # alone: building the Cython grammar itself is left until it is needed.
+    with open(_CYTHON_GRAMMAR_FILE(), encoding="utf-8") as f:
+        cython_rules = set(re.findall(r"^(\w+):", f.read(), re.MULTILINE))
+    numbers = dict(python_grammar.symbol2number)
+    for name in sorted(cython_rules - numbers.keys()):
+        numbers[name] = 256 + len(numbers)
+    _cython_numbers = numbers
+    cython_symbols = _cython_symbols(numbers)
 
     # Python 3.0-3.6
     python_grammar.version = (3, 0)

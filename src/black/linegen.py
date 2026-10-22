@@ -310,6 +310,21 @@ class LineGenerator(Visitor[Line]):
         for child in node.children:
             yield from self.visit(child)
 
+    def visit_cdef_stmt(self, node: Node) -> Iterator[Line]:
+        """Visit `cdef`, `cpdef` and `ctypedef` (Cython)."""
+        yield from self.line()
+        for child in node.children:
+            if child.type == syms.classdef:
+                # `cdef class C:` stays on the line that `cdef` started.
+                yield from self.visit_default(child)
+            else:
+                yield from self.visit(child)
+
+    def visit_cdef_line(self, node: Node) -> Iterator[Line]:
+        """Visit a declaration in the body of a `cdef` struct, extern block, etc."""
+        yield from self.line()
+        yield from self.visit_default(node)
+
     def visit_suite(self, node: Node) -> Iterator[Line]:
         """Visit a suite."""
         if is_stub_suite(node):
@@ -753,7 +768,7 @@ class LineGenerator(Visitor[Line]):
                 {"yield"} if Preview.parenthesize_tuple_in_yield in self.mode else Ø
             ),
         )
-        self.visit_import_from = partial(v, keywords=Ø, parens={"import"})
+        self.visit_import_from = partial(v, keywords=Ø, parens={"import", "cimport"})
         self.visit_del_stmt = partial(v, keywords=Ø, parens={"del"})
         self.visit_async_funcdef = self.visit_async_stmt
         self.visit_decorated = self.visit_decorators

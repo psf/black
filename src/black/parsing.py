@@ -43,7 +43,11 @@ class InvalidInput(ValueError):
         return str(self.args[0])
 
 
-def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
+def get_grammars(
+    target_versions: set[TargetVersion], cython: bool = False
+) -> list[Grammar]:
+    if cython:
+        return [pygram.get_cython_grammar()]
     if not target_versions:
         # No target_version specified, so try all grammars.
         return [
@@ -75,13 +79,15 @@ def get_grammars(target_versions: set[TargetVersion]) -> list[Grammar]:
 
 
 def lib2to3_parse(
-    src_txt: str, target_versions: Collection[TargetVersion] = ()
+    src_txt: str,
+    target_versions: Collection[TargetVersion] = (),
+    cython: bool = False,
 ) -> Node:
     """Given a string with source, return the lib2to3 Node."""
     if not src_txt.endswith("\n"):
         src_txt += "\n"
 
-    grammars = get_grammars(set(target_versions))
+    grammars = get_grammars(set(target_versions), cython)
     if target_versions:
         max_tv = max(target_versions, key=lambda tv: tv.value)
         tv_str = f" for target version {max_tv.pretty()}"

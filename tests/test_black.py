@@ -1379,6 +1379,52 @@ class BlackTestCase(BlackBaseTestCase):
         actual = result.output
         self.assertFormatEqual(actual, expected)
 
+    def test_cython_file(self) -> None:
+        source, expected = read_data("cases", "cython_cdef_variables.pyx")
+        with cache_dir() as workspace:
+            path = (workspace / "file.pyx").resolve()
+            path.write_text(source, encoding="utf-8")
+            # Cython is only formatted as such with --preview.
+            result = BlackRunner().invoke(black.main, [str(path), "-q"])
+            self.assertEqual(result.exit_code, 123)
+            self.assertEqual(path.read_text(encoding="utf-8"), source)
+            self.invokeBlack([str(path), "--preview"])
+            self.assertFormatEqual(expected, path.read_text(encoding="utf-8"))
+            # A second run changes nothing, and the files found in the directory are
+            # the ones that match --include.
+            self.invokeBlack([str(workspace), "--preview", "--check"], exit_code=0)
+            path.write_text(source, encoding="utf-8")
+            self.invokeBlack([str(workspace), "--preview", "--check"], exit_code=0)
+            self.invokeBlack(
+                [str(workspace), "--preview", "--check", "--include", r"\.pyx$"],
+                exit_code=1,
+            )
+
+    def test_cython_pipe(self) -> None:
+        source, expected = read_data("cases", "cython_cdef_variables.pyx")
+        result = BlackRunner().invoke(
+            black.main,
+            ["-", "-q", "--preview", "--stdin-filename", "file.pxd"],
+            input=BytesIO(source.encode("utf-8")),
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertFormatEqual(expected, result.output)
+
+    def test_cython_unknown_character_is_a_parse_error(self) -> None:
+        # pytokens yields empty names forever at the `?`; this used to hang.
+        with self.assertRaises(black.InvalidInput):
+            black.format_str(
+                "cdef int f() except? -1:\n    pass\n", mode=black.Mode(is_pyx=True)
+            )
+
+    def test_cython_symbols_extend_python_symbols(self) -> None:
+        from blib2to3 import pygram
+
+        grammar = pygram.get_cython_grammar()
+        for name, number in pygram.python_grammar.symbol2number.items():
+            assert grammar.symbol2number[name] == number
+        assert grammar.symbol2number == pygram._cython_numbers
+
     def test_single_file_force_py36(self) -> None:
         reg_mode = DEFAULT_MODE
         py36_mode = replace(DEFAULT_MODE, target_versions=PY36_VERSIONS)

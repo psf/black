@@ -21,7 +21,7 @@ from black.ranges import parse_line_ranges
 from . import conftest
 
 PYTHON_SUFFIX = ".py"
-ALLOWED_SUFFIXES = (PYTHON_SUFFIX, ".pyi", ".out", ".diff", ".ipynb")
+ALLOWED_SUFFIXES = (PYTHON_SUFFIX, ".pyi", ".pyx", ".out", ".diff", ".ipynb")
 
 THIS_DIR = Path(__file__).parent
 DATA_DIR = THIS_DIR / "data"
@@ -178,7 +178,10 @@ def _assert_format_inner(
         # Unfortunately the AST equivalence check relies on the built-in ast module
         # being able to parse the code being formatted. This doesn't always work out
         # when checking modern code on older versions.
-        if minimum_version is None or sys.version_info >= minimum_version:
+        # Python's ast cannot parse Cython either.
+        if not mode.is_pyx and (
+            minimum_version is None or sys.version_info >= minimum_version
+        ):
             black.assert_equivalent(source, actual)
         black.assert_stable(source, actual, mode=mode, lines=lines)
 
@@ -199,7 +202,10 @@ def get_base_dir(data: bool) -> Path:
 def all_data_cases(subdir_name: str, data: bool = True) -> list[str]:
     cases_dir = get_base_dir(data) / subdir_name
     assert cases_dir.is_dir()
-    return [case_path.stem for case_path in cases_dir.iterdir()]
+    return [
+        case_path.name if case_path.suffix == ".pyx" else case_path.stem
+        for case_path in cases_dir.iterdir()
+    ]
 
 
 def get_case_path(
@@ -246,6 +252,7 @@ def get_flags_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--pyi", default=False, action="store_true")
     parser.add_argument("--ipynb", default=False, action="store_true")
+    parser.add_argument("--pyx", default=False, action="store_true")
     parser.add_argument(
         "--skip-magic-trailing-comma", default=False, action="store_true"
     )
@@ -286,6 +293,7 @@ def parse_mode(flags_line: str) -> TestCaseArgs:
         string_normalization=not args.skip_string_normalization,
         is_pyi=args.pyi,
         is_ipynb=args.ipynb,
+        is_pyx=args.pyx,
         magic_trailing_comma=not args.skip_magic_trailing_comma,
         preview=args.preview,
         unstable=args.unstable,

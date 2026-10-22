@@ -323,6 +323,11 @@ class Parser:
         Depending on whether the value is a soft-keyword or not,
         this function may return multiple labels to choose from."""
         if type == token.NAME:
+            if not value:
+                # pytokens yields empty names forever at a character it cannot
+                # tokenize, like the `?` of `except? -1`. That is always an error, and a
+                # rule that repeats NAME would never stop.
+                raise ParseError("bad input", type, value, context)
             # Keep a listing of all used names
             self.used_names.add(value)
             # Check for reserved words
