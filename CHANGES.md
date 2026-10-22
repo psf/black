@@ -13,18 +13,29 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
+  subscript that isn't the last element of a collection or argument list (#5522)
+- Normalize hex codes in unicode escape sequences in f-strings (#5526)
 - Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
   line endings and does not end with a newline, e.g. a notebook piped to `black -`
   (#5559)
+- Fix crash when `# fmt: skip` on an opening bracket is followed by more code after the
+  closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Merge adjacent short raw string literals with matching prefixes and quotation marks
+  when using the unstable `string_processing` feature (#5515)
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses in subscripts and indexing operators (#5496)
+- Fix unstable formatting when an unpacking target's redundant parentheses are split
+  across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Fix unstable formatting of a call whose sole argument is a generator in redundant
+  parentheses, e.g. with `--skip-magic-trailing-comma` (#5564)
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
@@ -35,6 +46,9 @@
 
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
+- Emit a clear error instead of a confusing `OSError: AF_UNIX path too long` traceback
+  when running `--diff` in environments where the temporary directory path is too long
+  (#5513)
 
 ### Packaging
 
@@ -104,6 +118,9 @@ has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is pending.
   the first two lines of a file (#5487)
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
+- Keep the parentheses around a walrus that is the only item in a set (for example
+  `{(x := f())}`) when targeting Python 3.9 or older, since Python 3.8 and 3.9.0 can't
+  parse it without them (#5502)
 
 ### Preview style
 
