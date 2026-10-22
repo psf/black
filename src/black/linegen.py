@@ -819,6 +819,13 @@ def transform_line(
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
         and not line.contains_implicit_multiline_string_with_comments()
+        and not (
+            Preview.split_implicit_string_concatenations in mode
+            and (
+                _implicit_concat_split_points(line)
+                or _contains_bracketed_implicit_concat(line)
+            )
+        )
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         if Preview.string_processing in mode:
@@ -862,6 +869,8 @@ def transform_line(
                     standalone_comment_split,
                     right_hand_split_with_omits,
                 ]
+                if Preview.split_implicit_string_concatenations in mode:
+                    transformers.insert(0, string_concat_split)
             else:
                 transformers = [right_hand_split_with_omits]
 
@@ -1762,6 +1771,106 @@ def delimiter_split(
         current_line = _safe_add_trailing_comma(
             trailing_comma_safe, delimiter_priority, current_line
         )
+        yield current_line
+
+
+def _implicit_concat_split_points(line: Line) -> list[int]:
+    """Return the indices of leaves after which an implicit string
+    concatenation may be split: the leaf and its successor are both string
+    literals, and no brackets opened on the line are still open at that
+    point (so the split happens at the line's own depth)."""
+    split_points: list[int] = []
+    depth = 0
+    for idx, leaf in enumerate(line.leaves[:-1]):
+        if leaf.type in CLOSING_BRACKETS:
+            depth -= 1
+        elif leaf.type in OPENING_BRACKETS:
+            depth += 1
+        if (
+            depth == 0
+            and leaf.type == token.STRING
+            and line.leaves[idx + 1].type == token.STRING
+        ):
+            split_points.append(idx)
+    return split_points
+
+
+def _contains_bracketed_implicit_concat(line: Line) -> bool:
+    """Does `line` contain a visible bracket pair whose immediate contents
+    include an implicit string concatenation?"""
+    openers: list[Leaf] = []
+    for leaf, nxt in zip(line.leaves, line.leaves[1:], strict=False):
+        if leaf.type in OPENING_BRACKETS:
+            openers.append(leaf)
+        elif leaf.type in CLOSING_BRACKETS and openers:
+            openers.pop()
+        if (
+            leaf.type == token.STRING
+            and nxt.type == token.STRING
+            and openers
+            and openers[-1].value
+        ):
+            return True
+    return False
+
+
+@dont_increase_indentation
+def string_concat_split(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
+    """Split implicit string concatenations onto one line per string literal.
+
+    Instead of joining implicitly concatenated strings onto a single line,
+    keep each string literal of a concatenation of two or more literals on
+    its own line (#1540)."""
+    if Preview.split_implicit_string_concatenations not in mode:
+        raise CannotSplit("Splitting implicit string concatenations is not enabled")
+    if not line.inside_brackets:
+        raise CannotSplit("Not inside brackets")
+    if line.comments:
+        raise CannotSplit("Line contains comments")
+    split_points = _implicit_concat_split_points(line)
+    if not split_points:
+        raise CannotSplit("No implicit string concatenation at this depth")
+    # Also break after element separators so a concatenation and any sibling
+    # elements each get their own line.
+    boundaries = set(split_points)
+    depth = 0
+    for idx, leaf in enumerate(line.leaves):
+        if leaf.type in CLOSING_BRACKETS:
+            depth -= 1
+        elif leaf.type in OPENING_BRACKETS:
+            depth += 1
+        elif leaf.type == token.COMMA and depth == 0:
+            boundaries.add(idx)
+
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
+
+    def append_to_line(leaf: Leaf) -> Iterator[Line]:
+        """Append `leaf` to current line or to new line if appending impossible."""
+        nonlocal current_line
+        try:
+            current_line.append_safe(leaf, preformatted=True)
+        except ValueError:
+            yield current_line
+
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
+            current_line.append(leaf)
+
+    for leaf_idx, leaf in enumerate(line.leaves):
+        yield from append_to_line(leaf)
+
+        if leaf_idx in boundaries:
+            yield current_line
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
+
+    if current_line:
         yield current_line
 
 
