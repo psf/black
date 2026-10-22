@@ -33,6 +33,7 @@ from black.lines import (
     can_be_split,
     can_omit_invisible_parens,
     is_line_short_enough,
+    is_symmetric_collection_binop,
     line_to_string,
 )
 from black.mode import Feature, Mode, Preview
@@ -55,6 +56,7 @@ from black.nodes import (
     is_docstring,
     is_empty_tuple,
     is_generator,
+    is_list,
     is_lpar_token,
     is_multiline_string,
     is_name_token,
@@ -400,6 +402,13 @@ class LineGenerator(Visitor[Line]):
                         features=self.features,
                         remove_generator_parens=True,
                     )
+                    atom = child.children[1]
+                    if is_atom_with_invisible_parens(atom) and not any(
+                        "#" in leaf.prefix for leaf in atom.leaves()
+                    ):
+                        # Drop the now invisible parens so the generator splits
+                        # the same way as one passed without parentheses.
+                        atom.replace(atom.children[1])
 
         remove_await_parens(node, mode=self.mode, features=self.features)
 
@@ -597,6 +606,17 @@ class LineGenerator(Visitor[Line]):
         if (
             Preview.remove_redundant_generator_parentheses in self.mode
             and _has_redundant_generator_parentheses(node)
+        ):
+            maybe_make_parens_invisible_in_atom(
+                node,
+                parent=node.parent or node,
+                mode=self.mode,
+                features=self.features,
+            )
+
+        if (
+            Preview.remove_redundant_list_parentheses in self.mode
+            and _has_redundant_list_parentheses(node)
         ):
             maybe_make_parens_invisible_in_atom(
                 node,
@@ -1223,6 +1243,14 @@ def _maybe_split_omitting_optional_parens(
     features: Collection[Feature] = (),
     omit: Collection[LeafID] = (),
 ) -> Iterator[Line]:
+    split_symmetric_collection_binops = (
+        Preview.symmetric_collection_operations in mode
+        and rhs.opening_bracket.type == token.LPAR
+        and not rhs.opening_bracket.value
+        and rhs.closing_bracket.type == token.RPAR
+        and not rhs.closing_bracket.value
+        and is_symmetric_collection_binop(rhs.body, mode.line_length)
+    )
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
@@ -1288,6 +1316,8 @@ def _maybe_split_omitting_optional_parens(
 
     ensure_visible(rhs.opening_bracket)
     ensure_visible(rhs.closing_bracket)
+    if split_symmetric_collection_binops:
+        rhs.body.should_split_rhs = True
     for result in (rhs.head, rhs.body, rhs.tail):
         if result:
             yield result
@@ -1817,6 +1847,12 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
             # Do not isolate the header colon onto its own line when a
             # standalone comment (e.g. from `# fmt: skip`) ends with `)`.
             and not (current_line.is_comment and leaf.type == token.COLON)
+            # Code hidden by `# fmt: skip` / `# fmt: off` that ends in code rather
+            # than a comment can be followed by the rest of the line.
+            and not (
+                leaf.type != STANDALONE_COMMENT
+                and _is_fmt_pass_converted_ending_in_code(current_line)
+            )
         ):
             yield current_line
             current_line = Line(
@@ -1827,6 +1863,18 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
             current_line.append(comment_after, preformatted=True)
     if current_line:
         yield current_line
+
+
+def _is_fmt_pass_converted_ending_in_code(line: Line) -> bool:
+    """Is `line` a single STANDALONE_COMMENT holding code hidden by `# fmt: skip`
+    or `# fmt: off` whose last line has no comment?
+
+    Any `#` on the last line counts as a comment, even inside a string, so in
+    doubt the caller keeps splitting.
+    """
+    if not line.is_fmt_pass_converted():
+        return False
+    return "#" not in line.leaves[0].value.rpartition("\n")[2]
 
 
 def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:
@@ -1864,6 +1912,20 @@ def _has_redundant_generator_parentheses(node: LN) -> bool:
     return is_generator(middle) or _has_redundant_generator_parentheses(middle)
 
 
+def _has_redundant_list_parentheses(node: LN) -> bool:
+    """Whether `node` adds parentheses around a list."""
+    if (
+        node.type != syms.atom
+        or len(node.children) != 3
+        or not is_lpar_token(node.children[0])
+        or not is_rpar_token(node.children[-1])
+    ):
+        return False
+
+    middle = node.children[1]
+    return is_list(middle) or _has_redundant_list_parentheses(middle)
+
+
 def _normalize_unpacking_targets(
     node: LN,
     mode: Mode,
@@ -1882,7 +1944,7 @@ def _normalize_unpacking_targets(
         syms.star_expr,
     ):
         for child in node.children:
-            if child.type == syms.atom and not _is_atom_multiline(child):
+            if child.type == syms.atom and not _atom_has_inner_comments(child):
                 maybe_make_parens_invisible_in_atom(
                     child,
                     parent=node,
@@ -2286,6 +2348,17 @@ def _is_parenthesized_annotation_target(node: Node, child: Node) -> bool:
     return isinstance(target, Leaf) and target.type == token.NAME
 
 
+def _atom_has_inner_comments(node: LN) -> bool:
+    """Check if there are comments inside an atom's brackets."""
+    if not isinstance(node, Node) or len(node.children) < 3:
+        return False
+
+    # The first child's prefix holds comments before the opening bracket.
+    return any(
+        "#" in leaf.prefix for child in node.children[1:] for leaf in child.leaves()
+    )
+
+
 def _is_atom_multiline(node: LN) -> bool:
     """Check if an atom node is multiline (indicating intentional formatting)."""
     if not isinstance(node, Node) or len(node.children) < 3:
@@ -2376,6 +2449,14 @@ def maybe_make_parens_invisible_in_atom(
             syms.for_stmt,
             syms.del_stmt,
         ]:
+            return False
+        if (
+            parent.type == syms.atom
+            and parent.children[0].type == token.LBRACE
+            and Feature.UNPARENTHESIZED_WALRUS_IN_SETS not in features
+        ):
+            # A named expression in a set literal needs its parentheses before
+            # Python 3.10 (3.9.1 accepts it, but 3.9.0 doesn't).
             return False
 
     first = node.children[0]

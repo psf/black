@@ -81,7 +81,7 @@ To cut a release:
 1. **To cut a stable release, merge the PR once everything looks good.** If you're
    cutting a prerelease, **do not merge it**, and instead [run the "cut release"
    workflow][cut-release-workflow] manually. **Make sure to select the
-   `ci/prepare-release/<verson>` branch**, where `<version>` is the stable version
+   `ci/prepare-release/<version>` branch**, where `<version>` is the stable version
    you're preparing. You can release multiple prereleases from the same PR by running
    "cut release" multiple times after any desired changes.
 
@@ -92,7 +92,7 @@ To cut a release:
      configuration file to reverse-engineer your way to a solution.
    - If the failure is in the "cut release" workflow before "update stable" runs, you're
      able to commit a fix to `main` and rerun it manually with no issues. Again, run it
-     on the `main` branch for stable releases or the `ci/prepare-release/<verson>`
+     on the `main` branch for stable releases or the `ci/prepare-release/<version>`
      branch for prereleases.
    - If a different workflow fails, the release can't be fully reverted at this point.
      Determine the best course of action according to what failed and the necessary

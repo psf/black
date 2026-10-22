@@ -51,6 +51,9 @@ Currently, the following features are included in the preview style:
   definition starts inside a `# fmt: off` block after an import.
 - `remove_redundant_generator_parentheses`: Remove redundant parentheses around
   generator expressions. ([see below](labels/remove-redundant-generator-parentheses))
+- `symmetric_collection_operations`: Keep optional parentheses around long binary
+  operations between collection displays when both operands fit on their own
+  delimiter-split line. ([see below](labels/symmetric-collection-operations))
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
@@ -76,6 +79,26 @@ Currently, the following features are included in the preview style:
   indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
   line length limit only due to a trailing comment.
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+- `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
+  and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+
+(labels/remove-redundant-list-parentheses)=
+
+### Redundant list parentheses
+
+Black removes extra parentheses around list literals and list comprehensions:
+
+```python
+# Before
+([])
+([1, 2])
+foo(([1, 2]))
+
+# After (with --preview)
+[]
+[1, 2]
+foo([1, 2])
+```
 
 (labels/keep-trailers-on-bracket-comment-overflow)=
 
@@ -285,6 +308,33 @@ any additional pair:
 
 # After (with --preview)
 [(item for item in items), fallback]
+```
+
+(labels/symmetric-collection-operations)=
+
+### Symmetric display operations
+
+When a binary operation between two collection displays is too long for one line and
+both operands fit on their own delimiter-split line, Black keeps optional parentheses
+around the expression so that the operands can be split symmetrically. This applies to
+every arithmetic, bitwise, and symbolic comparison operator between collection displays.
+If either display needs an internal split, including when an active magic trailing comma
+forces it onto multiple lines, Black retains the existing formatting.
+
+```python
+# Before
+names = ["Alice", "Bob", "Charlie", "Diana", "Edward"] + [
+    "Fiona",
+    "George",
+    "Harriet",
+    "Isabelle",
+]
+
+# After (with --preview)
+names = (
+    ["Alice", "Bob", "Charlie", "Diana", "Edward"]
+    + ["Fiona", "George", "Harriet", "Isabelle"]
+)
 ```
 
 (labels/wrap-comprehension-in)=

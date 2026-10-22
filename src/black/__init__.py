@@ -782,8 +782,8 @@ def main(
         if not sources:
             if verbose or not quiet:
                 out("No Python files are present to be formatted. Nothing to do 😴")
-            if "-" in src:
-                sys.stdout.write(sys.stdin.read())
+            if "-" in src and write_back is WriteBack.YES:
+                _echo_stdin_unchanged()
             if "GITHUB_OUTPUT" in os.environ:
                 report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
             ctx.exit(0)
@@ -1013,16 +1013,17 @@ def reformat_one(
                 cache = Cache.read(mode)
             else:
                 cache = Cache.read(mode, cache_dir)
-            if cache is not None and write_back not in (
-                WriteBack.DIFF,
-                WriteBack.COLOR_DIFF,
-            ):
+            if cache is not None:
                 if not cache.is_changed(src):
                     changed = Changed.CACHED
             if changed is not Changed.CACHED and format_file_in_place(
                 src, fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
                 changed = Changed.YES
+            can_cache_unmodified = (
+                write_back in (WriteBack.CHECK, WriteBack.DIFF, WriteBack.COLOR_DIFF)
+                and changed is Changed.NO
+            )
             # Formatting only some lines doesn't make the whole file formatted, and
             # the cache key doesn't include the line ranges, so don't record it.
             if (
@@ -1030,7 +1031,7 @@ def reformat_one(
                 and not lines
                 and (
                     (write_back is WriteBack.YES and changed is not Changed.CACHED)
-                    or (write_back is WriteBack.CHECK and changed is Changed.NO)
+                    or can_cache_unmodified
                 )
             ):
                 cache.write([src])
@@ -1144,9 +1145,11 @@ def format_stdin_to_stdout(
 
     finally:
         if write_back == WriteBack.YES:
-            # Make sure there's a newline after the content
+            # Make sure there's a newline after the content. `_write_to_stdout()`
+            # translates "\n" into `newline` itself, so append a bare "\n" here;
+            # appending `newline` would write e.g. "\r\r\n" for CRLF input.
             if dst and dst[-1] != "\n" and dst[-1] != "\r":
-                dst += newline
+                dst += "\n"
             _write_to_stdout(dst, encoding=encoding, newline=newline)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
@@ -1185,6 +1188,22 @@ def _write_to_stdout(
     wrapped = wrap_stream_for_windows(f) if wrap_for_windows else f
     wrapped.write(content)
     f.detach()
+
+
+def _echo_stdin_unchanged() -> None:
+    """Copy stdin to stdout byte for byte.
+
+    Going through the text streams instead would fail on input that isn't in their
+    encoding (e.g. a latin-1 file) and, on Windows, turn LF line endings into CRLF.
+    """
+    in_buffer = getattr(sys.stdin, "buffer", None)
+    out_buffer = getattr(sys.stdout, "buffer", None)
+    if in_buffer is None or out_buffer is None:
+        sys.stdout.write(sys.stdin.read())
+        return
+
+    out_buffer.write(in_buffer.read())
+    out_buffer.flush()
 
 
 def check_stability_and_equivalence(
@@ -1451,6 +1470,7 @@ def _format_str_once(
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
+            Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         }
         if supports_feature(versions, feature)
     }
@@ -1736,7 +1756,12 @@ def get_features_used(
 
 
 def is_unpacking_comprehension(node: LN) -> bool:
-    if node.type not in {syms.listmaker, syms.testlist_gexp, syms.dictsetmaker}:
+    if node.type not in {
+        syms.listmaker,
+        syms.testlist_gexp,
+        syms.dictsetmaker,
+        syms.argument,
+    }:
         return False
 
     if not any(
@@ -1745,7 +1770,7 @@ def is_unpacking_comprehension(node: LN) -> bool:
         return False
 
     first_child = node.children[0]
-    return first_child.type == syms.star_expr or first_child.type == token.DOUBLESTAR
+    return first_child.type in {syms.star_expr, token.STAR, token.DOUBLESTAR}
 
 
 def _contains_asexpr(node: Node | Leaf) -> bool:
