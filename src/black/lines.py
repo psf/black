@@ -269,6 +269,14 @@ class Line:
 
     def contains_implicit_multiline_string_with_comments(self) -> bool:
         """Check if we have an implicit multiline string with comments on the line"""
+        ignored_leaf: Leaf | None = None
+        if (
+            self.mode.magic_trailing_comma
+            and len(self.leaves) > 1
+            and self.leaves[-1].type == token.COMMA
+        ):
+            # Its comment is printed after the comma, which owns it on the next run.
+            ignored_leaf = self.leaves[-2]
         for leaf_type, leaf_group_iterator in itertools.groupby(
             self.leaves, lambda leaf: leaf.type
         ):
@@ -278,7 +286,7 @@ class Line:
             if len(leaf_list) == 1:
                 continue
             for leaf in leaf_list:
-                if self.comments_after(leaf):
+                if leaf is not ignored_leaf and self.comments_after(leaf):
                     return True
         return False
 

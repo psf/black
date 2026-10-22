@@ -74,6 +74,11 @@ func(
 # had lost their place in the tree.
 value = alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
 
+# A comment after an implicitly concatenated string keeps the strings apart.
+parser.add_argument("--retries",  # 0 disables
+                    help="Number of times to retry "
+                         "before giving up")
+
 # output
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
@@ -131,4 +136,11 @@ func(argument1, (one, two), argument4, argument5, argument6)
 # had lost their place in the tree.
 value = (
     alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
+)
+
+# A comment after an implicitly concatenated string keeps the strings apart.
+parser.add_argument(
+    "--retries",
+    help="Number of times to retry "
+    "before giving up",  # 0 disables
 )
