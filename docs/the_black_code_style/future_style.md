@@ -827,18 +827,4 @@ parentheses are stripped. The stability and status of this feature is tracked in
 
 Long strings on the right-hand side of binary and augmented assignment operators are
 also split, including operators overloaded by objects such as `pathlib.Path`. Middle
-operands of operator chains can also be wrapped and split. Subsequent operators remain
-outside the added parentheses, preserving the expression's original precedence and
-associativity:
-
-```python
-# Before, with --unstable --line-length=20
-x % "directory subdirectory file.txt" % y
-
-# After, with the same flags
-x % (
-    "directory"
-    " subdirectory"
-    " file.txt"
-) % y
-```
+operands of operator chains can also be wrapped and split.
