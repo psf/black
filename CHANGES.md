@@ -34,6 +34,7 @@
   when using the unstable `string_processing` feature (#5515)
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
+- Remove redundant parentheses in subscripts and indexing operators (#5496)
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
