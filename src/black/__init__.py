@@ -687,13 +687,31 @@ def main(
     if cache_dir is None:
         cache_dir = cache_module.CACHE_DIR
     else:
-        if (
-            not cache_dir.is_absolute()
+        cache_dir_from_config = (
+            config is not None
             and ctx.get_parameter_source("cache_dir") == ParameterSource.DEFAULT_MAP
-            and config is not None
-        ):
-            cache_dir = Path(config).resolve().parent / cache_dir
-        cache_dir = get_cache_dir(cache_dir)
+        )
+        config_is_user_level = False
+        config_path: Path | None = None
+        if cache_dir_from_config and config is not None:
+            try:
+                config_path = Path(config).resolve()
+                config_is_user_level = config_path == find_user_pyproject_toml()
+            except (PermissionError, RuntimeError):
+                pass
+
+        if cache_dir_from_config and not config_is_user_level:
+            if verbose:
+                out(
+                    "Not using cache-dir from project configuration. Set it with "
+                    "--cache-dir or BLACK_CACHE_DIR instead.",
+                    fg="blue",
+                )
+            cache_dir = cache_module.CACHE_DIR
+        else:
+            if not cache_dir.is_absolute() and config_path is not None:
+                cache_dir = config_path.parent / cache_dir
+            cache_dir = get_cache_dir(cache_dir)
     if not no_cache:
         try:
             cache_dir.mkdir(parents=True, exist_ok=True)

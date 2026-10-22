@@ -34,6 +34,8 @@
 
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
+- Ignore cache-dir values from project configuration to avoid reading project-controlled
+  cache files (#5547)
 
 ### Packaging
 
