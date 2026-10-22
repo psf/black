@@ -32,6 +32,17 @@ class Outer:
 
 x = 1
 #endregion
+# region Spam
+class Bar:
+    pass
+# endregion
+a = 1
+# region Ham
+class Qux:
+    pass
+# endregion
+def g():
+    pass
 
 # output
 
@@ -70,3 +81,20 @@ class Outer:
 
 x = 1
 # endregion
+# region Spam
+class Bar:
+    pass
+# endregion
+
+
+a = 1
+
+
+# region Ham
+class Qux:
+    pass
+# endregion
+
+
+def g():
+    pass

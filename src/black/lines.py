@@ -1064,6 +1064,19 @@ class EmptyLineTracker:
         user_had_newline = bool(before)
         depth = current_line.depth
 
+        if _is_endregion_comment(current_line):
+            # An ``# endregion`` marker closes the block above it, so it
+            # must not be separated from that block by the blank lines
+            # that precede a top-level class or function (or that follow
+            # one). Preserve the author's spacing, capped as usual,
+            # instead of inserting blank lines that were not there.
+            # This returns before ``previous_defs`` is mutated below so
+            # the marker stays transparent to that bookkeeping: the
+            # class or function it closes remains the previous def for
+            # the following line, which then gets the blank lines it is
+            # due after the marker rather than none at all.
+            return author_before, 0
+
         # Mutate self.previous_defs, remainder of this function should be pure
         previous_def = None
         while self.previous_defs and self.previous_defs[-1].depth >= depth:
@@ -1180,14 +1193,6 @@ class EmptyLineTracker:
                     before = 1
                 else:
                     before = 2
-
-        if _is_endregion_comment(current_line):
-            # An ``# endregion`` marker closes the block above it, so it
-            # must not be separated from that block by the blank lines
-            # that precede a top-level class or function (or that follow
-            # one). Preserve the author's spacing, capped as usual,
-            # instead of inserting blank lines that were not there.
-            return author_before, 0
 
         if current_line.is_decorator or current_line.is_def or current_line.is_class:
             return self._maybe_empty_lines_for_class_or_def(
