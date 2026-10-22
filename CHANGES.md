@@ -21,6 +21,10 @@
   (#5559)
 - Fix crash when `# fmt: skip` on an opening bracket is followed by more code after the
   closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
+- Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
+  one of its parameter defaults (#5533)
+- Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
+  subscript (`a[x,]`) used as a lambda parameter default (#5533)
 
 ### Preview style
 
