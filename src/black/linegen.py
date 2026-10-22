@@ -1847,6 +1847,12 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
             # Do not isolate the header colon onto its own line when a
             # standalone comment (e.g. from `# fmt: skip`) ends with `)`.
             and not (current_line.is_comment and leaf.type == token.COLON)
+            # Code hidden by `# fmt: skip` / `# fmt: off` that ends in code rather
+            # than a comment can be followed by the rest of the line.
+            and not (
+                leaf.type != STANDALONE_COMMENT
+                and _is_fmt_pass_converted_ending_in_code(current_line)
+            )
         ):
             yield current_line
             current_line = Line(
@@ -1857,6 +1863,18 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
             current_line.append(comment_after, preformatted=True)
     if current_line:
         yield current_line
+
+
+def _is_fmt_pass_converted_ending_in_code(line: Line) -> bool:
+    """Is `line` a single STANDALONE_COMMENT holding code hidden by `# fmt: skip`
+    or `# fmt: off` whose last line has no comment?
+
+    Any `#` on the last line counts as a comment, even inside a string, so in
+    doubt the caller keeps splitting.
+    """
+    if not line.is_fmt_pass_converted():
+        return False
+    return "#" not in line.leaves[0].value.rpartition("\n")[2]
 
 
 def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:

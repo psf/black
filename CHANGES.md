@@ -18,6 +18,8 @@
 - Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
   line endings and does not end with a newline, e.g. a notebook piped to `black -`
   (#5559)
+- Fix crash when `# fmt: skip` on an opening bracket is followed by more code after the
+  closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 
 ### Preview style
 
