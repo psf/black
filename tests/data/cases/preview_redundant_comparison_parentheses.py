@@ -149,7 +149,7 @@ assert a not in b
 assert (1, 2) == (3, 4)
 assert (1,) == (2,)
 assert () == ()
-assert ((1, 2)) == ((3, 4))
+assert (1, 2) == (3, 4)
 
 # Generators
 assert (x for x in y) == z
@@ -161,7 +161,7 @@ assert (a % b) == (c // d)
 assert (a | b) == (c & d)
 assert (a ^ b) == (c << d)
 assert (a >> b) == (c**d)
-assert ((a + b)) == c
+assert (a + b) == c
 
 # Lower precedence
 assert (a and b) == (c or d)

@@ -1981,35 +1981,19 @@ def _is_parenthesized_atom(node: LN) -> bool:
     )
 
 
-def _can_remove_comparison_parens(node: LN) -> bool:
-    """Whether parentheses around comparison operand `node` can be safely removed."""
+def _is_disallowed_comparison_operand(node: LN) -> bool:
+    """Whether atom `node` encloses an expression that must retain parens in
+    comparison.
+    """
     if not _is_parenthesized_atom(node):
         return False
 
-    if is_empty_tuple(node) or is_one_tuple(node) or is_tuple(node):
-        return False
-
     middle = node.children[1]
-
-    if is_generator(middle):
-        return False
-
-    if is_empty_tuple(middle) or is_one_tuple(middle) or is_tuple(middle):
-        return False
-
-    if middle.type in _DISALLOWED_COMPARISON_INNER_TYPES:
-        return False
-
-    if middle.type in _BINARY_OP_TYPES:
-        return False
-
-    if _is_binary_power(middle):
-        return False
-
-    if _is_parenthesized_atom(middle):
-        return _can_remove_comparison_parens(middle)
-
-    return True
+    return (
+        middle.type in _DISALLOWED_COMPARISON_INNER_TYPES
+        or middle.type in _BINARY_OP_TYPES
+        or _is_binary_power(middle)
+    )
 
 
 def _normalize_comparison_operands(
@@ -2018,7 +2002,7 @@ def _normalize_comparison_operands(
     """Remove redundant parentheses around operands in a comparison expression."""
     for i in range(0, len(node.children), 2):
         operand = node.children[i]
-        if _can_remove_comparison_parens(operand):
+        if operand.type == syms.atom:
             maybe_make_parens_invisible_in_atom(
                 operand, parent=node, mode=mode, features=features
             )
@@ -2484,11 +2468,16 @@ def maybe_make_parens_invisible_in_atom(
         or is_tuple_containing_walrus(node)
         or (not allow_star_expr and is_tuple_containing_star(node))
         or (not can_remove_generator_parens and is_generator(node))
+        or (
+            parent.type == syms.comparison
+            and _is_disallowed_comparison_operand(node)
+        )
     ):
         return False
 
     if is_walrus_assignment(node):
         if parent.type in [
+            syms.comparison,
             syms.annassign,
             syms.expr_stmt,
             syms.assert_stmt,
