@@ -98,7 +98,7 @@ codebase with _Black_.
 
 ## Can I run Black with PyPy?
 
-Yes, there is support for PyPy 3.8 and higher.
+Yes, there is support for PyPy 3.10 and higher.
 
 ## Why does Black not detect syntax errors in my code?
 

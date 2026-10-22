@@ -15,7 +15,7 @@ except ImportError as ie:
     raise ImportError(
         f"aiohttp dependency is not installed: {ie}. "
         + "Please re-install black with the '[d]' extra install "
-        + "to obtain aiohttp_cors: `pip install black[d]`"
+        + "to obtain aiohttp: `pip install black[d]`"
     ) from None
 
 import click
@@ -172,7 +172,10 @@ async def handle(
             return web.Response(status=400, text=e.args[0])
         req_bytes = await request.read()
         charset = request.charset if request.charset is not None else "utf8"
-        req_str = req_bytes.decode(charset)
+        try:
+            req_str = req_bytes.decode(charset)
+        except (UnicodeError, LookupError) as e:
+            return web.Response(status=400, headers=headers, text=str(e))
         then = datetime.now(timezone.utc)
 
         header = ""
