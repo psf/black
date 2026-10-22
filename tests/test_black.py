@@ -10,12 +10,13 @@ import multiprocessing
 import os
 import pickle
 import re
+import signal
 import subprocess
 import sys
 import textwrap
 import types
 from collections.abc import Callable, Iterator, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import fields, replace
 from importlib.metadata import version as imp_version
@@ -1730,6 +1731,16 @@ class BlackTestCase(BlackBaseTestCase):
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
+    def test_preserves_line_endings_via_stdin_when_echoing_the_source(self) -> None:
+        # Black writes the source back to stdout when it cannot format it, so a
+        # formatting pipeline does not lose the file. That happens through the same
+        # trailing-newline fixup as a successful run, which must add "\n" and not
+        # the detected "\r\n" (the stream translates "\n" itself).
+        contents = b"def f(:\r\n    pass"
+        result = BlackRunner().invoke(black.main, ["-"], input=BytesIO(contents))
+        self.assertEqual(result.exit_code, 123)
+        self.assertEqual(result.stdout_bytes, contents + b"\r\n")
+
     def test_force_excluded_stdin_is_echoed_unchanged(self) -> None:
         # Content passed through stdin for a file that `--force-exclude` excludes is
         # written back byte for byte, whatever its line endings or encoding.
@@ -3299,6 +3310,61 @@ class TestCaching:
             cache = black.Cache.read(mode, workspace)
             assert cache.is_changed(failing)
             assert not cache.is_changed(clean)
+
+    @pytest.mark.parametrize(
+        "executor, workers",
+        [("ProcessPoolExecutor", "2"), ("ThreadPoolExecutor", "1")],
+        ids=["process-pool", "thread-pool"],
+    )
+    @pytest.mark.parametrize(
+        "output", ["", "--check", "--diff"], ids=["format", "check", "diff"]
+    )
+    @event_loop()
+    def test_interrupted_run_is_not_reported_as_success(
+        self, output: str, executor: str, workers: str
+    ) -> None:
+        if sys.platform == "win32":
+            pytest.skip("Signal handlers aren't supported on Windows")
+
+        class InterruptingExecutor(Executor):
+            def __init__(self, max_workers: int) -> None:
+                self.submitted = 0
+
+            def submit(
+                self, fn: Callable[..., Any], /, *args: Any, **kwargs: Any
+            ) -> Future[Any]:
+                future: Future[Any] = Future()
+                self.submitted += 1
+                if self.submitted == 1:
+                    future.set_result(fn(*args, **kwargs))
+                else:
+                    # Leave the file pending and interrupt Black like Ctrl+C would.
+                    asyncio.get_running_loop().call_soon(
+                        os.kill, os.getpid(), signal.SIGINT
+                    )
+                return future
+
+        mode = DEFAULT_MODE
+        with (
+            cache_dir() as workspace,
+            patch(f"black.concurrency.{executor}", new=InterruptingExecutor),
+        ):
+            clean = (workspace / "clean.py").resolve()
+            clean.write_text('print("hello")\n', encoding="utf-8")
+            pending = (workspace / "pending.py").resolve()
+            pending.write_text("print('hello')\n", encoding="utf-8")
+            args = ["--config", str(THIS_DIR / "empty.toml"), "--workers", workers]
+            if output:
+                args.append(output)
+            result = BlackRunner().invoke(black.main, [*args, str(workspace)])
+            assert result.exit_code == 1
+            assert "Aborting..." in result.stderr
+            assert "Aborted!" in result.stderr
+            assert "All done!" not in result.stderr
+            assert pending.read_text(encoding="utf-8") == "print('hello')\n"
+            cache = black.Cache.read(mode, workspace)
+            assert not cache.is_changed(clean)
+            assert cache.is_changed(pending)
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE
