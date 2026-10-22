@@ -75,8 +75,6 @@
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
 
-- Correct the documented cache file names (#5572)
-
 ## Version 26.10.1
 
 ### Highlights
