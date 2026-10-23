@@ -60,9 +60,15 @@ from black.handle_ipynb_magics import (
 )
 from black.linegen import LN, LineGenerator, transform_line
 from black.lines import EmptyLineTracker, LinesBlock
-from black.mode import FUTURE_FLAG_TO_FEATURE, VERSION_TO_FEATURES, Feature
+from black.mode import (
+    FUTURE_FLAG_TO_FEATURE,
+    VERSION_TO_FEATURES,
+    Feature,
+    Preview,
+    TargetVersion,
+    supports_feature,
+)
 from black.mode import Mode as Mode  # re-exported
-from black.mode import Preview, TargetVersion, supports_feature
 from black.nodes import STARS, is_number_token, is_simple_decorator_expression, syms
 from black.output import color_diff, diff, dump_to_file, err, ipynb_diff, out
 from black.parsing import (  # noqa F401
