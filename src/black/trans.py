@@ -905,8 +905,9 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             # Keep long raw groups intact: merging and splitting them again can
             # introduce unnecessary parentheses around an existing concatenation.
             prefix = next(iter(set_of_prefixes))
-            merged_length = str_width(str(line).rstrip()) - (num_of_strings - 1) * (
-                len(prefix) + 3
+            merged_length = (
+                str_width(str(line).rstrip())
+                - (num_of_strings - 1) * (len(prefix) + 3)
             )
             if merged_length > self.line_length:
                 return TErr(

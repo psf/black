@@ -1313,7 +1313,6 @@ def _maybe_split_omitting_optional_parens(
         and not rhs.closing_bracket.value
         and is_symmetric_collection_binop(rhs.body, mode.line_length)
     )
-    split_symmetric_binop = False
     if (
         Feature.FORCE_OPTIONAL_PARENTHESES not in features
         # the opening bracket is an optional paren
@@ -1333,10 +1332,9 @@ def _maybe_split_omitting_optional_parens(
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
             if _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode):
-                # Rather than exploding just the last operand, keep the optional
-                # parens and split before the operator.
-                split_symmetric_binop = _should_split_symmetric_binop(rhs, mode)
-                if not split_symmetric_binop:
+                # Rather than splitting inside an operand, keep the optional parens
+                # so that the binary operation can split before its operator.
+                if not _keep_parens_around_symmetric_binop(rhs_oop, rhs, mode):
                     yield from _maybe_split_omitting_optional_parens(
                         rhs_oop, line, mode, features=features, omit=omit
                     )
@@ -1383,7 +1381,7 @@ def _maybe_split_omitting_optional_parens(
 
     ensure_visible(rhs.opening_bracket)
     ensure_visible(rhs.closing_bracket)
-    if split_symmetric_collection_binops or split_symmetric_binop:
+    if split_symmetric_collection_binops:
         rhs.body.should_split_rhs = True
     for result in (rhs.head, rhs.body, rhs.tail):
         if result:
@@ -1465,13 +1463,22 @@ def _prefer_split_rhs_oop_over_rhs(
     )
 
 
-def _should_split_symmetric_binop(rhs: RHSResult, mode: Mode) -> bool:
+def _keep_parens_around_symmetric_binop(
+    rhs_oop: RHSResult, rhs: RHSResult, mode: Mode
+) -> bool:
     """
-    Returns whether `rhs` should keep its optional parens and split before the
-    operator of the binary operation they wrap, rather than omit them.
+    Returns whether we should keep the optional parens of the original (rhs) around
+    a binary operation, instead of using the result from a split omitting optional
+    parens (rhs_oop).
     """
     return (
         Preview.symmetric_binary_operations in mode
+        # a type: ignore that can't be split must stay on its line
+        and not (
+            rhs_oop.head.contains_unsplittable_type_ignore()
+            or rhs_oop.body.contains_unsplittable_type_ignore()
+            or rhs_oop.tail.contains_unsplittable_type_ignore()
+        )
         # the opening line still fits once the optional paren becomes visible
         and is_line_short_enough(
             rhs.head, mode=replace(mode, line_length=mode.line_length - 1)

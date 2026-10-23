@@ -9,8 +9,9 @@ class SomeClass:
         return self.another_method(value - max_size) + self.another_method(min_size - value)
 
 
-# Chains of three or more operands already split before every operator.
+# Chains of three or more operands are already formatted this way.
 value = get_value_from_a_kinda_long_function() + previous_values[-1] + max(offset, threshold)
+value = get_value_from_function() + previous_values[-1] + max(offset_value_xx, threshold)
 
 
 # Tuples are not binary operations.
@@ -18,7 +19,7 @@ def prepare_batch(batch, device, non_blocking):
     x, y = batch["image"].to(device, non_blocking=non_blocking), batch["label"].to(device, non_blocking=non_blocking)
 
 
-# Every arithmetic and bitwise binary operator is split the same way.
+# Every arithmetic and bitwise binary operator is treated the same way.
 difference = first_function_with_long_name(argument) - second_function_with_long_name(arg)
 product = first_function_with_long_name(argument) * second_function_with_long_name(argument)
 quotient = first_function_with_long_name(argument) / second_function_with_long_name(argument)
@@ -32,26 +33,40 @@ bitwise_and = first_function_with_long_name(argument) & second_function_with_lon
 bitwise_xor = first_function_with_long_name(argument) ^ second_function_with_long_name(arg)
 bitwise_or = first_function_with_long_name(argument) | second_function_with_long_name(arg)
 
+# Operations that don't fit inside the parentheses are split before the operator.
+difference = first_function_with_a_long_name(argument) - second_function_with_a_long_name(argument)
+seconds = 60 * (some_function_with_a_long_name(argument_value) + some_other_function(argument))
+
 # This includes string formatting with a tuple of arguments.
 message = "Something went wrong with %s while processing the request %s" % (first, second)
+message = "Something went wrong with %s while processing the request %s" % (first_value, second_value)
+
+# A set display on the right is treated the same way.
+values = some_function_with_a_long_name(argument_value) | {"first_value", "second_value", "third"}
 
 # Operands may contain attribute access, subscripts, unary operators, and operators
 # with a higher priority.
-total = self.first_attribute.compute(first_argument) + self.second_attribute[some_key](arg)
-total = -first_function_with_long_name(argument) + second_function_with_long_name(argument)
-total = first_value * first_function_with_long_name(argument) + second_function_name(arg)
+total = self.first_attribute.compute(first_argument) + self.second_attribute[some_key](argument)
+total = -first_function_with_long_name(argument_value) + second_function_with_long_name(argument)
+total = first_value * first_function_with_long_name(argument) + second_function_name(argument_value)
 
 
 async def main():
-    result = await first_function_with_long_name(argument) + second_function_name(argument)
+    result = await first_function_with_long_name(argument) + second_function_name(argument_value)
 
 
-# Other statements with optional parentheses are split the same way.
+# Other statements and expressions with optional parentheses are treated the same way.
 def f():
     if first_function_with_long_name(argument) + second_function_with_long_name(argument):
         return first_function_with_long_name(argument) + second_function_with_long_name(arg)
     for item in first_function_with_long_name(argument) + second_function_with_long_name(arg):
         pass
+    assert isinstance(data, (bytes, bytearray, memoryview)), "data argument must be byte-ish (%r)" % type(data)
+    yield first_function_with_long_name(argument_value) + second_function_with_long_name(argument)
+    items = [item for item in first_function_with_long_name(argument) + second_function_name(argument)]
+    match command:
+        case FirstPatternWithLongName(argument_one=1) | SecondPatternWithLongName(argument_two=2):
+            pass
 
 
 some_dict["with_a_long_key"] = some_function_name(first_argument) + other_function(second)
@@ -69,6 +84,10 @@ commented_right = (
 comment_in_operand = first_function_with_long_name(  # comment
     argument
 ) + second_function_with_long_name(argument)
+type_ignore = (
+    first_function_with_long_name(argument)  # type: ignore
+    + second_function_with_long_name(argument_value)
+)
 
 # Operands that would still be split keep the existing formatting.
 long_left = first_function_with_a_really_long_name(first_argument, second_argument, third_argument_value) + f(x)
@@ -77,6 +96,13 @@ magic_trailing_comma = first_function(argument,) + second_function_with_a_long_n
 multiline_string = """
 text
 """ + second_function_with_a_long_name(argument_value, another_argument_value, third_one)
+
+
+def g(a,):
+    type_comment_in_operand = first_function_with_long_name(  # type: List[int]
+        argument
+    ) + second_function_with_long_name(argument_value)
+
 
 # Splitting before the operator would misrepresent precedence.
 negation = not some_function_with_long_name(argument) + other_function_with_long_name(arg)
@@ -92,6 +118,10 @@ mapping = {
     "some_key": first_function_with_long_name(argument) + second_function_with_long_name(arg),
 }
 
+# A line ending in a dict display keeps the operator next to its opening brace.
+query = self.sql_pk_constraint % {"columns": ", ".join(self.quote_name(column) for column in columns)}
+query = self.connection.prefix + self.sql_pk_constraint % {"columns": ", ".join(columns_x)}
+
 # The opening line would be too long with an optional parenthesis.
 some_object.some_attribute_with_a_very_long_name["some_key_with_a_very_long_name_too"] = first(arg) + second(arg)
 
@@ -105,8 +135,7 @@ small = f(x) + g(y)
 
 # Regression tests for https://github.com/psf/black/issues/4455.
 value = (
-    get_value_from_a_kinda_long_function_that_is_even_longer()
-    + max(offset, threshold)
+    get_value_from_a_kinda_long_function_that_is_even_longer() + max(offset, threshold)
 )
 
 
@@ -118,11 +147,14 @@ class SomeClass:
         )
 
 
-# Chains of three or more operands already split before every operator.
+# Chains of three or more operands are already formatted this way.
 value = (
     get_value_from_a_kinda_long_function()
     + previous_values[-1]
     + max(offset, threshold)
+)
+value = (
+    get_value_from_function() + previous_values[-1] + max(offset_value_xx, threshold)
 )
 
 
@@ -133,86 +165,93 @@ def prepare_batch(batch, device, non_blocking):
     )
 
 
-# Every arithmetic and bitwise binary operator is split the same way.
+# Every arithmetic and bitwise binary operator is treated the same way.
 difference = (
-    first_function_with_long_name(argument)
-    - second_function_with_long_name(arg)
+    first_function_with_long_name(argument) - second_function_with_long_name(arg)
 )
 product = (
-    first_function_with_long_name(argument)
-    * second_function_with_long_name(argument)
+    first_function_with_long_name(argument) * second_function_with_long_name(argument)
 )
 quotient = (
-    first_function_with_long_name(argument)
-    / second_function_with_long_name(argument)
+    first_function_with_long_name(argument) / second_function_with_long_name(argument)
 )
 floor_quotient = (
-    first_function_with_long_name(argument)
-    // second_function_with_long_name(arg)
+    first_function_with_long_name(argument) // second_function_with_long_name(arg)
 )
 remainder = (
-    first_function_with_long_name(argument)
-    % second_function_with_long_name(argument)
+    first_function_with_long_name(argument) % second_function_with_long_name(argument)
 )
 matrix_product = (
-    first_function_with_long_name(argument)
-    @ second_function_with_long_name(arg)
+    first_function_with_long_name(argument) @ second_function_with_long_name(arg)
 )
 power = (
-    first_function_with_long_name(argument)
-    ** second_function_with_long_name(argument)
+    first_function_with_long_name(argument) ** second_function_with_long_name(argument)
 )
 left_shift = (
-    first_function_with_long_name(argument)
-    << second_function_with_long_name(arg)
+    first_function_with_long_name(argument) << second_function_with_long_name(arg)
 )
 right_shift = (
-    first_function_with_long_name(argument)
-    >> second_function_with_long_name(arg)
+    first_function_with_long_name(argument) >> second_function_with_long_name(arg)
 )
 bitwise_and = (
-    first_function_with_long_name(argument)
-    & second_function_with_long_name(arg)
+    first_function_with_long_name(argument) & second_function_with_long_name(arg)
 )
 bitwise_xor = (
-    first_function_with_long_name(argument)
-    ^ second_function_with_long_name(arg)
+    first_function_with_long_name(argument) ^ second_function_with_long_name(arg)
 )
 bitwise_or = (
-    first_function_with_long_name(argument)
-    | second_function_with_long_name(arg)
+    first_function_with_long_name(argument) | second_function_with_long_name(arg)
+)
+
+# Operations that don't fit inside the parentheses are split before the operator.
+difference = (
+    first_function_with_a_long_name(argument)
+    - second_function_with_a_long_name(argument)
+)
+seconds = (
+    60
+    * (some_function_with_a_long_name(argument_value) + some_other_function(argument))
 )
 
 # This includes string formatting with a tuple of arguments.
 message = (
+    "Something went wrong with %s while processing the request %s" % (first, second)
+)
+message = (
     "Something went wrong with %s while processing the request %s"
-    % (first, second)
+    % (first_value, second_value)
+)
+
+# A set display on the right is treated the same way.
+values = (
+    some_function_with_a_long_name(argument_value)
+    | {"first_value", "second_value", "third"}
 )
 
 # Operands may contain attribute access, subscripts, unary operators, and operators
 # with a higher priority.
 total = (
     self.first_attribute.compute(first_argument)
-    + self.second_attribute[some_key](arg)
+    + self.second_attribute[some_key](argument)
 )
 total = (
-    -first_function_with_long_name(argument)
+    -first_function_with_long_name(argument_value)
     + second_function_with_long_name(argument)
 )
 total = (
     first_value * first_function_with_long_name(argument)
-    + second_function_name(arg)
+    + second_function_name(argument_value)
 )
 
 
 async def main():
     result = (
         await first_function_with_long_name(argument)
-        + second_function_name(argument)
+        + second_function_name(argument_value)
     )
 
 
-# Other statements with optional parentheses are split the same way.
+# Other statements and expressions with optional parentheses are treated the same way.
 def f():
     if (
         first_function_with_long_name(argument)
@@ -223,19 +262,35 @@ def f():
             + second_function_with_long_name(arg)
         )
     for item in (
-        first_function_with_long_name(argument)
-        + second_function_with_long_name(arg)
+        first_function_with_long_name(argument) + second_function_with_long_name(arg)
     ):
         pass
+    assert isinstance(data, (bytes, bytearray, memoryview)), (
+        "data argument must be byte-ish (%r)" % type(data)
+    )
+    yield (
+        first_function_with_long_name(argument_value)
+        + second_function_with_long_name(argument)
+    )
+    items = [
+        item
+        for item in (
+            first_function_with_long_name(argument) + second_function_name(argument)
+        )
+    ]
+    match command:
+        case (
+            FirstPatternWithLongName(argument_one=1)
+            | SecondPatternWithLongName(argument_two=2)
+        ):
+            pass
 
 
 some_dict["with_a_long_key"] = (
-    some_function_name(first_argument)
-    + other_function(second)
+    some_function_name(first_argument) + other_function(second)
 )
 some_object.some_attribute_with_a_very_long_name["some_key_with_a_long_name"] = (
-    first(arg)
-    + second(arg)
+    first(arg) + second(arg)
 )
 
 # Comments on an operand stay attached and formatting remains stable.
@@ -250,6 +305,10 @@ commented_right = (
 comment_in_operand = (
     first_function_with_long_name(argument)  # comment
     + second_function_with_long_name(argument)
+)
+type_ignore = (
+    first_function_with_long_name(argument)  # type: ignore
+    + second_function_with_long_name(argument_value)
 )
 
 # Operands that would still be split keep the existing formatting.
@@ -267,6 +326,15 @@ text
 """ + second_function_with_a_long_name(
     argument_value, another_argument_value, third_one
 )
+
+
+def g(
+    a,
+):
+    type_comment_in_operand = first_function_with_long_name(  # type: List[int]
+        argument
+    ) + second_function_with_long_name(argument_value)
+
 
 # Splitting before the operator would misrepresent precedence.
 negation = not some_function_with_long_name(argument) + other_function_with_long_name(
@@ -292,6 +360,14 @@ mapping = {
     "some_key": (
         first_function_with_long_name(argument) + second_function_with_long_name(arg)
     ),
+}
+
+# A line ending in a dict display keeps the operator next to its opening brace.
+query = self.sql_pk_constraint % {
+    "columns": ", ".join(self.quote_name(column) for column in columns)
+}
+query = self.connection.prefix + self.sql_pk_constraint % {
+    "columns": ", ".join(columns_x)
 }
 
 # The opening line would be too long with an optional parenthesis.

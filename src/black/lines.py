@@ -1645,14 +1645,31 @@ def is_symmetric_binop(line: Line, line_length: int) -> bool:
     ):
         return False
 
+    # A line ending in a dict display is left to `keep_dict_keys_with_operators`,
+    # which keeps the dict's opening brace on the same line as the operator.
+    last_opening = line.leaves[-1].opening_bracket
+    if (
+        Preview.keep_dict_keys_with_operators in line.mode
+        and line.leaves[-1].type == token.RBRACE
+        and last_opening is not None
+        and isinstance(last_opening.next_sibling, Node)
+        and last_opening.next_sibling.type == syms.dictsetmaker
+        and any(
+            child.type == token.COLON for child in last_opening.next_sibling.children
+        )
+    ):
+        return False
+
     # Operands that would still be split internally keep the existing formatting.
     if line.magic_trailing_comma or line.contains_standalone_comments():
         return False
 
-    # Moving type comments to another line could change what they apply to.
+    # So do operands with a type comment inside them, as it can't be moved.
+    operand_ends = {id(line.leaves[operator_index - 1]), id(line.leaves[-1])}
     if any(
         is_type_comment(comment, mode=line.mode)
-        for comments in line.comments.values()
+        for leaf_id, comments in line.comments.items()
+        if leaf_id not in operand_ends
         for comment in comments
     ):
         return False
