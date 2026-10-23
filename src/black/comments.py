@@ -496,6 +496,8 @@ def _handle_regular_fmt_block(
         node_str = str(node)
         if not node_str.endswith("\n") and (
             next_node is None
+            # A comment-only fmt:off/on block ends with the `# fmt: on` comment
+            or node.fmt_pass_converted_first_leaf is None
             or (isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT)
             or "\n" in next_node.prefix
         ):
@@ -779,9 +781,12 @@ def _should_keep_compound_statement_inline(
 
 
 def _get_compound_statement_header(
-    body_node: Node, simple_stmt_parent: Node
+    body_node: Node, simple_stmt_parent: Node, *, ignored: Collection[LN] = ()
 ) -> list[LN]:
-    """Get header nodes for a compound statement that should be preserved inline."""
+    """Get header nodes for a compound statement that should be preserved inline.
+
+    Leaves of `ignored` are left out, so they aren't added a second time.
+    """
     if not _should_keep_compound_statement_inline(body_node, simple_stmt_parent):
         return []
 
@@ -789,6 +794,8 @@ def _get_compound_statement_header(
     compound_stmt = body_node.parent
     if compound_stmt is None or compound_stmt.type not in _COMPOUND_STATEMENTS:
         return []
+
+    covered = {id(leaf) for node in ignored for leaf in node.leaves()}
 
     # Collect all header leaves before the body
     header_leaves: list[LN] = []
@@ -801,16 +808,21 @@ def _get_compound_statement_header(
         and compound_stmt.parent.type == syms.async_stmt
         and compound_stmt.prev_sibling is not None
         and compound_stmt.prev_sibling.type == token.ASYNC
+        and id(compound_stmt.prev_sibling) not in covered
     ):
         header_leaves.append(compound_stmt.prev_sibling)
     for child in compound_stmt.children:
         if child is body_node:
             break
         if isinstance(child, Leaf):
-            if child.type not in (token.NEWLINE, token.INDENT):
+            if child.type not in (token.NEWLINE, token.INDENT) and (
+                id(child) not in covered
+            ):
                 header_leaves.append(child)
         else:
-            header_leaves.extend(child.leaves())
+            header_leaves.extend(
+                leaf for leaf in child.leaves() if id(leaf) not in covered
+            )
     return header_leaves
 
 
@@ -934,7 +946,11 @@ def _generate_ignored_nodes_from_fmt_skip(
             if (
                 current_node.type in CLOSING_BRACKETS
                 and current_node.parent
-                and current_node.parent.type in (syms.atom, syms.trailer)
+                and current_node.parent.type in (
+                    syms.atom,
+                    syms.trailer,
+                    syms.import_from,
+                )
             ):
                 current_node = current_node.parent
 
@@ -991,7 +1007,12 @@ def _generate_ignored_nodes_from_fmt_skip(
         if isinstance(parent, Node):
             body_node = _find_compound_statement_context(parent)
             if body_node is not None:
-                header_nodes = _get_compound_statement_header(body_node, parent)
+                # The walk above can already reach the header, e.g. when the body
+                # starts with a bare name as in `if x: a; b  # fmt: skip`, so pass
+                # the nodes it found to avoid adding those header leaves twice.
+                header_nodes = _get_compound_statement_header(
+                    body_node, parent, ignored=ignored_nodes
+                )
                 if header_nodes:
                     ignored_nodes = header_nodes + ignored_nodes
 
