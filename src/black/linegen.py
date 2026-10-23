@@ -2526,12 +2526,17 @@ def _is_atom_multiline(node: LN) -> bool:
     if not isinstance(node, Node) or len(node.children) < 3:
         return False
 
-    # Check the middle child (between LPAR and RPAR) for newlines in its subtree
-    # The first child's prefix contains blank lines/comments before the opening paren
+    if _atom_has_inner_comments(node):
+        return True
+
     middle = node.children[1]
-    for child in middle.pre_order():
-        if isinstance(child, Leaf) and "\n" in child.prefix:
+    first = True
+    for leaf in middle.leaves():
+        if "\n" in leaf.value:
             return True
+        if not first and "\n" in leaf.prefix:
+            return True
+        first = False
 
     return False
 
