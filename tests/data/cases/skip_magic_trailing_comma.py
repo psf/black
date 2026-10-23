@@ -74,7 +74,8 @@ func(
 # had lost their place in the tree.
 value = alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
 
-# A comment after an implicitly concatenated string keeps the strings apart.
+# A comment after an argument stays there when the last argument is an implicitly
+# concatenated string.
 parser.add_argument("--retries",  # 0 disables
                     help="Number of times to retry "
                          "before giving up")
@@ -138,9 +139,9 @@ value = (
     alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
 )
 
-# A comment after an implicitly concatenated string keeps the strings apart.
+# A comment after an argument stays there when the last argument is an implicitly
+# concatenated string.
 parser.add_argument(
-    "--retries",
-    help="Number of times to retry "
-    "before giving up",  # 0 disables
+    "--retries",  # 0 disables
+    help="Number of times to retry " "before giving up",
 )
