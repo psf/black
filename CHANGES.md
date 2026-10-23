@@ -33,8 +33,7 @@
 <!-- Changes that affect Black's preview style -->
 
 - Parenthesize the value of a keyword argument when it would otherwise make the line
-  exceed the line length and Black has no other way to split it, such as a bare
-  attribute chain, mirroring how assignment right-hand sides are handled (#5592)
+  exceed the line length (#5592)
 - Remove redundant parentheses around simple top-level expressions (#5516)
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
   when using the unstable `string_processing` feature (#5515)
