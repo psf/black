@@ -909,8 +909,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
             # introduce unnecessary parentheses around an existing concatenation.
             prefix = next(iter(set_of_prefixes))
             merged_length = (
-                str_width(str(line).rstrip())
-                - (num_of_strings - 1) * (len(prefix) + 3)
+                str_width(str(line).rstrip()) - (num_of_strings - 1) * (len(prefix) + 3)
             )
             if merged_length > self.line_length:
                 return TErr(
