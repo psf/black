@@ -40,6 +40,9 @@
 - Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
+- Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
+  has its own `# fmt: skip` on the opening line but not on the closing one, such as
+  `if (` ... `a in (  # fmt: skip` ... `)` ... `):  # fmt: skip` (#5597)
 
 ### Preview style
 
