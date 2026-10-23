@@ -49,6 +49,8 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Parenthesize and split operator chains when both operands fit on their own
+  delimiter-split line (#5523)
 - Remove redundant parentheses around operands in comparison expressions (#5539)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)

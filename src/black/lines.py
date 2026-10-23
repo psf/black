@@ -1626,6 +1626,77 @@ def is_symmetric_collection_binop(line: Line, line_length: int) -> bool:
     )
 
 
+def is_symmetric_operator_chain_binop(
+    line: Line, line_length: int, rhs: RHSResult | None = None
+) -> bool:
+    """Is `line` a binary operation between operands that each fit on a single line?"""
+    if len(line.bracket_tracker.delimiters) != 1:
+        return False
+
+    # Delimiters is keyed by leaf ID, not line position.
+    delimiter_id = next(iter(line.bracket_tracker.delimiters))
+    try:
+        left_closing_index = next(
+            index for index, leaf in enumerate(line.leaves) if id(leaf) == delimiter_id
+        )
+    except StopIteration:
+        return False
+
+    delimiter_index = left_closing_index + 1
+    if delimiter_index >= len(line.leaves) - 1:
+        return False
+
+    delimiter = line.leaves[delimiter_index]
+    if delimiter.type not in MATH_OPERATORS | COMPARATORS:
+        return False
+
+    # Keep existing asymmetric split when either operand has a magic trailing comma
+    if line.mode.magic_trailing_comma and (
+        line.leaves[left_closing_index - 1].type == token.COMMA
+        or line.leaves[-2].type == token.COMMA
+    ):
+        return False
+
+    def rendered_width(start: int, end: int) -> int | None:
+        leaves = line.leaves[start:end]
+        if any(leaf.type == STANDALONE_COMMENT for leaf in leaves):
+            return None
+        prev_type: int | None = None
+        for leaf in leaves:
+            if prev_type in {token.STRING, token.FSTRING_END} and leaf.type in {
+                token.STRING,
+                token.FSTRING_START,
+            }:
+                return None
+            prev_type = leaf.type
+        rendered = "    " * line.depth
+        # End-of-line comments do not determine whether the operand itself fits.
+        for index, leaf in enumerate(leaves):
+            rendered += leaf.value if index == 0 else str(leaf)
+        if "\n" in rendered:
+            return None
+        return str_width(rendered)
+
+    left_width = rendered_width(0, delimiter_index)
+    right_width = rendered_width(delimiter_index, len(line.leaves))
+    if left_width is None or right_width is None:
+        return False
+
+    head_length = 4 * line.depth
+    if rhs is not None:
+        head_length = 4 * rhs.head.depth
+        for _index, _leaf, leaf_length in rhs.head.enumerate_with_length():
+            head_length += leaf_length
+
+    total_width = (
+        head_length + (left_width - 4 * line.depth) + (right_width - 4 * line.depth)
+    )
+    if total_width <= line_length:
+        return False
+
+    return left_width <= line_length and right_width <= line_length
+
+
 def can_omit_invisible_parens(
     rhs: RHSResult,
     line_length: int,
@@ -1766,6 +1837,13 @@ def can_omit_invisible_parens(
         ):
             # Retaining the optional parentheses lets the delimiter splitter put
             # each display operand on its own line instead of exploding just one.
+            return False
+        if (
+            Preview.parenthesize_operator_chains in mode
+            and is_symmetric_operator_chain_binop(line, line_length, rhs=rhs)
+        ):
+            # Retaining the optional parentheses lets the delimiter splitter put
+            # each operand on its own line instead of exploding an inner call/display.
             return False
         # Otherwise it may also read better, but we don't do it today and requires
         # careful considerations for all possible cases. See
