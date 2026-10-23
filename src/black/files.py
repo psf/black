@@ -405,6 +405,28 @@ def gen_python_files(
         if resolves_outside_root_or_cannot_stat(child, root, report):
             continue
 
+        resolved_path = "/" + _cached_resolve(child).relative_to(root).as_posix()
+        if child.is_dir():
+            resolved_path += "/"
+        if resolved_path != root_relative_path:
+            excluded_by = next(
+                (
+                    option
+                    for option, pattern in (
+                        ("--exclude", exclude),
+                        ("--extend-exclude", extend_exclude),
+                        ("--force-exclude", force_exclude),
+                    )
+                    if path_is_excluded(resolved_path, pattern)
+                ),
+                None,
+            )
+            if excluded_by is not None:
+                report.path_ignored(
+                    child, f"resolved path matches the {excluded_by} regular expression"
+                )
+                continue
+
         if child.is_dir():
             # If gitignore is None, gitignore usage is disabled, while a Falsey
             # gitignore is when the directory doesn't have a .gitignore file.

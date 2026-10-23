@@ -5,6 +5,11 @@ walk them, collecting files to format. It determines what files to format or ski
 automatically using the inclusion and exclusion regexes and as well their modification
 time.
 
+When collecting files recursively, _Black_ checks exclusion regexes against both a
+symbolic link's path and its resolved path. Linking to an excluded file or directory
+does not cause it to be formatted. Files explicitly passed on the command line keep
+their usual exclusion behavior.
+
 ## Ignoring unmodified files
 
 _Black_ remembers files it has already formatted, unless code is passed via standard
