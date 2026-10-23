@@ -57,6 +57,12 @@ magic_right = other(third_arg, fourth_arg) + func(
     second_arg,
 )
 
+# Operands with implicit string concatenation retain existing formatting.
+implicit_concat = some_variable_name == (
+    "first string literal that is long enough"
+    "second string literal that completes it"
+)
+
 # output
 
 # Regression test for https://github.com/psf/black/issues/4455.
@@ -158,4 +164,9 @@ magic_left = func(
 magic_right = other(third_arg, fourth_arg) + func(
     first_arg,
     second_arg,
+)
+
+# Operands with implicit string concatenation retain existing formatting.
+implicit_concat = some_variable_name == (
+    "first string literal that is long enough" "second string literal that completes it"
 )

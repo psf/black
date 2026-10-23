@@ -1661,6 +1661,14 @@ def is_symmetric_operator_chain_binop(
         leaves = line.leaves[start:end]
         if any(leaf.type == STANDALONE_COMMENT for leaf in leaves):
             return None
+        prev_type: int | None = None
+        for leaf in leaves:
+            if prev_type in {token.STRING, token.FSTRING_END} and leaf.type in {
+                token.STRING,
+                token.FSTRING_START,
+            }:
+                return None
+            prev_type = leaf.type
         rendered = "    " * line.depth
         # End-of-line comments do not determine whether the operand itself fits.
         for index, leaf in enumerate(leaves):
