@@ -1626,7 +1626,9 @@ def is_symmetric_collection_binop(line: Line, line_length: int) -> bool:
     )
 
 
-def is_symmetric_operator_chain_binop(line: Line, line_length: int) -> bool:
+def is_symmetric_operator_chain_binop(
+    line: Line, line_length: int, rhs: RHSResult | None = None
+) -> bool:
     """Is `line` a binary operation between operands that each fit on a single line?"""
     if len(line.bracket_tracker.delimiters) != 1:
         return False
@@ -1657,6 +1659,8 @@ def is_symmetric_operator_chain_binop(line: Line, line_length: int) -> bool:
 
     def rendered_width(start: int, end: int) -> int | None:
         leaves = line.leaves[start:end]
+        if any(leaf.type == STANDALONE_COMMENT for leaf in leaves):
+            return None
         rendered = "    " * line.depth
         # End-of-line comments do not determine whether the operand itself fits.
         for index, leaf in enumerate(leaves):
@@ -1667,12 +1671,22 @@ def is_symmetric_operator_chain_binop(line: Line, line_length: int) -> bool:
 
     left_width = rendered_width(0, delimiter_index)
     right_width = rendered_width(delimiter_index, len(line.leaves))
-    return (
-        left_width is not None
-        and right_width is not None
-        and left_width <= line_length
-        and right_width <= line_length
+    if left_width is None or right_width is None:
+        return False
+
+    head_length = 4 * line.depth
+    if rhs is not None:
+        head_length = 4 * rhs.head.depth
+        for _index, _leaf, leaf_length in rhs.head.enumerate_with_length():
+            head_length += leaf_length
+
+    total_width = (
+        head_length + (left_width - 4 * line.depth) + (right_width - 4 * line.depth)
     )
+    if total_width <= line_length:
+        return False
+
+    return left_width <= line_length and right_width <= line_length
 
 
 def can_omit_invisible_parens(
@@ -1818,7 +1832,7 @@ def can_omit_invisible_parens(
             return False
         if (
             Preview.parenthesize_operator_chains in mode
-            and is_symmetric_operator_chain_binop(line, line_length)
+            and is_symmetric_operator_chain_binop(line, line_length, rhs=rhs)
         ):
             # Retaining the optional parentheses lets the delimiter splitter put
             # each operand on its own line instead of exploding an inner call/display.
