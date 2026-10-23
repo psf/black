@@ -68,6 +68,15 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Add `--cache-dir` to configure the cache directory from the command line (#5433)
+- Resolve `.gitignore` files the way git does: the file closest to a path decides it,
+  and shallower ones are only consulted when no deeper file has a matching pattern. A
+  nested `.gitignore` can now re-include something an ancestor excluded with a `!`
+  pattern, which Black previously skipped silently, so `black --check` passed on files
+  git tracks (#5453)
+- Don't cache a file as formatted after formatting or checking it with `--line-ranges`,
+  which made a later full `black --check` pass and `black` skip the unformatted lines
+  (#5476)
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 - Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
