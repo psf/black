@@ -339,8 +339,16 @@ def _handle_comment_only_fmt_block(
         fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
     standalone_comment_prefix += fmt_off_prefix
 
-    # Update leaf prefix
-    leaf.prefix = original_prefix[fmt_on_comment.consumed :]
+    # Update leaf prefix. consumed counts through the newline that ends the
+    # `# fmt: on` line. When `# fmt: on` was the last comment, slicing past
+    # original_prefix yields an empty string and the next statement gets
+    # glued onto the `# fmt: on` line (#5524). Keep a bare newline so the
+    # statement stays on its own line. generate_comments() strips a trailing
+    # newline from prefixes, so "\n" renders cleanly -- no blank line, no glue.
+    new_prefix = original_prefix[fmt_on_comment.consumed:]
+    if not new_prefix:
+        new_prefix = "\n"
+    leaf.prefix = new_prefix
 
     # Insert the STANDALONE_COMMENT
     parent = leaf.parent
