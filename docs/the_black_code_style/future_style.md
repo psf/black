@@ -88,6 +88,11 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_comparison_parentheses`: Remove redundant parentheses around
   operands in comparison expressions.
   ([see below](labels/remove-redundant-comparison-parentheses))
+- `parenthesize_unsplittable_keyword_arguments`: Parenthesize the value of a keyword
+  argument when it would otherwise make the line exceed the line length and Black has no
+  other way to split it, such as a bare attribute chain. This mirrors how assignment
+  right-hand sides are handled.
+  ([see below](labels/parenthesize-unsplittable-keyword-arguments))
 
 (labels/remove-redundant-top-level-parentheses)=
 
@@ -736,6 +741,34 @@ assert (
     ).get_return_type()
 )
 ```
+
+(labels/parenthesize-unsplittable-keyword-arguments)=
+
+### Parenthesize unsplittable keyword argument values
+
+When a keyword argument's value is a bare attribute chain (or another expression Black
+cannot split, such as a plain name or literal) and the whole argument would exceed the
+line length, Black previously had no split point and left the line too long. With this
+feature enabled, Black wraps such a value in parentheses — just as it already does for
+assignment right-hand sides — so the value moves onto its own line:
+
+```python
+# Before
+func(
+    long_long_long_long_long_long_long_long_long_long_long_arg=long_long_long_long_long_class.long_long_long_long_attr
+)
+
+# After (with --preview)
+func(
+    long_long_long_long_long_long_long_long_long_long_long_arg=(
+        long_long_long_long_long_class.long_long_long_long_attr
+    )
+)
+```
+
+Values that already have a split point (calls, subscripts, collections, or expressions
+with a top-level operator) are unaffected, as are arguments whose name alone is already
+so long that wrapping would not help.
 
 ## Unstable style
 
