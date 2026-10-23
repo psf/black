@@ -502,7 +502,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Stop emitting all non-critical output. Error messages will still be emitted"
-        " (which can silenced by 2>/dev/null)."
+        " (which can be silenced by 2>/dev/null)."
     ),
 )
 @click.option(
@@ -782,8 +782,8 @@ def main(
         if not sources:
             if verbose or not quiet:
                 out("No Python files are present to be formatted. Nothing to do 😴")
-            if "-" in src:
-                sys.stdout.write(sys.stdin.read())
+            if "-" in src and write_back is WriteBack.YES:
+                _echo_stdin_unchanged()
             if "GITHUB_OUTPUT" in os.environ:
                 report.write_github_outputs(Path(os.environ["GITHUB_OUTPUT"]))
             ctx.exit(0)
@@ -1130,8 +1130,16 @@ def format_stdin_to_stdout(
     """
     then = datetime.now(timezone.utc)
 
+    header_str = ""
     if content is None:
-        src, encoding, newline = decode_bytes(sys.stdin.buffer.read(), mode)
+        buf = io.BytesIO(sys.stdin.buffer.read())
+        header = buf.readline() if mode.skip_source_first_line else b""
+        src, encoding, newline = decode_bytes(buf.read(), mode)
+        header_str = header.decode(encoding)
+        if newline != "\n" and header_str.endswith(newline):
+            # The output is written with `newline` translation, which would turn
+            # the header's original line ending into e.g. "\r\r\n".
+            header_str = header_str[: -len(newline)] + "\n"
     else:
         src, encoding, newline = content, "utf-8", "\n"
 
@@ -1144,10 +1152,14 @@ def format_stdin_to_stdout(
         return False
 
     finally:
+        src = header_str + src
+        dst = header_str + dst
         if write_back == WriteBack.YES:
-            # Make sure there's a newline after the content
+            # Make sure there's a newline after the content. `_write_to_stdout()`
+            # translates "\n" into `newline` itself, so append a bare "\n" here;
+            # appending `newline` would write e.g. "\r\r\n" for CRLF input.
             if dst and dst[-1] != "\n" and dst[-1] != "\r":
-                dst += newline
+                dst += "\n"
             _write_to_stdout(dst, encoding=encoding, newline=newline)
         elif write_back in (WriteBack.DIFF, WriteBack.COLOR_DIFF):
             now = datetime.now(timezone.utc)
@@ -1186,6 +1198,22 @@ def _write_to_stdout(
     wrapped = wrap_stream_for_windows(f) if wrap_for_windows else f
     wrapped.write(content)
     f.detach()
+
+
+def _echo_stdin_unchanged() -> None:
+    """Copy stdin to stdout byte for byte.
+
+    Going through the text streams instead would fail on input that isn't in their
+    encoding (e.g. a latin-1 file) and, on Windows, turn LF line endings into CRLF.
+    """
+    in_buffer = getattr(sys.stdin, "buffer", None)
+    out_buffer = getattr(sys.stdout, "buffer", None)
+    if in_buffer is None or out_buffer is None:
+        sys.stdout.write(sys.stdin.read())
+        return
+
+    out_buffer.write(in_buffer.read())
+    out_buffer.flush()
 
 
 def check_stability_and_equivalence(
@@ -1452,6 +1480,7 @@ def _format_str_once(
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
+            Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         }
         if supports_feature(versions, feature)
     }
@@ -1737,7 +1766,12 @@ def get_features_used(
 
 
 def is_unpacking_comprehension(node: LN) -> bool:
-    if node.type not in {syms.listmaker, syms.testlist_gexp, syms.dictsetmaker}:
+    if node.type not in {
+        syms.listmaker,
+        syms.testlist_gexp,
+        syms.dictsetmaker,
+        syms.argument,
+    }:
         return False
 
     if not any(
@@ -1746,7 +1780,7 @@ def is_unpacking_comprehension(node: LN) -> bool:
         return False
 
     first_child = node.children[0]
-    return first_child.type == syms.star_expr or first_child.type == token.DOUBLESTAR
+    return first_child.type in {syms.star_expr, token.STAR, token.DOUBLESTAR}
 
 
 def _contains_asexpr(node: Node | Leaf) -> bool:

@@ -19,6 +19,7 @@ flattened = [*item for item in items]
 generator = (*item for item in items)
 combined = {*members for members in groups}
 merged = {**mapping for mapping in mappings}
+total = sum(*item for item in items)
 
 
 async def collect():
@@ -46,6 +47,7 @@ flattened = [*item for item in items]
 generator = (*item for item in items)
 combined = {*members for members in groups}
 merged = {**mapping for mapping in mappings}
+total = sum(*item for item in items)
 
 
 async def collect():
