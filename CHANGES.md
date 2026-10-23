@@ -32,6 +32,8 @@
   sequences in bytes and were changed by the escape normalization (#5583)
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits
   between `lambda` and its parameters (#5596)
+- Fix crash on `# fmt: skip` after a one-line compound statement whose
+  semicolon-separated body starts with a bare name, such as `if x: a; b` (#5588)
 - Keep comments at the end of a `# fmt: off` region inside brackets unchanged, instead
   of moving a trailing comment to its own line or re-indenting them (#5585)
 - Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression

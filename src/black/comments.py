@@ -998,6 +998,19 @@ def _generate_ignored_nodes_from_fmt_skip(
             body_node = _find_compound_statement_context(parent)
             if body_node is not None:
                 header_nodes = _get_compound_statement_header(body_node, parent)
+                # The walk above can already reach the header, e.g. when the body
+                # starts with a bare name as in `if x: a; b  # fmt: skip`. Don't
+                # add the header leaves it covers a second time.
+                covered = {
+                    id(ignored_leaf)
+                    for ignored in ignored_nodes
+                    for ignored_leaf in ignored.leaves()
+                }
+                header_nodes = [
+                    node
+                    for node in header_nodes
+                    if not all(id(leaf) in covered for leaf in node.leaves())
+                ]
                 if header_nodes:
                     ignored_nodes = header_nodes + ignored_nodes
 
