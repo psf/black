@@ -197,8 +197,18 @@ class LineGenerator(Visitor[Line]):
         already_parenthesized = (
             node.prev_sibling and node.prev_sibling.type == token.LPAR
         )
+        # `# fmt: skip` on an opening bracket can hide the start of the expression,
+        # as in `x = (  # fmt: skip` ... `) if c else d`. Outside of brackets, the
+        # rest has to stay on the line of the hidden closing bracket, so it can't be
+        # wrapped in parentheses.
+        first = node.children[0]
+        follows_fmt_skip = (
+            isinstance(first, Leaf)
+            and first.value in {"if", "else"}
+            and not self.current_line.bracket_tracker.any_open_brackets()
+        )
 
-        if not already_parenthesized:
+        if not already_parenthesized and not follows_fmt_skip:
             # Similar to logic in wrap_in_parentheses
             lpar = Leaf(token.LPAR, "")
             rpar = Leaf(token.RPAR, "")

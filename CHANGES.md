@@ -27,6 +27,9 @@
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
 - Keep comments at the end of a `# fmt: off` region inside brackets unchanged, instead
   of moving a trailing comment to its own line or re-indenting them (#5585)
+- Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression
+  continues after the closing bracket, such as `x = (  # fmt: skip` ... `) if c else d`
+  (#5586)
 
 ### Preview style
 
