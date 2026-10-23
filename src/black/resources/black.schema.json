@@ -108,7 +108,8 @@
           "parenthesize_expressions_with_comments",
           "keep_trailers_on_bracket_comment_overflow",
           "remove_redundant_comparison_parentheses",
-          "remove_redundant_top_level_parentheses"
+          "remove_redundant_top_level_parentheses",
+          "parenthesize_unsplittable_keyword_arguments"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
