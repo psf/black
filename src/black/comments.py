@@ -496,6 +496,8 @@ def _handle_regular_fmt_block(
         node_str = str(node)
         if not node_str.endswith("\n") and (
             next_node is None
+            # A comment-only fmt:off/on block ends with the `# fmt: on` comment
+            or node.fmt_pass_converted_first_leaf is None
             or (isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT)
             or "\n" in next_node.prefix
         ):
@@ -934,7 +936,11 @@ def _generate_ignored_nodes_from_fmt_skip(
             if (
                 current_node.type in CLOSING_BRACKETS
                 and current_node.parent
-                and current_node.parent.type in (syms.atom, syms.trailer)
+                and current_node.parent.type in (
+                    syms.atom,
+                    syms.trailer,
+                    syms.import_from,
+                )
             ):
                 current_node = current_node.parent
 
