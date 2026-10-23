@@ -23,10 +23,25 @@
   closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
   one of its parameter defaults (#5533)
+- Fix crash when `# fmt: skip` follows the closing parenthesis of a multi-line `from`
+  import and another statement on the same line, such as `); import c  # fmt: skip`
+  (#5584)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
+- Fix crash on bytes literals containing `\u`, `\U` or `\N{...}`, which are not escape
+  sequences in bytes and were changed by the escape normalization (#5583)
+- Fix a parenthesized lambda being turned into a tuple when a standalone comment sits
+  between `lambda` and its parameters (#5596)
+- Fix crash on `# fmt: skip` after a one-line compound statement whose
+  semicolon-separated body starts with a bare name, such as `if x: a; b` (#5588)
 - Keep comments at the end of a `# fmt: off` region inside brackets unchanged, instead
   of moving a trailing comment to its own line or re-indenting them (#5585)
+- Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression
+  continues after the closing bracket, such as `x = (  # fmt: skip` ... `) if c else d`
+  (#5586)
+- Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
+  block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
+  is outside the selected `--line-ranges` (#5549)
 
 ### Preview style
 
@@ -52,6 +67,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Split long strings after overloaded binary and augmented assignment operators,
+  including middle operands of operator chains, in the unstable `string_processing`
+  feature (#5562)
 
 ### Configuration
 
@@ -94,6 +112,9 @@
 
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using
   the requested charset, instead of HTTP 500 (#5519)
+- Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
+  for a `X-Diff` request, instead of prepending it as raw text in front of the diff
+  (#5573)
 
 ### Integrations
 
