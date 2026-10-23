@@ -33,6 +33,7 @@ from black.lines import (
     can_be_split,
     can_omit_invisible_parens,
     is_line_short_enough,
+    is_symmetric_binop,
     is_symmetric_collection_binop,
     line_to_string,
 )
@@ -1341,10 +1342,13 @@ def _maybe_split_omitting_optional_parens(
             # The RHSResult Omitting Optional Parens.
             rhs_oop = _first_right_hand_split(line, omit=omit)
             if _prefer_split_rhs_oop_over_rhs(rhs_oop, rhs, mode):
-                yield from _maybe_split_omitting_optional_parens(
-                    rhs_oop, line, mode, features=features, omit=omit
-                )
-                return
+                # Rather than splitting inside an operand, keep the optional parens
+                # so that the binary operation can split before its operator.
+                if not _keep_parens_around_symmetric_binop(rhs_oop, rhs, mode):
+                    yield from _maybe_split_omitting_optional_parens(
+                        rhs_oop, line, mode, features=features, omit=omit
+                    )
+                    return
             elif Preview.avoid_parens_for_unbreakable_rhs_in_assignments in mode:
                 raise CannotSplit(
                     "Alternative split not preferred, falling back to original RHS"
@@ -1466,6 +1470,30 @@ def _prefer_split_rhs_oop_over_rhs(
             # the first line is short enough
             and is_line_short_enough(rhs_oop.head, mode=mode)
         )
+    )
+
+
+def _keep_parens_around_symmetric_binop(
+    rhs_oop: RHSResult, rhs: RHSResult, mode: Mode
+) -> bool:
+    """
+    Returns whether we should keep the optional parens of the original (rhs) around
+    a binary operation, instead of using the result from a split omitting optional
+    parens (rhs_oop).
+    """
+    return (
+        Preview.symmetric_binary_operations in mode
+        # a type: ignore that can't be split must stay on its line
+        and not (
+            rhs_oop.head.contains_unsplittable_type_ignore()
+            or rhs_oop.body.contains_unsplittable_type_ignore()
+            or rhs_oop.tail.contains_unsplittable_type_ignore()
+        )
+        # the opening line still fits once the optional paren becomes visible
+        and is_line_short_enough(
+            rhs.head, mode=replace(mode, line_length=mode.line_length - 1)
+        )
+        and is_symmetric_binop(rhs.body, mode.line_length)
     )
 
 

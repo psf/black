@@ -56,6 +56,9 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
+- Keep optional parentheses around long two-operand arithmetic and bitwise operations
+  instead of splitting inside an operand, when both operands fit on their own line
+  (#5517)
 - Remove redundant parentheses around operands in comparison expressions (#5539)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)
