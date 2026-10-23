@@ -934,7 +934,11 @@ def _generate_ignored_nodes_from_fmt_skip(
             if (
                 current_node.type in CLOSING_BRACKETS
                 and current_node.parent
-                and current_node.parent.type in (syms.atom, syms.trailer)
+                and current_node.parent.type in (
+                    syms.atom,
+                    syms.trailer,
+                    syms.import_from,
+                )
             ):
                 current_node = current_node.parent
 

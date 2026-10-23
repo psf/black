@@ -23,6 +23,9 @@
   closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
   one of its parameter defaults (#5533)
+- Fix crash when `# fmt: skip` follows the closing parenthesis of a multi-line `from`
+  import and another statement on the same line, such as `); import c  # fmt: skip`
+  (#5584)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
 - Fix crash on bytes literals containing `\u`, `\U` or `\N{...}`, which are not escape
