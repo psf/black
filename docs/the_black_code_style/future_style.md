@@ -91,7 +91,8 @@ Currently, the following features are included in the preview style:
 - `parenthesize_unsplittable_keyword_arguments`: Parenthesize the value of a keyword
   argument when it would otherwise make the line exceed the line length and Black has no
   other way to split it, such as a bare attribute chain. This mirrors how assignment
-  right-hand sides are handled. ([see below](labels/parenthesize-unsplittable-keyword-arguments))
+  right-hand sides are handled.
+  ([see below](labels/parenthesize-unsplittable-keyword-arguments))
 
 (labels/remove-redundant-top-level-parentheses)=
 
