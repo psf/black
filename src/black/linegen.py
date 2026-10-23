@@ -17,6 +17,8 @@ from black.brackets import (
     LOGIC_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
+    is_split_after_delimiter,
+    is_split_before_delimiter,
     max_delimiter_priority_in_atom,
 )
 from black.comments import (
@@ -698,6 +700,48 @@ class LineGenerator(Visitor[Line]):
                     features=self.features,
                 )
 
+        yield from self.visit_default(node)
+
+    def visit_argument(self, node: Node) -> Iterator[Line]:
+        """Visit a keyword argument in a call.
+
+        Wrap the value of a ``name=value`` argument in (invisible) parentheses so
+        that it can be split if the argument doesn't fit on one line. This mirrors
+        how assignment right-hand sides are handled by :func:`visit_stmt` with
+        ``parens=ASSIGNMENTS``.
+
+        Only values that Black otherwise cannot split at all are wrapped: a value
+        with its own brackets (calls, subscripts, collections) or a top-level
+        operator (arithmetic, comparison, boolean, ...) already has a split point.
+        An unsplittable value (a plain name, literal, or attribute chain) has none,
+        so the whole argument would blow past the line length. See issue #2893.
+
+        Wrapping is skipped when it cannot help: if the ``name=(`` head alone would
+        still exceed the line length (because the name is very long), moving the value
+        to its own line wouldn't make the head fit, so the argument is left alone.
+        """
+        if not any(child.type == token.EQUAL for child in node.children):
+            yield from self.visit_default(node)
+            return
+
+        value = node.children[-1]
+        name = node.children[0]
+        if (
+            Preview.parenthesize_unsplittable_keyword_arguments in self.mode
+            and isinstance(name, Leaf)
+            and _is_unsplittable_argument_value(value)
+            # Wrapping only shortens the (still-overflowing) value line when the name
+            # is at least four characters: the value moves from indent 4 (``4+n+1+V``)
+            # to indent 8 (``8+V``), which is smaller only when ``n >= 4``.
+            and len(name.value) >= 4
+            # The wrapped head is ``<indent>name=(``. Call arguments sit at least one
+            # bracket deep (indent 4); if even that shortest possible head can't fit,
+            # wrapping would just produce a still-too-long line, so don't bother.
+            and 4 + len(name.value) + 2 <= self.mode.line_length
+        ):
+            normalize_invisible_parens(
+                node, parens_after={"="}, mode=self.mode, features=self.features
+            )
         yield from self.visit_default(node)
 
     def visit_fstring(self, node: Node) -> Iterator[Line]:
@@ -2093,6 +2137,39 @@ def _is_parenthesized_atom(node: LN) -> bool:
     )
 
 
+def _is_unsplittable_argument_value(value: LN) -> bool:
+    """Can Black split `value` (the RHS of a ``name=value`` argument) by itself?
+
+    Returns ``False`` when the value already offers a split point, so wrapping it in
+    parentheses would be pointless:
+
+    * it contains brackets (a call, subscript, or collection literal), which
+      :func:`right_hand_split` can split, or
+    * one of its top-level tokens is a delimiter (an operator, comparison, boolean,
+      ternary, or implicit string concatenation), which :func:`delimiter_split` can
+      split.
+
+    Returns ``True`` for values with neither — a plain name, a numeric/string
+    literal, or a bare attribute chain such as ``long_obj.long_attr``. None of these
+    have a split point (a ``.`` preceded by a name is deliberately not a delimiter),
+    so without wrapping the whole argument would blow past the line length.
+    """
+    # Any bracket anywhere in the value subtree gives right_hand_split a place to go.
+    for leaf in value.leaves():
+        if leaf.type in BRACKETS:
+            return False
+
+    # Walk the value's leaves tracking delimiters exactly the way the bracket
+    # tracker does, so this check stays in sync with what delimiter_split sees.
+    # Because we already excluded every bracket, all leaves sit at the same depth.
+    previous: Leaf | None = None
+    for leaf in value.leaves():
+        if is_split_before_delimiter(leaf, previous) or is_split_after_delimiter(leaf):
+            return False
+        previous = leaf
+    return True
+
+
 def _is_disallowed_comparison_operand(node: LN) -> bool:
     """Whether atom `node` encloses an expression that must retain parens in
     comparison.
@@ -2620,6 +2697,9 @@ def maybe_make_parens_invisible_in_atom(
             syms.with_stmt,
             syms.testlist_gexp,
             syms.tname,
+            # keyword argument values need their parentheses around a walrus:
+            # `f(x=(y := 1))` cannot lose them (see #2893)
+            syms.argument,
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
