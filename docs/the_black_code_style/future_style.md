@@ -847,3 +847,7 @@ contain internal quotes and it would change their quotation mark style. Line
 continuation backslashes are converted into parenthesized strings. Unnecessary
 parentheses are stripped. The stability and status of this feature is tracked in
 [this issue](https://github.com/psf/black/issues/2188).
+
+Long strings on the right-hand side of binary and augmented assignment operators are
+also split, including operators overloaded by objects such as `pathlib.Path`. Middle
+operands of operator chains can also be wrapped and split.

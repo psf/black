@@ -54,6 +54,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Split long strings after overloaded binary and augmented assignment operators,
+  including middle operands of operator chains, in the unstable `string_processing`
+  feature (#5562)
 
 ### Configuration
 
