@@ -44,6 +44,8 @@
   is outside the selected `--line-ranges` (#5549)
 - Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
   has its own `# fmt: skip` on the opening line (#5597)
+- Fix unstable formatting of a call with an inline comment after an argument when its
+  last argument is an implicitly concatenated string (#5587)
 
 ### Preview style
 
