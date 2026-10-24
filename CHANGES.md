@@ -44,6 +44,9 @@
   is outside the selected `--line-ranges` (#5549)
 - Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
   has its own `# fmt: skip` on the opening line (#5597)
+- Fix crash when a statement has two `# fmt: skip` comments on opening brackets and the
+  second one starts on the line where the first bracket closes, such as
+  `x = a if (  # fmt: skip` ... `) else (  # fmt: skip`
 
 ### Preview style
 
