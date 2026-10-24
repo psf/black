@@ -44,6 +44,9 @@
   is outside the selected `--line-ranges` (#5549)
 - Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
   has its own `# fmt: skip` on the opening line (#5597)
+- Fix crash on an assignment whose target is split over lines inside redundant
+  parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
+  `.d[e]) = f` (#5606)
 
 ### Preview style
 
