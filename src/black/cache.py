@@ -15,6 +15,7 @@ from platformdirs import user_cache_dir
 from _black_version import version as __version__
 from black.mode import Mode
 from black.output import err
+from blib2to3.pgen2 import safe_pickle
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -78,7 +79,7 @@ class Cache:
 
         with cache_file.open("rb") as fobj:
             try:
-                data: dict[str, tuple[float, int, str]] = pickle.load(fobj)
+                data: dict[str, tuple[float, int, str]] = safe_pickle.load(fobj)
                 file_data = {k: FileData(*v) for k, v in data.items()}
             except (
                 pickle.UnpicklingError,
