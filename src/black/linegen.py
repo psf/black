@@ -80,8 +80,10 @@ from black.nodes import (
 )
 from black.numerics import normalize_numeric_literal
 from black.strings import (
+    STRING_PREFIX_CHARS,
     fix_multiline_docstring,
     get_string_prefix,
+    has_triple_quotes,
     normalize_string_prefix,
     normalize_string_quotes,
     normalize_unicode_escape_sequences,
@@ -1774,11 +1776,41 @@ def delimiter_split(
         yield current_line
 
 
+def _string_literal_ends_with_newline(leaf: Leaf) -> bool:
+    """Does the string literal `leaf` end with a newline character?
+
+    Only a literal `\n` escape (or a real trailing newline in a
+    triple-quoted string) counts; raw strings cannot contain the escape,
+    and in f-strings trailing text after the last expression is literal,
+    so an escape there is genuine. A literal backslash before the `n`
+    (an even number of backslashes) does not produce a newline.
+    """
+    value = leaf.value
+    if "r" in get_string_prefix(value).lower():
+        return False
+    body = value.lstrip(STRING_PREFIX_CHARS)
+    if has_triple_quotes(body):
+        body = body[3:-3]
+        if body.endswith("\n"):
+            return True
+    else:
+        body = body[1:-1]
+    if not body.endswith("n"):
+        return False
+    backslashes = 0
+    for char in reversed(body[:-1]):
+        if char != "\\":
+            break
+        backslashes += 1
+    return backslashes % 2 == 1
+
+
 def _implicit_concat_split_points(line: Line) -> list[int]:
     """Return the indices of leaves after which an implicit string
-    concatenation may be split: the leaf and its successor are both string
-    literals, and no brackets opened on the line are still open at that
-    point (so the split happens at the line's own depth)."""
+    concatenation may be split: the leaf ends with a newline, its
+    successor is also a string literal, and no brackets opened on the
+    line are still open at that point (so the split happens at the
+    line's own depth)."""
     split_points: list[int] = []
     depth = 0
     for idx, leaf in enumerate(line.leaves[:-1]):
@@ -1789,6 +1821,7 @@ def _implicit_concat_split_points(line: Line) -> list[int]:
         if (
             depth == 0
             and leaf.type == token.STRING
+            and _string_literal_ends_with_newline(leaf)
             and line.leaves[idx + 1].type == token.STRING
         ):
             split_points.append(idx)
@@ -1797,7 +1830,8 @@ def _implicit_concat_split_points(line: Line) -> list[int]:
 
 def _contains_bracketed_implicit_concat(line: Line) -> bool:
     """Does `line` contain a visible bracket pair whose immediate contents
-    include an implicit string concatenation?"""
+    include an implicit string concatenation that may be split (the
+    leading literal ends with a newline)?"""
     openers: list[Leaf] = []
     for leaf, nxt in zip(line.leaves, line.leaves[1:], strict=False):
         if leaf.type in OPENING_BRACKETS:
@@ -1806,6 +1840,7 @@ def _contains_bracketed_implicit_concat(line: Line) -> bool:
             openers.pop()
         if (
             leaf.type == token.STRING
+            and _string_literal_ends_with_newline(leaf)
             and nxt.type == token.STRING
             and openers
             and openers[-1].value
@@ -1821,8 +1856,9 @@ def string_concat_split(
     """Split implicit string concatenations onto one line per string literal.
 
     Instead of joining implicitly concatenated strings onto a single line,
-    keep each string literal of a concatenation of two or more literals on
-    its own line (#1540)."""
+    keep each string literal that ends with a newline on its own line
+    (#1540): a line break is only placed after a literal ending in `\\n`,
+    so concatenations without trailing newlines stay joined."""
     if Preview.split_implicit_string_concatenations not in mode:
         raise CannotSplit("Splitting implicit string concatenations is not enabled")
     if not line.inside_brackets:
