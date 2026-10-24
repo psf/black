@@ -48,6 +48,9 @@
   last argument is an implicitly concatenated string (#5587)
 - Keep the empty lines before a comment outside the requested `--line-ranges` instead of
   capping them (#5613)
+- Fix crash on an assignment whose target is split over lines inside redundant
+  parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
+  `.d[e]) = f` (#5606)
 
 ### Preview style
 
