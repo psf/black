@@ -531,7 +531,11 @@ def _handle_regular_fmt_block(
                                 and "\n" in n.value
                             ):
                                 result = _remove_preceding_newline_for_comment(result)
-                            if not result.endswith("\n"):
+                            # The newline ends a trailing comment. A skipped block
+                            # that ends in code, like the `)` of an inner
+                            # `(  # fmt: skip` block, is followed by its own source.
+                            last_line = result.rpartition("\n")[2]
+                            if not result.endswith("\n") and "#" in last_line:
                                 result += "\n"
                             return result
                         return str(n)
