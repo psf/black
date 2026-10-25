@@ -84,6 +84,9 @@
 - Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
+- Keep the parentheses around a walrus that is the whole subscript (for example
+  `x[(y := f())]`) when targeting Python 3.9 or older, since Python 3.8 and 3.9 can't
+  parse it without them (#5619)
 
 ### Configuration
 
