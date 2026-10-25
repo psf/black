@@ -48,6 +48,9 @@
   last argument is an implicitly concatenated string (#5587)
 - Keep the empty lines before a comment outside the requested `--line-ranges` instead of
   capping them (#5613)
+- Fix a `# fmt: skip` comment on a line of its own after a blank line skipping the
+  statement above it, which removed or added blank lines and could crash with "produced
+  different code on the second pass" (#5615)
 - Fix crash on an assignment whose target is split over lines inside redundant
   parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
   `.d[e]) = f` (#5606)

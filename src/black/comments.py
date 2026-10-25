@@ -266,10 +266,12 @@ def _is_valid_standalone_fmt_comment(
     We only want standalone comments. If there's no previous leaf or if
     the previous leaf is indentation, it's a standalone comment in disguise.
     """
-    if comment.type == STANDALONE_COMMENT:
-        return True
-
     prev = preceding_leaf(leaf)
+    if comment.type == STANDALONE_COMMENT:
+        # `# fmt: skip` applies to the code on its line, so on a line of its own
+        # between statements it skips nothing, not the statement above either.
+        return not (is_fmt_skip and prev is not None and prev.type in WHITESPACE)
+
     if not prev:
         return True
 
