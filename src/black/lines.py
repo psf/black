@@ -211,18 +211,6 @@ class Line:
         )
 
     @property
-    def _is_triple_quoted_string(self) -> bool:
-        """Is the line a triple quoted string?"""
-        if not self or self.leaves[0].type != token.STRING:
-            return False
-        value = self.leaves[0].value
-        if value.startswith(('"""', "'''")):
-            return True
-        if value.startswith(("r'''", 'r"""', "R'''", 'R"""')):
-            return True
-        return False
-
-    @property
     def is_docstring(self) -> bool:
         """Is the line a docstring?"""
         return bool(self) and is_docstring(self.leaves[0])
@@ -277,6 +265,9 @@ class Line:
             leaf_list = list(leaf_group_iterator)
             if len(leaf_list) == 1:
                 continue
+            if leaf_list[-1] is self.leaves[-1] and any(self.comments.values()):
+                # Joining the line would print its comments after these strings.
+                return True
             for leaf in leaf_list:
                 if self.comments_after(leaf):
                     return True
@@ -1034,11 +1025,20 @@ class EmptyLineTracker:
             # The blank lines that terminate a `# fmt: off` region live in the
             # prefix of the `# fmt: on` comment, not in the verbatim block, so
             # capping them here would edit formatting that was opted out of.
-            if not current_line.is_fmt_pass_converted() and not (
-                first_leaf.type == STANDALONE_COMMENT
-                and contains_fmt_directive(first_leaf.value, FMT_ON)
-                and self.previous_line is not None
-                and self.previous_line.is_fmt_pass_converted()
+            # Likewise for a comment kept from the prefix of a line outside
+            # --line-ranges.
+            if (
+                not current_line.is_fmt_pass_converted()
+                and not (
+                    first_leaf.type == STANDALONE_COMMENT
+                    and contains_fmt_directive(first_leaf.value, FMT_ON)
+                    and self.previous_line is not None
+                    and self.previous_line.is_fmt_pass_converted()
+                )
+                and not (
+                    current_line.is_comment
+                    and first_leaf.line_ranges_selected is not None
+                )
             ):
                 before = min(before, max_allowed)
             first_leaf.prefix = ""
@@ -1368,8 +1368,8 @@ def append_leaves(
     # formatting pass).
     search_start: dict[int, int] = {}
     for old_leaf in leaves:
-        new_leaf = Leaf(old_leaf.type, old_leaf.value)
-        new_leaf.lineno = old_leaf.lineno
+        new_leaf = old_leaf.clone()
+        new_leaf.prefix = ""
         parent = old_leaf.parent
         if parent is not None:
             children = parent.children
