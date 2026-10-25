@@ -1481,6 +1481,7 @@ def _format_str_once(
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
             Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
+            Feature.UNPARENTHESIZED_WALRUS_IN_SUBSCRIPTS,
         }
         if supports_feature(versions, feature)
     }
