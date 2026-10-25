@@ -51,6 +51,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
+  binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
   when using the unstable `string_processing` feature (#5515)

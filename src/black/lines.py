@@ -1371,8 +1371,8 @@ def append_leaves(
     # formatting pass).
     search_start: dict[int, int] = {}
     for old_leaf in leaves:
-        new_leaf = Leaf(old_leaf.type, old_leaf.value)
-        new_leaf.lineno = old_leaf.lineno
+        new_leaf = old_leaf.clone()
+        new_leaf.prefix = ""
         parent = old_leaf.parent
         if parent is not None:
             children = parent.children
