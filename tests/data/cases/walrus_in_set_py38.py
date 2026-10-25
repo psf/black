@@ -1,4 +1,4 @@
-# flags: --target-version=3.8
+# flags: --target-version=py38
 # Python 3.8 needs the parentheses around a named expression in a set literal.
 x = {(y := 1)}
 x = {((y := 1))}

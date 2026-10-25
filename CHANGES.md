@@ -10,6 +10,7 @@
 <!-- Include any especially major or disruptive changes here -->
 
 - Drop runtime support for Python 3.10 (#5616)
+- Build Python 3.15 wheels (#5616)
 
 ### Stable style
 
