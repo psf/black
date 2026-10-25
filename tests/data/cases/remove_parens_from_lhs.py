@@ -22,6 +22,14 @@ def restore_region(surface, region, sly, slx, sh, sw):
     (np.frombuffer(surface.get_data(), np.uint32)
      .reshape((sh, sw))[sly, slx]) = region._data
 
+# The blank lines before the statement stay, and a comment inside the parentheses is kept.
+x = 1
+
+
+(a.b) = 1
+(a.b  # c
+) = 1
+
 # output
 
 # Remove unnecessary parentheses from LHS of assignments
@@ -48,3 +56,11 @@ def restore_region(surface, region, sly, slx, sh, sw):
     np.frombuffer(surface.get_data(), np.uint32).reshape((sh, sw))[
         sly, slx
     ] = region._data
+
+
+# The blank lines before the statement stay, and a comment inside the parentheses is kept.
+x = 1
+
+
+a.b = 1
+a.b = 1  # c
