@@ -1368,16 +1368,8 @@ def append_leaves(
     # formatting pass).
     search_start: dict[int, int] = {}
     for old_leaf in leaves:
-        # The marker on `fmt: skip` / `fmt: off` code carried in a single
-        # STANDALONE_COMMENT leaf has to survive the copy: without it the line
-        # transformer no longer knows the hidden code ends in code and splits
-        # the rest of the line off.
-        new_leaf = Leaf(
-            old_leaf.type,
-            old_leaf.value,
-            fmt_pass_converted_first_leaf=old_leaf.fmt_pass_converted_first_leaf,
-        )
-        new_leaf.lineno = old_leaf.lineno
+        new_leaf = old_leaf.clone()
+        new_leaf.prefix = ""
         parent = old_leaf.parent
         if parent is not None:
             children = parent.children

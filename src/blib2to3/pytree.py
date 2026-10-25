@@ -304,6 +304,7 @@ class Node(Base):
         return Node(
             self.type,
             [ch.clone() for ch in self.children],
+            prefix=self.prefix,
             fixers_applied=self.fixers_applied,
         )
 
@@ -552,12 +553,25 @@ class Leaf(Base):
     def clone(self) -> "Leaf":
         assert self.type is not None
         """Return a cloned (deep) copy of self."""
+        if self.fmt_pass_converted_first_leaf:
+            converted_first_leaf = self.fmt_pass_converted_first_leaf.clone()
+            converted_first_leaf.parent = (
+                self.fmt_pass_converted_first_leaf.parent
+                and self.fmt_pass_converted_first_leaf.parent.clone()
+            )
+        else:
+            converted_first_leaf = None
         return Leaf(
             self.type,
             self.value,
             (self.prefix, (self.lineno, self.column)),
             fixers_applied=self.fixers_applied,
+            fmt_pass_converted_first_leaf=converted_first_leaf,
             bracket_depth=self.bracket_depth,
+            line_ranges_first_lineno=self.line_ranges_first_lineno,
+            line_ranges_selected=(
+                self.line_ranges_selected and self.line_ranges_selected.copy()
+            ),
         )
 
     def leaves(self) -> Iterator["Leaf"]:
