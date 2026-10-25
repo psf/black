@@ -103,7 +103,14 @@ def generate_comments(
         )
         if should_preserve:
             value = pc.leading_whitespace + pc.original_value
-        yield Leaf(pc.type, value, prefix=prefix)
+        # A preserved comment carries `line_ranges_selected` so that the empty lines
+        # before it are kept as well.
+        yield Leaf(
+            pc.type,
+            value,
+            prefix=prefix,
+            line_ranges_selected=line_ranges_selected if should_preserve else None,
+        )
     normalize_trailing_prefix(leaf, total_consumed)
 
 
