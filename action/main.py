@@ -140,7 +140,7 @@ def find_black_version_in_array(array: object) -> str | None:
     return None
 
 
-run([sys.executable, "-m", "venv", str(ENV_PATH)], check=True)
+run([sys.executable, "-m", "venv", str(ENV_PATH)], cwd=ACTION_PATH, check=True)
 
 version_specifier = determine_version_specifier()
 if JUPYTER:

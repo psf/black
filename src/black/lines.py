@@ -277,6 +277,9 @@ class Line:
             leaf_list = list(leaf_group_iterator)
             if len(leaf_list) == 1:
                 continue
+            if leaf_list[-1] is self.leaves[-1] and any(self.comments.values()):
+                # Joining the line would print its comments after these strings.
+                return True
             for leaf in leaf_list:
                 if self.comments_after(leaf):
                     return True

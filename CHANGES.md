@@ -43,10 +43,9 @@
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
 - Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
-  has its own `# fmt: skip` on the opening line (#5597)
-- Fix crash when a `# fmt: skip` line closes a bracket opened on an earlier line and
-  opens one it doesn't close, such as `) -> A[B  # fmt: skip` after a multi-line
-  parameter list (#5612)
+  has its own `# fmt: skip` on the opening line (#5597, #5612)
+- Fix unstable formatting of a call with an inline comment after an argument when its
+  last argument is an implicitly concatenated string (#5587)
 
 ### Preview style
 
@@ -124,6 +123,8 @@
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Fix the GitHub Action picking up `venv.py` from the local repository (#5611)
 
 ### Documentation
 
