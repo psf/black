@@ -303,7 +303,6 @@ class _NodeReplacements:
                 else:
                     new_children.append(child)
             parent.children = new_children
-            parent.changed()
             parent.invalidate_sibling_maps()
 
 
