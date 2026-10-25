@@ -30,6 +30,12 @@ x = 1
 (a.b  # c
 ) = 1
 
+# A tuple target written without parentheses gets invisible ones, so a split tuple
+# target keeps its parentheses as invisible ones to split the same way.
+if x:
+    (self._cls_dict["__getstate__"],
+     self._cls_dict["__setstate__"]) = self._make_getstate_setstate()
+
 # output
 
 # Remove unnecessary parentheses from LHS of assignments
@@ -64,3 +70,10 @@ x = 1
 
 a.b = 1
 a.b = 1  # c
+
+# A tuple target written without parentheses gets invisible ones, so a split tuple
+# target keeps its parentheses as invisible ones to split the same way.
+if x:
+    self._cls_dict["__getstate__"], self._cls_dict["__setstate__"] = (
+        self._make_getstate_setstate()
+    )
