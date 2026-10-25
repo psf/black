@@ -822,11 +822,8 @@ def transform_line(
         and not (line.inside_brackets and line.contains_standalone_comments())
         and not line.contains_implicit_multiline_string_with_comments()
         and not (
-            Preview.split_implicit_string_concatenations in mode
-            and (
-                _implicit_concat_split_points(line)
-                or _contains_bracketed_implicit_concat(line)
-            )
+            Preview.split_implicit_string_concatenations_at_newlines in mode
+            and any(_implicit_concat_split_points(line))
         )
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
@@ -871,7 +868,7 @@ def transform_line(
                     standalone_comment_split,
                     right_hand_split_with_omits,
                 ]
-                if Preview.split_implicit_string_concatenations in mode:
+                if Preview.split_implicit_string_concatenations_at_newlines in mode:
                     transformers.insert(0, string_concat_split)
             else:
                 transformers = [right_hand_split_with_omits]
@@ -1805,48 +1802,36 @@ def _string_literal_ends_with_newline(leaf: Leaf) -> bool:
     return backslashes % 2 == 1
 
 
-def _implicit_concat_split_points(line: Line) -> list[int]:
-    """Return the indices of leaves after which an implicit string
-    concatenation may be split: the leaf ends with a newline, its
-    successor is also a string literal, and no brackets opened on the
-    line are still open at that point (so the split happens at the
-    line's own depth)."""
+def _implicit_concat_split_points(line: Line) -> tuple[list[int], bool]:
+    """Scan `line` for implicit string concatenations whose leading literal
+    ends with a newline. Returns the indices of leaves after which the line
+    may be split (no brackets opened on the line are still open at that
+    point, so the split happens at the line's own depth), and whether any
+    such concatenation sits inside a visible bracket pair (so the line
+    should be routed through the bracket-splitting pipeline even when it
+    cannot be split at this depth)."""
     split_points: list[int] = []
+    bracketed = False
     depth = 0
+    openers: list[Leaf] = []
     for idx, leaf in enumerate(line.leaves[:-1]):
         if leaf.type in CLOSING_BRACKETS:
             depth -= 1
+            if openers:
+                openers.pop()
         elif leaf.type in OPENING_BRACKETS:
             depth += 1
-        if (
-            depth == 0
-            and leaf.type == token.STRING
-            and _string_literal_ends_with_newline(leaf)
-            and line.leaves[idx + 1].type == token.STRING
-        ):
-            split_points.append(idx)
-    return split_points
-
-
-def _contains_bracketed_implicit_concat(line: Line) -> bool:
-    """Does `line` contain a visible bracket pair whose immediate contents
-    include an implicit string concatenation that may be split (the
-    leading literal ends with a newline)?"""
-    openers: list[Leaf] = []
-    for leaf, nxt in zip(line.leaves, line.leaves[1:], strict=False):
-        if leaf.type in OPENING_BRACKETS:
             openers.append(leaf)
-        elif leaf.type in CLOSING_BRACKETS and openers:
-            openers.pop()
         if (
             leaf.type == token.STRING
             and _string_literal_ends_with_newline(leaf)
-            and nxt.type == token.STRING
-            and openers
-            and openers[-1].value
+            and line.leaves[idx + 1].type == token.STRING
         ):
-            return True
-    return False
+            if depth == 0:
+                split_points.append(idx)
+            elif openers and openers[-1].value:
+                bracketed = True
+    return split_points, bracketed
 
 
 @dont_increase_indentation
@@ -1859,26 +1844,18 @@ def string_concat_split(
     keep each string literal that ends with a newline on its own line
     (#1540): a line break is only placed after a literal ending in `\\n`,
     so concatenations without trailing newlines stay joined."""
-    if Preview.split_implicit_string_concatenations not in mode:
+    if Preview.split_implicit_string_concatenations_at_newlines not in mode:
         raise CannotSplit("Splitting implicit string concatenations is not enabled")
     if not line.inside_brackets:
         raise CannotSplit("Not inside brackets")
     if line.comments:
         raise CannotSplit("Line contains comments")
-    split_points = _implicit_concat_split_points(line)
+    split_points, _ = _implicit_concat_split_points(line)
     if not split_points:
         raise CannotSplit("No implicit string concatenation at this depth")
-    # Also break after element separators so a concatenation and any sibling
-    # elements each get their own line.
+    # Break after split points, and also after element separators so a
+    # concatenation and any sibling elements each get their own line.
     boundaries = set(split_points)
-    depth = 0
-    for idx, leaf in enumerate(line.leaves):
-        if leaf.type in CLOSING_BRACKETS:
-            depth -= 1
-        elif leaf.type in OPENING_BRACKETS:
-            depth += 1
-        elif leaf.type == token.COMMA and depth == 0:
-            boundaries.add(idx)
 
     current_line = Line(
         mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
@@ -1897,10 +1874,15 @@ def string_concat_split(
             )
             current_line.append(leaf)
 
+    depth = 0
     for leaf_idx, leaf in enumerate(line.leaves):
+        if leaf.type in CLOSING_BRACKETS:
+            depth -= 1
+        elif leaf.type in OPENING_BRACKETS:
+            depth += 1
         yield from append_to_line(leaf)
 
-        if leaf_idx in boundaries:
+        if leaf_idx in boundaries or (leaf.type == token.COMMA and depth == 0):
             yield current_line
             current_line = Line(
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
