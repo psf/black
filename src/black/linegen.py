@@ -546,9 +546,13 @@ class LineGenerator(Visitor[Line]):
 
         -2 ** 8 -> -(2 ** 8)
         """
-        _operator, operand = node.children
+        # The operator is gone when a `# fmt: skip` on the operand's opening bracket
+        # hides it and the operand goes on after the closing bracket, as in
+        # `x = -(  # fmt: skip` ... `).y`.
+        operand = node.children[-1]
         if (
-            operand.type == syms.power
+            len(node.children) == 2
+            and operand.type == syms.power
             and len(operand.children) == 3
             and operand.children[1].type == token.DOUBLESTAR
         ):

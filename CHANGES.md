@@ -54,6 +54,9 @@
 - Fix crash on an assignment whose target is split over lines inside redundant
   parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
   `.d[e]) = f` (#5606)
+- Fix crash when `# fmt: skip` is on an opening bracket that starts an operand of a
+  longer expression after `with` or `yield`, such as `with (  # fmt: skip` ...
+  `) == 1 and b:`. Elsewhere, the code before the bracket is now left as is too (#XXXX)
 
 ### Preview style
 
