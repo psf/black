@@ -46,6 +46,8 @@
   has its own `# fmt: skip` on the opening line (#5597)
 - Fix unstable formatting of a call with an inline comment after an argument when its
   last argument is an implicitly concatenated string (#5587)
+- Keep the empty lines before a comment outside the requested `--line-ranges` instead of
+  capping them (#5613)
 
 ### Preview style
 
