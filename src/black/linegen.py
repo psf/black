@@ -201,7 +201,11 @@ class LineGenerator(Visitor[Line]):
         # as in `x = (  # fmt: skip` ... `) if c else d`. Outside of brackets, the
         # rest has to stay on the line of the hidden closing bracket, so it can't be
         # wrapped in parentheses.
-        # The `if` part can itself be hidden by another `# fmt: skip`.
+        # The `if` part can itself be hidden by another `# fmt: skip`. The hidden
+        # code is then replaced by a STANDALONE_COMMENT at the index of its first
+        # node in the same parent, so a comment in `node.children[0]` hid this
+        # node's own `if` or `else`, and `fmt_pass_converted_first_leaf` is that
+        # keyword (detached from the tree, only its value is read).
         first = node.children[0]
         if isinstance(first, Leaf) and first.fmt_pass_converted_first_leaf:
             first = first.fmt_pass_converted_first_leaf
@@ -499,12 +503,12 @@ class LineGenerator(Visitor[Line]):
         any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
         # Code hidden by a second `# fmt: skip` in the same statement stays on the
         # line where the previous hidden code ends, with its original spacing.
-        continues_fmt_skip_line = not any_open_brackets and _continues_fmt_skip_line(
-            self.current_line, leaf
-        )
+        continues_fmt_skip_line = False
         original_prefix = leaf.prefix
-        if not any_open_brackets and not continues_fmt_skip_line:
-            yield from self.line()
+        if not any_open_brackets:
+            continues_fmt_skip_line = _continues_fmt_skip_line(self.current_line, leaf)
+            if not continues_fmt_skip_line:
+                yield from self.line()
         # STANDALONE_COMMENT nodes created by our special handling in
         # normalize_fmt_off for comment-only blocks have fmt:off as the first
         # line and fmt:on as the last line (each directive on its own line,
