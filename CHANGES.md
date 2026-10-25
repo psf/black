@@ -53,7 +53,7 @@
   different code on the second pass" (#5615)
 - Fix crash on an assignment whose target is split over lines inside redundant
   parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
-  `.d[e]) = f` (#5606)
+  `.d[e]) = f` (#5606, #5621)
 
 ### Preview style
 
