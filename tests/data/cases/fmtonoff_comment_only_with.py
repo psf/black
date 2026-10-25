@@ -1,5 +1,3 @@
-# flags: --minimum-version=3.10
-
 with open("bug.txt", "r", encoding="utf-8") as fh1:
     pass
 # fmt: off

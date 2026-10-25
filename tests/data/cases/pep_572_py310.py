@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 # Unparenthesized walruses are now allowed in indices since Python 3.10.
 x[a := 0]
 x[a := 0, b := 1]

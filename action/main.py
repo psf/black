@@ -3,6 +3,7 @@ import re
 import shlex
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 from subprocess import PIPE, STDOUT, run
 
@@ -49,16 +50,6 @@ def determine_version_specifier() -> str:
 
 
 def read_version_specifier_from_pyproject() -> str:
-    if sys.version_info < (3, 11):
-        print(
-            "::error::'with.use_pyproject' input requires Python 3.11 or later.",
-            file=sys.stderr,
-            flush=True,
-        )
-        sys.exit(1)
-
-    import tomllib  # type: ignore[import-not-found,unreachable]
-
     try:
         with Path("pyproject.toml").open("rb") as fp:
             pyproject = tomllib.load(fp)
@@ -101,17 +92,14 @@ def read_version_specifier_from_pyproject() -> str:
     for array in arrays:
         version = find_black_version_in_array(array)
         if version is not None:
-            break
+            return version
 
-    if version is None:
-        print(
-            "::error::'black' dependency missing from pyproject.toml.",
-            file=sys.stderr,
-            flush=True,
-        )
-        sys.exit(1)
-
-    return version
+    print(
+        "::error::'black' dependency missing from pyproject.toml.",
+        file=sys.stderr,
+        flush=True,
+    )
+    sys.exit(1)
 
 
 def find_black_version_in_array(array: object) -> str | None:

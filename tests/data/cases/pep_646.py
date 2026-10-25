@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.11
 A[*b]
 A[*b] = 1
 A

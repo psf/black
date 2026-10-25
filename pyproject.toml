@@ -34,7 +34,7 @@ name = "black"
 description = "The uncompromising code formatter."
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ name = "Łukasz Langa", email = "lukasz@langa.pl" }]
 keywords = ["automation", "autopep8", "formatter", "gofmt", "pyfmt", "rustfmt", "yapf"]
 classifiers = [
@@ -44,7 +44,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -60,8 +59,6 @@ dependencies = [
     "pathspec>=1.0.0",
     "platformdirs>=2",
     "pytokens~=0.4.0",
-    "tomli>=1.1.0; python_version<'3.11'",
-    "typing-extensions>=4.0.1; python_version<'3.11'",
 ]
 dynamic = ["readme", "version"]
 
@@ -76,7 +73,7 @@ jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 
 [dependency-groups]
 hatch = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs", "virtualenv<21.0.0"]
-cibw = ["cibuildwheel==4.1.0"]
+cibw = ["cibuildwheel==4.3.0"]
 pyinstaller = ["pyinstaller"]
 
 dev = [{ include-group = "cov-tests" }, { include-group = "tox" }, "pre-commit"]
@@ -168,7 +165,7 @@ options = { debug_level = "0" }
 build-verbosity = 1
 
 # So these are the environments we target:
-# - Python: CPython 3.10+ only
+# - Python: CPython 3.11+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp31*"
@@ -225,7 +222,7 @@ branch = true
 # Specify the target platform details in config, so your developers are
 # free to run mypy on Windows, Linux, or macOS and get consistent
 # results.
-python_version = "3.10"
+python_version = "3.11"
 mypy_path = "src"
 strict = true
 # Unreachable blocks have been an issue when compiling mypyc, let's try to avoid 'em in the first place.

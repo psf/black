@@ -1,6 +1,3 @@
-# flags: --minimum-version=3.10
-
-
 def pattern_matching():
     match status:
         case 1:
