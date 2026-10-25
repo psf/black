@@ -48,6 +48,9 @@
   last argument is an implicitly concatenated string (#5587)
 - Keep the empty lines before a comment outside the requested `--line-ranges` instead of
   capping them (#5613)
+- Fix a `# fmt: skip` comment on a line of its own after a blank line skipping the
+  statement above it, which removed or added blank lines and could crash with "produced
+  different code on the second pass" (#5615)
 
 ### Preview style
 
