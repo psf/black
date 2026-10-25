@@ -56,7 +56,7 @@
   `.d[e]) = f` (#5606)
 - Fix crash when `# fmt: skip` is on an opening bracket that starts an operand of a
   longer expression after `with` or `yield`, such as `with (  # fmt: skip` ...
-  `) == 1 and b:`. Elsewhere, the code before the bracket is now left as is too (#XXXX)
+  `) == 1 and b:`. Elsewhere, the code before the bracket is now left as is too (#5620)
 
 ### Preview style
 
