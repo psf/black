@@ -54,6 +54,9 @@
 - Fix crash on an assignment whose target is split over lines inside redundant
   parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
   `.d[e]) = f` (#5606, #5621)
+- Fix crash on a method chain with multiple `# type: ignore` comments when another
+  comment sits between them, which put a `# type: ignore` after the other comment on one
+  line, where it no longer applies (#5618)
 
 ### Preview style
 
