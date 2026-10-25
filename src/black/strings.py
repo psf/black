@@ -264,6 +264,7 @@ def normalize_string_quotes(s: str) -> str:
     return f"{prefix}{new_quote}{new_body}{new_quote}"
 
 
+# TODO: only used in currently disabled f-string formatting
 def normalize_fstring_quotes(
     quote: str,
     middles: list[Leaf],

@@ -211,18 +211,6 @@ class Line:
         )
 
     @property
-    def _is_triple_quoted_string(self) -> bool:
-        """Is the line a triple quoted string?"""
-        if not self or self.leaves[0].type != token.STRING:
-            return False
-        value = self.leaves[0].value
-        if value.startswith(('"""', "'''")):
-            return True
-        if value.startswith(("r'''", 'r"""', "R'''", 'R"""')):
-            return True
-        return False
-
-    @property
     def is_docstring(self) -> bool:
         """Is the line a docstring?"""
         return bool(self) and is_docstring(self.leaves[0])
