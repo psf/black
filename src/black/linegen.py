@@ -2238,12 +2238,16 @@ def normalize_invisible_parens(
                 allow_star_expr=True,
             ):
                 wrap_in_parentheses(node, child, visible=False, index=index)
-            elif is_atom_with_invisible_parens(child) and not any(
-                "#" in leaf.prefix for leaf in child.leaves()
+            elif (
+                is_atom_with_invisible_parens(child)
+                and not is_tuple(child)
+                and not any("#" in leaf.prefix for leaf in child.leaves())
             ):
                 # Drop the now invisible parens so the target splits the same
                 # way as one written without parentheses. Otherwise the next
                 # pass, which no longer sees them, can split it differently.
+                # A tuple target keeps them, since one written without
+                # parentheses gets invisible parens too.
                 middle = child.children[1]
                 middle.prefix = child.prefix
                 child.replace(middle)
