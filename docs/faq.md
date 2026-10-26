@@ -82,12 +82,12 @@ information). We promise to support all Python versions at least until they reac
 end of life.
 
 While we make our best efforts to support new Python vesions as quickly as we can, we
-make no gurantees on when official runtime or formatting support will be added. Please
+make no guarantees on when official runtime or formatting support will be added. Please
 check changelog entires and the
 [metadata on PyPi](https://pypi.org/project/black/#:~:text=Programming%20Language) for
 the most up-to-date information.
 
-Currently, _Black_ provides runtime support for versions 3.10-3.15.
+Currently, _Black_ provides runtime support for versions 3.11-3.15.
 
 Runtime support for 3.6 was removed in version 22.10.0, for 3.7 in version 23.7.0, for
 3.8 in version 24.10.0, for 3.9 in version 25.12.0, and for 3.10 in version 26.11.0.
