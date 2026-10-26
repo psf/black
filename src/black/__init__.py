@@ -502,7 +502,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Stop emitting all non-critical output. Error messages will still be emitted"
-        " (which can silenced by 2>/dev/null)."
+        " (which can be silenced by 2>/dev/null)."
     ),
 )
 @click.option(
@@ -1130,8 +1130,16 @@ def format_stdin_to_stdout(
     """
     then = datetime.now(timezone.utc)
 
+    header_str = ""
     if content is None:
-        src, encoding, newline = decode_bytes(sys.stdin.buffer.read(), mode)
+        buf = io.BytesIO(sys.stdin.buffer.read())
+        header = buf.readline() if mode.skip_source_first_line else b""
+        src, encoding, newline = decode_bytes(buf.read(), mode)
+        header_str = header.decode(encoding)
+        if newline != "\n" and header_str.endswith(newline):
+            # The output is written with `newline` translation, which would turn
+            # the header's original line ending into e.g. "\r\r\n".
+            header_str = header_str[: -len(newline)] + "\n"
     else:
         src, encoding, newline = content, "utf-8", "\n"
 
@@ -1144,6 +1152,8 @@ def format_stdin_to_stdout(
         return False
 
     finally:
+        src = header_str + src
+        dst = header_str + dst
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content. `_write_to_stdout()`
             # translates "\n" into `newline` itself, so append a bare "\n" here;
@@ -1470,6 +1480,7 @@ def _format_str_once(
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
+            Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         }
         if supports_feature(versions, feature)
     }

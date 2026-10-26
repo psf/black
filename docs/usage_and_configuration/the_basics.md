@@ -362,6 +362,9 @@ Default Inclusions: `['.py', '.pyi', '.ipynb']`
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
 This option controls the number of parallel workers. This can also be specified via the
 `BLACK_NUM_WORKERS` environment variable. Defaults to the number of CPUs in the system.
+On Windows the number of workers used is capped at 60, even when a higher value is set
+via this option or the environment variable, to work around
+[CPython issue 26903](https://bugs.python.org/issue26903).
 
 #### `-q`, `--quiet`
 

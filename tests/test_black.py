@@ -523,6 +523,30 @@ class BlackTestCase(BlackBaseTestCase):
             self.assertIn(" Header will be skipped\r\n-i = [1,2,3]\r\n", actual)
             self.assertNotIn("\r\r\n", actual)
 
+    def test_skip_source_first_line_via_stdin(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            code = nl.join(["This is not valid Python syntax", "i = [1,2,3]", ""])
+            expected = nl.join(["This is not valid Python syntax", "i = [1, 2, 3]", ""])
+            result = BlackRunner().invoke(
+                black.main,
+                ["-", "-x", f"--config={EMPTY_CONFIG}"],
+                input=BytesIO(code.encode()),
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(result.stdout_bytes, expected.encode())
+
+            result = BlackRunner().invoke(
+                black.main,
+                ["-", "-x", "--diff", f"--config={EMPTY_CONFIG}"],
+                input=BytesIO(code.encode()),
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn(
+                f" This is not valid Python syntax{nl}-i = [1,2,3]{nl}".encode(),
+                result.stdout_bytes,
+            )
+            self.assertNotIn(b"\r\r\n", result.stdout_bytes)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
@@ -2564,6 +2588,22 @@ class BlackTestCase(BlackBaseTestCase):
         assert (
             black.format_str(source, mode=black.FileMode(), lines=[(2, 2)]) == expected
         )
+
+    def test_line_ranges_fmt_off_prefix_comment_indentation_is_stable(self) -> None:
+        expected = textwrap.dedent("""\
+            def f():
+                x = 1
+                # note
+                y = [  # fmt: off
+                ]  # fmt: on
+            """)
+        source = expected.replace("x = 1", "x=1")
+        mode = black.Mode()
+        lines = [(2, 2)]
+
+        formatted = black.format_str(source, mode=mode, lines=lines)
+        assert formatted == expected
+        assert black.format_str(formatted, mode=mode, lines=lines) == expected
 
     def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
         # This regression stays inline because it requires literal trailing spaces,

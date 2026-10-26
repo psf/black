@@ -14,6 +14,7 @@ from black.nodes import (
     container_of,
     first_leaf_of,
     is_type_comment_string,
+    last_leaf,
     make_simple_prefix,
     preceding_leaf,
     syms,
@@ -54,18 +55,12 @@ class ProtoComment:
     newlines: int  # how many newlines before the comment
     consumed: int  # how many characters of the original leaf's prefix did we consume
     form_feed: bool  # is there a form feed before the comment
-    leading_whitespace: str  # leading whitespace before the comment, if any
-    original_value: str  # original comment text, before normalization
-    prefix_line_index: int  # 0-based physical line index within the parsed prefix
+    original_line: str  # Includes source indentation and trailing whitespace
+    lines_before_leaf: int  # Physical line distance from this comment to its leaf
 
 
 def generate_comments(
-    leaf: LN,
-    mode: Mode,
-    *,
-    preserve_comment_formatting: bool = False,
-    line_ranges_first_lineno: int = 0,
-    line_ranges_selected: set[int] | None = None,
+    leaf: Leaf, mode: Mode, *, block_depth: int | None = None
 ) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
@@ -84,26 +79,30 @@ def generate_comments(
 
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
+
+    Pass the block depth to keep comments outside the selected lines as written,
+    accounting for the indentation the line renderer will add.
     """
-    total_consumed = 0
     comments = list_comments(
         leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER, mode=mode
     )
-    prefix_line_count = len(re.split(r"\r?\n|\r", leaf.prefix)) - 1
+    selected = leaf.line_ranges_selected
     for pc in comments:
-        total_consumed = pc.consumed
         prefix = make_simple_prefix(pc.newlines, pc.form_feed)
-        value = pc.value
-        comment_lineno = (
-            line_ranges_first_lineno - prefix_line_count + pc.prefix_line_index
-        )
-        should_preserve = preserve_comment_formatting and (
-            line_ranges_selected is None or comment_lineno not in line_ranges_selected
-        )
-        if should_preserve:
-            value = pc.leading_whitespace + pc.original_value
-        yield Leaf(pc.type, value, prefix=prefix)
-    normalize_trailing_prefix(leaf, total_consumed)
+        if (
+            block_depth is not None
+            and selected is not None
+            and leaf.line_ranges_first_lineno - pc.lines_before_leaf not in selected
+        ):
+            yield Leaf(
+                pc.type,
+                pc.original_line.removeprefix("    " * block_depth),
+                prefix=prefix,
+                line_ranges_selected=selected,
+            )
+        else:
+            yield Leaf(pc.type, pc.value, prefix=prefix)
+    normalize_trailing_prefix(leaf, comments[-1].consumed if comments else 0)
 
 
 @lru_cache(maxsize=4096)
@@ -117,11 +116,10 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
     nlines = 0
     ignored_lines = 0
     form_feed = False
-    for index, full_line in enumerate(re.split("\r?\n|\r", prefix)):
+    lines = re.split("\r?\n|\r", prefix)
+    for index, full_line in enumerate(lines):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
-        match = re.match(r"^(\s*)(\S.*|)$", full_line)
-        assert match
-        whitespace, line = match.groups()
+        line = full_line.lstrip()
         if not line:
             nlines += 1
             if "\f" in full_line:
@@ -146,9 +144,8 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
                 newlines=nlines,
                 consumed=consumed,
                 form_feed=form_feed,
-                leading_whitespace=whitespace,
-                original_value=line,
-                prefix_line_index=index,
+                original_line=full_line,
+                lines_before_leaf=len(lines) - 1 - index,
             )
         )
         form_feed = False
@@ -258,10 +255,12 @@ def _is_valid_standalone_fmt_comment(
     We only want standalone comments. If there's no previous leaf or if
     the previous leaf is indentation, it's a standalone comment in disguise.
     """
-    if comment.type == STANDALONE_COMMENT:
-        return True
-
     prev = preceding_leaf(leaf)
+    if comment.type == STANDALONE_COMMENT:
+        # `# fmt: skip` applies to the code on its line, so on a line of its own
+        # between statements it skips nothing, not the statement above either.
+        return not (is_fmt_skip and prev is not None and prev.type in WHITESPACE)
+
     if not prev:
         return True
 
@@ -431,6 +430,7 @@ def convert_one_fmt_off_pair(
                 is_fmt_skip,
                 lines,
                 leaf,
+                mode,
                 search_hints,
             )
             return idx
@@ -469,12 +469,16 @@ def _handle_regular_fmt_block(
     is_fmt_skip: bool,
     lines: Collection[tuple[int, int]],
     leaf: Leaf,
+    mode: Mode,
     search_hints: dict[int, int] | None = None,
 ) -> None:
     """Handle fmt blocks with actual AST nodes."""
     first = ignored_nodes[0]  # Can be a container node with the `leaf`.
     parent = first.parent
     prefix = first.prefix
+    trailing_comments = (
+        "" if is_fmt_skip else _take_comments_ending_fmt_off(ignored_nodes[-1], mode)
+    )
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         first.prefix = prefix[comment.consumed :]
@@ -490,6 +494,8 @@ def _handle_regular_fmt_block(
         node_str = str(node)
         if not node_str.endswith("\n") and (
             next_node is None
+            # A comment-only fmt:off/on block ends with the `# fmt: on` comment
+            or node.fmt_pass_converted_first_leaf is None
             or (isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT)
             or "\n" in next_node.prefix
         ):
@@ -523,7 +529,11 @@ def _handle_regular_fmt_block(
                                 and "\n" in n.value
                             ):
                                 result = _remove_preceding_newline_for_comment(result)
-                            if not result.endswith("\n"):
+                            # The newline ends a trailing comment. A skipped block
+                            # that ends in code, like the `)` of an inner
+                            # `(  # fmt: skip` block, is followed by its own source.
+                            last_line = result.rpartition("\n")[2]
+                            if not result.endswith("\n") and "#" in last_line:
                                 result += "\n"
                             return result
                         return str(n)
@@ -544,7 +554,7 @@ def _handle_regular_fmt_block(
         else:
             parts.append(str(node))
 
-    hidden_value = "".join(parts)
+    hidden_value = "".join(parts) + trailing_comments
     comment_lineno = leaf.lineno - comment.newlines
     leaf_is_ignored = any(
         ignored is leaf
@@ -568,7 +578,8 @@ def _handle_regular_fmt_block(
         hidden_value = comment.value + "\n" + hidden_value
 
     if is_fmt_skip and not leaf_is_ignored:
-        hidden_value += comment.leading_whitespace + comment.value
+        whitespace = comment.original_line.partition("#")[0]
+        hidden_value += whitespace + comment.value
 
     if hidden_value.endswith("\n"):
         # That happens when one of the `ignored_nodes` ended with a NEWLINE
@@ -605,6 +616,49 @@ def _handle_regular_fmt_block(
             fmt_pass_converted_first_leaf=first_leaf_of(first),
         ),
     )
+
+
+def _take_comments_ending_fmt_off(last_ignored: LN, mode: Mode) -> str:
+    """Detach the comments that end a `# fmt: off` region inside brackets.
+
+    The comments between the last ignored node and `# fmt: on` live in the prefix of
+    the leaf after the region. So do all of its comments when that leaf is a closing
+    bracket and the region runs to the end of the bracket without a `# fmt: on`.
+    Return that part of the prefix and remove it from the leaf, so it is kept
+    verbatim instead of being formatted.
+    """
+    last = last_leaf(last_ignored)
+    if last is None or last.type in {token.NEWLINE, token.DEDENT}:
+        # The region ends at statement level, where comments before `# fmt: on`
+        # are left to the blank line handling.
+        return ""
+
+    node: LN | None = last_ignored
+    while node is not None and node.next_sibling is None:
+        node = node.parent
+    if node is None or node.next_sibling is None:
+        return ""
+
+    next_leaf = first_leaf_of(node.next_sibling)
+    if next_leaf is None:
+        return ""
+
+    consumed = 0
+    fmt_on = False
+    for comment in list_comments(next_leaf.prefix, is_endmarker=False, mode=mode):
+        if contains_fmt_directive(comment.value, FMT_ON):
+            fmt_on = True
+            break
+        consumed = comment.consumed
+    if not consumed or not (fmt_on or next_leaf.type in CLOSING_BRACKETS):
+        return ""
+
+    # A comment always ends its line before the next leaf. Leave that newline in the
+    # prefix, so whatever follows (`# fmt: on` or the leaf) stays on its own line.
+    consumed -= 1
+    trailing_comments = next_leaf.prefix[:consumed]
+    next_leaf.prefix = next_leaf.prefix[consumed:]
+    return trailing_comments
 
 
 def generate_ignored_nodes(
@@ -730,9 +784,12 @@ def _should_keep_compound_statement_inline(
 
 
 def _get_compound_statement_header(
-    body_node: Node, simple_stmt_parent: Node
+    body_node: Node, simple_stmt_parent: Node, *, ignored: Collection[LN] = ()
 ) -> list[LN]:
-    """Get header nodes for a compound statement that should be preserved inline."""
+    """Get header nodes for a compound statement that should be preserved inline.
+
+    Leaves of `ignored` are left out, so they aren't added a second time.
+    """
     if not _should_keep_compound_statement_inline(body_node, simple_stmt_parent):
         return []
 
@@ -740,6 +797,8 @@ def _get_compound_statement_header(
     compound_stmt = body_node.parent
     if compound_stmt is None or compound_stmt.type not in _COMPOUND_STATEMENTS:
         return []
+
+    covered = {id(leaf) for node in ignored for leaf in node.leaves()}
 
     # Collect all header leaves before the body
     header_leaves: list[LN] = []
@@ -752,16 +811,21 @@ def _get_compound_statement_header(
         and compound_stmt.parent.type == syms.async_stmt
         and compound_stmt.prev_sibling is not None
         and compound_stmt.prev_sibling.type == token.ASYNC
+        and id(compound_stmt.prev_sibling) not in covered
     ):
         header_leaves.append(compound_stmt.prev_sibling)
     for child in compound_stmt.children:
         if child is body_node:
             break
         if isinstance(child, Leaf):
-            if child.type not in (token.NEWLINE, token.INDENT):
+            if child.type not in (token.NEWLINE, token.INDENT) and (
+                id(child) not in covered
+            ):
                 header_leaves.append(child)
         else:
-            header_leaves.extend(child.leaves())
+            header_leaves.extend(
+                leaf for leaf in child.leaves() if id(leaf) not in covered
+            )
     return header_leaves
 
 
@@ -885,7 +949,11 @@ def _generate_ignored_nodes_from_fmt_skip(
             if (
                 current_node.type in CLOSING_BRACKETS
                 and current_node.parent
-                and current_node.parent.type == syms.atom
+                and current_node.parent.type in (
+                    syms.atom,
+                    syms.trailer,
+                    syms.import_from,
+                )
             ):
                 current_node = current_node.parent
 
@@ -942,7 +1010,12 @@ def _generate_ignored_nodes_from_fmt_skip(
         if isinstance(parent, Node):
             body_node = _find_compound_statement_context(parent)
             if body_node is not None:
-                header_nodes = _get_compound_statement_header(body_node, parent)
+                # The walk above can already reach the header, e.g. when the body
+                # starts with a bare name as in `if x: a; b  # fmt: skip`, so pass
+                # the nodes it found to avoid adding those header leaves twice.
+                header_nodes = _get_compound_statement_header(
+                    body_node, parent, ignored=ignored_nodes
+                )
                 if header_nodes:
                     ignored_nodes = header_nodes + ignored_nodes
 
@@ -950,15 +1023,17 @@ def _generate_ignored_nodes_from_fmt_skip(
         # open, the `# fmt: skip` sits inside a multi-line bracketed statement
         # (e.g. on the `from x import (` line). Skipping only that line would
         # reformat the rest of the statement, so preserve the whole enclosing
-        # statement instead.
-        bracket_depth = 0
+        # statement instead. A closing bracket on the line can belong to one
+        # opened on an earlier line (the `)` of a multi-line parameter list in
+        # `) -> A[B  # fmt: skip`), so it must not cancel an opening one.
+        open_brackets = 0
         for node in ignored_nodes:
             for ignored_leaf in node.leaves():
                 if ignored_leaf.type in OPENING_BRACKETS:
-                    bracket_depth += 1
-                elif ignored_leaf.type in CLOSING_BRACKETS:
-                    bracket_depth -= 1
-        if bracket_depth > 0:
+                    open_brackets += 1
+                elif ignored_leaf.type in CLOSING_BRACKETS and open_brackets:
+                    open_brackets -= 1
+        if open_brackets:
             statement: LN = leaf
             while statement.parent is not None and statement.parent.type not in (
                 syms.file_input,
