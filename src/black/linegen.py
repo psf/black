@@ -188,7 +188,14 @@ class LineGenerator(Visitor[Line]):
         # as in `x = (  # fmt: skip` ... `) if c else d`. Outside of brackets, the
         # rest has to stay on the line of the hidden closing bracket, so it can't be
         # wrapped in parentheses.
+        # The `if` part can itself be hidden by another `# fmt: skip`. The hidden
+        # code is then replaced by a STANDALONE_COMMENT at the index of its first
+        # node in the same parent, so a comment in `node.children[0]` hid this
+        # node's own `if` or `else`, and `fmt_pass_converted_first_leaf` is that
+        # keyword (detached from the tree, only its value is read).
         first = node.children[0]
+        if isinstance(first, Leaf) and first.fmt_pass_converted_first_leaf:
+            first = first.fmt_pass_converted_first_leaf
         follows_fmt_skip = (
             isinstance(first, Leaf)
             and first.value in {"if", "else"}
@@ -481,8 +488,14 @@ class LineGenerator(Visitor[Line]):
 
     def visit_STANDALONE_COMMENT(self, leaf: Leaf) -> Iterator[Line]:
         any_open_brackets = self.current_line.bracket_tracker.any_open_brackets()
+        # Code hidden by a second `# fmt: skip` in the same statement stays on the
+        # line where the previous hidden code ends, with its original spacing.
+        continues_fmt_skip_line = False
+        original_prefix = leaf.prefix
         if not any_open_brackets:
-            yield from self.line()
+            continues_fmt_skip_line = _continues_fmt_skip_line(self.current_line, leaf)
+            if not continues_fmt_skip_line:
+                yield from self.line()
         # STANDALONE_COMMENT nodes created by our special handling in
         # normalize_fmt_off for comment-only blocks have fmt:off as the first
         # line and fmt:on as the last line (each directive on its own line,
@@ -527,6 +540,8 @@ class LineGenerator(Visitor[Line]):
         else:
             # Normal standalone comment - process through visit_default
             yield from self.visit_default(leaf)
+            if continues_fmt_skip_line:
+                leaf.prefix = original_prefix
 
     def visit_factor(self, node: Node) -> Iterator[Line]:
         """Force parentheses between a unary op and a binary power:
@@ -1925,6 +1940,7 @@ def _force_standalone_comment_split(line: Line) -> Iterator[Line]:
                 leaf.type != STANDALONE_COMMENT
                 and _is_fmt_pass_converted_ending_in_code(current_line)
             )
+            and not _continues_fmt_skip_line(current_line, leaf)
         ):
             yield current_line
             current_line = Line(
@@ -1947,6 +1963,35 @@ def _is_fmt_pass_converted_ending_in_code(line: Line) -> bool:
     if not line.is_fmt_pass_converted():
         return False
     return "#" not in line.leaves[0].value.rpartition("\n")[2]
+
+
+def _continues_fmt_skip_line(line: Line, leaf: Leaf) -> bool:
+    """Is `leaf` code hidden by `# fmt: skip` that starts on the line where the
+    hidden code at the end of `line` ends?
+
+    That happens with two `# fmt: skip` comments in one statement, as in
+    `x = a if (  # fmt: skip` ... `) else (  # fmt: skip` ... `)`.
+    """
+    if not line.leaves:
+        return False
+    last = line.leaves[-1]
+    return (
+        _is_hidden_by_fmt_skip(last)
+        and "#" not in last.value.rpartition("\n")[2]
+        and _is_hidden_by_fmt_skip(leaf)
+        and not leaf.value.startswith("#")
+        and "\n" not in leaf.prefix
+    )
+
+
+def _is_hidden_by_fmt_skip(leaf: Leaf) -> bool:
+    """Is `leaf` a STANDALONE_COMMENT holding code hidden by `# fmt: skip` or
+    `# fmt: off`, rather than code left alone by `--line-ranges`?"""
+    return (
+        leaf.type == STANDALONE_COMMENT
+        and leaf.fmt_pass_converted_first_leaf is not None
+        and leaf.line_ranges_selected is None
+    )
 
 
 def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:
