@@ -919,7 +919,7 @@ def _generate_ignored_nodes_from_fmt_skip(
             current_node = current_node.parent
 
         ignored_nodes = [current_node]
-        if current_node.prev_sibling is None and current_node.parent is not None:
+        while current_node.prev_sibling is None and current_node.parent is not None:
             current_node = current_node.parent
 
         # Track seen nodes to detect cycles that can occur after tree modifications
@@ -979,7 +979,7 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             ignored_nodes.insert(0, current_node)
 
-            if current_node.prev_sibling is None and current_node.parent is not None:
+            while current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
                 # Every child of the node we are climbing out of is now ignored, so
                 # take the node itself instead. Converting only its leaves would
@@ -987,24 +987,17 @@ def _generate_ignored_nodes_from_fmt_skip(
                 # children, like the one for PEP 695 type parameters, crash on it.
                 # Children collapsed on an earlier climb are already nodes here, so
                 # compare against children rather than leaves.
+                # The collapsed node can be the first child of a parent that is now
+                # fully ignored as well (`a + b` in `a + b if c else d`), so keep
+                # climbing and collapse that parent too. Stopping one level short
+                # leaves the parent's children in the list next to a sibling from
+                # the enclosing node, and the standalone comment then lands inside
+                # the parent while that sibling is removed from around it, turning
+                # e.g. a tuple into a call. Climbing also has to go on past parents
+                # that aren't fully ignored, or the walk stops before reaching the
+                # start of the line (`with` in `with not (  # fmt: skip`).
                 if _children_lead_ignored_nodes(current_node, ignored_nodes):
                     ignored_nodes[: len(current_node.children)] = [current_node]
-                    # The collapsed node can be the first child of a parent that
-                    # is now fully ignored as well (`a + b` in `a + b if c else d`).
-                    # Collapse that parent too and keep walking from it. Stopping
-                    # one level short leaves the parent's children in the list next
-                    # to a sibling from the enclosing node, and the standalone
-                    # comment then lands inside the parent while that sibling is
-                    # removed from around it, turning e.g. a tuple into a call.
-                    while (
-                        current_node.prev_sibling is None
-                        and current_node.parent is not None
-                        and _children_lead_ignored_nodes(
-                            current_node.parent, ignored_nodes
-                        )
-                    ):
-                        current_node = current_node.parent
-                        ignored_nodes[: len(current_node.children)] = [current_node]
 
         # Special handling for compound statements with semicolon-separated bodies
         if isinstance(parent, Node):
