@@ -54,6 +54,9 @@
 - Fix crash on an assignment whose target is split over lines inside redundant
   parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
   `.d[e]) = f` (#5606, #5621)
+- Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
+  line, such as `default=  # comment` followed by `value,  # type: ignore`. The
+  `# type: ignore` now comes first, where type checkers recognize it (#5625)
 
 ### Preview style
 

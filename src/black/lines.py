@@ -521,9 +521,14 @@ class Line:
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
         res += "".join(str(leaf) for leaf in leaves)
-        comments_iter = itertools.chain.from_iterable(self.comments.values())
-        comments = [str(comment) for comment in comments_iter]
-        res += "".join(comments)
+        comments = list(itertools.chain.from_iterable(self.comments.values()))
+        if len(comments) > 1:
+            # Python only recognizes a `# type: ignore` at the start of a comment, so
+            # it has to come first when comments from several lines end up on one.
+            comments.sort(
+                key=lambda comment: not is_type_ignore_comment(comment, mode=self.mode)
+            )
+        res += "".join(str(comment) for comment in comments)
 
         return res + "\n"
 
