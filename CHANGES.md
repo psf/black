@@ -43,7 +43,7 @@
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
 - Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
-  has its own `# fmt: skip` on the opening line (#5597, #5612)
+  has its own `# fmt: skip` on the opening line (#5597, #5612, #5610)
 - Fix unstable formatting of a call with an inline comment after an argument when its
   last argument is an implicitly concatenated string (#5587)
 - Keep the empty lines before a comment outside the requested `--line-ranges` instead of
@@ -55,8 +55,10 @@
   parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
   `.d[e]) = f` (#5606, #5621)
 - Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
-  line, such as `default=  # comment` followed by `value,  # type: ignore`. The
-  `# type: ignore` now comes first, where type checkers recognize it (#5625)
+  line and ensure the `# type: ignore` comes first (#5625)
+- Fix crash on a method chain with multiple `# type: ignore` comments when another
+  comment sits between them, which put a `# type: ignore` after the other comment on one
+  line, where it no longer applies (#5618)
 
 ### Preview style
 

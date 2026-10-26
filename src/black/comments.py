@@ -55,18 +55,12 @@ class ProtoComment:
     newlines: int  # how many newlines before the comment
     consumed: int  # how many characters of the original leaf's prefix did we consume
     form_feed: bool  # is there a form feed before the comment
-    leading_whitespace: str  # leading whitespace before the comment, if any
-    original_value: str  # original comment text, before normalization
-    prefix_line_index: int  # 0-based physical line index within the parsed prefix
+    original_line: str  # Includes source indentation and trailing whitespace
+    lines_before_leaf: int  # Physical line distance from this comment to its leaf
 
 
 def generate_comments(
-    leaf: LN,
-    mode: Mode,
-    *,
-    preserve_comment_formatting: bool = False,
-    line_ranges_first_lineno: int = 0,
-    line_ranges_selected: set[int] | None = None,
+    leaf: Leaf, mode: Mode, *, block_depth: int | None = None
 ) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
@@ -85,33 +79,30 @@ def generate_comments(
 
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
+
+    Pass the block depth to keep comments outside the selected lines as written,
+    accounting for the indentation the line renderer will add.
     """
-    total_consumed = 0
     comments = list_comments(
         leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER, mode=mode
     )
-    prefix_line_count = len(re.split(r"\r?\n|\r", leaf.prefix)) - 1
+    selected = leaf.line_ranges_selected
     for pc in comments:
-        total_consumed = pc.consumed
         prefix = make_simple_prefix(pc.newlines, pc.form_feed)
-        value = pc.value
-        comment_lineno = (
-            line_ranges_first_lineno - prefix_line_count + pc.prefix_line_index
-        )
-        should_preserve = preserve_comment_formatting and (
-            line_ranges_selected is None or comment_lineno not in line_ranges_selected
-        )
-        if should_preserve:
-            value = pc.leading_whitespace + pc.original_value
-        # A preserved comment carries `line_ranges_selected` so that the empty lines
-        # before it are kept as well.
-        yield Leaf(
-            pc.type,
-            value,
-            prefix=prefix,
-            line_ranges_selected=line_ranges_selected if should_preserve else None,
-        )
-    normalize_trailing_prefix(leaf, total_consumed)
+        if (
+            block_depth is not None
+            and selected is not None
+            and leaf.line_ranges_first_lineno - pc.lines_before_leaf not in selected
+        ):
+            yield Leaf(
+                pc.type,
+                pc.original_line.removeprefix("    " * block_depth),
+                prefix=prefix,
+                line_ranges_selected=selected,
+            )
+        else:
+            yield Leaf(pc.type, pc.value, prefix=prefix)
+    normalize_trailing_prefix(leaf, comments[-1].consumed if comments else 0)
 
 
 @lru_cache(maxsize=4096)
@@ -125,11 +116,10 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
     nlines = 0
     ignored_lines = 0
     form_feed = False
-    for index, full_line in enumerate(re.split("\r?\n|\r", prefix)):
+    lines = re.split("\r?\n|\r", prefix)
+    for index, full_line in enumerate(lines):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
-        match = re.match(r"^(\s*)(\S.*|)$", full_line)
-        assert match
-        whitespace, line = match.groups()
+        line = full_line.lstrip()
         if not line:
             nlines += 1
             if "\f" in full_line:
@@ -154,9 +144,8 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
                 newlines=nlines,
                 consumed=consumed,
                 form_feed=form_feed,
-                leading_whitespace=whitespace,
-                original_value=line,
-                prefix_line_index=index,
+                original_line=full_line,
+                lines_before_leaf=len(lines) - 1 - index,
             )
         )
         form_feed = False
@@ -589,7 +578,8 @@ def _handle_regular_fmt_block(
         hidden_value = comment.value + "\n" + hidden_value
 
     if is_fmt_skip and not leaf_is_ignored:
-        hidden_value += comment.leading_whitespace + comment.value
+        whitespace = comment.original_line.partition("#")[0]
+        hidden_value += whitespace + comment.value
 
     if hidden_value.endswith("\n"):
         # That happens when one of the `ignored_nodes` ended with a NEWLINE
