@@ -1898,7 +1898,11 @@ def standalone_comment_split(
 def type_ignore_comment_split(
     line: Line, features: Collection[Feature], mode: Mode
 ) -> Iterator[Line]:
-    """Keep multiple type ignores on their original physical lines."""
+    """Keep multiple type ignores on their original physical lines.
+
+    Any other comment in the chain also ends its line: a type ignore that
+    follows another comment on the same line is no longer a type ignore.
+    """
     if not line.contains_multiple_type_ignores_at_current_depth() or not any(
         leaf.type == token.DOT for leaf in line.leaves
     ):
@@ -1912,7 +1916,7 @@ def type_ignore_comment_split(
         comments = line.comments_after(leaf)
         for comment in comments:
             current_line.append(comment, preformatted=True)
-        if any(is_type_ignore_comment(comment, mode=mode) for comment in comments):
+        if comments:
             yield current_line
             current_line = Line(
                 mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
