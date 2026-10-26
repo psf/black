@@ -1989,7 +1989,25 @@ def _continues_fmt_skip_line(line: Line, leaf: Leaf) -> bool:
         and _is_hidden_by_fmt_skip(leaf)
         and not leaf.value.startswith("#")
         and "\n" not in leaf.prefix
+        and not _starts_statement(leaf)
     )
+
+
+def _starts_statement(leaf: Leaf) -> bool:
+    """Is `leaf` the first leaf of a statement?
+
+    The newline before a statement isn't in its prefix. It can even be hidden with
+    the statement above, e.g. `foo(a  # fmt: skip` ... `)` followed by another one.
+    """
+    node: LN = leaf
+    while node.parent is not None and node.parent.type not in {
+        syms.file_input,
+        syms.suite,
+    }:
+        if node.prev_sibling is not None:
+            return False
+        node = node.parent
+    return node.parent is not None
 
 
 def _is_hidden_by_fmt_skip(leaf: Leaf) -> bool:
