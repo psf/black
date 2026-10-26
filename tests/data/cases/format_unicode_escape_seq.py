@@ -12,7 +12,10 @@ x = "\N{ox}\N{OX}"
 x = "\N{lAtIn smaLL letteR x}"
 x = "\N{CYRILLIC small LETTER BYELORUSSIAN-UKRAINIAN I}"
 x = b"\x1Fdon't byte"
+x = b"\uFaCe \U0001F60E \N{ox} are not escapes in bytes"
+x = B"\xA3\N{ox}"
 x = rb"\x1Fdon't format"
+x = f"foo \xFF {1}"
 
 # output
 
@@ -30,4 +33,7 @@ x = "\N{OX}\N{OX}"
 x = "\N{LATIN SMALL LETTER X}"
 x = "\N{CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I}"
 x = b"\x1fdon't byte"
+x = b"\uFaCe \U0001F60E \N{ox} are not escapes in bytes"
+x = b"\xa3\N{ox}"
 x = rb"\x1Fdon't format"
+x = f"foo \xff {1}"

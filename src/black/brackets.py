@@ -236,6 +236,15 @@ def is_split_after_delimiter(leaf: Leaf) -> Priority:
                 syms.for_stmt,
             }:
                 return 0
+        # Lambda parameter commas aren't delimiters either. They are normally hidden
+        # by the lambda depth, but not when a comment splits `lambda` from them.
+        if parent is not None and parent.type == syms.varargslist:
+            grandparent = parent.parent
+            if grandparent is not None and grandparent.type in {
+                syms.lambdef,
+                syms.old_lambdef,
+            }:
+                return 0
         return COMMA_PRIORITY
 
     return 0

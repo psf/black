@@ -303,7 +303,6 @@ class _NodeReplacements:
                 else:
                     new_children.append(child)
             parent.children = new_children
-            parent.changed()
             parent.invalidate_sibling_maps()
 
 
@@ -446,24 +445,29 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
     replacements.apply()
 
 
-def _str_with_standalone_comments(node: LN) -> str:
-    """Like `str(node)`, but a nested STANDALONE_COMMENT that ends in a `# fmt: skip`
-    is followed by a newline.
+def _str_with_standalone_comments(*nodes: LN) -> str:
+    """Like `"".join(str(node) for node in nodes)`, but a nested STANDALONE_COMMENT
+    that ends in a comment is followed by a newline.
 
-    A STANDALONE_COMMENT made by `# fmt: skip` handling can end with the comment and
-    has no trailing newline: the line generator puts one after it. Joining it
-    straight to the next leaf would append that leaf (e.g. a closing bracket) to the
-    comment's line and turn it into part of the comment.
+    A STANDALONE_COMMENT made by `# fmt: skip` handling, or by a `# fmt: off` /
+    `# fmt: on` block that only holds comments, can end with the comment and has no
+    trailing newline: the line generator puts one after it. Joining it straight to
+    the next leaf would append that leaf (e.g. a closing bracket) to the comment's
+    line and turn it into part of the comment.
     """
-    leaves = list(node.leaves())
+    leaves = [leaf for node in nodes for leaf in node.leaves()]
     parts = []
     for leaf, next_leaf in zip(leaves, [*leaves[1:], None], strict=True):
         text = str(leaf)
         if (
             leaf.type == STANDALONE_COMMENT
             and next_leaf is not None
-            and not str(next_leaf).startswith("\n")
-            and _ends_with_fmt_skip(text)
+            and (
+                # A comment-only fmt:off/on block ends with the `# fmt: on` comment.
+                # A newline in the next leaf's prefix is a blank line after it.
+                leaf.fmt_pass_converted_first_leaf is None
+                or (not str(next_leaf).startswith("\n") and _ends_with_fmt_skip(text))
+            )
         ):
             text += "\n"
         parts.append(text)
@@ -548,7 +552,7 @@ def _convert_nodes_to_standalone_comment(
         return
     first_lineno = first.lineno
     prefix = replacements.take_prefix(first)
-    value = "".join(_str_with_standalone_comments(node) for node in nodes)
+    value = _str_with_standalone_comments(*nodes)
     # The prefix comment on the NEWLINE leaf is the trailing comment of the statement.
     if newline.prefix:
         value += newline.prefix

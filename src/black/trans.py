@@ -12,10 +12,13 @@ from typing import Any, ClassVar, Final, Literal, TypeVar, Union
 from mypy_extensions import trait
 
 from black.comments import contains_pragma_comment
-from black.lines import Line, append_leaves, line_to_string
+from black.lines import Line, append_leaves, is_line_short_enough, line_to_string
 from black.mode import Feature, Mode
 from black.nodes import (
+    ASSIGNMENTS,
     CLOSING_BRACKETS,
+    COMPARATORS,
+    MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     is_empty_lpar,
@@ -675,6 +678,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             RE_EVEN_BACKSLASHES = r"(?:(?<!\\)(?:\\\\)*)"
             naked_string = string[len(string_prefix) + 1 : -1]
+            if "r" in string_prefix:
+                # Escaping quotes would change a raw string's value. Validation
+                # ensures all raw substrings already use the same delimiter.
+                return naked_string
             naked_string = re.sub(
                 "(" + RE_EVEN_BACKSLASHES + ")" + QUOTE, r"\1\\" + QUOTE, naked_string
             )
@@ -777,8 +784,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         self.add_custom_splits(string_leaf.value, custom_splits)
         return num_of_strings, string_leaf
 
-    @staticmethod
-    def _validate_msg(line: Line, string_idx: int) -> TResult[None]:
+    def _validate_msg(self, line: Line, string_idx: int) -> TResult[None]:
         """Validate (M)erge (S)tring (G)roup
 
         Transform-time string validation logic for _merge_string_group(...).
@@ -794,7 +800,7 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
                 - The string group has an inline comment that appears to be a pragma.
                 - The set of all string prefixes in the string group is of
                   length greater than one and is not equal to {"", "f"}.
-                - The string group consists of raw strings.
+                - Raw strings in the group use different quote types.
                 - The string group would merge f-strings with different quote types
                   and internal quotes.
                 - The string group is stringified type annotations. We don't want to
@@ -842,8 +848,10 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
 
             num_of_strings += 1
             prefix = get_string_prefix(leaf.value).lower()
-            if "r" in prefix:
-                return TErr("StringMerger does NOT merge raw strings.")
+            if "r" in prefix and leaf.value[-1] != QUOTE:
+                return TErr("Cannot merge raw strings with different quote types.")
+            if "r" in prefix and "f" in prefix:
+                return TErr("Cannot merge raw f-strings.")
 
             set_of_prefixes.add(prefix)
 
@@ -896,10 +904,22 @@ class StringMerger(StringTransformer, CustomSplitMapMixin):
         if len(set_of_prefixes) > 1 and set_of_prefixes != {"", "f"}:
             return TErr(f"Too many different prefixes ({set_of_prefixes}).")
 
+        if any("r" in prefix for prefix in set_of_prefixes):
+            # Keep long raw groups intact: merging and splitting them again can
+            # introduce unnecessary parentheses around an existing concatenation.
+            prefix = next(iter(set_of_prefixes))
+            merged_length = str_width(str(line).rstrip()) - (num_of_strings - 1) * (
+                len(prefix) + 3
+            )
+            if merged_length > self.line_length:
+                return TErr(
+                    "Cannot merge a raw string group exceeding the line length."
+                )
+
         return Ok(None)
 
 
-class StringParenStripper(StringTransformer):
+class StringParenStripper(StringTransformer, CustomSplitMapMixin):
     """StringTransformer that strips surrounding parentheses from strings.
 
     Requirements:
@@ -1017,6 +1037,19 @@ class StringParenStripper(StringTransformer):
                 }:
                     continue
 
+                # Keep the parens if stripping them would leave an already
+                # too-long line with a merged string group glued to an `=`
+                # prefix (e.g. a def parameter default). Black cannot split
+                # such a line after the fact, while the parens let the layout
+                # split the group at its custom breakpoints. See #3497.
+                if (
+                    not is_line_short_enough(line, mode=line.mode)
+                    and is_valid_index(string_idx - 2)
+                    and LL[string_idx - 2].type == token.EQUAL
+                    and self.has_custom_splits(LL[string_idx].value)
+                ):
+                    continue
+
                 string_indices.append(string_idx)
                 idx = string_idx
                 while idx < len(LL) - 1 and LL[idx + 1].type == token.STRING:
@@ -1087,7 +1120,7 @@ class StringParenStripper(StringTransformer):
         return new_line
 
 
-class BaseStringSplitter(StringTransformer):
+class BaseStringSplitter(StringTransformer, CustomSplitMapMixin):
     """
     Abstract class for StringTransformers which transform a Line's strings by splitting
     them or placing them on their own lines where necessary to avoid going over
@@ -1112,17 +1145,111 @@ class BaseStringSplitter(StringTransformer):
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
-    STRING_OPERATORS: Final = [
-        token.EQEQUAL,
-        token.GREATER,
-        token.GREATEREQUAL,
-        token.LESS,
-        token.LESSEQUAL,
-        token.NOTEQUAL,
-        token.PERCENT,
-        token.PLUS,
-        token.STAR,
-    ]
+    STRING_OPERATORS: Final = COMPARATORS | (MATH_OPERATORS - {token.TILDE})
+
+    MIN_SUBSTR_SIZE: Final = 6
+
+    def _iter_nameescape_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
+        r"""
+        Yields:
+            All ranges of @string which, if @string were to be split there,
+            would result in the splitting of an \N{...} expression (which is NOT
+            allowed).
+        """
+        # True - the previous backslash was unescaped
+        # False - the previous backslash was escaped *or* there was no backslash
+        previous_was_unescaped_backslash = False
+        it = iter(enumerate(string))
+        for idx, c in it:
+            if c == "\\":
+                previous_was_unescaped_backslash = not previous_was_unescaped_backslash
+                continue
+            if not previous_was_unescaped_backslash or c != "N":
+                previous_was_unescaped_backslash = False
+                continue
+            previous_was_unescaped_backslash = False
+
+            begin = idx - 1  # the position of backslash before \N{...}
+            for idx, c in it:
+                if c == "}":
+                    end = idx
+                    break
+            else:
+                # malformed nameescape expression?
+                # should have been detected by AST parsing earlier...
+                raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
+            yield begin, end
+
+    def _iter_fexpr_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
+        """
+        Yields:
+            All ranges of @string which, if @string were to be split there,
+            would result in the splitting of an f-expression (which is NOT
+            allowed).
+        """
+        if "f" not in get_string_prefix(string).lower():
+            return
+        yield from iter_fexpr_spans(string)
+
+    def _get_illegal_split_indices(
+        self, string: str, has_named_escape: bool = True
+    ) -> set[Index]:
+        illegal_indices: set[Index] = set()
+        iterators = [self._iter_fexpr_slices(string)]
+        # Scanning for \N{...} ranges walks the whole string, so skip it when the
+        # caller already knows the string cannot contain a named escape.
+        if has_named_escape:
+            iterators.append(self._iter_nameescape_slices(string))
+        for it in iterators:
+            for begin, end in it:
+                illegal_indices.update(range(begin, end))
+        return illegal_indices
+
+    def _is_valid_split_index(
+        self, string: str, i: Index, illegal_split_indices: set[Index]
+    ) -> bool:
+        """
+        Returns:
+            True iff @i meets all requirements to be a valid split index in @string.
+        """
+        if i < self.MIN_SUBSTR_SIZE or len(string) - i < self.MIN_SUBSTR_SIZE:
+            return False
+
+        if i in illegal_split_indices:
+            return False
+
+        is_space = string[i] == " "
+        is_split_safe = i > 0 and string[i - 1] in SPLIT_SAFE_CHARS
+
+        if not (is_space or is_split_safe):
+            return False
+
+        is_not_escaped = True
+        j = i - 1
+        while j >= 0 and string[j] == "\\":
+            is_not_escaped = not is_not_escaped
+            j -= 1
+
+        return is_not_escaped
+
+    def can_be_split(self, string: str) -> bool:
+        """
+        Returns:
+            True iff @string contains at least one index where StringSplitter
+            can split it.
+        """
+        if len(string) < 2 * self.MIN_SUBSTR_SIZE:
+            return False
+
+        has_named_escape = "\\N" in string
+        illegal_split_indices = self._get_illegal_split_indices(
+            string, has_named_escape
+        )
+
+        return any(
+            self._is_valid_split_index(string, i, illegal_split_indices)
+            for i in range(self.MIN_SUBSTR_SIZE, len(string) - self.MIN_SUBSTR_SIZE + 1)
+        )
 
     @abstractmethod
     def do_splitter_match(self, line: Line) -> TMatchResult:
@@ -1246,7 +1373,7 @@ class BaseStringSplitter(StringTransformer):
                 # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
                 offset += 3
 
-            if P.type in [token.COLON, token.EQUAL, token.PLUSEQUAL, token.NAME]:
+            if P.type == token.NAME or P.value in ASSIGNMENTS:
                 # This conditional branch is meant to handle dictionary keys,
                 # variable assignments, 'return STRING' statement lines, and
                 # 'else STRING' ternary expression lines.
@@ -1304,8 +1431,7 @@ class BaseStringSplitter(StringTransformer):
         max_string_length = count_chars_in_width(str(line), self.line_length - offset)
         return max_string_length
 
-    @staticmethod
-    def _prefer_paren_wrap_match(LL: list[Leaf]) -> int | None:
+    def _prefer_paren_wrap_match(self, line: Line) -> int | None:
         """
         Returns:
             string_idx such that @LL[string_idx] is equal to our target (i.e.
@@ -1315,8 +1441,19 @@ class BaseStringSplitter(StringTransformer):
                 OR
             None, otherwise.
         """
+        LL = line.leaves
         # The line must start with a string.
-        if LL[0].type != token.STRING:
+        if not LL or LL[0].type != token.STRING:
+            return None
+
+        # Atom strings prefer to be wrapped in parens only if they will actually
+        # be split by StringSplitter, or if the line has comments that will be
+        # moved to the LPAR.
+        if (
+            not self.can_be_split(LL[0].value)
+            and not self.has_custom_splits(LL[0].value)
+            and not line.comments
+        ):
             return None
 
         matching_nodes = [
@@ -1463,12 +1600,10 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
         CustomSplit objects and add them to the custom split map.
     """
 
-    MIN_SUBSTR_SIZE: Final = 6
-
     def do_splitter_match(self, line: Line) -> TMatchResult:
         LL = line.leaves
 
-        if self._prefer_paren_wrap_match(LL) is not None:
+        if self._prefer_paren_wrap_match(line) is not None:
             return TErr("Line needs to be wrapped in parens first.")
 
         # If the line is just STRING + COMMA (a one-item tuple) and not inside
@@ -1772,62 +1907,6 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             last_line.comments = line.comments.copy()
             yield Ok(last_line)
 
-    def _iter_nameescape_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
-        r"""
-        Yields:
-            All ranges of @string which, if @string were to be split there,
-            would result in the splitting of an \N{...} expression (which is NOT
-            allowed).
-        """
-        # True - the previous backslash was unescaped
-        # False - the previous backslash was escaped *or* there was no backslash
-        previous_was_unescaped_backslash = False
-        it = iter(enumerate(string))
-        for idx, c in it:
-            if c == "\\":
-                previous_was_unescaped_backslash = not previous_was_unescaped_backslash
-                continue
-            if not previous_was_unescaped_backslash or c != "N":
-                previous_was_unescaped_backslash = False
-                continue
-            previous_was_unescaped_backslash = False
-
-            begin = idx - 1  # the position of backslash before \N{...}
-            for idx, c in it:
-                if c == "}":
-                    end = idx
-                    break
-            else:
-                # malformed nameescape expression?
-                # should have been detected by AST parsing earlier...
-                raise RuntimeError(f"{self.__class__.__name__} LOGIC ERROR!")
-            yield begin, end
-
-    def _iter_fexpr_slices(self, string: str) -> Iterator[tuple[Index, Index]]:
-        """
-        Yields:
-            All ranges of @string which, if @string were to be split there,
-            would result in the splitting of an f-expression (which is NOT
-            allowed).
-        """
-        if "f" not in get_string_prefix(string).lower():
-            return
-        yield from iter_fexpr_spans(string)
-
-    def _get_illegal_split_indices(
-        self, string: str, has_named_escape: bool = True
-    ) -> set[Index]:
-        illegal_indices: set[Index] = set()
-        iterators = [self._iter_fexpr_slices(string)]
-        # Scanning for \N{...} ranges walks the whole string, so skip it when the
-        # caller already knows the string cannot contain a named escape.
-        if has_named_escape:
-            iterators.append(self._iter_nameescape_slices(string))
-        for it in iterators:
-            for begin, end in it:
-                illegal_indices.update(range(begin, end))
-        return illegal_indices
-
     def _get_break_idx(
         self, string: str, max_break_idx: int, has_named_escape: bool = True
     ) -> int | None:
@@ -1865,38 +1944,8 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
             string, has_named_escape
         )
 
-        def breaks_unsplittable_expression(i: Index) -> bool:
-            """
-            Returns:
-                True iff returning @i would result in the splitting of an
-                unsplittable expression (which is NOT allowed).
-            """
-            return i in _illegal_split_indices
-
         def passes_all_checks(i: Index) -> bool:
-            """
-            Returns:
-                True iff ALL of the conditions listed in the 'Transformations'
-                section of this classes' docstring would be met by returning @i.
-            """
-            is_space = string[i] == " "
-            is_split_safe = is_valid_index(i - 1) and string[i - 1] in SPLIT_SAFE_CHARS
-
-            is_not_escaped = True
-            j = i - 1
-            while is_valid_index(j) and string[j] == "\\":
-                is_not_escaped = not is_not_escaped
-                j -= 1
-
-            is_big_enough = (
-                len(string) - i >= self.MIN_SUBSTR_SIZE and i >= self.MIN_SUBSTR_SIZE
-            )
-            return (
-                (is_space or is_split_safe)
-                and is_not_escaped
-                and is_big_enough
-                and not breaks_unsplittable_expression(i)
-            )
+            return self._is_valid_split_index(string, i, _illegal_split_indices)
 
         # First, we check all indices BELOW @max_break_idx.
         break_idx = max_break_idx
@@ -1954,7 +2003,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
         string_op_leaves = []
         i = 0
-        while LL[i].type in self.STRING_OPERATORS + [token.NAME]:
+        while LL[i].type in self.STRING_OPERATORS or LL[i].type == token.NAME:
             prefix_leaf = Leaf(LL[i].type, str(LL[i]).strip())
             string_op_leaves.append(prefix_leaf)
             i += 1
@@ -1983,6 +2032,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
           <string>`) such that the variable is being assigned the value of some
           string.
           OR
+        * The line contains a binary operator followed by a string, including
+          operators overloaded by the left operand.
+          OR
         * The line is a dictionary key assignment where some valid key is being
           assigned the value of some string.
           OR
@@ -2001,9 +2053,10 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         the RPAR. This results in the RPAR (and possibly a trailing comma)
         being placed on its own line.
 
-        NOTE: If any leaves exist to the right of the chosen string (except
-        for a trailing comma, which would be placed after the RPAR), those
-        leaves are placed inside the parentheses.  In effect, the chosen
+        NOTE: For binary operands, subsequent operators stay outside the new
+        parentheses. Otherwise, leaves to the right of the chosen string are
+        placed inside the parentheses, except for a trailing comma, which is
+        placed after the RPAR. In effect, the chosen
         string is not necessarily being "wrapped" by parentheses. We can,
         however, count on the LPAR being placed directly before the chosen
         string.
@@ -2035,6 +2088,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
+            or self._binary_match(line)
             or self._dict_or_lambda_match(LL)
         )
 
@@ -2042,7 +2096,15 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             string_idx = self._trailing_comma_tuple_match(line)
 
         if string_idx is None:
-            string_idx = self._prefer_paren_wrap_match(LL)
+            string_idx = self._prefer_paren_wrap_match(line)
+            if string_idx is not None and not self._wrapped_line_can_fit(
+                line, string_idx
+            ):
+                return TErr(
+                    "We do not wrap strings in parentheses when the resultant line"
+                    " would still be over the line length and can't be split by"
+                    " StringSplitter."
+                )
 
         if string_idx is not None:
             # If the string is implicitly concatenated with a string on another
@@ -2065,8 +2127,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                 # If the first string fits on the line, splitting at the
                 # concatenation is enough.
                 tail = "".join(str(leaf) for leaf in LL[string_idx + 1 :])
-                if str_width(line_to_string(line)) - str_width(tail) <= (
-                    self.line_length
+                if (
+                    str_width(line_to_string(line)) - str_width(tail)
+                    <= self.line_length
                 ):
                     return TErr(
                         "The first string of the implicit concatenation fits on"
@@ -2092,6 +2155,22 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             return Ok([string_idx])
 
         return TErr("This line does not contain any non-atomic strings.")
+
+    def _wrapped_line_can_fit(self, line: Line, string_idx: int) -> bool:
+        """
+        Returns:
+            True iff the line created by wrapping the string at @string_idx in
+            parens fits within the line length, or StringSplitter can split it
+            there. That line is one level deeper than @line.
+        """
+        string_value = line.leaves[string_idx].value
+        new_depth = line.depth + 1
+        if new_depth * 4 + str_width(string_value) <= self.line_length:
+            return True
+
+        return self.line_length - 1 - new_depth * 4 >= 0 and (
+            self.can_be_split(string_value) or self.has_custom_splits(string_value)
+        )
 
     @staticmethod
     def _return_match(LL: list[Leaf]) -> int | None:
@@ -2227,8 +2306,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             is_valid_index = is_valid_index_factory(LL)
 
             for i, leaf in enumerate(LL):
-                # We MUST find either an '=' or '+=' symbol...
-                if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
+                # An assignment operator must be followed by the target string.
+                if leaf.value in ASSIGNMENTS and leaf.type != token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
                     # That symbol MUST be followed by a string...
@@ -2259,6 +2338,56 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                             return string_idx
 
         return None
+
+    def _binary_match(self, line: Line) -> int | None:
+        """Find a long string operand, including one in the middle of a chain."""
+        LL = line.leaves
+        is_valid_index = is_valid_index_factory(LL)
+        for i, leaf in enumerate(LL):
+            if leaf.type not in MATH_OPERATORS or leaf.type == token.TILDE:
+                continue
+            if parent_type(leaf) not in {
+                syms.arith_expr,
+                syms.term,
+                syms.power,
+                syms.shift_expr,
+                syms.and_expr,
+                syms.xor_expr,
+                syms.expr,
+            }:
+                continue
+
+            idx = i + 1
+            if is_valid_index(idx) and is_empty_lpar(LL[idx]):
+                idx += 1
+            if not is_valid_index(idx) or LL[idx].type != token.STRING:
+                continue
+            operand_end = self._binary_operand_end(LL, idx)
+            if is_valid_index(operand_end):
+                if (
+                    LL[operand_end].type not in MATH_OPERATORS - {token.TILDE}
+                    or leaf.bracket_depth
+                ):
+                    # Split enclosing calls/collections before wrapping a middle
+                    # operand, and leave other trailers to existing matchers.
+                    continue
+            if not isinstance(self._validate(line, idx), Err):
+                return idx
+
+        return None
+
+    @staticmethod
+    def _binary_operand_end(LL: list[Leaf], string_idx: int) -> int:
+        """Find the string's trailer without absorbing a following % operation."""
+        idx = string_idx
+        while idx + 1 < len(LL) and LL[idx + 1].type == token.STRING:
+            idx += 1
+        trailer_idx = idx + 1
+        while trailer_idx < len(LL) and is_empty_par(LL[trailer_idx]):
+            trailer_idx += 1
+        if trailer_idx < len(LL) and LL[trailer_idx].type == token.PERCENT:
+            return trailer_idx
+        return StringParser().parse(LL, idx)
 
     @staticmethod
     def _dict_or_lambda_match(LL: list[Leaf]) -> int | None:
@@ -2341,8 +2470,25 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         )
         string_idx = string_indices[0]
 
+        if self._binary_match(line) == string_idx:
+            operand_end = self._binary_operand_end(LL, string_idx)
+            if operand_end < len(LL):
+                # Reuse the terminal-operand wrapper, then restore the suffix
+                # after its RPAR. Wrapping the suffix too would reassociate
+                # expressions such as x % STRING % y.
+                operand_line = line.clone()
+                append_leaves(operand_line, line, LL[:operand_end])
+                results = list(self.do_transform(operand_line, [string_idx]))
+                last_result = results.pop()
+                yield from results
+                if isinstance(last_result, Err):
+                    yield last_result
+                    return
+                append_leaves(last_result.ok(), line, LL[operand_end:])
+                yield last_result
+                return
+
         is_valid_index = is_valid_index_factory(LL)
-        insert_str_child = insert_str_child_factory(LL[string_idx])
 
         comma_idx = -1
         ends_with_comma = False
@@ -2375,6 +2521,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         append_leaves(first_line, line, left_leaves)
 
+        # Keep the operand in the tree while calculating the operator's spacing.
+        # Removing it early can make an exponentiation look simple enough to hug.
+        insert_str_child = insert_str_child_factory(LL[string_idx])
         lpar_leaf = Leaf(token.LPAR, "(")
         if old_parens_exist:
             replace_child(LL[string_idx - 1], lpar_leaf)
