@@ -25,10 +25,10 @@ Currently, the following features are included in the preview style:
   also in the rare case the exponentiation is split into separate lines.
   ([see below](labels/simplify-power-operator))
 - `split_implicit_string_concatenations_at_newlines`: Put each string literal of an
-  implicit string concatenation on its own line inside the surrounding brackets when
-  the literal ends with a newline, instead of joining them onto a single line. Note
-  that the unstable `string_processing` style merges implicitly concatenated strings
-  and takes precedence, so this feature has no effect while it is also enabled.
+  implicit string concatenation on its own line inside the surrounding brackets when the
+  literal ends with a newline, instead of joining them onto a single line. Note that the
+  unstable `string_processing` style merges implicitly concatenated strings and takes
+  precedence, so this feature has no effect while it is also enabled.
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
 - `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
