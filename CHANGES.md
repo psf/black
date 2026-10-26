@@ -59,6 +59,8 @@
 - Fix crash on a method chain with multiple `# type: ignore` comments when another
   comment sits between them, which put a `# type: ignore` after the other comment on one
   line, where it no longer applies (#5618)
+- Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
+  line and ensure the `# type: ignore` comes first (#5625)
 
 ### Preview style
 
