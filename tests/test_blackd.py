@@ -60,6 +60,41 @@ class BlackDTestCase(AioHTTPTestCase):
             msg=f"Expected error to start with 'cannot parse', got {repr(content)}",
         )
 
+    async def test_blackd_request_invalid_encoding(self) -> None:
+        response = await self.client.post("/", data=b"name = '\xff'")
+        self.assertEqual(response.status, 400)
+        self.assertIn("decode", await response.text())
+        self.assertEqual(
+            response.headers.get(blackd.BLACK_VERSION_HEADER), black.__version__
+        )
+
+    async def test_blackd_request_unknown_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"x=1",
+            headers={"Content-Type": "text/plain; charset=unknown-charset"},
+        )
+        self.assertEqual(response.status, 400)
+        self.assertIn("unknown encoding", await response.text())
+
+    async def test_blackd_request_undecodable_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"x=1",
+            headers={"Content-Type": "text/plain; charset=undefined"},
+        )
+        self.assertEqual(response.status, 400)
+        self.assertIn("undefined", await response.text())
+
+    async def test_blackd_request_non_utf8_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"name = '\xe9'",
+            headers={"Content-Type": "text/plain; charset=iso-8859-1"},
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.read(), b'name = "\xe9"\n')
+
     async def test_blackd_unsupported_version(self) -> None:
         response = await self.client.post(
             "/", data=b"what", headers={blackd.PROTOCOL_VERSION_HEADER: "2"}
@@ -194,6 +229,35 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.read(), expected_result)
+
+    async def test_blackd_skip_first_source_line_with_diff(self) -> None:
+        source = b"#!/usr/bin/env python\ni = [1,2,3]\n"
+        response = await self.client.post(
+            "/",
+            data=source,
+            headers={
+                blackd.SKIP_SOURCE_FIRST_LINE: "true",
+                blackd.DIFF_HEADER: "true",
+            },
+        )
+        self.assertEqual(response.status, 200)
+
+        diff_header = re.compile(
+            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
+        )
+        actual = diff_header.sub(DETERMINISTIC_HEADER, await response.text())
+
+        # The skipped line must stay inside the patch as context, so that the body is
+        # a diff of the whole source rather than a raw source line in front of it.
+        self.assertEqual(
+            actual,
+            "--- [Deterministic header]\n"
+            "+++ [Deterministic header]\n"
+            "@@ -1,2 +1,2 @@\n"
+            " #!/usr/bin/env python\n"
+            "-i = [1,2,3]\n"
+            "+i = [1, 2, 3]\n",
+        )
 
     async def test_blackd_preview(self) -> None:
         response = await self.client.post(

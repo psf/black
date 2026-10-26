@@ -27,6 +27,17 @@ foo(lambda x=(
     1,
 ): x]
 
+# Same for a single-element subscript, but not for one with more elements.
+foo(lambda x=a[
+    # comment
+    1,
+]: x)
+[lambda x=a[
+    # comment
+    1,
+    2,
+]: x]
+
 # Trailing commas in multiple chained non-nested parens.
 zero(
     one,
@@ -63,6 +74,12 @@ func(
 # had lost their place in the tree.
 value = alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
 
+# A comment after an argument stays there when the last argument is an implicitly
+# concatenated string.
+parser.add_argument("--retries",  # 0 disables
+                    help="Number of times to retry "
+                         "before giving up")
+
 # output
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
@@ -94,6 +111,18 @@ foo(
     1,): x
 ]
 
+# Same for a single-element subscript, but not for one with more elements.
+foo(
+    lambda x=a[
+    # comment
+    1,]: x
+)
+[
+    lambda x=a[
+    # comment
+    1, 2]: x
+]
+
 # Trailing commas in multiple chained non-nested parens.
 zero(one).two(three).four(five)
 
@@ -108,4 +137,11 @@ func(argument1, (one, two), argument4, argument5, argument6)
 # had lost their place in the tree.
 value = (
     alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
+)
+
+# A comment after an argument stays there when the last argument is an implicitly
+# concatenated string.
+parser.add_argument(
+    "--retries",  # 0 disables
+    help="Number of times to retry " "before giving up",
 )
