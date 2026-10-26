@@ -43,7 +43,7 @@
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
 - Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
-  has its own `# fmt: skip` on the opening line (#5597, #5612, #5610, #5626)
+  has its own `# fmt: skip` on the opening line (#5597, #5612, #5610)
 - Fix unstable formatting of a call with an inline comment after an argument when its
   last argument is an implicitly concatenated string (#5587)
 - Keep the empty lines before a comment outside the requested `--line-ranges` instead of
@@ -61,6 +61,8 @@
   line, where it no longer applies (#5618)
 - Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
   line and ensure the `# type: ignore` comes first (#5625)
+- Fix crash on consecutive statements that each have `# fmt: skip` on an opening bracket
+  (#5626)
 
 ### Preview style
 
