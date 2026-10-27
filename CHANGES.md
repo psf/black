@@ -69,6 +69,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix unstable formatting when a comparison operand's redundant parentheses span several
+  lines but fit on one, such as `assert f(...) == (` ... `expected` ... `)` (#5631)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
   binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
