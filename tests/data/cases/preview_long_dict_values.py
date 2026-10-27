@@ -1,8 +1,6 @@
 # flags: --preview
 x = {
-    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
-        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
-    )
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
 }
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
@@ -46,9 +44,7 @@ tasks = {
 
 # Dictionary comprehensions
 tasks = {
-    key_name: (
-        xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
-    )
+    key_name: xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
     for src in sources
 }
 tasks = {key_name: foobar for src in sources}
@@ -161,9 +157,7 @@ class C:
 
 # output
 x = {
-    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
-        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
-    )
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
 }
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
@@ -208,9 +202,7 @@ tasks = {
 
 # Dictionary comprehensions
 tasks = {
-    key_name: (
-        xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
-    )
+    key_name: xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
     for src in sources
 }
 tasks = {key_name: foobar for src in sources}

@@ -287,7 +287,7 @@ class LineGenerator(Visitor[Line]):
                             features=self.features,
                             remove_brackets_around_comma=False,
                         )
-                    else:
+                    elif max_delimiter_priority_in_atom(child) > DOT_PRIORITY:
                         wrap_in_parentheses(node, child, visible=False, index=i)
         yield from self.visit_default(node)
 
