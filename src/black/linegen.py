@@ -17,6 +17,7 @@ from black.brackets import (
     LOGIC_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
+    max_delimiter_priority,
     max_delimiter_priority_in_atom,
 )
 from black.comments import (
@@ -287,7 +288,7 @@ class LineGenerator(Visitor[Line]):
                             features=self.features,
                             remove_brackets_around_comma=False,
                         )
-                    elif max_delimiter_priority_in_atom(child) > DOT_PRIORITY:
+                    elif max_delimiter_priority(child.children) > DOT_PRIORITY:
                         wrap_in_parentheses(node, child, visible=False, index=i)
         yield from self.visit_default(node)
 
