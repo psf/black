@@ -2168,6 +2168,16 @@ def _normalize_comparison_operands(
             maybe_make_parens_invisible_in_atom(
                 operand, parent=node, mode=mode, features=features
             )
+            if is_atom_with_invisible_parens(operand) and not any(
+                "#" in leaf.prefix for leaf in operand.leaves()
+            ):
+                # Drop the now invisible parens so the operand splits the same way
+                # as one written without parentheses. Otherwise the next pass, which
+                # no longer sees them, can split it differently: parens kept for
+                # being multiline are joined onto one line and only removed then.
+                middle = operand.children[1]
+                middle.prefix = operand.prefix
+                operand.replace(middle)
 
 
 def normalize_invisible_parens(
