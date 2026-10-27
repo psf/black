@@ -61,6 +61,9 @@
   line, where it no longer applies (#5618)
 - Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
   line and ensure the `# type: ignore` comes first (#5625)
+- Fix a Jupyter notebook magic in an annotated assignment (for example
+  `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
+  runs it as (#5628)
 
 ### Preview style
 
