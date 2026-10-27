@@ -17,6 +17,18 @@ x = {
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
 }
+{
+    "url": f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    f"FILENAME/download",
+    "url": "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    f"FILENAME/download",
+    "url": f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    "FILENAME/download",
+    "url": "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    "FILENAME/download",
+}
+{"a":"""
+"""}
 
 my_dict = {
     "something_something":
@@ -121,6 +133,27 @@ my_dict = {
 }
 
 
+class Foo:
+    def test_apply_nanoseconds(self):
+        tests = [
+            (
+                BusinessHour(),
+                {
+                    Timestamp("2014-07-04 15:00") + Nano(5): Timestamp(
+                        "2014-07-04 16:00"
+                    ) + Nano(5),
+                    Timestamp("2014-07-04 16:00") + Nano(5):Timestamp(
+                         "2014-07-07 09:00"
+                    )+Nano(5),
+                    Timestamp("2014-07-04 16:00") - Nano(5): Timestamp(
+                        "2014-07-04 17:00"
+                    )
+                    - Nano(5),
+                },
+            ),
+        ]
+
+
 class Random:
     def func():
         random_service.status.active_states.inactive = (
@@ -173,6 +206,28 @@ x = {
 }
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
+}
+{
+    "url": (
+        f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        f"FILENAME/download"
+    ),
+    "url": (
+        "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        f"FILENAME/download"
+    ),
+    "url": (
+        f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        "FILENAME/download"
+    ),
+    "url": (
+        "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        "FILENAME/download"
+    ),
+}
+{
+    "a": """
+"""
 }
 
 my_dict = {
@@ -289,6 +344,26 @@ my_dict = {
         }
     ),
 }
+
+
+class Foo:
+    def test_apply_nanoseconds(self):
+        tests = [
+            (
+                BusinessHour(),
+                {
+                    Timestamp("2014-07-04 15:00") + Nano(5): (
+                        Timestamp("2014-07-04 16:00") + Nano(5)
+                    ),
+                    Timestamp("2014-07-04 16:00") + Nano(5): (
+                        Timestamp("2014-07-07 09:00") + Nano(5)
+                    ),
+                    Timestamp("2014-07-04 16:00") - Nano(5): (
+                        Timestamp("2014-07-04 17:00") - Nano(5)
+                    ),
+                },
+            ),
+        ]
 
 
 class Random:

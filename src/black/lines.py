@@ -1461,7 +1461,7 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
 
         if is_multiline_string(leaf):
             if leaf.parent and (
-                leaf.parent.type == syms.test
+                leaf.parent.type in {syms.test, syms.dictsetmaker}
                 or (leaf.parent.parent and leaf.parent.parent.type == syms.dictsetmaker)
             ):
                 # Keep ternary and dictionary values parenthesized
