@@ -290,6 +290,14 @@ class LineGenerator(Visitor[Line]):
                     # Allow parens around the value if otherwise the key would split
                     key and max_delimiter_priority(key.children) > 0
                 ):
+                    while (
+                        child
+                        and len(child.children) == 3
+                        and is_lpar_token(child.children[0])
+                        and is_rpar_token(child.children[-1])
+                    ):
+                        child = child.children[1]
+
                     wrap_in_parentheses(node, child, visible=False, index=i)
 
         yield from self.visit_default(node)
