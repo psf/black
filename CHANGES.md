@@ -69,8 +69,6 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- Fix unstable formatting when a comparison operand's redundant parentheses span several
-  lines but fit on one, such as `assert f(...) == (` ... `expected` ... `)` (#5631)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
   binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
@@ -82,7 +80,7 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
-- Remove redundant parentheses around operands in comparison expressions (#5539)
+- Remove redundant parentheses around operands in comparison expressions (#5539, #5631)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant
