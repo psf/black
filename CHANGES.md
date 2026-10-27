@@ -64,6 +64,9 @@
 - Fix a Jupyter notebook magic in an annotated assignment (for example
   `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
   runs it as (#5628)
+- Fix IPython help syntax after an object (`obj?`), wildcard searches (`np.*load*?`) and
+  pasted `>>>` prompts being rewritten in Jupyter notebooks. Cells with IPython syntax
+  that can't be put back as written are now left unchanged (#5630)
 
 ### Preview style
 

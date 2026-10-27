@@ -61,6 +61,7 @@ following will not be formatted:
 - non-Python cell magics (e.g. `%%writefile`)
 - multiline magics
 - code which `IPython`'s `TransformerManager` would transform magics into
+- IPython syntax that can't be put back as written (e.g. `df.head?` or `>>>` prompts)
 - invalid syntax
 
 See

@@ -73,6 +73,8 @@ formatted:
   ```python
   get_ipython().system('ls')
   ```
+- **IPython syntax that can't be put back as written** — e.g. help after an object
+  (`df.head?`), wildcard searches (`np.*load*?`) and pasted `>>>` prompts
 - **Invalid syntax** — as it cannot be safely distinguished from automagics without a
   running IPython kernel.
 

@@ -1,4 +1,3 @@
-import contextlib
 import pathlib
 import re
 from contextlib import AbstractContextManager
@@ -25,8 +24,6 @@ from black.handle_ipynb_magics import (
 )
 from tests.util import DATA_DIR, get_case_path, read_jupyter_notebook
 
-with contextlib.suppress(ModuleNotFoundError):
-    import IPython
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
 pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency")
@@ -174,15 +171,29 @@ def test_non_python_magics(src: str) -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
-@pytest.mark.skipif(
-    IPython.version_info < (8, 3),
-    reason="Change in how TransformerManager transforms this input",
-)
 def test_set_input() -> None:
     src = "a = b??"
-    expected = "??b"
-    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
-    assert result == expected
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
+@pytest.mark.parametrize(
+    "src",
+    (
+        pytest.param("str.split?\nx=1", id="Help after the object"),
+        pytest.param("str.split??\nx=1", id="Source after the object"),
+        pytest.param("str.*find*?\nx=1", id="Wildcard search"),
+        pytest.param(">>> x=1\n>>> print(x)", id="Python prompts"),
+        pytest.param("In [1]: x=1\n   ...: print(x)", id="IPython prompts"),
+        pytest.param(",print a b\nx=1", id="Auto-quoted call"),
+        pytest.param("/print 1\nx=1", id="Auto-parenthesized call"),
+    ),
+)
+def test_rewritten_ipython_syntax_noop(src: str) -> None:
+    # Black can only put back what IPython turns these into (`?str.split`,
+    # `%psearch str.*find*`, the code without prompts, `print("a", "b")`, ...).
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_input_already_contains_transformed_magic() -> None:
