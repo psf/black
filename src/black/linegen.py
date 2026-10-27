@@ -273,23 +273,25 @@ class LineGenerator(Visitor[Line]):
     def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_long_dict_values_in_parens in self.mode:
             for i, child in enumerate(node.children):
-                if i == 0:
+                if not child.prev_sibling or child.prev_sibling.type != token.COLON:
                     continue
-                if node.children[i - 1].type == token.COLON:
-                    if (
-                        child.type == syms.atom
-                        and child.children[0].type in OPENING_BRACKETS
-                        and not is_walrus_assignment(child)
-                    ):
-                        maybe_make_parens_invisible_in_atom(
-                            child,
-                            parent=node,
-                            mode=self.mode,
-                            features=self.features,
-                            remove_brackets_around_comma=False,
-                        )
-                    elif max_delimiter_priority(child.children) > DOT_PRIORITY:
-                        wrap_in_parentheses(node, child, visible=False, index=i)
+
+                if not is_walrus_assignment(child):
+                    maybe_make_parens_invisible_in_atom(
+                        child,
+                        parent=node,
+                        mode=self.mode,
+                        features=self.features,
+                        remove_brackets_around_comma=False,
+                    )
+
+                key = node.children[i - 2]
+                if max_delimiter_priority(child.children) > 0 or (
+                    # Allow parens around the value if otherwise the key would split
+                    key and max_delimiter_priority(key.children) > 0
+                ):
+                    wrap_in_parentheses(node, child, visible=False, index=i)
+
         yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
