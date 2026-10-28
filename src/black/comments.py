@@ -498,6 +498,9 @@ def _handle_regular_fmt_block(
             or node.fmt_pass_converted_first_leaf is None
             or (isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT)
             or "\n" in next_node.prefix
+            # The newline ends a trailing comment, like `B,  # fmt: skip` in a class
+            # header: it was taken along with the comment from the prefix of `)`
+            or "#" in node_str.rpartition("\n")[2]
         ):
             node_str += "\n"
         return node_str

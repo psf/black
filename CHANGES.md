@@ -64,6 +64,8 @@
 - Fix a Jupyter notebook magic in an annotated assignment (for example
   `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
   runs it as (#5628)
+- Fix crash when a class header with `# fmt: skip` also has a `# fmt: skip` after its
+  last base or keyword argument, such as `B,  # fmt: skip` ... `):  # fmt: skip` (#5633)
 
 ### Preview style
 
