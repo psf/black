@@ -558,6 +558,22 @@ def _handle_regular_fmt_block(
             parts.append(str(node))
 
     hidden_value = "".join(parts) + trailing_comments
+    if not is_fmt_skip:
+        endmarker, dedents = _get_endmarker_and_dedents(ignored_nodes[-1])
+        eof_nodes: list[Leaf] = [*dedents, endmarker] if endmarker is not None else []
+        has_fmt_on = any(
+            contains_fmt_directive(c.value, FMT_ON)
+            for eof_node in eof_nodes
+            for c in list_comments(
+                eof_node.prefix,
+                is_endmarker=eof_node.type == token.ENDMARKER,
+                mode=mode,
+            )
+        )
+        if eof_nodes and not has_fmt_on:
+            hidden_value += "".join(eof_node.prefix for eof_node in eof_nodes)
+            for eof_node in eof_nodes:
+                eof_node.prefix = ""
     comment_lineno = leaf.lineno - comment.newlines
     leaf_is_ignored = any(
         ignored is leaf
@@ -662,6 +678,31 @@ def _take_comments_ending_fmt_off(last_ignored: LN, mode: Mode) -> str:
     trailing_comments = next_leaf.prefix[:consumed]
     next_leaf.prefix = next_leaf.prefix[consumed:]
     return trailing_comments
+
+
+def _get_endmarker_and_dedents(node: LN) -> tuple[Leaf | None, list[Leaf]]:
+    """Find the ENDMARKER leaf and intervening DEDENT leaves following `node`.
+
+    If `node` is followed by non-dedent statements before reaching ENDMARKER,
+    it is not at the end of the file, and `(None, [])` is returned.
+    """
+    dedents: list[Leaf] = []
+    current: LN | None = node
+    while current is not None:
+        sibling = current.next_sibling
+        if sibling is None:
+            current = current.parent
+            continue
+        if sibling.type == token.DEDENT:
+            assert isinstance(sibling, Leaf)
+            dedents.append(sibling)
+            current = sibling
+            continue
+        if sibling.type == token.ENDMARKER:
+            assert isinstance(sibling, Leaf)
+            return sibling, dedents
+        return None, []
+    return None, []
 
 
 def generate_ignored_nodes(
