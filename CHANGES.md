@@ -61,6 +61,9 @@
   line, where it no longer applies (#5618)
 - Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
   line and ensure the `# type: ignore` comes first (#5625)
+- Fix a Jupyter notebook magic in an annotated assignment (for example
+  `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
+  runs it as (#5628)
 
 ### Preview style
 
@@ -77,7 +80,7 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
-- Remove redundant parentheses around operands in comparison expressions (#5539)
+- Remove redundant parentheses around operands in comparison expressions (#5539, #5631)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant
