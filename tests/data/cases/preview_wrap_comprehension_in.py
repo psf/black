@@ -44,6 +44,8 @@ double_lambda_iter = [i for i in ((lambda: 0)) if i]
 double_lambda_no_clause = [i for i in ((lambda x: x))]
 double_ternary = [i for i in ((a if b else c))]
 triple_lambda = [i for i in (((lambda: 0))) if i]
+[a for a in (yield b)]
+[a for a in (((yield b)))]
 
 # Nested arrays
 # First in will not be split because it would still be too long
@@ -162,6 +164,8 @@ double_lambda_iter = [i for i in (lambda: 0) if i]
 double_lambda_no_clause = [i for i in (lambda x: x)]
 double_ternary = [i for i in (a if b else c)]
 triple_lambda = [i for i in (lambda: 0) if i]
+[a for a in (yield b)]
+[a for a in (yield b)]
 
 # Nested arrays
 # First in will not be split because it would still be too long

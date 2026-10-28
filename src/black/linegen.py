@@ -831,7 +831,7 @@ class LineGenerator(Visitor[Line]):
                         child,
                         visible=(
                             # Keep one level to avoid syntax errors
-                            child.type in {syms.test, syms.lambdef}
+                            child.type in {syms.test, syms.lambdef, syms.yield_expr}
                             # Keep as-written if it's a non-simple name (has delimiters)
                             or (unwrapped and max_delimiter > DOT_PRIORITY)
                         ),
