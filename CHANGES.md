@@ -69,6 +69,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Retain user-written parens around `in` clauses of comprehensions if they have
+  delimiters (#4881)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
   binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
@@ -94,8 +96,6 @@
 - Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
-- Retain user-written parens around `in` clauses of comprehensions if they have
-  delimiters (#4881)
 
 ### Configuration
 
