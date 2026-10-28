@@ -21,6 +21,19 @@ parametrize(
         {},
     ),
 )
+parser.add_argument("--retries",  # 0 disables
+                    help="Number of times to retry "
+                         "before giving up")
+def check(path):
+    if not path.exists():
+        raise FileNotFoundError(errno.ENOENT,  # keep errno
+                                "Config file is missing: "
+                                "run init")
+call(
+    "aaaaaaaaaaaaaaaaaaaa",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"  # comment
+    "ccccccccccccccccccccccccccccccc",
+)
 
 
 
@@ -47,5 +60,24 @@ parametrize(
         {},
         {},
     ),
+)
+parser.add_argument(
+    "--retries",  # 0 disables
+    help="Number of times to retry " "before giving up",
+)
+
+
+def check(path):
+    if not path.exists():
+        raise FileNotFoundError(
+            errno.ENOENT,  # keep errno
+            "Config file is missing: " "run init",
+        )
+
+
+call(
+    "aaaaaaaaaaaaaaaaaaaa",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"  # comment
+    "ccccccccccccccccccccccccccccccc",
 )
 

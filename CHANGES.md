@@ -23,15 +23,54 @@
   closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
   one of its parameter defaults (#5533)
+- Fix crash when `# fmt: skip` follows the closing parenthesis of a multi-line `from`
+  import and another statement on the same line, such as `); import c  # fmt: skip`
+  (#5584)
 - Fix `--skip-magic-trailing-comma` dropping the trailing comma from a split one-element
   subscript (`a[x,]`) used as a lambda parameter default (#5533)
+- Fix crash on bytes literals containing `\u`, `\U` or `\N{...}`, which are not escape
+  sequences in bytes and were changed by the escape normalization (#5583)
+- Fix a parenthesized lambda being turned into a tuple when a standalone comment sits
+  between `lambda` and its parameters (#5596)
+- Fix crash on `# fmt: skip` after a one-line compound statement whose
+  semicolon-separated body starts with a bare name, such as `if x: a; b` (#5588)
 - Keep comments at the end of a `# fmt: off` region inside brackets unchanged, instead
   of moving a trailing comment to its own line or re-indenting them (#5585)
+- Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression
+  continues after the closing bracket, such as `x = (  # fmt: skip` ... `) if c else d`
+  (#5586)
+- Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
+  block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
+  is outside the selected `--line-ranges` (#5549)
+- Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
+  has its own `# fmt: skip` on the opening line (#5597, #5612, #5610)
+- Fix unstable formatting of a call with an inline comment after an argument when its
+  last argument is an implicitly concatenated string (#5587)
+- Keep the empty lines before a comment outside the requested `--line-ranges` instead of
+  capping them (#5613)
+- Fix a `# fmt: skip` comment on a line of its own after a blank line skipping the
+  statement above it, which removed or added blank lines and could crash with "produced
+  different code on the second pass" (#5615)
+- Fix crash on an assignment whose target is split over lines inside redundant
+  parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
+  `.d[e]) = f` (#5606, #5621)
+- Fix crash when `# fmt: skip` is on an opening bracket that starts an operand of a
+  longer expression after `with` or `yield` (#5620)
+- Fix crash on a method chain with multiple `# type: ignore` comments when another
+  comment sits between them, which put a `# type: ignore` after the other comment on one
+  line, where it no longer applies (#5618)
+- Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
+  line and ensure the `# type: ignore` comes first (#5625)
+- Fix a Jupyter notebook magic in an annotated assignment (for example
+  `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
+  runs it as (#5628)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
+  binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
   when using the unstable `string_processing` feature (#5515)
@@ -43,7 +82,7 @@
 - Remove redundant parentheses around lists and list comprehensions (#5431)
 - Parenthesize and split operator chains when both operands fit on their own
   delimiter-split line (#5523)
-- Remove redundant parentheses around operands in comparison expressions (#5539)
+- Remove redundant parentheses around operands in comparison expressions (#5539, #5631)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant
@@ -51,6 +90,12 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Split long strings after overloaded binary and augmented assignment operators,
+  including middle operands of operator chains, in the unstable `string_processing`
+  feature (#5562)
+- Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
+  sets when the line length is very small or the code is deeply nested, by not wrapping
+  them in parentheses when the wrapped line would still be too long (#5521)
 
 ### Configuration
 
@@ -93,10 +138,15 @@
 
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using
   the requested charset, instead of HTTP 500 (#5519)
+- Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
+  for a `X-Diff` request, instead of prepending it as raw text in front of the diff
+  (#5573)
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
+
+- Fix the GitHub Action picking up `venv.py` from the local repository (#5611)
 
 ### Documentation
 

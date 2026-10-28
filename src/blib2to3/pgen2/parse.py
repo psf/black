@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from blib2to3.pgen2.driver import TokenProxy
 
 
-Results = dict[str, NL]
 Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]
 DFA = list[list[tuple[int, int]]]
 DFAS = tuple[DFA, dict[int, int]]
@@ -32,7 +31,7 @@ DFAS = tuple[DFA, dict[int, int]]
 
 def lam_sub(grammar: Grammar, node: RawNode) -> NL:
     assert node[3] is not None
-    return Node(type=node[0], children=node[3], context=node[2])
+    return Node(type=node[0], children=node[3])
 
 
 # A placeholder node, used when parser is backtracking.
@@ -283,7 +282,7 @@ class Parser:
                 if t >= 256:
                     # See if it's a symbol and if we're in its first set
                     itsdfa = self.grammar.dfas[t]
-                    itsstates, itsfirst = itsdfa
+                    itsfirst = itsdfa[1]
                     if ilabel in itsfirst:
                         # Push a symbol
                         self.push(t, itsdfa, newstate, context)
@@ -384,7 +383,7 @@ class Parser:
         if self.is_backtracking:
             self.stack.pop()
         else:
-            popdfa, popstate, popnode = self.stack.pop()
+            popnode = self.stack.pop()[2]
             newnode = convert(self.grammar, popnode)
             if self.stack:
                 dfa, state, node = self.stack[-1]
@@ -392,4 +391,3 @@ class Parser:
                 node[-1].append(newnode)
             else:
                 self.rootnode = newnode
-                self.rootnode.used_names = self.used_names

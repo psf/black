@@ -144,6 +144,16 @@ def test_cell_magic_noop() -> None:
             id="Assignment after non-ASCII characters",
         ),
         pytest.param("env =  %env", "env = %env", id="Assignment to magic"),
+        pytest.param(
+            "files: list[str] =!ls",
+            "files: list[str] = !ls",
+            id="Annotated system assignment",
+        ),
+        pytest.param(
+            "home: str =  %env HOME",
+            "home: str = %env HOME",
+            id="Annotated assignment to environment variable",
+        ),
     ),
 )
 def test_magic(src: str, expected: str, mode: Mode) -> None:
@@ -205,6 +215,11 @@ def test_magic_noop() -> None:
             "if True:\n    installed_packages_in_this_environment = !pip list"
             " --format=freeze --disable-pip-version-check",
             id="Indented system assignment",
+        ),
+        pytest.param(
+            "installed_packages_in_this_environment: list[str] = !pip list"
+            " --format=freeze --disable-pip-version-check",
+            id="Annotated system assignment",
         ),
     ),
 )

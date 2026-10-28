@@ -174,8 +174,9 @@ magic_right = other(third_arg, fourth_arg) + func(
 )
 
 # Operands with implicit string concatenation retain existing formatting.
-implicit_concat = some_variable_name == (
-    "first string literal that is long enough" "second string literal that completes it"
+implicit_concat = (
+    some_variable_name == "first string literal that is long enough"
+    "second string literal that completes it"
 )
 
 

@@ -451,18 +451,20 @@ class MagicFinder(ast.NodeVisitor):
     def __init__(self) -> None:
         self.magics: dict[int, list[OffsetAndMagic]] = collections.defaultdict(list)
 
-    def visit_Assign(self, node: ast.Assign) -> None:
+    def visit_Assign(self, node: ast.Assign | ast.AnnAssign) -> None:
         """Look for system assign magics.
 
         For example,
 
             black_version = !black --version
             env = %env var
+            files: list[str] = !ls
 
         would have been (respectively) transformed to
 
             black_version = get_ipython().getoutput('black --version')
             env = get_ipython().run_line_magic('env', 'var')
+            files: list[str] = get_ipython().getoutput('ls')
 
         and we look for instances of any of the latter.
         """
@@ -483,6 +485,10 @@ class MagicFinder(ast.NodeVisitor):
                 OffsetAndMagic(node.value.col_offset, src)
             )
         self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        """Look for system assign magics with a type annotation."""
+        self.visit_Assign(node)
 
     def visit_Expr(self, node: ast.Expr) -> None:
         """Look for magics in body of cell.

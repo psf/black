@@ -264,6 +264,7 @@ def normalize_string_quotes(s: str) -> str:
     return f"{prefix}{new_quote}{new_body}{new_quote}"
 
 
+# TODO: only used in currently disabled f-string formatting
 def normalize_fstring_quotes(
     quote: str,
     middles: list[Leaf],
@@ -331,12 +332,18 @@ def normalize_fstring_quotes(
     return middles, new_quote
 
 
-def _normalize_unicode_escape_sequences_in_text(text: str) -> str:
+def _normalize_unicode_escape_sequences_in_text(
+    text: str, is_bytes: bool = False
+) -> str:
     def replace(m: Match[str]) -> str:
         groups = m.groupdict()
         back_slashes = groups["backslashes"]
 
         if groups["body"] is None or len(back_slashes) % 2 == 0:
+            return m.group(0)
+
+        if is_bytes and not groups["x"]:
+            # \u, \U and \N{} are not escape sequences in bytes literals
             return m.group(0)
 
         if groups["u"]:
@@ -363,7 +370,9 @@ def normalize_unicode_escape_sequences(leaf: Leaf) -> None:
     if "r" in prefix.lower():
         return
 
-    leaf.value = _normalize_unicode_escape_sequences_in_text(text)
+    leaf.value = _normalize_unicode_escape_sequences_in_text(
+        text, is_bytes="b" in prefix.lower()
+    )
 
 
 def _normalize_fstring_field_node(node: Leaf | Node) -> None:

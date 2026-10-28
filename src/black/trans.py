@@ -15,7 +15,10 @@ from black.comments import contains_pragma_comment
 from black.lines import Line, append_leaves, is_line_short_enough, line_to_string
 from black.mode import Feature, Mode
 from black.nodes import (
+    ASSIGNMENTS,
     CLOSING_BRACKETS,
+    COMPARATORS,
+    MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
     is_empty_lpar,
@@ -1142,17 +1145,7 @@ class BaseStringSplitter(StringTransformer, CustomSplitMapMixin):
         * The target string is not a multiline (i.e. triple-quote) string.
     """
 
-    STRING_OPERATORS: Final = [
-        token.EQEQUAL,
-        token.GREATER,
-        token.GREATEREQUAL,
-        token.LESS,
-        token.LESSEQUAL,
-        token.NOTEQUAL,
-        token.PERCENT,
-        token.PLUS,
-        token.STAR,
-    ]
+    STRING_OPERATORS: Final = COMPARATORS | (MATH_OPERATORS - {token.TILDE})
 
     MIN_SUBSTR_SIZE: Final = 6
 
@@ -1380,7 +1373,7 @@ class BaseStringSplitter(StringTransformer, CustomSplitMapMixin):
                 # WMA4 a space, a comma, and a closing bracket [e.g. `), STRING`].
                 offset += 3
 
-            if P.type in [token.COLON, token.EQUAL, token.PLUSEQUAL, token.NAME]:
+            if P.type == token.NAME or P.value in ASSIGNMENTS:
                 # This conditional branch is meant to handle dictionary keys,
                 # variable assignments, 'return STRING' statement lines, and
                 # 'else STRING' ternary expression lines.
@@ -2010,7 +2003,7 @@ class StringSplitter(BaseStringSplitter, CustomSplitMapMixin):
 
         string_op_leaves = []
         i = 0
-        while LL[i].type in self.STRING_OPERATORS + [token.NAME]:
+        while LL[i].type in self.STRING_OPERATORS or LL[i].type == token.NAME:
             prefix_leaf = Leaf(LL[i].type, str(LL[i]).strip())
             string_op_leaves.append(prefix_leaf)
             i += 1
@@ -2039,6 +2032,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
           <string>`) such that the variable is being assigned the value of some
           string.
           OR
+        * The line contains a binary operator followed by a string, including
+          operators overloaded by the left operand.
+          OR
         * The line is a dictionary key assignment where some valid key is being
           assigned the value of some string.
           OR
@@ -2057,9 +2053,10 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         the RPAR. This results in the RPAR (and possibly a trailing comma)
         being placed on its own line.
 
-        NOTE: If any leaves exist to the right of the chosen string (except
-        for a trailing comma, which would be placed after the RPAR), those
-        leaves are placed inside the parentheses.  In effect, the chosen
+        NOTE: For binary operands, subsequent operators stay outside the new
+        parentheses. Otherwise, leaves to the right of the chosen string are
+        placed inside the parentheses, except for a trailing comma, which is
+        placed after the RPAR. In effect, the chosen
         string is not necessarily being "wrapped" by parentheses. We can,
         however, count on the LPAR being placed directly before the chosen
         string.
@@ -2091,6 +2088,7 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             or self._else_match(LL)
             or self._assert_match(LL)
             or self._assign_match(LL)
+            or self._binary_match(line)
             or self._dict_or_lambda_match(LL)
         )
 
@@ -2099,6 +2097,14 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         if string_idx is None:
             string_idx = self._prefer_paren_wrap_match(line)
+            if string_idx is not None and not self._wrapped_line_can_fit(
+                line, string_idx
+            ):
+                return TErr(
+                    "We do not wrap strings in parentheses when the resultant line"
+                    " would still be over the line length and can't be split by"
+                    " StringSplitter."
+                )
 
         if string_idx is not None:
             # If the string is implicitly concatenated with a string on another
@@ -2149,6 +2155,22 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             return Ok([string_idx])
 
         return TErr("This line does not contain any non-atomic strings.")
+
+    def _wrapped_line_can_fit(self, line: Line, string_idx: int) -> bool:
+        """
+        Returns:
+            True iff the line created by wrapping the string at @string_idx in
+            parens fits within the line length, or StringSplitter can split it
+            there. That line is one level deeper than @line.
+        """
+        string_value = line.leaves[string_idx].value
+        new_depth = line.depth + 1
+        if new_depth * 4 + str_width(string_value) <= self.line_length:
+            return True
+
+        return self.line_length - 1 - new_depth * 4 >= 0 and (
+            self.can_be_split(string_value) or self.has_custom_splits(string_value)
+        )
 
     @staticmethod
     def _return_match(LL: list[Leaf]) -> int | None:
@@ -2284,8 +2306,8 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             is_valid_index = is_valid_index_factory(LL)
 
             for i, leaf in enumerate(LL):
-                # We MUST find either an '=' or '+=' symbol...
-                if leaf.type in [token.EQUAL, token.PLUSEQUAL]:
+                # An assignment operator must be followed by the target string.
+                if leaf.value in ASSIGNMENTS and leaf.type != token.COLON:
                     idx = i + 2 if is_empty_par(LL[i + 1]) else i + 1
 
                     # That symbol MUST be followed by a string...
@@ -2316,6 +2338,56 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                             return string_idx
 
         return None
+
+    def _binary_match(self, line: Line) -> int | None:
+        """Find a long string operand, including one in the middle of a chain."""
+        LL = line.leaves
+        is_valid_index = is_valid_index_factory(LL)
+        for i, leaf in enumerate(LL):
+            if leaf.type not in MATH_OPERATORS or leaf.type == token.TILDE:
+                continue
+            if parent_type(leaf) not in {
+                syms.arith_expr,
+                syms.term,
+                syms.power,
+                syms.shift_expr,
+                syms.and_expr,
+                syms.xor_expr,
+                syms.expr,
+            }:
+                continue
+
+            idx = i + 1
+            if is_valid_index(idx) and is_empty_lpar(LL[idx]):
+                idx += 1
+            if not is_valid_index(idx) or LL[idx].type != token.STRING:
+                continue
+            operand_end = self._binary_operand_end(LL, idx)
+            if is_valid_index(operand_end):
+                if (
+                    LL[operand_end].type not in MATH_OPERATORS - {token.TILDE}
+                    or leaf.bracket_depth
+                ):
+                    # Split enclosing calls/collections before wrapping a middle
+                    # operand, and leave other trailers to existing matchers.
+                    continue
+            if not isinstance(self._validate(line, idx), Err):
+                return idx
+
+        return None
+
+    @staticmethod
+    def _binary_operand_end(LL: list[Leaf], string_idx: int) -> int:
+        """Find the string's trailer without absorbing a following % operation."""
+        idx = string_idx
+        while idx + 1 < len(LL) and LL[idx + 1].type == token.STRING:
+            idx += 1
+        trailer_idx = idx + 1
+        while trailer_idx < len(LL) and is_empty_par(LL[trailer_idx]):
+            trailer_idx += 1
+        if trailer_idx < len(LL) and LL[trailer_idx].type == token.PERCENT:
+            return trailer_idx
+        return StringParser().parse(LL, idx)
 
     @staticmethod
     def _dict_or_lambda_match(LL: list[Leaf]) -> int | None:
@@ -2398,8 +2470,25 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
         )
         string_idx = string_indices[0]
 
+        if self._binary_match(line) == string_idx:
+            operand_end = self._binary_operand_end(LL, string_idx)
+            if operand_end < len(LL):
+                # Reuse the terminal-operand wrapper, then restore the suffix
+                # after its RPAR. Wrapping the suffix too would reassociate
+                # expressions such as x % STRING % y.
+                operand_line = line.clone()
+                append_leaves(operand_line, line, LL[:operand_end])
+                results = list(self.do_transform(operand_line, [string_idx]))
+                last_result = results.pop()
+                yield from results
+                if isinstance(last_result, Err):
+                    yield last_result
+                    return
+                append_leaves(last_result.ok(), line, LL[operand_end:])
+                yield last_result
+                return
+
         is_valid_index = is_valid_index_factory(LL)
-        insert_str_child = insert_str_child_factory(LL[string_idx])
 
         comma_idx = -1
         ends_with_comma = False
@@ -2432,6 +2521,9 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         append_leaves(first_line, line, left_leaves)
 
+        # Keep the operand in the tree while calculating the operator's spacing.
+        # Removing it early can make an exponentiation look simple enough to hug.
+        insert_str_child = insert_str_child_factory(LL[string_idx])
         lpar_leaf = Leaf(token.LPAR, "(")
         if old_parens_exist:
             replace_child(LL[string_idx - 1], lpar_leaf)
