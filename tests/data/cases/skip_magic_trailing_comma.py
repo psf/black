@@ -74,6 +74,20 @@ func(
 # had lost their place in the tree.
 value = alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
 
+# A comment after an argument stays there when the last argument is an implicitly
+# concatenated string.
+parser.add_argument("--retries",  # 0 disables
+                    help="Number of times to retry "
+                         "before giving up")
+
+# A split tuple target whose trailing comma is ignored splits like one written
+# without parentheses.
+if props.added_pickling:
+    (
+        self._cls_dict["__getstate__"],
+        self._cls_dict["__setstate__"],
+    ) = self._make_getstate_setstate()
+
 # output
 # We should not remove the trailing comma in a single-element subscript.
 a: tuple[int,]
@@ -132,3 +146,17 @@ func(argument1, (one, two), argument4, argument5, argument6)
 value = (
     alpha[beta,]() ** gamma * delta << epsilon | zeta < eta ^ theta * iota + kappa + mu
 )
+
+# A comment after an argument stays there when the last argument is an implicitly
+# concatenated string.
+parser.add_argument(
+    "--retries",  # 0 disables
+    help="Number of times to retry " "before giving up",
+)
+
+# A split tuple target whose trailing comma is ignored splits like one written
+# without parentheses.
+if props.added_pickling:
+    self._cls_dict["__getstate__"], self._cls_dict["__setstate__"] = (
+        self._make_getstate_setstate()
+    )

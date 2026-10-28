@@ -2097,6 +2097,14 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
 
         if string_idx is None:
             string_idx = self._prefer_paren_wrap_match(line)
+            if string_idx is not None and not self._wrapped_line_can_fit(
+                line, string_idx
+            ):
+                return TErr(
+                    "We do not wrap strings in parentheses when the resultant line"
+                    " would still be over the line length and can't be split by"
+                    " StringSplitter."
+                )
 
         if string_idx is not None:
             # If the string is implicitly concatenated with a string on another
@@ -2147,6 +2155,22 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
             return Ok([string_idx])
 
         return TErr("This line does not contain any non-atomic strings.")
+
+    def _wrapped_line_can_fit(self, line: Line, string_idx: int) -> bool:
+        """
+        Returns:
+            True iff the line created by wrapping the string at @string_idx in
+            parens fits within the line length, or StringSplitter can split it
+            there. That line is one level deeper than @line.
+        """
+        string_value = line.leaves[string_idx].value
+        new_depth = line.depth + 1
+        if new_depth * 4 + str_width(string_value) <= self.line_length:
+            return True
+
+        return self.line_length - 1 - new_depth * 4 >= 0 and (
+            self.can_be_split(string_value) or self.has_custom_splits(string_value)
+        )
 
     @staticmethod
     def _return_match(LL: list[Leaf]) -> int | None:

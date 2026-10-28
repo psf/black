@@ -207,9 +207,7 @@ def convert_unchanged_lines(src_node: Node, lines: Collection[tuple[int, int]]) 
     more formatting to pass (1). However, it's hard to get it correct when
     incorrect indentations are used. So we defer this to future optimizations.
     """
-    lines_set: set[int] = set()
-    for start, end in lines:
-        lines_set.update(range(start, end + 1))
+    lines_set = frozenset(n for start, end in lines for n in range(start, end + 1))
     replacements = _NodeReplacements()
     visitor = _TopLevelStatementsVisitor(lines_set, replacements)
     _ = list(visitor.visit(src_node))  # Consume all results.
@@ -303,7 +301,6 @@ class _NodeReplacements:
                 else:
                     new_children.append(child)
             parent.children = new_children
-            parent.changed()
             parent.invalidate_sibling_maps()
 
 
@@ -327,7 +324,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
     classes/functions/statements.
     """
 
-    def __init__(self, lines_set: set[int], replacements: "_NodeReplacements"):
+    def __init__(self, lines_set: frozenset[int], replacements: "_NodeReplacements"):
         self._lines_set = lines_set
         self._replacements = replacements
 
@@ -376,7 +373,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
             )
 
 
-def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
+def _convert_unchanged_line_by_line(node: Node, lines_set: frozenset[int]) -> None:
     """Converts unchanged to STANDALONE_COMMENT line by line."""
     replacements = _NodeReplacements()
     for leaf in node.leaves():
@@ -489,7 +486,7 @@ def _ends_with_fmt_skip(text: str) -> bool:
 
 
 def _convert_node_to_standalone_comment(
-    node: LN, replacements: "_NodeReplacements", lines_set: set[int]
+    node: LN, replacements: "_NodeReplacements", lines_set: frozenset[int]
 ) -> None:
     """Convert node to STANDALONE_COMMENT by modifying the tree inline."""
     parent = node.parent
@@ -542,7 +539,7 @@ def _convert_nodes_to_standalone_comment(
     *,
     newline: Leaf,
     replacements: "_NodeReplacements",
-    lines_set: set[int],
+    lines_set: frozenset[int],
 ) -> None:
     """Convert nodes to STANDALONE_COMMENT by modifying the tree inline."""
     if not nodes:

@@ -95,7 +95,7 @@ docs = [
 ]
 
 tox = ["tox>=4.22"]
-tests = ["pytest>=7", "pytest-xdist>=3.0.2"]
+tests = ["pytest>=7.4.3", "pytest-xdist>=3.0.2"]
 coverage = ["coverage>=5.3"]
 
 fuzz = [{ include-group = "coverage" }, "hypothesis", "hypothesmith"]
