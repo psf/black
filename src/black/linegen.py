@@ -814,15 +814,16 @@ class LineGenerator(Visitor[Line]):
                         child, parent=node, mode=self.mode, features=self.features
                     )
 
-                    unwrapped = child
+                    unwrapped = False
                     while (
-                        len(unwrapped.children) == 3
-                        and is_lpar_token(unwrapped.children[0])
-                        and is_rpar_token(unwrapped.children[-1])
+                        len(child.children) == 3
+                        and is_lpar_token(child.children[0])
+                        and is_rpar_token(child.children[-1])
                     ):
-                        unwrapped = unwrapped.children[1]
+                        unwrapped = True
+                        child = child.children[1]
 
-                    max_delimiter = max_delimiter_priority(unwrapped.children)
+                    max_delimiter = max_delimiter_priority(child.children)
 
                     # Keep 1 level of invisible parens so it can be wrapped if too long
                     wrap_in_parentheses(
@@ -830,9 +831,9 @@ class LineGenerator(Visitor[Line]):
                         child,
                         visible=(
                             # Keep one level to avoid syntax errors
-                            _is_parenthesized_lambda_or_ternary(child)
+                            child.type in {syms.test, syms.lambdef}
                             # Keep as-written if it's a non-simple name (has delimiters)
-                            or (child != unwrapped and max_delimiter > DOT_PRIORITY)
+                            or (unwrapped and max_delimiter > DOT_PRIORITY)
                         ),
                         index=index,
                     )
