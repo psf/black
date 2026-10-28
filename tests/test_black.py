@@ -2589,6 +2589,22 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_str(source, mode=black.FileMode(), lines=[(2, 2)]) == expected
         )
 
+    def test_line_ranges_fmt_off_prefix_comment_indentation_is_stable(self) -> None:
+        expected = textwrap.dedent("""\
+            def f():
+                x = 1
+                # note
+                y = [  # fmt: off
+                ]  # fmt: on
+            """)
+        source = expected.replace("x = 1", "x=1")
+        mode = black.Mode()
+        lines = [(2, 2)]
+
+        formatted = black.format_str(source, mode=mode, lines=lines)
+        assert formatted == expected
+        assert black.format_str(formatted, mode=mode, lines=lines) == expected
+
     def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
         # This regression stays inline because it requires literal trailing spaces,
         # which would fail `git diff --check` in a data case file.

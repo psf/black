@@ -43,14 +43,34 @@
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
 - Fix crash when a compound statement header with `# fmt: skip` contains a bracket that
-  has its own `# fmt: skip` on the opening line (#5597)
+  has its own `# fmt: skip` on the opening line (#5597, #5612, #5610)
 - Fix unstable formatting of a call with an inline comment after an argument when its
   last argument is an implicitly concatenated string (#5587)
+- Keep the empty lines before a comment outside the requested `--line-ranges` instead of
+  capping them (#5613)
+- Fix a `# fmt: skip` comment on a line of its own after a blank line skipping the
+  statement above it, which removed or added blank lines and could crash with "produced
+  different code on the second pass" (#5615)
+- Fix crash on an assignment whose target is split over lines inside redundant
+  parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
+  `.d[e]) = f` (#5606, #5621)
+- Fix crash when `# fmt: skip` is on an opening bracket that starts an operand of a
+  longer expression after `with` or `yield` (#5620)
+- Fix crash on a method chain with multiple `# type: ignore` comments when another
+  comment sits between them, which put a `# type: ignore` after the other comment on one
+  line, where it no longer applies (#5618)
+- Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
+  line and ensure the `# type: ignore` comes first (#5625)
+- Fix a Jupyter notebook magic in an annotated assignment (for example
+  `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
+  runs it as (#5628)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
+  binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
   when using the unstable `string_processing` feature (#5515)
@@ -60,7 +80,7 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
-- Remove redundant parentheses around operands in comparison expressions (#5539)
+- Remove redundant parentheses around operands in comparison expressions (#5539, #5631)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant

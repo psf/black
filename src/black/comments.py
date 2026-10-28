@@ -55,18 +55,12 @@ class ProtoComment:
     newlines: int  # how many newlines before the comment
     consumed: int  # how many characters of the original leaf's prefix did we consume
     form_feed: bool  # is there a form feed before the comment
-    leading_whitespace: str  # leading whitespace before the comment, if any
-    original_value: str  # original comment text, before normalization
-    prefix_line_index: int  # 0-based physical line index within the parsed prefix
+    original_line: str  # Includes source indentation and trailing whitespace
+    lines_before_leaf: int  # Physical line distance from this comment to its leaf
 
 
 def generate_comments(
-    leaf: LN,
-    mode: Mode,
-    *,
-    preserve_comment_formatting: bool = False,
-    line_ranges_first_lineno: int = 0,
-    line_ranges_selected: set[int] | None = None,
+    leaf: Leaf, mode: Mode, *, block_depth: int | None = None
 ) -> Iterator[Leaf]:
     """Clean the prefix of the `leaf` and generate comments from it, if any.
 
@@ -85,26 +79,30 @@ def generate_comments(
 
     Inline comments are emitted as regular token.COMMENT leaves.  Standalone
     are emitted with a fake STANDALONE_COMMENT token identifier.
+
+    Pass the block depth to keep comments outside the selected lines as written,
+    accounting for the indentation the line renderer will add.
     """
-    total_consumed = 0
     comments = list_comments(
         leaf.prefix, is_endmarker=leaf.type == token.ENDMARKER, mode=mode
     )
-    prefix_line_count = len(re.split(r"\r?\n|\r", leaf.prefix)) - 1
+    selected = leaf.line_ranges_selected
     for pc in comments:
-        total_consumed = pc.consumed
         prefix = make_simple_prefix(pc.newlines, pc.form_feed)
-        value = pc.value
-        comment_lineno = (
-            line_ranges_first_lineno - prefix_line_count + pc.prefix_line_index
-        )
-        should_preserve = preserve_comment_formatting and (
-            line_ranges_selected is None or comment_lineno not in line_ranges_selected
-        )
-        if should_preserve:
-            value = pc.leading_whitespace + pc.original_value
-        yield Leaf(pc.type, value, prefix=prefix)
-    normalize_trailing_prefix(leaf, total_consumed)
+        if (
+            block_depth is not None
+            and selected is not None
+            and leaf.line_ranges_first_lineno - pc.lines_before_leaf not in selected
+        ):
+            yield Leaf(
+                pc.type,
+                pc.original_line.removeprefix("    " * block_depth),
+                prefix=prefix,
+                line_ranges_selected=selected,
+            )
+        else:
+            yield Leaf(pc.type, pc.value, prefix=prefix)
+    normalize_trailing_prefix(leaf, comments[-1].consumed if comments else 0)
 
 
 @lru_cache(maxsize=4096)
@@ -118,11 +116,10 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
     nlines = 0
     ignored_lines = 0
     form_feed = False
-    for index, full_line in enumerate(re.split("\r?\n|\r", prefix)):
+    lines = re.split("\r?\n|\r", prefix)
+    for index, full_line in enumerate(lines):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
-        match = re.match(r"^(\s*)(\S.*|)$", full_line)
-        assert match
-        whitespace, line = match.groups()
+        line = full_line.lstrip()
         if not line:
             nlines += 1
             if "\f" in full_line:
@@ -147,9 +144,8 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
                 newlines=nlines,
                 consumed=consumed,
                 form_feed=form_feed,
-                leading_whitespace=whitespace,
-                original_value=line,
-                prefix_line_index=index,
+                original_line=full_line,
+                lines_before_leaf=len(lines) - 1 - index,
             )
         )
         form_feed = False
@@ -259,10 +255,12 @@ def _is_valid_standalone_fmt_comment(
     We only want standalone comments. If there's no previous leaf or if
     the previous leaf is indentation, it's a standalone comment in disguise.
     """
-    if comment.type == STANDALONE_COMMENT:
-        return True
-
     prev = preceding_leaf(leaf)
+    if comment.type == STANDALONE_COMMENT:
+        # `# fmt: skip` applies to the code on its line, so on a line of its own
+        # between statements it skips nothing, not the statement above either.
+        return not (is_fmt_skip and prev is not None and prev.type in WHITESPACE)
+
     if not prev:
         return True
 
@@ -580,7 +578,8 @@ def _handle_regular_fmt_block(
         hidden_value = comment.value + "\n" + hidden_value
 
     if is_fmt_skip and not leaf_is_ignored:
-        hidden_value += comment.leading_whitespace + comment.value
+        whitespace = comment.original_line.partition("#")[0]
+        hidden_value += whitespace + comment.value
 
     if hidden_value.endswith("\n"):
         # That happens when one of the `ignored_nodes` ended with a NEWLINE
@@ -920,7 +919,7 @@ def _generate_ignored_nodes_from_fmt_skip(
             current_node = current_node.parent
 
         ignored_nodes = [current_node]
-        if current_node.prev_sibling is None and current_node.parent is not None:
+        while current_node.prev_sibling is None and current_node.parent is not None:
             current_node = current_node.parent
 
         # Track seen nodes to detect cycles that can occur after tree modifications
@@ -980,7 +979,7 @@ def _generate_ignored_nodes_from_fmt_skip(
 
             ignored_nodes.insert(0, current_node)
 
-            if current_node.prev_sibling is None and current_node.parent is not None:
+            while current_node.prev_sibling is None and current_node.parent is not None:
                 current_node = current_node.parent
                 # Every child of the node we are climbing out of is now ignored, so
                 # take the node itself instead. Converting only its leaves would
@@ -988,24 +987,17 @@ def _generate_ignored_nodes_from_fmt_skip(
                 # children, like the one for PEP 695 type parameters, crash on it.
                 # Children collapsed on an earlier climb are already nodes here, so
                 # compare against children rather than leaves.
+                # The collapsed node can be the first child of a parent that is now
+                # fully ignored as well (`a + b` in `a + b if c else d`), so keep
+                # climbing and collapse that parent too. Stopping one level short
+                # leaves the parent's children in the list next to a sibling from
+                # the enclosing node, and the standalone comment then lands inside
+                # the parent while that sibling is removed from around it, turning
+                # e.g. a tuple into a call. Climbing also has to go on past parents
+                # that aren't fully ignored, or the walk stops before reaching the
+                # start of the line (`with` in `with not (  # fmt: skip`).
                 if _children_lead_ignored_nodes(current_node, ignored_nodes):
                     ignored_nodes[: len(current_node.children)] = [current_node]
-                    # The collapsed node can be the first child of a parent that
-                    # is now fully ignored as well (`a + b` in `a + b if c else d`).
-                    # Collapse that parent too and keep walking from it. Stopping
-                    # one level short leaves the parent's children in the list next
-                    # to a sibling from the enclosing node, and the standalone
-                    # comment then lands inside the parent while that sibling is
-                    # removed from around it, turning e.g. a tuple into a call.
-                    while (
-                        current_node.prev_sibling is None
-                        and current_node.parent is not None
-                        and _children_lead_ignored_nodes(
-                            current_node.parent, ignored_nodes
-                        )
-                    ):
-                        current_node = current_node.parent
-                        ignored_nodes[: len(current_node.children)] = [current_node]
 
         # Special handling for compound statements with semicolon-separated bodies
         if isinstance(parent, Node):
@@ -1024,15 +1016,17 @@ def _generate_ignored_nodes_from_fmt_skip(
         # open, the `# fmt: skip` sits inside a multi-line bracketed statement
         # (e.g. on the `from x import (` line). Skipping only that line would
         # reformat the rest of the statement, so preserve the whole enclosing
-        # statement instead.
-        bracket_depth = 0
+        # statement instead. A closing bracket on the line can belong to one
+        # opened on an earlier line (the `)` of a multi-line parameter list in
+        # `) -> A[B  # fmt: skip`), so it must not cancel an opening one.
+        open_brackets = 0
         for node in ignored_nodes:
             for ignored_leaf in node.leaves():
                 if ignored_leaf.type in OPENING_BRACKETS:
-                    bracket_depth += 1
-                elif ignored_leaf.type in CLOSING_BRACKETS:
-                    bracket_depth -= 1
-        if bracket_depth > 0:
+                    open_brackets += 1
+                elif ignored_leaf.type in CLOSING_BRACKETS and open_brackets:
+                    open_brackets -= 1
+        if open_brackets:
             statement: LN = leaf
             while statement.parent is not None and statement.parent.type not in (
                 syms.file_input,

@@ -75,6 +75,7 @@ jobs:
     needs: configure
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.configure.outputs.include) }}
 
