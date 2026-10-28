@@ -1650,12 +1650,58 @@ def is_symmetric_operator_chain_binop(
     if delimiter.type not in MATH_OPERATORS | COMPARATORS:
         return False
 
+    if (
+        delimiter.parent is None
+        or first_leaf(delimiter.parent) is not line.leaves[0]
+        or last_leaf(delimiter.parent) is not line.leaves[-1]
+    ):
+        return False
+
+    # Operands that would still be split internally keep existing formatting.
+    if (
+        line.mode.magic_trailing_comma and line.magic_trailing_comma is not None
+    ) or line.contains_standalone_comments():
+        return False
+
     # Keep existing asymmetric split when either operand has a magic trailing comma
     if line.mode.magic_trailing_comma and (
         line.leaves[left_closing_index - 1].type == token.COMMA
         or line.leaves[-2].type == token.COMMA
     ):
         return False
+
+    operand_ends = {id(line.leaves[delimiter_index - 1]), id(line.leaves[-1])}
+    if any(
+        is_type_comment(comment, mode=line.mode)
+        for leaf_id, comments in line.comments.items()
+        if leaf_id not in operand_ends
+        for comment in comments
+    ):
+        return False
+
+    if (
+        Preview.hug_comparator in line.mode and delimiter.type in COMPARATORS
+    ) or Preview.keep_dict_keys_with_operators in line.mode:
+        try:
+            from black.linegen import (
+                CannotSplit,
+                _can_defer_dict_key_delimiter_to_rhs,
+                _can_defer_lone_comparator_to_rhs,
+                _first_right_hand_split,
+            )
+
+            rhs_inner = _first_right_hand_split(line)
+            if (
+                Preview.hug_comparator in line.mode
+                and delimiter.type in COMPARATORS
+                and _can_defer_lone_comparator_to_rhs(line, rhs_inner, line.mode)
+            ) or (
+                Preview.keep_dict_keys_with_operators in line.mode
+                and _can_defer_dict_key_delimiter_to_rhs(line, rhs_inner, line.mode)
+            ):
+                return False
+        except CannotSplit:
+            pass
 
     def rendered_width(start: int, end: int) -> int | None:
         leaves = line.leaves[start:end]

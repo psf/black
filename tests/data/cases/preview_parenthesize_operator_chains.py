@@ -63,6 +63,13 @@ implicit_concat = some_variable_name == (
     "second string literal that completes it"
 )
 
+
+# Lone comparator deferring to RHS bracket explosion does not add redundant outer parens.
+def test_lone_comparator_rhs_bracket_not_parenthesized():
+    assert stats == DownloadStats(
+        file_count=1, total_bytes=len(content), unknown_size_count=0
+    )
+
 # output
 
 # Regression test for https://github.com/psf/black/issues/4455.
@@ -170,3 +177,10 @@ magic_right = other(third_arg, fourth_arg) + func(
 implicit_concat = some_variable_name == (
     "first string literal that is long enough" "second string literal that completes it"
 )
+
+
+# Lone comparator deferring to RHS bracket explosion does not add redundant outer parens.
+def test_lone_comparator_rhs_bracket_not_parenthesized():
+    assert stats == DownloadStats(
+        file_count=1, total_bytes=len(content), unknown_size_count=0
+    )
