@@ -79,6 +79,78 @@ Currently, the following features are included in the preview style:
   indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
   line length limit only due to a trailing comment.
   ([see below](labels/keep-trailers-on-bracket-comment-overflow))
+- `remove_redundant_subscript_parentheses`: Remove redundant parentheses in subscripts
+  and indexing operators.
+- `remove_redundant_top_level_parentheses`: Remove redundant parentheses around simple
+  top-level expressions. ([see below](labels/remove-redundant-top-level-parentheses))
+- `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
+  and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+- `remove_redundant_comparison_parentheses`: Remove redundant parentheses around
+  operands in comparison expressions.
+  ([see below](labels/remove-redundant-comparison-parentheses))
+
+(labels/remove-redundant-top-level-parentheses)=
+
+### Remove parentheses around simple top-level expressions
+
+Redundant outer parentheses are removed from simple top-level expression statements
+(such as `(x)`, `(1)`, `(yield 42)`, `([])`, `({})`, `(a + b)`):
+
+```python
+# Before
+(x)
+(1)
+(yield 42)
+([])
+({})
+(a + b)
+
+# After (with --preview)
+x
+1
+yield 42
+[]
+{}
+a + b
+```
+
+(labels/remove-redundant-list-parentheses)=
+
+### Redundant list parentheses
+
+Black removes extra parentheses around list literals and list comprehensions:
+
+```python
+# Before
+([])
+([1, 2])
+foo(([1, 2]))
+
+# After (with --preview)
+[]
+[1, 2]
+foo([1, 2])
+```
+
+(labels/remove-redundant-comparison-parentheses)=
+
+### Redundant comparison parentheses
+
+Black removes redundant parentheses around operands in comparison expressions:
+
+```python
+# Before
+assert name == ("CommonName")
+x = (1) < (2) <= (3)
+if (foo()) == (bar()):
+    pass
+
+# After (with --preview)
+assert name == "CommonName"
+x = 1 < 2 <= 3
+if foo() == bar():
+    pass
+```
 
 (labels/keep-trailers-on-bracket-comment-overflow)=
 
@@ -767,7 +839,15 @@ foo(
 
 _Black_ will split long string literals and merge short ones. Parentheses are used where
 appropriate. When split, parts of f-strings that don't need formatting are converted to
-plain strings. f-strings will not be merged if they contain internal quotes and it would
-change their quotation mark style. Line continuation backslashes are converted into
-parenthesized strings. Unnecessary parentheses are stripped. The stability and status of
-this feature is tracked in [this issue](https://github.com/psf/black/issues/2188).
+plain strings. Short raw strings are merged only when their prefixes and quotation marks
+match and the resulting line fits within the line length limit. Their backslashes are
+preserved; raw f-strings are not merged, and raw groups whose estimated merged line
+exceeds the line length limit remain separate. f-strings will not be merged if they
+contain internal quotes and it would change their quotation mark style. Line
+continuation backslashes are converted into parenthesized strings. Unnecessary
+parentheses are stripped. The stability and status of this feature is tracked in
+[this issue](https://github.com/psf/black/issues/2188).
+
+Long strings on the right-hand side of binary and augmented assignment operators are
+also split, including operators overloaded by objects such as `pathlib.Path`. Middle
+operands of operator chains can also be wrapped and split.

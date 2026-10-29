@@ -10,12 +10,13 @@ import multiprocessing
 import os
 import pickle
 import re
+import signal
 import subprocess
 import sys
 import textwrap
 import types
 from collections.abc import Callable, Iterator, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from contextlib import contextmanager, redirect_stderr
 from dataclasses import fields, replace
 from importlib.metadata import version as imp_version
@@ -379,6 +380,10 @@ class BlackTestCase(BlackBaseTestCase):
         )
         versions = black.detect_target_versions(root)
         self.assertIn(black.TargetVersion.PY315, versions)
+        self.assertIn(
+            black.Feature.UNPACKING_IN_COMPREHENSIONS,
+            black.get_features_used(black.lib2to3_parse("f(*x for x in y)\n")),
+        )
 
     def test_expression_ff(self) -> None:
         source, expected = read_data("cases", "expression.py")
@@ -517,6 +522,30 @@ class BlackTestCase(BlackBaseTestCase):
             actual = output.getvalue()
             self.assertIn(" Header will be skipped\r\n-i = [1,2,3]\r\n", actual)
             self.assertNotIn("\r\r\n", actual)
+
+    def test_skip_source_first_line_via_stdin(self) -> None:
+        for nl in ["\n", "\r\n"]:
+            code = nl.join(["This is not valid Python syntax", "i = [1,2,3]", ""])
+            expected = nl.join(["This is not valid Python syntax", "i = [1, 2, 3]", ""])
+            result = BlackRunner().invoke(
+                black.main,
+                ["-", "-x", f"--config={EMPTY_CONFIG}"],
+                input=BytesIO(code.encode()),
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(result.stdout_bytes, expected.encode())
+
+            result = BlackRunner().invoke(
+                black.main,
+                ["-", "-x", "--diff", f"--config={EMPTY_CONFIG}"],
+                input=BytesIO(code.encode()),
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn(
+                f" This is not valid Python syntax{nl}-i = [1,2,3]{nl}".encode(),
+                result.stdout_bytes,
+            )
+            self.assertNotIn(b"\r\r\n", result.stdout_bytes)
 
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
@@ -1726,6 +1755,48 @@ class BlackTestCase(BlackBaseTestCase):
             if nl == "\n":
                 self.assertNotIn(b"\r\n", output)
 
+    def test_preserves_line_endings_via_stdin_when_echoing_the_source(self) -> None:
+        # Black writes the source back to stdout when it cannot format it, so a
+        # formatting pipeline does not lose the file. That happens through the same
+        # trailing-newline fixup as a successful run, which must add "\n" and not
+        # the detected "\r\n" (the stream translates "\n" itself).
+        contents = b"def f(:\r\n    pass"
+        result = BlackRunner().invoke(black.main, ["-"], input=BytesIO(contents))
+        self.assertEqual(result.exit_code, 123)
+        self.assertEqual(result.stdout_bytes, contents + b"\r\n")
+
+    def test_force_excluded_stdin_is_echoed_unchanged(self) -> None:
+        # Content passed through stdin for a file that `--force-exclude` excludes is
+        # written back byte for byte, whatever its line endings or encoding.
+        args = [
+            "--config",
+            str(THIS_DIR / "empty.toml"),
+            "--force-exclude",
+            r"excluded\.py",
+            "--stdin-filename",
+            "excluded.py",
+        ]
+        for contents in (
+            b"x  =  1\ny = 2\n",
+            b"x  =  1\r\ny = 2\r\n",
+            b"# -*- coding: latin-1 -*-\ns  =  '\xe9t\xe9'\n",
+        ):
+            runner = BlackRunner()
+            result = runner.invoke(black.main, [*args, "-"], input=BytesIO(contents))
+            self.assertEqual(result.exit_code, 0, result.stderr_bytes)
+            self.assertEqual(result.stdout_bytes, contents)
+
+        # Like an unchanged file, an excluded one produces no output when checking.
+        for options in (["--check"], ["--diff"], ["--check", "--diff"]):
+            runner = BlackRunner()
+            result = runner.invoke(
+                black.main,
+                [*args, *options, "-"],
+                input=BytesIO(b"x  =  1\n"),
+            )
+            self.assertEqual(result.exit_code, 0, result.stderr_bytes)
+            self.assertEqual(result.stdout_bytes, b"")
+
     def test_normalize_line_endings(self) -> None:
         with TemporaryDirectory() as workspace:
             test_file = Path(workspace) / "test.py"
@@ -1774,6 +1845,32 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
+
+    def test_cli_rejects_non_table_black_config(self) -> None:
+        for value in ('["--line-length", "88"]', '"line-length = 88"', "88", "false"):
+            for explicit_config in (True, False):
+                with self.subTest(value=value, explicit_config=explicit_config):
+                    with TemporaryDirectory() as workspace:
+                        root = Path(workspace)
+                        (root / ".git").mkdir()
+                        config = root / "pyproject.toml"
+                        config.write_text(
+                            f"[tool]\nblack = {value}\n", encoding="utf-8"
+                        )
+                        source = root / "example.py"
+                        source.write_text("x=1\n", encoding="utf-8")
+                        args = [str(source)]
+                        if explicit_config:
+                            args = ["--config", str(config), *args]
+
+                        result = BlackRunner().invoke(
+                            black.main, args, catch_exceptions=False
+                        )
+
+                        assert result.exit_code == 1
+                        assert "Error reading configuration file" in result.stderr
+                        assert "Config key tool.black must be a table" in result.stderr
+                        assert source.read_text(encoding="utf-8") == "x=1\n"
 
     def test_spellcheck_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
@@ -2058,6 +2155,58 @@ class BlackTestCase(BlackBaseTestCase):
                 black.find_project_root((r"C:\work\app\a.py", r"D:\tmp\b.py")),
                 (None, None),
             )
+
+    def test_is_filesystem_root(self) -> None:
+        root = Path("/").resolve()
+        self.assertTrue(black.files.is_filesystem_root(root))
+        self.assertTrue(black.files.is_filesystem_root(Path("/")))
+        with TemporaryDirectory() as workspace:
+            self.assertFalse(black.files.is_filesystem_root(Path(workspace)))
+            self.assertFalse(
+                black.files.is_filesystem_root(Path(workspace) / "file.py")
+            )
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_is_filesystem_root_error_handling(self) -> None:
+        with patch.object(Path, "resolve", side_effect=OSError("permission denied")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+        with patch.object(Path, "resolve", side_effect=RuntimeError("symlink loop")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_warn_on_reformatting_root(self) -> None:
+        runner = BlackRunner()
+        root_path = str(Path("/").resolve())
+        with patch("black.get_sources", return_value=set()):
+            result = runner.invoke(black.main, [root_path])
+            self.assertIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+            result_multi = runner.invoke(black.main, [root_path, root_path])
+            self.assertEqual(
+                result_multi.stderr.count(
+                    "Warning: formatting the filesystem root can affect files outside"
+                    " your project."
+                ),
+                1,
+            )
+
+        with TemporaryDirectory() as workspace:
+            result = runner.invoke(black.main, [workspace])
+            self.assertNotIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+
+        result = runner.invoke(black.main, ["-"], input=b"x = 1\n")
+        self.assertNotIn(
+            "Warning: formatting the filesystem root can affect files outside your"
+            " project.",
+            result.stderr,
+        )
 
     @pytest.mark.incompatible_with_mypyc
     @patch("black.files.find_user_pyproject_toml")
@@ -2492,6 +2641,22 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_str(source, mode=black.FileMode(), lines=[(2, 2)]) == expected
         )
 
+    def test_line_ranges_fmt_off_prefix_comment_indentation_is_stable(self) -> None:
+        expected = textwrap.dedent("""\
+            def f():
+                x = 1
+                # note
+                y = [  # fmt: off
+                ]  # fmt: on
+            """)
+        source = expected.replace("x = 1", "x=1")
+        mode = black.Mode()
+        lines = [(2, 2)]
+
+        formatted = black.format_str(source, mode=mode, lines=lines)
+        assert formatted == expected
+        assert black.format_str(formatted, mode=mode, lines=lines) == expected
+
     def test_line_ranges_preserves_unselected_prefix_trailing_whitespace(self) -> None:
         # This regression stays inline because it requires literal trailing spaces,
         # which would fail `git diff --check` in a data case file.
@@ -2731,6 +2896,70 @@ class BlackTestCase(BlackBaseTestCase):
                 black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
                 expected,
             )
+
+    def test_fmt_off_unclosed_trailing_blank_lines(self) -> None:
+        cases = [
+            '# fmt: off\n\nprint("hello")\n\n',
+            "# fmt: off\nx = 1\n# tail comment\n\n",
+            "# fmt: off\nx = 1\n\n\n\n",
+            "def f():\n    # fmt: off\n    x = 1\n\n",
+            "def f():\n    # fmt: off\n    x = 1\n    # tail comment\n\n",
+            "def f():\n    if condition:\n        # fmt: off\n        x = 1\n\n\n",
+            (
+                "def f():\n"
+                "    if condition:\n"
+                "        # fmt: off\n"
+                "        x = 1\n"
+                "        # inner tail\n"
+                "    # outer tail\n\n\n"
+            ),
+        ]
+        for src in cases:
+            for nl in ("\n", "\r\n"):
+                source = src.replace("\n", nl)
+                with self.subTest(source=source):
+                    with TemporaryDirectory() as workspace:
+                        path = Path(workspace) / "test.py"
+                        path.write_bytes(source.encode("utf-8"))
+                        changed = black.format_file_in_place(
+                            path,
+                            fast=False,
+                            mode=DEFAULT_MODE,
+                            write_back=black.WriteBack.YES,
+                        )
+                        self.assertFalse(changed)
+                        self.assertEqual(path.read_bytes(), source.encode("utf-8"))
+
+    def test_fmt_off_closed_trailing_blank_lines_are_normalized(self) -> None:
+        cases = [
+            (
+                "# fmt: off\nx = 1\n# fmt: on\n\n\n",
+                "# fmt: off\nx = 1\n# fmt: on\n",
+            ),
+            (
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n\n\n",
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n",
+            ),
+            (
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n    y = 2\n\n\n",
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n    y = 2\n",
+            ),
+        ]
+        for src, expected in cases:
+            self.assertEqual(
+                black.format_file_contents(src, fast=False, mode=DEFAULT_MODE),
+                expected,
+            )
+
+    def test_fmt_off_unclosed_formats_preceding_code_and_preserves_trailing(
+        self,
+    ) -> None:
+        source = "def f(  a,  b  ):\n    # fmt: off\n    x =    1   + 2\n\n\n"
+        expected = "def f(a, b):\n    # fmt: off\n    x =    1   + 2\n\n\n"
+        self.assertEqual(
+            black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
+            expected,
+        )
 
 
 class TestCaching:
@@ -3237,6 +3466,61 @@ class TestCaching:
             cache = black.Cache.read(mode, workspace)
             assert cache.is_changed(failing)
             assert not cache.is_changed(clean)
+
+    @pytest.mark.parametrize(
+        "executor, workers",
+        [("ProcessPoolExecutor", "2"), ("ThreadPoolExecutor", "1")],
+        ids=["process-pool", "thread-pool"],
+    )
+    @pytest.mark.parametrize(
+        "output", ["", "--check", "--diff"], ids=["format", "check", "diff"]
+    )
+    @event_loop()
+    def test_interrupted_run_is_not_reported_as_success(
+        self, output: str, executor: str, workers: str
+    ) -> None:
+        if sys.platform == "win32":
+            pytest.skip("Signal handlers aren't supported on Windows")
+
+        class InterruptingExecutor(Executor):
+            def __init__(self, max_workers: int) -> None:
+                self.submitted = 0
+
+            def submit(
+                self, fn: Callable[..., Any], /, *args: Any, **kwargs: Any
+            ) -> Future[Any]:
+                future: Future[Any] = Future()
+                self.submitted += 1
+                if self.submitted == 1:
+                    future.set_result(fn(*args, **kwargs))
+                else:
+                    # Leave the file pending and interrupt Black like Ctrl+C would.
+                    asyncio.get_running_loop().call_soon(
+                        os.kill, os.getpid(), signal.SIGINT
+                    )
+                return future
+
+        mode = DEFAULT_MODE
+        with (
+            cache_dir() as workspace,
+            patch(f"black.concurrency.{executor}", new=InterruptingExecutor),
+        ):
+            clean = (workspace / "clean.py").resolve()
+            clean.write_text('print("hello")\n', encoding="utf-8")
+            pending = (workspace / "pending.py").resolve()
+            pending.write_text("print('hello')\n", encoding="utf-8")
+            args = ["--config", str(THIS_DIR / "empty.toml"), "--workers", workers]
+            if output:
+                args.append(output)
+            result = BlackRunner().invoke(black.main, [*args, str(workspace)])
+            assert result.exit_code == 1
+            assert "Aborting..." in result.stderr
+            assert "Aborted!" in result.stderr
+            assert "All done!" not in result.stderr
+            assert pending.read_text(encoding="utf-8") == "print('hello')\n"
+            cache = black.Cache.read(mode, workspace)
+            assert not cache.is_changed(clean)
+            assert cache.is_changed(pending)
 
     def test_write_cache_write_fail(self) -> None:
         mode = DEFAULT_MODE

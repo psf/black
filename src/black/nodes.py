@@ -641,6 +641,16 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
+def is_one_element_subscript(node: LN) -> bool:
+    """Return True if `node` is a subscript trailer with one element, like `[x,]`."""
+    return (
+        node.type == syms.trailer
+        and node.children[1].type == syms.subscriptlist
+        and len(node.children[1].children) == 2
+        and node.children[1].children[1].type == token.COMMA
+    )
+
+
 def is_tuple(node: LN) -> bool:
     """Return True if `node` holds a tuple."""
     if node.type != syms.atom:
@@ -650,6 +660,16 @@ def is_tuple(node: LN) -> bool:
         return False
 
     return True
+
+
+def is_list(node: LN) -> bool:
+    """Return True if `node` holds a list or list comprehension."""
+    return (
+        node.type == syms.atom
+        and len(node.children) >= 2
+        and node.children[0].type == token.LSQB
+        and node.children[-1].type == token.RSQB
+    )
 
 
 def is_tuple_containing_walrus(node: LN) -> bool:
