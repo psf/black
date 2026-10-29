@@ -116,8 +116,6 @@
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
 
-- Fix a B045 lint error flagged by `flake8-bugbear` 26.10.27 (#5639)
-
 ### Parser
 
 <!-- Changes to the parser or to version autodetection -->
