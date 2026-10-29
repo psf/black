@@ -131,6 +131,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Emit a warning when an explicitly supplied source directory is the filesystem root
+  (#5637)
+
 - Write the content of a file passed through stdin that is excluded with
   `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
 - Fix `--check` passing when formatting multiple files is interrupted with Ctrl+C or
