@@ -73,6 +73,9 @@
 - Fix `--line-ranges` crashing with an internal error, or changing lines outside the
   ranges, when an `if`, `for`, `while` or `try` statement has a clause with its body on
   the same line, such as `else: return` (#5635)
+- Fix IPython help syntax after an object (`obj?`), wildcard searches (`np.*load*?`) and
+  pasted `>>>` prompts being rewritten in Jupyter notebooks. Cells with IPython syntax
+  that can't be put back as written are now left unchanged (#5630)
 
 ### Preview style
 
