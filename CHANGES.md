@@ -13,6 +13,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
 - Normalize hex codes in unicode escape sequences in f-strings (#5526)
@@ -64,6 +65,11 @@
 - Fix a Jupyter notebook magic in an annotated assignment (for example
   `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
   runs it as (#5628)
+- Fix crash when a class header with `# fmt: skip` also has a `# fmt: skip` after its
+  last base or keyword argument, such as `B,  # fmt: skip` ... `):  # fmt: skip` (#5633)
+- Fix `--line-ranges` crashing with an internal error, or changing lines outside the
+  ranges, when an `if`, `for`, `while` or `try` statement has a clause with its body on
+  the same line, such as `else: return` (#5635)
 - Fix IPython help syntax after an object (`obj?`), wildcard searches (`np.*load*?`) and
   pasted `>>>` prompts being rewritten in Jupyter notebooks. Cells with IPython syntax
   that can't be put back as written are now left unchanged (#5630)
@@ -83,7 +89,7 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
-- Remove redundant parentheses around operands in comparison expressions (#5539)
+- Remove redundant parentheses around operands in comparison expressions (#5539, #5631)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant

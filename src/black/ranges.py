@@ -314,6 +314,21 @@ def _contains_standalone_comment(node: LN) -> bool:
         return False
 
 
+def _is_body_on_clause_line(node: LN) -> bool:
+    """Is `node` a body on the same line as its clause, in a statement with other
+    clauses? For example `b()` in `if a: b()` or `c()` in `else: c()`."""
+    parent = node.parent
+    return (
+        node.type == syms.simple_stmt
+        and parent is not None
+        and parent.type not in {syms.file_input, syms.suite}
+        and any(
+            child is not node and child.type in {syms.suite, syms.simple_stmt}
+            for child in parent.children
+        )
+    )
+
+
 class _TopLevelStatementsVisitor(Visitor[None]):
     """
     A node visitor that converts unchanged top-level statements to
@@ -342,6 +357,9 @@ class _TopLevelStatementsVisitor(Visitor[None]):
         # leaf, since a `suite` can simply be a `simple_stmt` when it puts
         # its body on the same line. Example: `if cond: pass`.
         ancestor = furthest_ancestor_with_last_leaf(newline_leaf)
+        if _is_body_on_clause_line(ancestor):
+            # Not the last clause; it's converted with its clause line by line.
+            return
         if not _get_line_range(ancestor).intersection(self._lines_set):
             _convert_node_to_standalone_comment(
                 ancestor, self._replacements, self._lines_set
@@ -402,21 +420,30 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: frozenset[int]) -> No
                     replacements=replacements,
                     lines_set=lines_set,
                 )
-        elif leaf.parent and leaf.parent.type == syms.suite:
+        elif leaf.parent and (
+            leaf.parent.type == syms.suite or _is_body_on_clause_line(leaf.parent)
+        ):
             # The `suite` node is defined as:
             #   suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
             # We will check `simple_stmt` and `stmt+` separately against the lines set
             parent_sibling = leaf.parent.prev_sibling
             nodes_to_ignore = []
-            while parent_sibling and parent_sibling.type != syms.suite:
+            while parent_sibling and parent_sibling.type not in {
+                syms.suite,
+                syms.simple_stmt,
+            }:
                 # NOTE: Multiple suite nodes can exist as siblings in e.g. `if_stmt`.
                 nodes_to_ignore.insert(0, parent_sibling)
                 parent_sibling = parent_sibling.prev_sibling
+            if leaf.parent.type == syms.simple_stmt:
+                # A body on its clause's line is checked with the clause.
+                nodes_to_ignore.extend(leaf.parent.children[:-1])
             # Special case for `async_stmt` and `async_funcdef` where the ASYNC
             # token is on the grandparent node.
             grandparent = leaf.parent.parent
             if (
-                grandparent is not None
+                parent_sibling is None
+                and grandparent is not None
                 and grandparent.prev_sibling is not None
                 and grandparent.prev_sibling.type == ASYNC
             ):
