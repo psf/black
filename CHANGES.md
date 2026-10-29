@@ -105,6 +105,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Preserve the upper bound of compatible-release `requires-python` constraints such as
+  `~=3.11.0` when inferring target versions (#5468)
+
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 - Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
