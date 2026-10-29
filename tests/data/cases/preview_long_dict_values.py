@@ -159,6 +159,49 @@ class C:
             )
         )
 
+
+# comments
+[
+    a
+    for a in
+    # foo0
+    (
+        # foo1
+        (b)
+        # foo2
+    )
+    # foo3
+]
+
+[
+    a
+    for a in
+    # foo4
+    ((b))
+]
+
+[
+    a
+    for a in (
+        # foo5
+        (b)
+    )
+]
+
+[
+    a
+    for a in (
+        (b)
+        # foo6
+    )
+]
+
+[
+    a
+    for a in ((b))
+    # foo7
+]
+
 # output
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
@@ -332,3 +375,46 @@ class C:
                 },
             )
         )
+
+
+# comments
+[
+    a
+    for a in
+    # foo0
+    (
+        # foo1
+        b
+        # foo2
+    )
+    # foo3
+]
+
+[
+    a
+    for a in
+    # foo4
+    b
+]
+
+[
+    a
+    for a in (
+        # foo5
+        b
+    )
+]
+
+[
+    a
+    for a in (
+        b
+        # foo6
+    )
+]
+
+[
+    a
+    for a in b
+    # foo7
+]
