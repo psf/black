@@ -13,6 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Keep the optional parentheses around an assignment's right-hand side when removing
+  them would produce a first line longer than the line length and the expression
+  contains standalone comments (#5638)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
