@@ -105,6 +105,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Apply recursive exclusions to symlink destinations (#5574)
+
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 - Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
