@@ -2156,6 +2156,58 @@ class BlackTestCase(BlackBaseTestCase):
                 (None, None),
             )
 
+    def test_is_filesystem_root(self) -> None:
+        root = Path("/").resolve()
+        self.assertTrue(black.files.is_filesystem_root(root))
+        self.assertTrue(black.files.is_filesystem_root(Path("/")))
+        with TemporaryDirectory() as workspace:
+            self.assertFalse(black.files.is_filesystem_root(Path(workspace)))
+            self.assertFalse(
+                black.files.is_filesystem_root(Path(workspace) / "file.py")
+            )
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_is_filesystem_root_error_handling(self) -> None:
+        with patch.object(Path, "resolve", side_effect=OSError("permission denied")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+        with patch.object(Path, "resolve", side_effect=RuntimeError("symlink loop")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_warn_on_reformatting_root(self) -> None:
+        runner = BlackRunner()
+        root_path = str(Path("/").resolve())
+        with patch("black.get_sources", return_value=set()):
+            result = runner.invoke(black.main, [root_path])
+            self.assertIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+            result_multi = runner.invoke(black.main, [root_path, root_path])
+            self.assertEqual(
+                result_multi.stderr.count(
+                    "Warning: formatting the filesystem root can affect files outside"
+                    " your project."
+                ),
+                1,
+            )
+
+        with TemporaryDirectory() as workspace:
+            result = runner.invoke(black.main, [workspace])
+            self.assertNotIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+
+        result = runner.invoke(black.main, ["-"], input=b"x = 1\n")
+        self.assertNotIn(
+            "Warning: formatting the filesystem root can affect files outside your"
+            " project.",
+            result.stderr,
+        )
+
     @pytest.mark.incompatible_with_mypyc
     @patch("black.files.find_user_pyproject_toml")
     def test_find_pyproject_toml_no_common_parent(
