@@ -350,6 +350,20 @@ def _path_is_ignored(
     return False
 
 
+def _gitignore_has_negation(gitignore_dict: dict[Path, GitIgnoreSpec]) -> bool:
+    """True if any .gitignore pattern is a negation (`!…`).
+
+    Git may ignore a directory (e.g. via `*`) while later un-ignoring it or files
+    under it (`!*/`, `!*.py`). In that case we must still walk the directory.
+    """
+    for spec in gitignore_dict.values():
+        for pattern in spec.patterns:
+            # pathspec: include is False for negation patterns, True for ignores
+            if getattr(pattern, "include", True) is False:
+                return True
+    return False
+
+
 def path_is_excluded(
     normalized_path: str,
     pattern: Pattern[str] | None,
@@ -385,12 +399,15 @@ def gen_python_files(
         assert child.is_absolute()
         root_relative_path = child.relative_to(root).as_posix()
 
-        # First ignore files matching .gitignore, if passed
+        # First ignore files matching .gitignore, if passed.
+        # Directories still get walked when a negation pattern exists, so git-style
+        # un-ignores like `*` / `!*/` / `!*.py` can see nested files (see #3694).
         if gitignore_dict and _path_is_ignored(
             root_relative_path, root, gitignore_dict
         ):
-            report.path_ignored(child, "matches a .gitignore file content")
-            continue
+            if not (child.is_dir() and _gitignore_has_negation(gitignore_dict)):
+                report.path_ignored(child, "matches a .gitignore file content")
+                continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
         root_relative_path = "/" + root_relative_path
