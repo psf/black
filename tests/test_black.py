@@ -2156,6 +2156,58 @@ class BlackTestCase(BlackBaseTestCase):
                 (None, None),
             )
 
+    def test_is_filesystem_root(self) -> None:
+        root = Path("/").resolve()
+        self.assertTrue(black.files.is_filesystem_root(root))
+        self.assertTrue(black.files.is_filesystem_root(Path("/")))
+        with TemporaryDirectory() as workspace:
+            self.assertFalse(black.files.is_filesystem_root(Path(workspace)))
+            self.assertFalse(
+                black.files.is_filesystem_root(Path(workspace) / "file.py")
+            )
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_is_filesystem_root_error_handling(self) -> None:
+        with patch.object(Path, "resolve", side_effect=OSError("permission denied")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+        with patch.object(Path, "resolve", side_effect=RuntimeError("symlink loop")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_warn_on_reformatting_root(self) -> None:
+        runner = BlackRunner()
+        root_path = str(Path("/").resolve())
+        with patch("black.get_sources", return_value=set()):
+            result = runner.invoke(black.main, [root_path])
+            self.assertIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+            result_multi = runner.invoke(black.main, [root_path, root_path])
+            self.assertEqual(
+                result_multi.stderr.count(
+                    "Warning: formatting the filesystem root can affect files outside"
+                    " your project."
+                ),
+                1,
+            )
+
+        with TemporaryDirectory() as workspace:
+            result = runner.invoke(black.main, [workspace])
+            self.assertNotIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+
+        result = runner.invoke(black.main, ["-"], input=b"x = 1\n")
+        self.assertNotIn(
+            "Warning: formatting the filesystem root can affect files outside your"
+            " project.",
+            result.stderr,
+        )
+
     @pytest.mark.incompatible_with_mypyc
     @patch("black.files.find_user_pyproject_toml")
     def test_find_pyproject_toml_no_common_parent(
@@ -2844,6 +2896,70 @@ class BlackTestCase(BlackBaseTestCase):
                 black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
                 expected,
             )
+
+    def test_fmt_off_unclosed_trailing_blank_lines(self) -> None:
+        cases = [
+            '# fmt: off\n\nprint("hello")\n\n',
+            "# fmt: off\nx = 1\n# tail comment\n\n",
+            "# fmt: off\nx = 1\n\n\n\n",
+            "def f():\n    # fmt: off\n    x = 1\n\n",
+            "def f():\n    # fmt: off\n    x = 1\n    # tail comment\n\n",
+            "def f():\n    if condition:\n        # fmt: off\n        x = 1\n\n\n",
+            (
+                "def f():\n"
+                "    if condition:\n"
+                "        # fmt: off\n"
+                "        x = 1\n"
+                "        # inner tail\n"
+                "    # outer tail\n\n\n"
+            ),
+        ]
+        for src in cases:
+            for nl in ("\n", "\r\n"):
+                source = src.replace("\n", nl)
+                with self.subTest(source=source):
+                    with TemporaryDirectory() as workspace:
+                        path = Path(workspace) / "test.py"
+                        path.write_bytes(source.encode("utf-8"))
+                        changed = black.format_file_in_place(
+                            path,
+                            fast=False,
+                            mode=DEFAULT_MODE,
+                            write_back=black.WriteBack.YES,
+                        )
+                        self.assertFalse(changed)
+                        self.assertEqual(path.read_bytes(), source.encode("utf-8"))
+
+    def test_fmt_off_closed_trailing_blank_lines_are_normalized(self) -> None:
+        cases = [
+            (
+                "# fmt: off\nx = 1\n# fmt: on\n\n\n",
+                "# fmt: off\nx = 1\n# fmt: on\n",
+            ),
+            (
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n\n\n",
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n",
+            ),
+            (
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n    y = 2\n\n\n",
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n    y = 2\n",
+            ),
+        ]
+        for src, expected in cases:
+            self.assertEqual(
+                black.format_file_contents(src, fast=False, mode=DEFAULT_MODE),
+                expected,
+            )
+
+    def test_fmt_off_unclosed_formats_preceding_code_and_preserves_trailing(
+        self,
+    ) -> None:
+        source = "def f(  a,  b  ):\n    # fmt: off\n    x =    1   + 2\n\n\n"
+        expected = "def f(a, b):\n    # fmt: off\n    x =    1   + 2\n\n\n"
+        self.assertEqual(
+            black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
+            expected,
+        )
 
 
 class TestCaching:

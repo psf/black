@@ -54,14 +54,9 @@ for details.
 
 ## Why is my Jupyter Notebook cell not formatted?
 
-_Black_ is timid about formatting Jupyter Notebooks. Cells containing any of the
-following will not be formatted:
-
-- automagics (e.g. `pip install black`)
-- non-Python cell magics (e.g. `%%writefile`)
-- multiline magics
-- code which `IPython`'s `TransformerManager` would transform magics into
-- invalid syntax
+_Black_ is timid about formatting Jupyter Notebooks. Cells that aren't valid Python
+code, such as automagics or IPython syntax that can't be put back as written, will not
+be reformatted.
 
 See
 [Using _Black_ with Jupyter Notebooks](guides/using_black_with_jupyter_notebooks.md#cells-that-black-will-skip)

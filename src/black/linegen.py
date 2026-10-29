@@ -1426,6 +1426,23 @@ def _prefer_split_rhs_oop_over_rhs(
         # Unless the split is inside the key
         return any(leaf.type == token.COLON for leaf in rhs_oop.tail.leaves)
 
+    # Keep the optional parens when omitting them would make the assignment head
+    # overlong even though keeping them fits. If the omitted-paren head contains a
+    # closing bracket, the split machinery can still try an earlier split point;
+    # if it contains comments, the overflow is not caused by the code alone. Leave
+    # both cases to the existing heuristics. Standalone comments in the body force
+    # it onto separate lines, so the head cannot be shortened afterwards (#3925).
+    if (
+        len(rhs.head.leaves) >= 2
+        and rhs.head.leaves[-2].type == token.EQUAL
+        and rhs_oop.body.contains_standalone_comments()
+        and not rhs_oop.head.comments
+        and is_line_short_enough(rhs.head, mode=mode)
+        and not is_line_short_enough(rhs_oop.head, mode=mode)
+        and not any(leaf.type in CLOSING_BRACKETS for leaf in rhs_oop.head.leaves)
+    ):
+        return False
+
     # the split is right after `=`
     if not (len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL):
         return True
@@ -2186,6 +2203,16 @@ def _normalize_comparison_operands(
             maybe_make_parens_invisible_in_atom(
                 operand, parent=node, mode=mode, features=features
             )
+            if is_atom_with_invisible_parens(operand) and not any(
+                "#" in leaf.prefix for leaf in operand.leaves()
+            ):
+                # Drop the now invisible parens so the operand splits the same way
+                # as one written without parentheses. Otherwise the next pass, which
+                # no longer sees them, can split it differently: parens kept for
+                # being multiline are joined onto one line and only removed then.
+                middle = operand.children[1]
+                middle.prefix = operand.prefix
+                operand.replace(middle)
 
 
 def normalize_invisible_parens(

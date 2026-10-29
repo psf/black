@@ -13,6 +13,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Keep the optional parentheses around an assignment's right-hand side when removing
+  them would produce a first line longer than the line length and the expression
+  contains standalone comments (#5638)
+- Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
 - Normalize hex codes in unicode escape sequences in f-strings (#5526)
@@ -63,6 +67,17 @@
   line and ensure the `# type: ignore` comes first (#5625)
 - Fix crash on consecutive statements that each have `# fmt: skip` on an opening bracket
   (#5626)
+- Fix a Jupyter notebook magic in an annotated assignment (for example
+  `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
+  runs it as (#5628)
+- Fix crash when a class header with `# fmt: skip` also has a `# fmt: skip` after its
+  last base or keyword argument, such as `B,  # fmt: skip` ... `):  # fmt: skip` (#5633)
+- Fix `--line-ranges` crashing with an internal error, or changing lines outside the
+  ranges, when an `if`, `for`, `while` or `try` statement has a clause with its body on
+  the same line, such as `else: return` (#5635)
+- Fix IPython help syntax after an object (`obj?`), wildcard searches (`np.*load*?`) and
+  pasted `>>>` prompts being rewritten in Jupyter notebooks. Cells with IPython syntax
+  that can't be put back as written are now left unchanged (#5630)
 
 ### Preview style
 
@@ -79,7 +94,7 @@
 - Fix unstable formatting when an unpacking target's redundant parentheses are split
   across lines (#5563)
 - Remove redundant parentheses around lists and list comprehensions (#5431)
-- Remove redundant parentheses around operands in comparison expressions (#5539)
+- Remove redundant parentheses around operands in comparison expressions (#5539, #5631)
 - Avoid adding redundant parentheses around unsplittable strings when string processing
   is enabled (#5544)
 - Fix unstable formatting of a call whose sole argument is a generator in redundant
@@ -124,6 +139,9 @@
 
 <!-- Changes to Black's terminal output and error messages -->
 
+- Emit a warning when an explicitly supplied source directory is the filesystem root
+  (#5637)
+
 - Write the content of a file passed through stdin that is excluded with
   `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
 - Fix `--check` passing when formatting multiple files is interrupted with Ctrl+C or
@@ -149,6 +167,9 @@
 
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
+
+- Expand the guide for introducing Black to an existing project with rollout and
+  active-branch guidance (#5472)
 
 ## Version 26.10.1
 

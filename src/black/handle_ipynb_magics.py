@@ -180,10 +180,14 @@ def mask_cell(src: str) -> tuple[str, list[Replacement]]:
     replacements += cell_magic_replacements
     transformed = transformer_manager.transform_cell(transformed)
     transformed, magic_replacements = replace_magics(transformed)
-    if len(transformed.strip().splitlines()) != len(src.strip().splitlines()):
-        # Multi-line magic, not supported.
-        raise NothingChanged
     replacements += magic_replacements
+    restored = transformed
+    for replacement in replacements:
+        restored = restored.replace(replacement.mask, replacement.src)
+    if _stripped_lines(restored) != _stripped_lines(src):
+        # Multi-line magic, or IPython syntax that wouldn't be put back as written,
+        # e.g. `obj?` would become `?obj` and `>>>` prompts would be removed.
+        raise NothingChanged
     return transformed, replacements
 
 
@@ -350,6 +354,11 @@ def _get_code_start(src: str) -> str:
     return ""
 
 
+def _stripped_lines(src: str) -> list[str]:
+    """Return the lines of `src`, ignoring indentation and surrounding whitespace."""
+    return [line.strip() for line in src.strip().splitlines()]
+
+
 def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
     """Check if attribute is IPython magic.
 
@@ -451,18 +460,20 @@ class MagicFinder(ast.NodeVisitor):
     def __init__(self) -> None:
         self.magics: dict[int, list[OffsetAndMagic]] = collections.defaultdict(list)
 
-    def visit_Assign(self, node: ast.Assign) -> None:
+    def visit_Assign(self, node: ast.Assign | ast.AnnAssign) -> None:
         """Look for system assign magics.
 
         For example,
 
             black_version = !black --version
             env = %env var
+            files: list[str] = !ls
 
         would have been (respectively) transformed to
 
             black_version = get_ipython().getoutput('black --version')
             env = get_ipython().run_line_magic('env', 'var')
+            files: list[str] = get_ipython().getoutput('ls')
 
         and we look for instances of any of the latter.
         """
@@ -483,6 +494,10 @@ class MagicFinder(ast.NodeVisitor):
                 OffsetAndMagic(node.value.col_offset, src)
             )
         self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        """Look for system assign magics with a type annotation."""
+        self.visit_Assign(node)
 
     def visit_Expr(self, node: ast.Expr) -> None:
         """Look for magics in body of cell.

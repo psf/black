@@ -16,7 +16,7 @@ on:
       - tests/**
       - tox.ini
       - pyproject.toml
-      - docs/integrations/source_version_control.md # Run on "Prepare Release" PRs
+      - docs/integrations/pre-commit.md # Run on "Prepare Release" PRs
 
 permissions:
   contents: read
@@ -76,7 +76,7 @@ jobs:
           !startsWith(matrix.python-version, 'pypy')
         uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
           parallel: true
           flag-name: py${{ matrix.python-version }}-${{ matrix.os }}
           debug: true
