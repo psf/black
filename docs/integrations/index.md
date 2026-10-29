@@ -7,7 +7,7 @@ hidden:
 
 editors
 github_actions
-source_version_control
+pre-commit
 doctest_formatting
 ```
 
@@ -17,7 +17,7 @@ following areas:
 
 - {doc}`Editor / IDE <./editors>`
 - {doc}`GitHub Actions <./github_actions>`
-- {doc}`Source version control <./source_version_control>`
+- {doc}`Pre-commit <./pre-commit>`
 - {doc}`Doctest formatting <./doctest_formatting>`
 
 Editors and tools not listed will require external contributions.
