@@ -88,6 +88,8 @@
 - Remove redundant parentheses around simple top-level expressions (#5516)
 - Merge adjacent short raw string literals with matching prefixes and quotation marks
   when using the unstable `string_processing` feature (#5515)
+- Treat `# ruff: ignore` comments like `# type: ignore`, so Black does not split a line
+  just to move the comment off the statement it applies to (#5528)
 - Format long binary operations between collection displays symmetrically when both
   operands fit on their own delimiter-split line (#5259)
 - Remove redundant parentheses in subscripts and indexing operators (#5496)

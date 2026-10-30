@@ -1026,10 +1026,19 @@ def is_type_ignore_comment(leaf: Leaf, mode: Mode) -> bool:
 
 def is_type_ignore_comment_string(value: str, mode: Mode) -> bool:
     """Return True if the given string match with type comment with
-    ignore annotation."""
-    return is_type_comment_string(value, mode) and value.split(":", 1)[
+    ignore annotation.
+
+    With the ruff_ignore_pragma preview feature, ``# ruff:ignore`` counts too.
+    """
+    if is_type_comment_string(value, mode) and value.split(":", 1)[
         1
-    ].lstrip().startswith("ignore")
+    ].lstrip().startswith("ignore"):
+        return True
+    if Preview.ruff_ignore_pragma in mode and value.startswith("#"):
+        rest = value[1:].lstrip()
+        if rest.startswith("ruff:"):
+            return rest[5:].lstrip().startswith("ignore")
+    return False
 
 
 def wrap_in_parentheses(
