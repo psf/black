@@ -134,7 +134,7 @@ Pass arguments to pytest:
 (.venv)$ tox -e py -- --no-cov
 ```
 
-_Black_ also has two unique CLI options that serve to help depug failing test files in
+_Black_ also has two unique CLI options that serve to help debug failing test files in
 `tests/data/`. These can be passed to `pytest` through `tox` as shown above, or directly
 into pytest if not using `tox`.
 
