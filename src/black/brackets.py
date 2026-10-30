@@ -282,9 +282,9 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf | None = None) -> Prior
         return COMPARATOR_PRIORITY
 
     if (
-        leaf.type == token.STRING
+        leaf.type in {token.STRING, token.FSTRING_START, token.TSTRING_START}
         and previous is not None
-        and previous.type == token.STRING
+        and previous.type in {token.STRING, token.FSTRING_END, token.TSTRING_END}
     ):
         return STRING_PRIORITY
 
@@ -360,8 +360,13 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
     if not (first.type == token.LPAR and last.type == token.RPAR):
         return 0
 
+    return max_delimiter_priority(node.children[1:-1])
+
+
+def max_delimiter_priority(children: list[LN]) -> Priority:
+    """Return maximum delimiter priority in a list of leaves and nodes."""
     bt = BracketTracker()
-    for leaf in _top_level_leaves(node.children[1:-1]):
+    for leaf in _top_level_leaves(children):
         bt.mark(leaf)
     try:
         return bt.max_delimiter_priority()

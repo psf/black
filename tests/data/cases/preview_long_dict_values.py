@@ -1,8 +1,6 @@
 # flags: --preview
 x = {
-    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
-        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
-    )
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
 }
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
@@ -19,6 +17,18 @@ x = {
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
 }
+{
+    "url": f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    f"FILENAME/download",
+    "url": "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    f"FILENAME/download",
+    "url": f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    "FILENAME/download",
+    "url": "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+    "FILENAME/download",
+}
+{"a":"""
+"""}
 
 my_dict = {
     "something_something":
@@ -46,9 +56,7 @@ tasks = {
 
 # Dictionary comprehensions
 tasks = {
-    key_name: (
-        xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
-    )
+    key_name: xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
     for src in sources
 }
 tasks = {key_name: foobar for src in sources}
@@ -125,6 +133,27 @@ my_dict = {
 }
 
 
+class Foo:
+    def test_apply_nanoseconds(self):
+        tests = [
+            (
+                BusinessHour(),
+                {
+                    Timestamp("2014-07-04 15:00") + Nano(5): Timestamp(
+                        "2014-07-04 16:00"
+                    ) + Nano(5),
+                    Timestamp("2014-07-04 16:00") + Nano(5):Timestamp(
+                         "2014-07-07 09:00"
+                    )+Nano(5),
+                    Timestamp("2014-07-04 16:00") - Nano(5): Timestamp(
+                        "2014-07-04 17:00"
+                    )
+                    - Nano(5),
+                },
+            ),
+        ]
+
+
 class Random:
     def func():
         random_service.status.active_states.inactive = (
@@ -161,9 +190,7 @@ class C:
 
 # output
 x = {
-    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
-        "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
-    )
+    "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
 }
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": (
@@ -179,6 +206,28 @@ x = {
 }
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxx"
+}
+{
+    "url": (
+        f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        f"FILENAME/download"
+    ),
+    "url": (
+        "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        f"FILENAME/download"
+    ),
+    "url": (
+        f"{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        "FILENAME/download"
+    ),
+    "url": (
+        "{SF_PROJECTS}/libpng/files/libpng{V['libpng-xy']}/{V['libpng']}/"
+        "FILENAME/download"
+    ),
+}
+{
+    "a": """
+"""
 }
 
 my_dict = {
@@ -208,9 +257,7 @@ tasks = {
 
 # Dictionary comprehensions
 tasks = {
-    key_name: (
-        xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
-    )
+    key_name: xx_xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxxxxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx
     for src in sources
 }
 tasks = {key_name: foobar for src in sources}
@@ -297,6 +344,26 @@ my_dict = {
         }
     ),
 }
+
+
+class Foo:
+    def test_apply_nanoseconds(self):
+        tests = [
+            (
+                BusinessHour(),
+                {
+                    Timestamp("2014-07-04 15:00") + Nano(5): (
+                        Timestamp("2014-07-04 16:00") + Nano(5)
+                    ),
+                    Timestamp("2014-07-04 16:00") + Nano(5): (
+                        Timestamp("2014-07-07 09:00") + Nano(5)
+                    ),
+                    Timestamp("2014-07-04 16:00") - Nano(5): (
+                        Timestamp("2014-07-04 17:00") - Nano(5)
+                    ),
+                },
+            ),
+        ]
 
 
 class Random:
