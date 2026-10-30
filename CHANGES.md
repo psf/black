@@ -83,6 +83,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Parenthesize the value of a keyword argument when the argument would exceed the line
+  length, including the long-keyword-name cases with attribute-chain or operator values,
+  mirroring how assignment right-hand sides are handled (#2893, #5592)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
   binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)

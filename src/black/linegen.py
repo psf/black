@@ -716,6 +716,48 @@ class LineGenerator(Visitor[Line]):
 
         yield from self.visit_default(node)
 
+    def visit_argument(self, node: Node) -> Iterator[Line]:
+        """Visit a keyword argument in a call.
+
+        Wrap the value of a ``name=value`` argument in (invisible) parentheses
+        when the argument does not fit on one line, so it gains a split point.
+        This mirrors how assignment right-hand sides are handled by
+        :func:`visit_stmt` with ``parens=ASSIGNMENTS`` and fixes issue #2893
+        (a keyword argument with a bare attribute-chain value blows past the
+        line length with no split point), plus the long-name variant from
+        #5335 where the value itself is splittable: ``foo(long_name=a + b)``
+        gets wrapped after the ``=`` instead of leaving the first content
+        line over the line length.
+
+        Wrapping only happens when the argument's minimal one-line rendering
+        already exceeds the line length. Arguments that fit must not acquire
+        parentheses: they live inside larger expressions whose outer layout
+        was already decided, and an extra invisible pair inside the argument
+        changes that layout (the PR #5592 regression, where wrapping the
+        small ``encoding="utf-8"`` value inside an ``assert`` stopped Black
+        from splitting the assert at the ``==``).
+
+        Values containing any bracket (calls, subscripts, collections) are
+        not wrapped: they already offer :func:`right_hand_split` a split point
+        inside their own brackets, and the broader long-keyword-name layout
+        question for those is #5335.
+        """
+        if not any(child.type == token.EQUAL for child in node.children):
+            yield from self.visit_default(node)
+            return
+
+        value = node.children[-1]
+        name = node.children[0]
+        if (
+            Preview.parenthesize_unsplittable_keyword_arguments in self.mode
+            and isinstance(name, Leaf)
+            and _kwarg_value_wants_parentheses(name, value, self.mode.line_length)
+        ):
+            normalize_invisible_parens(
+                node, parens_after={"="}, mode=self.mode, features=self.features
+            )
+        yield from self.visit_default(node)
+
     def visit_fstring(self, node: Node) -> Iterator[Line]:
         # If the fstring was converted to a STANDALONE_COMMENT by
         # normalize_fmt_off (e.g. it was inside a # fmt: off block),
@@ -2178,6 +2220,74 @@ def _is_parenthesized_atom(node: LN) -> bool:
     )
 
 
+def _kwarg_value_wants_parentheses(name: Leaf, value: LN, line_length: int) -> bool:
+    """Should the value of a ``name=value`` argument get invisible parentheses?
+
+    Wrapping changes layouts, so it is only done when the argument genuinely
+    needs it and genuinely benefits:
+
+    * ``value`` must not contain any bracket — a call, subscript, or
+      collection literal already offers :func:`right_hand_split` a split
+      point inside its own brackets (the broader long-keyword-name question
+      there is #5335);
+    * the argument's *minimal* one-line rendering must overflow the line
+      length. Call arguments sit at least one bracket deep (indent 4), so a
+      fitting argument is left untouched — that guard keeps the hook away
+      from the PR #5592 regression, where wrapping a small value that already
+      fit stopped Black from splitting the enclosing expression at its own
+      delimiters;
+    * the name must be at least four characters: the wrapped value sits on an
+      indent-8 line (``8+V``) instead of continuing the ``4+n+1+V`` line,
+      which only helps when ``n >= 4``;
+    * the wrapped head ``<indent>name=(`` must fit within the line length —
+      wrapping an argument whose ``name=(`` head alone overflows cannot help.
+    """
+    for leaf in value.leaves():
+        if leaf.type in BRACKETS:
+            return False
+
+    # An implicitly concatenated string value (two or more string leaves) is
+    # handled by Black's dedicated string concatenation splitting, which
+    # splits at the seams directly without extra parentheses — don't
+    # interfere (tests/data cases: #3497).
+    string_leaves = [leaf for leaf in value.leaves() if leaf.type == token.STRING]
+    if len(string_leaves) > 1:
+        return False
+
+    rendered = _minimal_render_length(value)
+    if 4 + len(name.value) + 1 + rendered <= line_length:
+        return False
+    return len(name.value) >= 4 and 4 + len(name.value) + 2 <= line_length
+
+
+def _minimal_render_length(value: LN) -> int:
+    """The length ``value`` takes when rendered on one line with no extra
+    spacing, measured from the leaves.
+
+    Leaves are joined without spaces except between two *wordish* leaves
+    (names, numbers, strings): Python requires a separator there (``1if``,
+    ``aand`` are invalid), while operators, dots, and commas join directly.
+    This can never exceed the length the argument really needs, so it errs
+    on the side of not wrapping.
+    """
+    leaves = list(value.leaves())
+    total = 0
+    for i, leaf in enumerate(leaves):
+        total += len(leaf.value)
+        if i and _is_wordish(leaves[i - 1]) and _is_wordish(leaf):
+            total += 1
+    return total
+
+
+def _is_wordish(leaf: Leaf) -> bool:
+    """Does ``leaf`` behave like a word for spacing purposes?
+
+    NAME covers identifiers and keywords, NUMBER digits, STRING ends in a
+    quote. Operators, `.` `,` `:`, and similar join with no space.
+    """
+    return leaf.type in (token.NAME, token.NUMBER, token.STRING)
+
+
 def _is_disallowed_comparison_operand(node: LN) -> bool:
     """Whether atom `node` encloses an expression that must retain parens in
     comparison.
@@ -2728,6 +2838,9 @@ def maybe_make_parens_invisible_in_atom(
             syms.with_stmt,
             syms.testlist_gexp,
             syms.tname,
+            # keyword argument values need their parentheses around a walrus:
+            # `f(x=(y := 1))` cannot lose them (see #2893)
+            syms.argument,
             # these ones aren't useful to end users, but they do please fuzzers
             syms.for_stmt,
             syms.del_stmt,
