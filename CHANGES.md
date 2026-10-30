@@ -81,9 +81,9 @@
 - Fix crash when a `# fmt: off` without a matching `# fmt: on` comes right before a
   single name, number or string inside brackets, such as `x = [` ... `# fmt: off` ...
   `1` ... `]`. In that case and in type parameter lists, the region now ends at the
-  closing bracket instead of also leaving the code after it unformatted (#5642)
+  closing bracket instead of also leaving the code after it unformatted (#5643)
 - Fix crash when `# fmt: skip` is on the closing bracket of a `# fmt: off` region that
-  ends in a comment (#5642)
+  ends in a comment (#5643)
 
 ### Preview style
 
