@@ -69,19 +69,34 @@ See [Using _Black_ with other tools](labels/why-pycodestyle-warnings).
 
 ## Which Python versions does Black support?
 
-_Black_ generally supports all Python versions supported by CPython (see
-[the Python devguide](https://devguide.python.org/versions/) for current information).
-We promise to support at least all Python versions that have not reached their end of
-life. This is the case for both running _Black_ and formatting code.
+### Runtime Support
+
+_Black_ generally provides runtime support for all Python versions supported by CPython
+(see [the Python devguide](https://devguide.python.org/versions/) for current
+information). We promise to support all Python versions at least until they reach their
+end of life.
+
+While we make our best efforts to support new Python vesions as quickly as we can, we
+make no guarantees on when official runtime or formatting support will be added. Please
+check changelog entires and the
+[metadata on PyPi](https://pypi.org/project/black/#:~:text=Programming%20Language) for
+the most up-to-date information.
+
+Currently, _Black_ provides runtime support for versions 3.11-3.15.
+
+Runtime support for 3.6 was removed in version 22.10.0, for 3.7 in version 23.7.0, for
+3.8 in version 24.10.0, for 3.9 in version 25.12.0, and for 3.10 in version 26.11.0.
+
+### Formatting Support
+
+Black provides formatting and `--target-version` support for Python 3.3+.
 
 Support for formatting Python 2 code was removed in version 22.0. While we've made no
 plans to stop supporting older Python 3 minor versions immediately, their support might
 also be removed some time in the future without a deprecation period.
 
-`await`/`async` as soft keywords/identifiers are no longer supported as of 25.9.0.
-
-Runtime support for 3.6 was removed in version 22.10.0, for 3.7 in version 23.7.0, for
-3.8 in version 24.10.0, and for 3.9 in version 25.12.0.
+Formatting code using `async`/`await` as soft keywords/identifiers is no longer
+supported as of 25.9.0.
 
 ## Why does my linter or typechecker complain after I format my code?
 
@@ -93,7 +108,8 @@ codebase with _Black_.
 
 ## Can I run Black with PyPy?
 
-Yes, there is support for PyPy 3.10 and higher.
+Yes, PyPy is supported. The same minimum runtime version requirement mentioned above
+applies.
 
 ## Why does Black not detect syntax errors in my code?
 
@@ -109,7 +125,7 @@ CPython doesn't accept.
 While _Black_ is indeed a pure Python project, we use [mypyc] to compile _Black_ into a
 C Python extension, usually doubling performance. These compiled wheels are available
 for 64-bit versions of Windows (both AMD and ARM), Linux (via the manylinux standard),
-and macOS across all supported CPython versions.
+and macOS (both x86 and ARM) across all supported CPython versions.
 
 Platforms including musl-based and/or ARM Linux distributions are currently **not**
 supported. These platforms will fall back to the slower pure Python wheel available on

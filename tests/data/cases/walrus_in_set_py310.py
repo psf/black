@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.10 --target-version=py310
+# flags: --target-version=py310
 # Since Python 3.10, the parentheses around a named expression in a set literal
 # can be removed.
 x = {(y := 1)}

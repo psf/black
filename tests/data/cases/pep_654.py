@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.11
 try:
     raise OSError("blah")
 except* ExceptionGroup as e:

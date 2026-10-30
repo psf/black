@@ -38,7 +38,7 @@ Watch the [PyCon 2019 talk](https://youtu.be/esZLCuWs_2Y) to learn more.
 
 ### Installation
 
-_Black_ can be installed by running `pip install black`. It requires Python 3.10+ to
+_Black_ can be installed by running `pip install black`. It requires Python 3.11+ to
 run. If you want to format Jupyter Notebooks, install with
 `pip install "black[jupyter]"`.
 

@@ -232,7 +232,7 @@ Configuration:
 
 #### Installation
 
-This plugin **requires Vim 7.0+ built with Python 3.10+ support**. It needs Python 3.10
+This plugin **requires Vim 7.0+ built with Python 3.11+ support**. It needs Python 3.11
 to be able to run _Black_ inside the Vim process which is much faster than calling an
 external command.
 

@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 for x in *a, *b:
     print(x)
 

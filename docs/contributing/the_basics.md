@@ -6,8 +6,8 @@ If you are making a large change, please open an issue first to discuss it befor
 
 ## Overview
 
-Development on the latest version of Python is preferred. You can use any operating
-system.
+Development requires Python 3.13+; the latest version is preferred. You can use any
+operating system.
 
 First clone the _Black_ repository:
 

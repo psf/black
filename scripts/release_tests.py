@@ -23,7 +23,6 @@ class FakeDateTime:
 
 class TestRelease(unittest.TestCase):
     def setUp(self) -> None:
-        # We only test on >= 3.12
         self.tempdir = TemporaryDirectory(delete=False)  # type: ignore
         self.tempdir_path = Path(self.tempdir.name)
         self.sf = SourceFiles(self.tempdir_path, None)
