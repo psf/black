@@ -717,6 +717,7 @@ def generate_ignored_nodes(
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment, mode)
         return
     container: LN | None = container_of(leaf)
+    open_brackets = 0
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container, mode=mode):
             return
@@ -750,6 +751,14 @@ def generate_ignored_nodes(
                 # This can happen when there is no matching `# fmt: on` comment at the
                 # same level as `# fmt: on`. We need to keep this DEDENT.
                 return
+            if container.type in CLOSING_BRACKETS:
+                if not open_brackets:
+                    # This closes the brackets that `# fmt: off` is in. Without a
+                    # `# fmt: on`, the region ends at the end of the brackets.
+                    return
+                open_brackets -= 1
+            elif container.type in OPENING_BRACKETS:
+                open_brackets += 1
             yield container
             container = container.next_sibling
 

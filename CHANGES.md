@@ -78,6 +78,9 @@
 - Fix IPython help syntax after an object (`obj?`), wildcard searches (`np.*load*?`) and
   pasted `>>>` prompts being rewritten in Jupyter notebooks. Cells with IPython syntax
   that can't be put back as written are now left unchanged (#5630)
+- Fix crash when a `# fmt: off` without a matching `# fmt: on` comes right before a
+  single name, number or string inside brackets, such as `x = [` ... `# fmt: off` ...
+  `1` ... `]` (#5642)
 
 ### Preview style
 
