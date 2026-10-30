@@ -99,6 +99,9 @@ assert ifd.tobytes() == (
     # tag id (2 bytes), type (2 bytes), count (4 bytes), value (4 bytes)
     b"\x11\x01\x04\x00\x02\x00\x00\x00\x12\x00\x00\x00"
 )
+assert (
+    single_line_operand_inside_parentheses
+) == expected
 
 # Multiline operands that fit on one line once joined
 assert offloadable_content_blocks(result=tool_result, store=FileSystemStore(root=tmp_path)) == (
@@ -214,6 +217,7 @@ assert ifd.tobytes() == (
     # tag id (2 bytes), type (2 bytes), count (4 bytes), value (4 bytes)
     b"\x11\x01\x04\x00\x02\x00\x00\x00\x12\x00\x00\x00"
 )
+assert single_line_operand_inside_parentheses == expected
 
 # Multiline operands that fit on one line once joined
 assert (
