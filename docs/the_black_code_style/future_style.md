@@ -85,9 +85,45 @@ Currently, the following features are included in the preview style:
   top-level expressions. ([see below](labels/remove-redundant-top-level-parentheses))
 - `remove_redundant_list_parentheses`: Remove redundant parentheses around list literals
   and list comprehensions. ([see below](labels/remove-redundant-list-parentheses))
+- `symmetric_binary_operations`: Keep optional parentheses around long two-operand
+  arithmetic and bitwise operations when both operands fit on their own line, rather
+  than splitting inside an operand. ([see below](labels/symmetric-binary-operations))
 - `remove_redundant_comparison_parentheses`: Remove redundant parentheses around
   operands in comparison expressions.
   ([see below](labels/remove-redundant-comparison-parentheses))
+
+(labels/symmetric-binary-operations)=
+
+### Symmetric binary operations
+
+When a binary operation with two operands is too long for one line, Black often omits
+the optional parentheses around it and splits inside one of the operands instead. If
+both operands fit on their own line, Black now keeps the optional parentheses and
+formats the operation like one with more operands: on one line inside the parentheses if
+it fits there, otherwise split before the operator. This applies to every arithmetic and
+bitwise operator. Black retains the existing formatting if either operand would still
+need an internal split, including when an active magic trailing comma forces it onto
+multiple lines, and when the expression ends in a dict display, whose opening brace
+stays next to the operator.
+
+```python
+# Before
+value = get_value_from_a_kinda_long_function_that_is_even_longer() + max(
+    offset, threshold
+)
+total = self.another_method(value - self.max_size) + self.another_method(
+    self.min_size - value
+)
+
+# After (with --preview)
+value = (
+    get_value_from_a_kinda_long_function_that_is_even_longer() + max(offset, threshold)
+)
+total = (
+    self.another_method(value - self.max_size)
+    + self.another_method(self.min_size - value)
+)
+```
 
 (labels/remove-redundant-top-level-parentheses)=
 
