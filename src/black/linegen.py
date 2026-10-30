@@ -17,6 +17,7 @@ from black.brackets import (
     LOGIC_PRIORITY,
     STRING_PRIORITY,
     get_leaves_inside_matching_brackets,
+    max_delimiter_priority,
     max_delimiter_priority_in_atom,
 )
 from black.comments import (
@@ -801,9 +802,46 @@ class LineGenerator(Visitor[Line]):
                 node.children[1], mode=self.mode, features=self.features
             )
         if Preview.wrap_comprehension_in in self.mode:
-            normalize_invisible_parens(
-                node, parens_after={"in"}, mode=self.mode, features=self.features
-            )
+            for index, child in enumerate(node.children):
+                if (
+                    not isinstance(child.prev_sibling, Leaf)
+                    or not child.prev_sibling.value == "in"
+                ):
+                    continue
+
+                # Always try to remove all levels of parens
+                maybe_make_parens_invisible_in_atom(
+                    child, parent=node, mode=self.mode, features=self.features
+                )
+
+                # Don't force anything if comments are present
+                if any("#" in leaf.prefix for leaf in child.leaves()):
+                    continue
+
+                unwrapped = False
+                while (
+                    len(child.children) == 3
+                    and is_lpar_token(child.children[0])
+                    and is_rpar_token(child.children[-1])
+                ):
+                    unwrapped = True
+                    child = child.children[1]
+
+                max_delimiter = max_delimiter_priority(child.children)
+
+                # Keep 1 level of invisible parens so it can be wrapped if too long
+                wrap_in_parentheses(
+                    node,
+                    child,
+                    visible=(
+                        # Keep one level to avoid syntax errors
+                        child.type in {syms.test, syms.lambdef, syms.yield_expr}
+                        # Keep as-written if it's a non-simple name (has delimiters)
+                        or (unwrapped and max_delimiter > DOT_PRIORITY)
+                    ),
+                    index=index,
+                )
+
         yield from self.visit_default(node)
 
     def visit_old_comp_for(self, node: Node) -> Iterator[Line]:

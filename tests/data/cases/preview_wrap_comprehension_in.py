@@ -44,6 +44,8 @@ double_lambda_iter = [i for i in ((lambda: 0)) if i]
 double_lambda_no_clause = [i for i in ((lambda x: x))]
 double_ternary = [i for i in ((a if b else c))]
 triple_lambda = [i for i in (((lambda: 0))) if i]
+[a for a in (yield b)]
+[a for a in (((yield b)))]
 
 # Nested arrays
 # First in will not be split because it would still be too long
@@ -81,6 +83,31 @@ dict_with_really_long_names = {
         dictionary
     )
 }
+
+# Short `in`s with delimiters should retain up to one level of parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in ((traits_instructions or [])) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions or [] if trait
+]
+
+# Short `in`s without delimiters (or only dots) should remove parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits.instructions) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits.instructions if trait
+]
 
 # output
 [
@@ -137,6 +164,8 @@ double_lambda_iter = [i for i in (lambda: 0) if i]
 double_lambda_no_clause = [i for i in (lambda x: x)]
 double_ternary = [i for i in (a if b else c)]
 triple_lambda = [i for i in (lambda: 0) if i]
+[a for a in (yield b)]
+[a for a in (yield b)]
 
 # Nested arrays
 # First in will not be split because it would still be too long
@@ -183,3 +212,28 @@ dict_with_really_long_names = {
     key_with_super_really_long_name: key_with_super_really_long_name
     for key in dictionary
 }
+
+# Short `in`s with delimiters should retain up to one level of parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in (traits_instructions or []) if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions or [] if trait
+]
+
+# Short `in`s without delimiters (or only dots) should remove parens
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits_instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits.instructions if trait
+]
+filtered_trait_instructions: list[str] = [
+    trait for trait in traits.instructions if trait
+]
