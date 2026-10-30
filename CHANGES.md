@@ -102,6 +102,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Put each string literal of an implicit string concatenation on its own line inside the
+  surrounding brackets when the literal ends with a newline, instead of joining them
+  onto a single line (#5554)
 - Split long strings after overloaded binary and augmented assignment operators,
   including middle operands of operator chains, in the unstable `string_processing`
   feature (#5562)
