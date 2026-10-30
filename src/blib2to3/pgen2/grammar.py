@@ -19,7 +19,7 @@ import tempfile
 from typing import Any, Optional, TypeVar, Union
 
 # Local imports
-from . import token
+from . import safe_pickle, token
 
 _P = TypeVar("_P", bound="Grammar")
 Label = tuple[int, Optional[str]]
@@ -121,12 +121,12 @@ class Grammar:
     def load(self, filename: Path) -> None:
         """Load the grammar tables from a pickle file."""
         with open(filename, "rb") as f:
-            d = pickle.load(f)
+            d = safe_pickle.load(f)
         self._update(d)
 
     def loads(self, pkl: bytes) -> None:
         """Load the grammar tables from a pickle bytes object."""
-        self._update(pickle.loads(pkl))
+        self._update(safe_pickle.loads(pkl))
 
     def copy(self: _P) -> _P:
         """

@@ -9,6 +9,9 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Reject unsafe globals when loading cache pickles, so a crafted cache in a checkout
+  cannot execute code (#5579)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
