@@ -135,6 +135,13 @@
 
 <!-- Changes that improve Black's performance. -->
 
+### Caching
+
+<!-- Changes to Black's file cache -->
+
+- Treat an unreadable cache file as a cache miss instead of failing the formatting run
+  with a "cannot format" error (#5641)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
