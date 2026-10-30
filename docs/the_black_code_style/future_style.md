@@ -88,6 +88,11 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_comparison_parentheses`: Remove redundant parentheses around
   operands in comparison expressions.
   ([see below](labels/remove-redundant-comparison-parentheses))
+- `parenthesize_unsplittable_keyword_arguments`: Parenthesize the value of a keyword
+  argument when it would otherwise make the line exceed the line length and Black has no
+  other way to split it, such as a bare attribute chain. This mirrors how assignment
+  right-hand sides are handled.
+  ([see below](labels/parenthesize-unsplittable-keyword-arguments))
 
 (labels/remove-redundant-top-level-parentheses)=
 
@@ -736,6 +741,55 @@ assert (
     ).get_return_type()
 )
 ```
+
+(labels/parenthesize-unsplittable-keyword-arguments)=
+
+### Parenthesize unsplittable keyword argument values
+
+When a keyword argument's value is a bare attribute chain (or another expression Black
+cannot split, such as a plain name or literal) and the whole argument would exceed the
+line length, Black previously had no split point and left the line too long. With this
+feature enabled, Black wraps such a value in parentheses — just as it already does for
+assignment right-hand sides — so the value moves onto its own line:
+
+```python
+# Before
+func(
+    long_long_long_long_long_long_long_long_long_long_long_arg=long_long_long_long_long_class.long_long_long_long_attr
+)
+
+# After (with --preview)
+func(
+    long_long_long_long_long_long_long_long_long_long_long_arg=(
+        long_long_long_long_long_class.long_long_long_long_attr
+    )
+)
+```
+
+The same wrapping applies when the keyword name itself is so long that Black cannot fix
+the overflow by splitting the value at its own operators (#5335): the whole value moves
+after the `name=(` line:
+
+```python
+# Before
+foo(
+    this_is_a_very_looooooooooooooong_parameter_name=some_very_loooooooooooooooooong_variable_name
+    + another_very_loooooooooooooooooong_variable_name
+)
+
+# After (with --preview)
+foo(
+    this_is_a_very_looooooooooooooong_parameter_name=(
+        some_very_loooooooooooooooooong_variable_name
+        + another_very_loooooooooooooooooong_variable_name
+    )
+)
+```
+
+Arguments whose rendered one-line form already fits are left untouched, as are values
+that contain brackets (the split point inside their own brackets already governs those)
+and implicitly concatenated strings, where Black's own string splitting applies. A name
+so long that `name=(` alone would still exceed the limit is also left alone.
 
 ## Unstable style
 
