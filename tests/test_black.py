@@ -3167,6 +3167,21 @@ class TestCaching:
             cache_file.touch()
             assert black.Cache.read(mode, workspace).file_data == {}
 
+    def test_cache_unreadable_file_is_a_miss(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode, workspace)
+            # A cache file that cannot be opened must be a cache miss, not a
+            # formatting failure: the cache is only an optimization. On Windows
+            # this happens when another Black process rewrites the file at the
+            # same moment, and the open() then fails with a sharing violation.
+            cache_file.mkdir()
+            src = (workspace / "test.py").resolve()
+            src.write_text("print('hello')", encoding="utf-8")
+            assert black.Cache.read(mode, workspace).file_data == {}
+            invokeBlack([str(src)])
+            assert src.read_text(encoding="utf-8") == 'print("hello")\n'
+
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:

@@ -76,18 +76,18 @@ class Cache:
         if not exists:
             return cls(mode, cache_file)
 
-        with cache_file.open("rb") as fobj:
-            try:
+        try:
+            with cache_file.open("rb") as fobj:
                 data: dict[str, tuple[float, int, str]] = pickle.load(fobj)
                 file_data = {k: FileData(*v) for k, v in data.items()}
-            except (
-                pickle.UnpicklingError,
-                EOFError,
-                ValueError,
-                IndexError,
-                PermissionError,
-            ):
-                return cls(mode, cache_file)
+        except (
+            pickle.UnpicklingError,
+            EOFError,
+            ValueError,
+            IndexError,
+            OSError,
+        ):
+            return cls(mode, cache_file)
 
         return cls(mode, cache_file, file_data)
 

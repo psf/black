@@ -119,6 +119,8 @@
 - Emit a clear error instead of a confusing `OSError: AF_UNIX path too long` traceback
   when running `--diff` in environments where the temporary directory path is too long
   (#5513)
+- Treat an unreadable cache file as a cache miss instead of failing the formatting run
+  with a "cannot format" error (#5641)
 
 ### Packaging
 
