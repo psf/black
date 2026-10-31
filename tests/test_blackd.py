@@ -454,6 +454,23 @@ class BlackDClientTestCase(AioHTTPTestCase):
 
         self.assertEqual(formatted_code, expected)
 
+    async def test_custom_content_type_charset(self) -> None:
+        for content_type in (
+            "text/plain",
+            "text/plain; charset=utf-8",
+            "text/plain; charset=iso-8859-1",
+            "text/plain; charset=windows-1252",
+            "text/plain; charset=utf-16",
+        ):
+            for source in ("message='café'", 'message = "café"\n'):
+                with self.subTest(content_type=content_type, source=source):
+                    client = blackd.client.BlackDClient(
+                        self.client.make_url("/"),
+                        headers={"Content-Type": content_type},
+                    )
+                    formatted_code = await client.format_code(source)
+                    self.assertEqual(formatted_code, 'message = "café"\n')
+
     async def test_skip_source_first_line(self) -> None:
         client = blackd.client.BlackDClient(
             self.client.make_url("/"), skip_source_first_line=True

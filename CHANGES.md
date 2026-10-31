@@ -153,6 +153,8 @@
 
 <!-- Changes to Blackd -->
 
+- Preserve non-ASCII source in the Python client when a custom `Content-Type` declares
+  a non-UTF-8 charset (#PR_NUMBER)
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using
   the requested charset, instead of HTTP 500 (#5519)
 - Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
