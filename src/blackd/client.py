@@ -41,7 +41,7 @@ class BlackDClient:
         :param diff: True to enable diff mode.
             Corresponds to the ``--diff`` CLI option.
         :param headers: A dictionary of additional custom headers to send with
-            the request.
+            the request. The body uses the Content-Type charset, defaulting to UTF-8.
         """
         self.url = url
         self.headers = _DEFAULT_HEADERS.copy()
@@ -69,7 +69,11 @@ class BlackDClient:
     async def format_code(self, unformatted_code: str) -> str:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                self.url, headers=self.headers, data=unformatted_code.encode("utf-8")
+                self.url,
+                headers=self.headers,
+                data=aiohttp.payload.StringPayload(
+                    unformatted_code, content_type=self.headers["Content-Type"]
+                ),
             ) as response:
                 if response.status == 204:
                     # Input is already well-formatted
