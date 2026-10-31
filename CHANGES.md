@@ -13,6 +13,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Do not let standalone comments break fluent method chaining formatting (#5644)
+
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638)
