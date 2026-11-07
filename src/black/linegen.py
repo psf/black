@@ -56,6 +56,7 @@ from black.nodes import (
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
     is_docstring,
+    is_empty_rpar,
     is_empty_tuple,
     is_generator,
     is_list,
@@ -917,6 +918,17 @@ def transform_line(
     `features` are syntactical features that may be used in the output.
     """
     if line.is_comment:
+        yield line
+        return
+
+    if (
+        Preview.keep_long_single_imports in mode
+        and line.is_import
+        and is_empty_rpar(line.leaves[-1])
+        and not any(line.comments.values())
+        and not line.contains_standalone_comments()
+        and not any(leaf.type == token.COMMA for leaf in line.leaves)
+    ):
         yield line
         return
 
