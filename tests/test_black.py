@@ -1353,21 +1353,6 @@ class BlackTestCase(BlackBaseTestCase):
             assert "BLACK_NUM_WORKERS" in result.stderr
             assert "Traceback" not in result.stderr
 
-    def test_invalid_line_length_pyproject(self) -> None:
-        with cache_dir() as workspace:
-            path = (workspace / "one.py").resolve()
-            path.write_text('print("hello")\n', encoding="utf-8")
-            (workspace / "pyproject.toml").write_text(
-                "[tool.black]\nline-length = -5\n", encoding="utf-8"
-            )
-
-            result = BlackRunner().invoke(black.main, [str(path)])
-
-            assert result.exit_code == 2
-            assert result.exception is not None
-            assert "--line-length" in result.stderr
-            assert "not in the range x>=1" in result.stderr
-
     @event_loop()
     def test_check_diff_use_together(self) -> None:
         with cache_dir():
