@@ -283,7 +283,7 @@ def validate_regex(
 @click.option(
     "-l",
     "--line-length",
-    type=int,
+    type=click.IntRange(min=1),
     default=DEFAULT_LINE_LENGTH,
     help="How many characters per line to allow.",
     show_default=True,
