@@ -2567,7 +2567,12 @@ def normalize_invisible_parens(
                     child, parent=node, mode=mode, features=features
                 ):
                     wrap_in_parentheses(node, child, visible=False, index=index)
-            elif is_one_tuple(child):
+            elif is_one_tuple(child) or (
+                Preview.parenthesize_one_item_sequence_patterns in mode
+                and child.type == syms.patterns
+                and len(child.children) == 2
+                and child.children[1].type == token.COMMA
+            ):
                 wrap_in_parentheses(node, child, visible=True, index=index)
             elif node.type == syms.import_from:
                 _normalize_import_from(node, child, index)
