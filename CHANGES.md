@@ -16,6 +16,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when `# fmt: skip` is on several one-line clauses of a statement with
+  semicolon-separated bodies, like `if x: a; b  # fmt: skip` ...
+  `else: a; b  # fmt: skip` (#XXXX)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
