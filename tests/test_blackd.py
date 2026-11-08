@@ -23,6 +23,13 @@ except ImportError as e:
     raise RuntimeError("Please install Black with the 'd' extra") from e
 
 import black
+from black.concurrency import cap_process_pool_workers
+
+
+@pytest.mark.parametrize("platform, expected", [("win32", 60), ("linux", 64)])
+def test_cap_process_pool_workers(platform: str, expected: int) -> None:
+    with patch("sys.platform", platform):
+        assert cap_process_pool_workers(64) == expected
 
 
 @pytest.mark.blackd
@@ -36,7 +43,7 @@ def test_blackd_startup_on_windows_with_many_cpus() -> None:
         "    blackd.make_app()\n"
         "    blackd.executor().shutdown()\n"
     )
-    subprocess.run([sys.executable, "-c", script], check=True)
+    subprocess.run([sys.executable, "-c", script], check=True, timeout=120)
 
 
 @pytest.mark.blackd
