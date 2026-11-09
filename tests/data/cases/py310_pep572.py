@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 x[a:=0]
 x[a := 0]
 x[a := 0, b := 1]

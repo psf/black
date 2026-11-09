@@ -36,6 +36,16 @@ assert "A format string: %s" % "This long string should be split at some point r
 msg += "This long string should be wrapped in parens at some point right around hereeeee"
 msg += "This long string should be split at some point right close to or around hereeeeeeee"
 msg += "This long string should not be split at any point ever since it is just righttt"
+# Unsplittable strings in call/collection should not get extra parentheses (issue #3466)
+f(
+    f'longstringwithnospacesinthestringbitbutwithspacesintheformattyfstringbithere{ 1 }',
+)
+f(
+    "l ongstringwithnospacesinthestringbitbutwithspacesintheformattyfstringbitherelollol",
+)
+[
+    f'longstringwithnospacesinthestringbitbutwithspacesintheformattyfstringbithere{ 1 }',
+]
 
 
 # output
@@ -139,3 +149,13 @@ msg += (
     " hereeeeeeee"
 )
 msg += "This long string should not be split at any point ever since it is just righttt"
+# Unsplittable strings in call/collection should not get extra parentheses (issue #3466)
+f(
+    f"longstringwithnospacesinthestringbitbutwithspacesintheformattyfstringbithere{ 1 }",
+)
+f(
+    "l ongstringwithnospacesinthestringbitbutwithspacesintheformattyfstringbitherelollol",
+)
+[
+    f"longstringwithnospacesinthestringbitbutwithspacesintheformattyfstringbithere{ 1 }",
+]

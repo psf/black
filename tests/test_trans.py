@@ -1,4 +1,4 @@
-from black.trans import iter_fexpr_spans
+from black.trans import StringSplitter, iter_fexpr_spans
 
 
 def test_fexpr_spans() -> None:
@@ -47,3 +47,27 @@ def test_fexpr_spans() -> None:
     )
     check(r"""{}{""", [(0, 2)], ["{}"])
     check("""f"{'{'''''''''}\"""", [(2, 15)], ["{'{'''''''''}"])
+
+
+def test_can_be_split() -> None:
+    splitter = StringSplitter(88, True)
+    assert not splitter.can_be_split('""')
+    assert not splitter.can_be_split('"short"')
+    assert not splitter.can_be_split(
+        '"longstringwithnospacesatalllongstringwithnospacesatall"'
+    )
+    assert not splitter.can_be_split(
+        'f"longstringwithnospacesinthestringbitbutwithspacesintheformattyfstringbithere{'
+        ' 1 }"'
+    )
+    assert not splitter.can_be_split(
+        '"l ong'
+        'stringwithnospacesinthestringbitbutwithspacesintheformattyfstringbitherelollol"'
+    )
+    assert not splitter.can_be_split(
+        '"\\N{LATIN CAPITAL LETTER'
+        ' A}longstringwithnospacesatalllongstringwithnospacesatall"'
+    )
+    assert splitter.can_be_split(
+        '"this is a very long string that can easily be split across multiple lines"'
+    )

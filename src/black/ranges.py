@@ -207,9 +207,7 @@ def convert_unchanged_lines(src_node: Node, lines: Collection[tuple[int, int]]) 
     more formatting to pass (1). However, it's hard to get it correct when
     incorrect indentations are used. So we defer this to future optimizations.
     """
-    lines_set: set[int] = set()
-    for start, end in lines:
-        lines_set.update(range(start, end + 1))
+    lines_set = frozenset(n for start, end in lines for n in range(start, end + 1))
     replacements = _NodeReplacements()
     visitor = _TopLevelStatementsVisitor(lines_set, replacements)
     _ = list(visitor.visit(src_node))  # Consume all results.
@@ -303,7 +301,6 @@ class _NodeReplacements:
                 else:
                     new_children.append(child)
             parent.children = new_children
-            parent.changed()
             parent.invalidate_sibling_maps()
 
 
@@ -317,6 +314,21 @@ def _contains_standalone_comment(node: LN) -> bool:
         return False
 
 
+def _is_body_on_clause_line(node: LN) -> bool:
+    """Is `node` a body on the same line as its clause, in a statement with other
+    clauses? For example `b()` in `if a: b()` or `c()` in `else: c()`."""
+    parent = node.parent
+    return (
+        node.type == syms.simple_stmt
+        and parent is not None
+        and parent.type not in {syms.file_input, syms.suite}
+        and any(
+            child is not node and child.type in {syms.suite, syms.simple_stmt}
+            for child in parent.children
+        )
+    )
+
+
 class _TopLevelStatementsVisitor(Visitor[None]):
     """
     A node visitor that converts unchanged top-level statements to
@@ -327,7 +339,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
     classes/functions/statements.
     """
 
-    def __init__(self, lines_set: set[int], replacements: "_NodeReplacements"):
+    def __init__(self, lines_set: frozenset[int], replacements: "_NodeReplacements"):
         self._lines_set = lines_set
         self._replacements = replacements
 
@@ -345,6 +357,9 @@ class _TopLevelStatementsVisitor(Visitor[None]):
         # leaf, since a `suite` can simply be a `simple_stmt` when it puts
         # its body on the same line. Example: `if cond: pass`.
         ancestor = furthest_ancestor_with_last_leaf(newline_leaf)
+        if _is_body_on_clause_line(ancestor):
+            # Not the last clause; it's converted with its clause line by line.
+            return
         if not _get_line_range(ancestor).intersection(self._lines_set):
             _convert_node_to_standalone_comment(
                 ancestor, self._replacements, self._lines_set
@@ -376,7 +391,7 @@ class _TopLevelStatementsVisitor(Visitor[None]):
             )
 
 
-def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
+def _convert_unchanged_line_by_line(node: Node, lines_set: frozenset[int]) -> None:
     """Converts unchanged to STANDALONE_COMMENT line by line."""
     replacements = _NodeReplacements()
     for leaf in node.leaves():
@@ -405,21 +420,30 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
                     replacements=replacements,
                     lines_set=lines_set,
                 )
-        elif leaf.parent and leaf.parent.type == syms.suite:
+        elif leaf.parent and (
+            leaf.parent.type == syms.suite or _is_body_on_clause_line(leaf.parent)
+        ):
             # The `suite` node is defined as:
             #   suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
             # We will check `simple_stmt` and `stmt+` separately against the lines set
             parent_sibling = leaf.parent.prev_sibling
             nodes_to_ignore = []
-            while parent_sibling and parent_sibling.type != syms.suite:
+            while parent_sibling and parent_sibling.type not in {
+                syms.suite,
+                syms.simple_stmt,
+            }:
                 # NOTE: Multiple suite nodes can exist as siblings in e.g. `if_stmt`.
                 nodes_to_ignore.insert(0, parent_sibling)
                 parent_sibling = parent_sibling.prev_sibling
+            if leaf.parent.type == syms.simple_stmt:
+                # A body on its clause's line is checked with the clause.
+                nodes_to_ignore.extend(leaf.parent.children[:-1])
             # Special case for `async_stmt` and `async_funcdef` where the ASYNC
             # token is on the grandparent node.
             grandparent = leaf.parent.parent
             if (
-                grandparent is not None
+                parent_sibling is None
+                and grandparent is not None
                 and grandparent.prev_sibling is not None
                 and grandparent.prev_sibling.type == ASYNC
             ):
@@ -446,24 +470,29 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: set[int]) -> None:
     replacements.apply()
 
 
-def _str_with_standalone_comments(node: LN) -> str:
-    """Like `str(node)`, but a nested STANDALONE_COMMENT that ends in a `# fmt: skip`
-    is followed by a newline.
+def _str_with_standalone_comments(*nodes: LN) -> str:
+    """Like `"".join(str(node) for node in nodes)`, but a nested STANDALONE_COMMENT
+    that ends in a comment is followed by a newline.
 
-    A STANDALONE_COMMENT made by `# fmt: skip` handling can end with the comment and
-    has no trailing newline: the line generator puts one after it. Joining it
-    straight to the next leaf would append that leaf (e.g. a closing bracket) to the
-    comment's line and turn it into part of the comment.
+    A STANDALONE_COMMENT made by `# fmt: skip` handling, or by a `# fmt: off` /
+    `# fmt: on` block that only holds comments, can end with the comment and has no
+    trailing newline: the line generator puts one after it. Joining it straight to
+    the next leaf would append that leaf (e.g. a closing bracket) to the comment's
+    line and turn it into part of the comment.
     """
-    leaves = list(node.leaves())
+    leaves = [leaf for node in nodes for leaf in node.leaves()]
     parts = []
     for leaf, next_leaf in zip(leaves, [*leaves[1:], None], strict=True):
         text = str(leaf)
         if (
             leaf.type == STANDALONE_COMMENT
             and next_leaf is not None
-            and not str(next_leaf).startswith("\n")
-            and _ends_with_fmt_skip(text)
+            and (
+                # A comment-only fmt:off/on block ends with the `# fmt: on` comment.
+                # A newline in the next leaf's prefix is a blank line after it.
+                leaf.fmt_pass_converted_first_leaf is None
+                or (not str(next_leaf).startswith("\n") and _ends_with_fmt_skip(text))
+            )
         ):
             text += "\n"
         parts.append(text)
@@ -484,7 +513,7 @@ def _ends_with_fmt_skip(text: str) -> bool:
 
 
 def _convert_node_to_standalone_comment(
-    node: LN, replacements: "_NodeReplacements", lines_set: set[int]
+    node: LN, replacements: "_NodeReplacements", lines_set: frozenset[int]
 ) -> None:
     """Convert node to STANDALONE_COMMENT by modifying the tree inline."""
     parent = node.parent
@@ -537,7 +566,7 @@ def _convert_nodes_to_standalone_comment(
     *,
     newline: Leaf,
     replacements: "_NodeReplacements",
-    lines_set: set[int],
+    lines_set: frozenset[int],
 ) -> None:
     """Convert nodes to STANDALONE_COMMENT by modifying the tree inline."""
     if not nodes:
@@ -548,7 +577,7 @@ def _convert_nodes_to_standalone_comment(
         return
     first_lineno = first.lineno
     prefix = replacements.take_prefix(first)
-    value = "".join(_str_with_standalone_comments(node) for node in nodes)
+    value = _str_with_standalone_comments(*nodes)
     # The prefix comment on the NEWLINE leaf is the trailing comment of the statement.
     if newline.prefix:
         value += newline.prefix

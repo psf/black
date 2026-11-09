@@ -28,13 +28,22 @@ python -m black {source_file_or_directory}
 ### Ignoring sections
 
 Black will not reformat lines that contain `# fmt: skip` or blocks that start with
-`# fmt: off` and end with `# fmt: on`. `# fmt: skip` can be mixed with other
-pragmas/comments either with multiple comments (e.g. `# fmt: skip # pylint # noqa`) or
-as a semicolon separated list (e.g. `# fmt: skip; pylint; noqa`). `# fmt: on/off` must
-be on the same level of indentation and in the same block, meaning no unindents beyond
-the initial indentation level between them. Black also recognizes
-[YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
-courtesy for straddling code.
+`# fmt: off` and end with `# fmt: on`.
+
+`# fmt: skip` can be mixed with other pragmas/comments either with multiple comments
+(e.g. `# fmt: skip # pylint # noqa`) or as a semicolon separated list (e.g.
+`# fmt: skip; pylint; noqa`).
+
+`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
+no unindents beyond the initial indentation level between them. A `# fmt: off` without a
+matching `# fmt: on` ends implicitly:
+
+- inside brackets, at the closing bracket
+- inside an indented block, at the first unindent beyond its indentation level
+- at the top level, at the end of the file
+
+Black also recognizes [YAPF](https://github.com/google/yapf)'s block comments to the
+same effect, as a courtesy for straddling code.
 
 ### Command line options
 
@@ -362,6 +371,9 @@ Default Inclusions: `['.py', '.pyi', '.ipynb']`
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
 This option controls the number of parallel workers. This can also be specified via the
 `BLACK_NUM_WORKERS` environment variable. Defaults to the number of CPUs in the system.
+On Windows the number of workers used is capped at 60, even when a higher value is set
+via this option or the environment variable, to work around
+[CPython issue 26903](https://bugs.python.org/issue26903).
 
 #### `-q`, `--quiet`
 
@@ -619,4 +631,4 @@ over to [File collection and discovery](./file_collection_and_discovery.md).
 
 Another good choice would be setting up an
 [integration with your editor](../integrations/editors.md) of choice or with
-[pre-commit for source version control](../integrations/source_version_control.md).
+[pre-commit for version control](../integrations/pre-commit.md).

@@ -45,6 +45,7 @@ from black.files import (
     find_user_pyproject_toml,
     gen_python_files,
     get_gitignore,
+    is_filesystem_root,
     parse_pyproject_toml,
     path_is_excluded,
     resolves_outside_root_or_cannot_stat,
@@ -503,7 +504,7 @@ def validate_regex(
     is_flag=True,
     help=(
         "Stop emitting all non-critical output. Error messages will still be emitted"
-        " (which can silenced by 2>/dev/null)."
+        " (which can be silenced by 2>/dev/null)."
     ),
 )
 @click.option(
@@ -596,7 +597,7 @@ def main(
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
 
-    assert sys.version_info >= (3, 10), "Black requires Python 3.10+"
+    assert sys.version_info >= (3, 11), "Black requires Python 3.11+"
     if sys.version_info[:3] == (3, 12, 5):
         out(
             "Python 3.12.5 has a memory safety issue that can cause Black's "
@@ -627,6 +628,15 @@ def main(
         find_project_root(src, stdin_filename) if code is None else (None, None)
     )
     ctx.obj["root"] = root
+
+    if code is None:
+        for source in src:
+            if source != "-" and is_filesystem_root(Path(source)):
+                err(
+                    "Warning: formatting the filesystem root can affect files "
+                    "outside your project."
+                )
+                break
 
     if (
         code is None
@@ -1135,8 +1145,16 @@ def format_stdin_to_stdout(
     """
     then = datetime.now(timezone.utc)
 
+    header_str = ""
     if content is None:
-        src, encoding, newline = decode_bytes(sys.stdin.buffer.read(), mode)
+        buf = io.BytesIO(sys.stdin.buffer.read())
+        header = buf.readline() if mode.skip_source_first_line else b""
+        src, encoding, newline = decode_bytes(buf.read(), mode)
+        header_str = header.decode(encoding)
+        if newline != "\n" and header_str.endswith(newline):
+            # The output is written with `newline` translation, which would turn
+            # the header's original line ending into e.g. "\r\r\n".
+            header_str = header_str[: -len(newline)] + "\n"
     else:
         src, encoding, newline = content, "utf-8", "\n"
 
@@ -1149,6 +1167,8 @@ def format_stdin_to_stdout(
         return False
 
     finally:
+        src = header_str + src
+        dst = header_str + dst
         if write_back == WriteBack.YES:
             # Make sure there's a newline after the content. `_write_to_stdout()`
             # translates "\n" into `newline` itself, so append a bare "\n" here;
@@ -1285,20 +1305,24 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     are currently not supported.
     """
     validate_cell(src, mode)
-    src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
-        src
-    )
     try:
+        src_without_trailing_semicolon, has_trailing_semicolon = (
+            remove_trailing_semicolon(src)
+        )
         masked_src, replacements = mask_cell(src_without_trailing_semicolon)
-    except SyntaxError:
+    except (SyntaxError, tokenize.TokenError):
         raise NothingChanged from None
     masked_dst = format_str(masked_src, mode=mode)
     if not fast:
         check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
     dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
-    dst = put_trailing_semicolon_back(
-        dst_without_trailing_semicolon, has_trailing_semicolon
-    )
+    try:
+        dst = put_trailing_semicolon_back(
+            dst_without_trailing_semicolon, has_trailing_semicolon
+        )
+    except tokenize.TokenError:
+        # Python 3.11 sees the `;` in `!find . -exec rm {} \;` as a trailing semicolon
+        raise NothingChanged from None
     dst = dst.rstrip("\n")
     if dst == src:
         raise NothingChanged from None
@@ -1461,7 +1485,7 @@ def _format_str_once(
     )
 
     src_node = lib2to3_parse(
-        normalized_contents.lstrip(),
+        normalized_contents,
         target_versions=mode.target_versions,
         cython=mode.is_pyx,
     )
@@ -1479,6 +1503,7 @@ def _format_str_once(
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
+            Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
         }
         if supports_feature(versions, feature)
     }

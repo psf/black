@@ -15,7 +15,7 @@ except ImportError as ie:
     raise ImportError(
         f"aiohttp dependency is not installed: {ie}. "
         + "Please re-install black with the '[d]' extra install "
-        + "to obtain aiohttp_cors: `pip install black[d]`"
+        + "to obtain aiohttp: `pip install black[d]`"
     ) from None
 
 import click
@@ -193,11 +193,8 @@ async def handle(
             only_diff=only_diff,
             executor=executor,
             executor_semaphore=executor_semaphore,
+            header=header,
         )
-
-        # Put the source first line back
-        req_str = header + req_str
-        formatted_str = header + formatted_str
 
         return web.Response(
             content_type=request.content_type,
@@ -227,12 +224,18 @@ async def format_code(
     only_diff: bool,
     executor: Executor,
     executor_semaphore: asyncio.BoundedSemaphore,
+    header: str = "",
 ) -> str:
     async with executor_semaphore:
         loop = asyncio.get_event_loop()
         formatted_str = await loop.run_in_executor(
             executor, partial(black.format_file_contents, req_str, fast=fast, mode=mode)
         )
+
+        # Put the skipped first line back. This has to happen before diffing so the
+        # line ends up as part of the patch instead of being glued in front of it.
+        req_str = header + req_str
+        formatted_str = header + formatted_str
 
         if not only_diff:
             return formatted_str

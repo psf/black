@@ -163,5 +163,5 @@ f = lambda: [1, 2]
 # Parentheses required for tuples containing lists
 ([1, 2],)
 ([1, 2], 3)
-(([1, 2],))
+([1, 2],)
 foo(([1, 2],))

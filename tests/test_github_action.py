@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture
 def action_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setenv("GITHUB_ACTION_PATH", str(tmp_path))
+    monkeypatch.setenv("GITHUB_ACTION_PATH", str(tmp_path / "action"))
     for name, value in {
         "INPUT_USE_PYPROJECT": "true",
         "INPUT_VERSION": "",
@@ -81,6 +81,7 @@ def test_action_use_pyproject(
 
     assert exc.value.code == 0
     assert action_run.call_count == 3
+    assert action_run.call_args_list[0].kwargs["cwd"] == tmp_path / "action"
     assert action_run.call_args_list[1].args[0][-1] == f"black[colorama]{specifier}"
     assert action_run.call_args_list[2].args[0][1:] == ["--check", "."]
 
