@@ -112,11 +112,15 @@ example `--include '\.(pyi?|pyx|pxd|pxi)$'`.
 Black parses them with a Cython grammar, which is the Python grammar with some extra
 rules. The following is supported:
 
-- `cimport` and `from ... cimport ...`
+- `cimport`, `from ... cimport ...` and `include "file.pxi"`
 - `cdef`, `cpdef` and `ctypedef` declarations of variables, functions, structs, unions,
   enums, classes and `extern from` blocks, and `cdef:` blocks of declarations
+- forward declarations of classes, `cdef class C(Base)`
+- C names for declared names, as in `ctypedef int vint "volatile int"`
 - C types in declarations and in the arguments of `def` functions, including pointers,
   `unsigned long`, `np.ndarray[double, ndim=2]` and `double[:, ::1]`
+- function pointers, such as `ctypedef void (*callback)(void *data) noexcept nogil`, in
+  declarations and in arguments
 - the `except` and `nogil` clauses after the arguments of a function
 - the `<type>value` cast, `&value` and `sizeof(type)`
 
@@ -143,11 +147,12 @@ cdef int add(int a, int b):
     return a + b
 ```
 
-Other Cython syntax, such as fused types, function pointers, C++ templates, `property`
-blocks, `include`, and the `DEF`, `IF` and `ELIF` statements, is not supported yet and
-makes Black fail on the file. Black cannot check that its output is equivalent to its
-input, as it does for Python code, because Python's `ast` module cannot parse Cython. It
-does check that formatting the output again changes nothing.
+Other Cython syntax, such as fused types, complex declarators like arrays of function
+pointers, C++ templates, `property` blocks, `for ... from` loops, and the `DEF`, `IF`
+and `ELIF` statements, is not supported yet and makes Black fail on the file. Black
+cannot check that its output is equivalent to its input, as it does for Python code,
+because Python's `ast` module cannot parse Cython. It does check that formatting the
+output again changes nothing.
 
 (labels/remove-redundant-top-level-parentheses)=
 

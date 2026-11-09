@@ -213,6 +213,20 @@ def _cython_type_whitespace(t: int, p: Node, prev: NL | None) -> str | None:
     return None
 
 
+def is_function_pointer_declarator(node: NL) -> bool:
+    """Is this the `(*name)` of a Cython function pointer declaration?
+
+    It is parsed as a first `parameters` node, followed by the arguments.
+    """
+    return (
+        node.type == syms.parameters
+        and node.parent is not None
+        and node.parent.type in {syms.cdef_tail, syms.tname}
+        and node.next_sibling is not None
+        and node.next_sibling.type == syms.parameters
+    )
+
+
 def prev_is(prev: NL | None, type: int) -> bool:
     return prev is not None and prev.type == type
 
@@ -248,6 +262,10 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
         syms.tstring_replacement_field,
     ):
         return NO
+
+    if t == token.LPAR and is_function_pointer_declarator(p):
+        # `ctypedef int (*name)(int)`
+        return SPACE
 
     prev = leaf.prev_sibling
     if p.type in CYTHON_TYPE_PARENTS:
@@ -1021,7 +1039,11 @@ def is_import(leaf: Leaf) -> bool:
         or (
             t == token.NAME
             and (
-                (v in {"import", "cimport"} and p and p.type == syms.import_name)
+                (
+                    v in {"import", "cimport", "include"}
+                    and p
+                    and p.type == syms.import_name
+                )
                 or (v == "from" and p and p.type == syms.import_from)
             )
         )

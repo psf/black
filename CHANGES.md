@@ -130,8 +130,8 @@
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
 - Add `cython_support`: format Cython files (`.pyx`, `.pxd` and `.pxi`), with support
-  for `cimport`, `cdef`, `cpdef` and `ctypedef` declarations, typed function arguments,
-  casts and `cdef extern from` blocks (#5569)
+  for `cimport`, `include`, `cdef`, `cpdef` and `ctypedef` declarations, typed function
+  arguments, function pointers, C names, casts and `cdef extern from` blocks (#5569)
 
 ### Configuration
 
