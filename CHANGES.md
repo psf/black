@@ -162,8 +162,8 @@
 <!-- Changes that improve Black's performance. -->
 
 - Skip the extra formatting pass of the stability check when the forced second pass
-  already left the output unchanged, making safe mode 1.4-1.6x faster on files that
-  get reformatted (#5682)
+  already left the output unchanged, making safe mode 1.4-1.6x faster on files that get
+  reformatted (#5682)
 
 ### Output
 
