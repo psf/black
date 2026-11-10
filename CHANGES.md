@@ -87,6 +87,9 @@
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
   such as a cell with an unclosed bracket or a shell command like
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
+- Keep a line holding only a backslash after a backslash continuation as written in
+  `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
+  or t-string fields, instead of crashing or dropping it (#5681)
 
 ### Preview style
 

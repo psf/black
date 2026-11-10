@@ -120,6 +120,11 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
     for index, full_line in enumerate(lines):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
         line = full_line.lstrip()
+        if index and line == "\\":
+            # A backslash on a line by itself, continuing the escaped newline on
+            # the line above. It only stays in the prefix so code written back as
+            # is keeps it; for comments it counts as an empty line.
+            full_line = line = ""
         if not line:
             nlines += 1
             if "\f" in full_line:
