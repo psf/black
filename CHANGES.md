@@ -162,7 +162,7 @@
 <!-- Changes that improve Black's performance. -->
 
 - Skip the regular expressions in string quote normalization when a string has no
-  backslash and no quote character to escape (#XXXX)
+  backslash and no quote character to escape (#5680)
 
 ### Output
 
