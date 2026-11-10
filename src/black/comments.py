@@ -340,13 +340,25 @@ def _handle_comment_only_fmt_block(
     # Update leaf prefix
     leaf.prefix = original_prefix[fmt_on_comment.consumed :]
 
-    # Insert the STANDALONE_COMMENT
-    parent = leaf.parent
+    # Insert the STANDALONE_COMMENT. If `leaf` starts the target of an assignment,
+    # insert it before the whole target. Inside the target it would end up within
+    # the invisible parentheses added around it (e.g. `a, b = c`), and every pass
+    # would add blank lines before the comment.
+    node: LN = leaf
+    while (
+        node.parent is not None
+        and node.parent.children[0] is node
+        and node.parent.type not in {syms.expr_stmt, syms.simple_stmt}
+    ):
+        node = node.parent
+    if node.parent is None or node.parent.type != syms.expr_stmt:
+        node = leaf
+    parent = node.parent
     assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (prefix only)"
 
     leaf_idx = None
     for idx, child in enumerate(parent.children):
-        if child is leaf:
+        if child is node:
             leaf_idx = idx
             break
 
