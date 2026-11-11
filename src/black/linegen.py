@@ -48,6 +48,7 @@ from black.nodes import (
     WHITESPACE,
     Visitor,
     ensure_visible,
+    first_leaf,
     first_leaf_of,
     fstring_tstring_to_string,
     get_annotation_type,
@@ -2825,6 +2826,42 @@ def _is_atom_multiline(node: LN) -> bool:
     return False
 
 
+def _type_ignores_would_be_joined(rpar: Leaf, *, mode: Mode) -> bool:
+    """Return True if removing `rpar` would join two `# type: ignore` comments.
+
+    Python only recognizes a `# type: ignore` at the start of a line's comment,
+    so two of them must not end up on one line.  This happens when a line
+    inside the parentheses and the line after them each carry one and removing
+    the parentheses merges the lines.
+    """
+    if not any(
+        is_type_ignore_comment_string(comment.value, mode=mode)
+        for comment in list_comments(rpar.prefix, is_endmarker=False, mode=mode)
+    ):
+        return False
+    following = _following_leaf(rpar)
+    return following is not None and any(
+        is_type_ignore_comment_string(comment.value, mode=mode)
+        for comment in list_comments(
+            following.prefix,
+            is_endmarker=following.type == token.ENDMARKER,
+            mode=mode,
+        )
+    )
+
+
+def _following_leaf(node: LN) -> Leaf | None:
+    """Return the first leaf that follows `node`, if any."""
+    while node.parent is not None:
+        res = node.next_sibling
+        if res is not None:
+            if isinstance(res, Leaf):
+                return res
+            return first_leaf(res)
+        node = node.parent
+    return None
+
+
 def maybe_make_parens_invisible_in_atom(
     node: LN,
     parent: LN,
@@ -2935,6 +2972,10 @@ def maybe_make_parens_invisible_in_atom(
             # If the prefix of `middle` includes a type comment with
             # ignore annotation, then we do not remove the parentheses
             not is_type_ignore_comment_string(middle.prefix.strip(), mode=mode)
+            # If the closing parenthesis and the following line each carry a
+            # `# type: ignore` comment, removing the parentheses would join
+            # them onto one line, where only the first one still applies.
+            and not _type_ignores_would_be_joined(last, mode=mode)
         ):
             first.value = ""
             last.value = ""
