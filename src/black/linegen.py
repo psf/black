@@ -379,17 +379,12 @@ class LineGenerator(Visitor[Line]):
         """Visit `async def`, `async for`, `async with`."""
         yield from self.line()
 
-        children = iter(node.children)
-        for child in children:
+        # Usually `ASYNC` and the statement. Visit every child: `# fmt: skip` on the
+        # header turns `async` into a STANDALONE_COMMENT, and a comment-only
+        # `# fmt: off` / `# fmt: on` block right before the statement adds a
+        # STANDALONE_COMMENT in front of `async`.
+        for child in node.children:
             yield from self.visit(child)
-
-            if child.type == token.ASYNC or child.type == STANDALONE_COMMENT:
-                # STANDALONE_COMMENT happens when `# fmt: skip` is applied on the async
-                # line.
-                break
-
-        internal_stmt = next(children)
-        yield from self.visit(internal_stmt)
 
     def visit_decorators(self, node: Node) -> Iterator[Line]:
         """Visit decorators."""
