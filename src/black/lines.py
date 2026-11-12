@@ -1654,6 +1654,16 @@ def can_omit_invisible_parens(
     """
     line = rhs.body
 
+    # Keep type ignores on the body and closing paren on separate physical lines.
+    if any(
+        is_type_ignore_comment(comment, mode=mode)
+        for comment in line.comments_after(line.leaves[-1])
+    ) and any(
+        is_type_ignore_comment(comment, mode=mode)
+        for comment in rhs.tail.comments_after(rhs.closing_bracket)
+    ):
+        return False
+
     # Multiple type ignores must stay on separate physical lines. Keeping the
     # optional parens gives the line transformer a safe place to split them.
     if (
