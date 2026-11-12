@@ -2502,13 +2502,15 @@ def normalize_invisible_parens(
             elif (
                 is_atom_with_invisible_parens(child)
                 and not is_tuple(child)
-                and not any("#" in leaf.prefix for leaf in child.leaves())
+                and not _atom_has_inner_comments(child)
             ):
                 # Drop the now invisible parens so the target splits the same
                 # way as one written without parentheses. Otherwise the next
                 # pass, which no longer sees them, can split it differently.
                 # A tuple target keeps them, since one written without
-                # parentheses gets invisible parens too.
+                # parentheses gets invisible parens too. Comments before the
+                # opening paren do not block the drop: that prefix is moved
+                # onto the middle node below, so they are kept.
                 middle = child.children[1]
                 middle.prefix = child.prefix
                 child.replace(middle)
