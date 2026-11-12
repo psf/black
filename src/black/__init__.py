@@ -1305,8 +1305,13 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
         masked_src, replacements = mask_cell(src_without_trailing_semicolon)
     except (SyntaxError, tokenize.TokenError):
         raise NothingChanged from None
+    # Format the cell like a file, which ends with a newline. Otherwise the first
+    # pass always changes the cell, so formatted cells are formatted twice.
+    if not masked_src.endswith("\n"):
+        masked_src += "\n"
     masked_dst = format_str(masked_src, mode=mode)
-    if not fast:
+    # An unchanged cell needs no checks, as in format_file_contents().
+    if not fast and masked_dst != masked_src:
         check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
     dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
     try:

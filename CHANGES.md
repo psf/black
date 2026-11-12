@@ -188,6 +188,9 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Format each Jupyter notebook cell once instead of twice, and skip the safety checks
+  for cells that are already formatted, making `--check` on formatted notebooks about 3x
+  faster (#5683)
 - Skip the regular expressions in string quote normalization when a string has no
   backslash and no quote character to escape (#5680)
 
