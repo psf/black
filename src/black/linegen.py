@@ -2402,6 +2402,7 @@ def _kwarg_value_wants_parentheses(name: Leaf, value: LN, mode: Mode) -> bool:
         # only be wrapped when it fits as a unit across the seam.
         if (
             part
+            and previous is not None
             and not (leaf.type == token.STRING and previous.type == token.STRING)
             and is_split_before_delimiter(leaf, previous)
         ):
