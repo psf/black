@@ -457,16 +457,15 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: frozenset[int]) -> No
                 )
         else:
             ancestor = furthest_ancestor_with_last_leaf(leaf)
-            # Consider multiple decorators as a whole block, as their
-            # newlines have different behaviors than the rest of the grammar.
-            if (
-                ancestor.type == syms.decorator
-                and ancestor.parent
-                and ancestor.parent.type == syms.decorators
-            ):
-                ancestor = ancestor.parent
-            if not _get_line_range(ancestor).intersection(lines_set):
-                _convert_node_to_standalone_comment(ancestor, replacements, lines_set)
+            # Convert stacked decorators one by one: as a single block, only the
+            # first decorator would be reindented.
+            if ancestor.type == syms.decorators:
+                targets = list(ancestor.children)
+            else:
+                targets = [ancestor]
+            for target in targets:
+                if not _get_line_range(target).intersection(lines_set):
+                    _convert_node_to_standalone_comment(target, replacements, lines_set)
     replacements.apply()
 
 
