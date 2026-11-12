@@ -95,6 +95,9 @@
   that can't be put back as written are now left unchanged (#5630)
 - Fix crash when `# fmt: skip` is on the closing bracket of a `# fmt: off` region that
   ends in a comment (#5643)
+- Keep a line holding only a backslash after a backslash continuation as written in
+  `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
+  or t-string fields, instead of crashing or dropping it (#5681)
 - Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
   the rest of the last item (#5651)
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
