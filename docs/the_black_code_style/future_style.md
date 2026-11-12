@@ -97,6 +97,8 @@ Currently, the following features are included in the preview style:
 - `end_fmt_off_at_closing_bracket`: Correctly indent `# fmt: off` comments inside
   brackets, such as function calls, and fix a crash when one comes right before a lone
   name, number or string.
+- `parenthesize_one_item_sequence_patterns`: Add parentheses around one-item sequence
+  patterns in `case` statements, such as `case x,:`.
 
 (labels/remove-redundant-top-level-parentheses)=
 

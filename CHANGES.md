@@ -16,17 +16,28 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix crash when removing parentheses would combine two `# type: ignore` comments onto
-  one line (#5686)
+- Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
+  `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
+- Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
+  unformatted by `# fmt: skip` or `--line-ranges` (#5671)
+- Remove the extra blank lines at the end of a file when the selected `--line-ranges`
+  reaches its last line, matching a full-file run (#5654)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
+- Fix crash when removing parentheses would combine two `# type: ignore` comments onto
+  one line (#5686)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
 - Normalize hex codes in unicode escape sequences in f-strings (#5526)
+- Fix crash when `# fmt: skip` is on several one-line clauses of a statement with
+  semicolon-separated bodies, like `if x: a; b  # fmt: skip` ...
+  `else: a; b  # fmt: skip` (#5675)
 - Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
   line endings and does not end with a newline, e.g. a notebook piped to `black -`
   (#5559)
+- Fix `async def`, `async for` and `async with` statements being dropped from the output
+  when a comment-only `# fmt: off` / `# fmt: on` block comes right before them (#5678)
 - Fix crash when `# fmt: skip` on an opening bracket is followed by more code after the
   closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
@@ -47,6 +58,8 @@
 - Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression
   continues after the closing bracket, such as `x = (  # fmt: skip` ... `) if c else d`
   (#5586)
+- Fix unstable formatting when a comment-only `# fmt: off` / `# fmt: on` block comes
+  right before an assignment to a tuple, like `a, b = c` (#5679)
 - Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
@@ -84,11 +97,16 @@
   that can't be put back as written are now left unchanged (#5630)
 - Fix crash when `# fmt: skip` is on the closing bracket of a `# fmt: off` region that
   ends in a comment (#5643)
+- Keep a line holding only a backslash after a backslash continuation as written in
+  `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
+  or t-string fields, instead of crashing or dropping it (#5681)
 - Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
   the rest of the last item (#5651)
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
   such as a cell with an unclosed bracket or a shell command like
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
+- Fix `--line-ranges` producing invalid code when stacked decorators outside the
+  selected lines are indented with 2 spaces or tabs (#5672)
 
 ### Preview style
 
@@ -131,6 +149,8 @@
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
+- Add parentheses around one-item sequence patterns in `case` statements, such as
+  `case x,:` (#5673)
 
 ### Configuration
 
@@ -162,6 +182,9 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Skip the regular expressions in string quote normalization when a string has no
+  backslash and no quote character to escape (#5680)
 
 ### Output
 

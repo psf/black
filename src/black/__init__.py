@@ -1398,10 +1398,16 @@ def format_str(
         hey
 
     """
+    requested_lines: Collection[tuple[int, int]] = ()
     if lines:
         lines = sanitized_lines(lines, src_contents)
         if not lines:
             return src_contents  # Nothing to format
+        # Keep the ranges exactly as the caller asked for them. `lines` is
+        # narrowed below to follow the code through the first pass, but deciding
+        # whether a dropped trailing blank line was selected has to be done
+        # against the original request.
+        requested_lines = lines
     dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
@@ -1413,6 +1419,9 @@ def format_str(
                 # None of the requested lines survived the first pass, so there is
                 # nothing left to format. Passing the empty `lines` to the second
                 # pass would format the whole file instead.
+                dst_contents = _restore_unselected_trailing_blank_lines(
+                    src_contents, dst_contents, requested_lines
+                )
                 return dst_contents
         try:
             dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
@@ -1439,9 +1448,9 @@ def format_str(
                 exc.details,
             )
             raise
-    if lines:
+    if requested_lines:
         dst_contents = _restore_unselected_trailing_blank_lines(
-            src_contents, dst_contents, lines
+            src_contents, dst_contents, requested_lines
         )
     return dst_contents
 
