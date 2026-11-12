@@ -192,14 +192,6 @@ class Driver:
         assert p.rootnode is not None
         return p.rootnode
 
-    def parse_file(
-        self, filename: Path, encoding: str | None = None, debug: bool = False
-    ) -> NL:
-        """Parse a file and return the syntax tree."""
-        with open(filename, encoding=encoding) as stream:
-            text = stream.read()
-        return self.parse_string(text, debug)
-
     def parse_string(self, text: str, debug: bool = False) -> NL:
         """Parse a string and return the syntax tree."""
         tokens = tokenize.tokenize(text, grammar=self.grammar)

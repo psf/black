@@ -11,12 +11,6 @@ from typing import Union
 from .pgen2 import driver
 from .pgen2.grammar import Grammar
 
-# Moved into initialize because mypyc can't handle __file__ (XXX bug)
-# # The grammar file
-# _GRAMMAR_FILE = os.path.join(os.path.dirname(__file__), "Grammar.txt")
-# _PATTERN_GRAMMAR_FILE = os.path.join(os.path.dirname(__file__),
-#                                      "PatternGrammar.txt")
-
 
 class Symbols:
     def __init__(self, grammar: Grammar) -> None:
@@ -178,6 +172,7 @@ def initialize(
     global pattern_symbols
 
     # The grammar file
+    # Moved here because mypyc can't handle __file__ (XXX bug)
     _GRAMMAR_FILE = os.path.join(os.path.dirname(__file__), "Grammar.txt")
     _PATTERN_GRAMMAR_FILE = os.path.join(
         os.path.dirname(__file__), "PatternGrammar.txt"

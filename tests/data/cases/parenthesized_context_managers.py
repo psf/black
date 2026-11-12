@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 with (CtxManager() as example):
     ...
 

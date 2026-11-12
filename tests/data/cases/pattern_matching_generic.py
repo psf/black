@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 re.match()
 match = a
 with match() as match:

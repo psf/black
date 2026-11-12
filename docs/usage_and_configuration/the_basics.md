@@ -28,13 +28,22 @@ python -m black {source_file_or_directory}
 ### Ignoring sections
 
 Black will not reformat lines that contain `# fmt: skip` or blocks that start with
-`# fmt: off` and end with `# fmt: on`. `# fmt: skip` can be mixed with other
-pragmas/comments either with multiple comments (e.g. `# fmt: skip # pylint # noqa`) or
-as a semicolon separated list (e.g. `# fmt: skip; pylint; noqa`). `# fmt: on/off` must
-be on the same level of indentation and in the same block, meaning no unindents beyond
-the initial indentation level between them. Black also recognizes
-[YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
-courtesy for straddling code.
+`# fmt: off` and end with `# fmt: on`.
+
+`# fmt: skip` can be mixed with other pragmas/comments either with multiple comments
+(e.g. `# fmt: skip # pylint # noqa`) or as a semicolon separated list (e.g.
+`# fmt: skip; pylint; noqa`).
+
+`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
+no unindents beyond the initial indentation level between them. A `# fmt: off` without a
+matching `# fmt: on` ends implicitly:
+
+- inside brackets, at the closing bracket
+- inside an indented block, at the first unindent beyond its indentation level
+- at the top level, at the end of the file
+
+Black also recognizes [YAPF](https://github.com/google/yapf)'s block comments to the
+same effect, as a courtesy for straddling code.
 
 ### Command line options
 
@@ -203,7 +212,7 @@ $ echo $?
 1
 
 $ black test.py --check
-error: cannot format test.py: INTERNAL ERROR: Black produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kjdr1oog.log
+error: cannot format test.py: INTERNAL ERROR: Black 26.10.1 on Python (CPython) 3.13.7 produced code that is not equivalent to the source.  Please report a bug on https://github.com/psf/black/issues.  This diff might be helpful: /tmp/blk_kjdr1oog.log
 Oh no! 💥 💔 💥
 1 file would fail to reformat.
 $ echo $?
@@ -287,6 +296,7 @@ configuration file for consistent results across environments.
 ```console
 $ black --version
 black, 26.10.1 (compiled: yes)
+Python (CPython) 3.13.7
 $ black --required-version 26.10.1 -c "format = 'this'"
 format = "this"
 $ black --required-version 31.5b2 -c "still = 'beta?!'"
@@ -343,6 +353,10 @@ programmatically on changed files, such as in a pre-commit hook or editor plugin
 The name of the file when passing it through stdin. Useful to make sure Black will
 respect the `--force-exclude` option on some editors that rely on using stdin.
 
+The filename also determines the input type: a `.pyi` suffix enables stub formatting,
+and a `.ipynb` suffix enables notebook formatting. For example, use
+`black --stdin-filename example.pyi -` when piping a stub through stdin.
+
 #### `--include`
 
 A regular expression that matches files and directories that should be included on
@@ -357,6 +371,9 @@ Default Inclusions: `['.py', '.pyi', '.ipynb']`
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
 This option controls the number of parallel workers. This can also be specified via the
 `BLACK_NUM_WORKERS` environment variable. Defaults to the number of CPUs in the system.
+On Windows the number of workers used is capped at 60, even when a higher value is set
+via this option or the environment variable, to work around
+[CPython issue 26903](https://bugs.python.org/issue26903).
 
 #### `-q`, `--quiet`
 
@@ -379,7 +396,7 @@ using will be emitted.
 
 ```console
 $ black src/ -v
-Using configuration from /tmp/pyproject.toml.
+Using configuration from project root.
 src/blib2to3 ignored: matches the --extend-exclude regular expression
 src/_black_version.py wasn't modified on disk since last run.
 src/black/__main__.py wasn't modified on disk since last run.
@@ -391,7 +408,7 @@ reformatted src/black_primer/lib.py
 reformatted src/blackd/__init__.py
 reformatted src/black/__init__.py
 Oh no! 💥 💔 💥
-3 files reformatted, 2 files left unchanged, 1 file failed to reformat
+3 files reformatted, 2 files left unchanged, 1 file failed to reformat.
 ```
 
 #### `--version`
@@ -400,7 +417,8 @@ You can check the version of _Black_ you have installed using the `--version` fl
 
 ```console
 $ black --version
-black, 26.10.1
+black, 26.10.1 (compiled: yes)
+Python (CPython) 3.13.7
 ```
 
 #### `--config`
@@ -501,8 +519,9 @@ command line. If it's not there, it looks in parent directories. It stops lookin
 it finds the file, or a `.git` directory, or a `.hg` directory, or the root of the file
 system, whichever comes first.
 
-If you're formatting standard input, _Black_ will look for configuration starting from
-the current working directory.
+If you're formatting only standard input, _Black_ will look for configuration starting
+from the current working directory. If you pass `--stdin-filename`, it starts from that
+file's directory instead.
 
 You can use a "global" configuration, stored in a specific location in your home
 directory. This will be used as a fallback configuration, that is, it will be used if
@@ -613,4 +632,4 @@ over to [File collection and discovery](./file_collection_and_discovery.md).
 
 Another good choice would be setting up an
 [integration with your editor](../integrations/editors.md) of choice or with
-[pre-commit for source version control](../integrations/source_version_control.md).
+[pre-commit for version control](../integrations/pre-commit.md).

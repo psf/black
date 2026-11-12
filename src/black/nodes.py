@@ -641,6 +641,16 @@ def is_one_tuple(node: LN) -> bool:
     )
 
 
+def is_one_element_subscript(node: LN) -> bool:
+    """Return True if `node` is a subscript trailer with one element, like `[x,]`."""
+    return (
+        node.type == syms.trailer
+        and node.children[1].type == syms.subscriptlist
+        and len(node.children[1].children) == 2
+        and node.children[1].children[1].type == token.COMMA
+    )
+
+
 def is_tuple(node: LN) -> bool:
     """Return True if `node` holds a tuple."""
     if node.type != syms.atom:
@@ -879,8 +889,14 @@ def is_parent_function_or_class(node: Node) -> bool:
 
 def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
-    if node.parent is not None and not is_parent_function_or_class(node):
-        return False
+    if node.parent is not None:
+        if not is_parent_function_or_class(node):
+            return False
+        # A header left as is (`# fmt: skip`, or outside `--line-ranges`) has become
+        # a STANDALONE_COMMENT, so the suite no longer follows the colon and the
+        # body can't be joined onto the header line.
+        if node.prev_sibling is None or node.prev_sibling.type != token.COLON:
+            return False
 
     # If there is a comment, we want to keep it.
     if node.prefix.strip():

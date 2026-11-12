@@ -115,6 +115,22 @@ Here's an example configuration:
     version: "21.5b1"
 ```
 
+### Job summary and output file
+
+By default the action also adds _Black_'s output to the workflow's job summary. Set
+`summary` to `false` to turn that off.
+
+If you want to keep the output around, for example to upload it as an artifact or use it
+in a later step, set `output-file` to a path. The output is then written to that file as
+well as printed in the log.
+
+```yaml
+- uses: psf/black@stable
+  with:
+    summary: false
+    output-file: "black-output.txt"
+```
+
 ### Outputs
 
 The action provides the following outputs:

@@ -25,7 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.15"
           allow-prereleases: true
@@ -33,39 +33,33 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --group cibw
 
-      - name: generate matrix
+      - name: generate full matrix
         if: |
-          github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+          github.event_name == 'release' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           {
-            cibuildwheel --print-build-identifiers --platform linux \
+            cibuildwheel --print-build-identifiers --platform linux --archs x86_64 \
               | jq -Rn '[{"only": inputs, "os": "ubuntu-latest"}]'
-            cibuildwheel --print-build-identifiers --platform macos \
+            cibuildwheel --print-build-identifiers --platform macos --archs x86_64,ARM64 \
               | jq -Rn '[{"only": inputs, "os": "macos-latest"}]'
-            cibuildwheel --print-build-identifiers --platform windows \
+            cibuildwheel --print-build-identifiers --platform windows --archs AMD64 \
               | jq -Rn '[{"only": inputs, "os": "windows-latest"}]'
             cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
               | jq -Rn '[{"only": inputs, "os": "windows-11-arm"}]'
           } | jq -cs 'add' > /tmp/matrix
-        env:
-          CIBW_ARCHS_LINUX: x86_64
-          CIBW_ARCHS_MACOS: x86_64 arm64
-          CIBW_ARCHS_WINDOWS: AMD64
 
-      - name: generate matrix (PR)
+      - name: generate partial matrix
         if: |
-          github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+          github.event_name != 'release' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           {
-            CIBW_BUILD="cp310-*" cibuildwheel --print-build-identifiers --platform linux \
+            CIBW_BUILD="cp311-*" cibuildwheel --print-build-identifiers --platform linux --archs x86_64 \
               | jq -Rn '[{"only": inputs, "os": "ubuntu-latest"}]'
-            CIBW_BUILD="cp312-*" cibuildwheel --print-build-identifiers --platform macos \
+            CIBW_BUILD="cp313-*" cibuildwheel --print-build-identifiers --platform macos --archs x86_64 \
               | jq -Rn '[{"only": inputs, "os": "macos-latest"}]'
-            CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows \
+            CIBW_BUILD="cp315-*" cibuildwheel --print-build-identifiers --platform windows --archs AMD64 \
               | jq -Rn '[{"only": inputs, "os": "windows-latest"}]'
           } | jq -cs 'add' > /tmp/matrix
-        env:
-          CIBW_ARCHS_LINUX: x86_64
 
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT
@@ -75,6 +69,7 @@ jobs:
     needs: configure
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.configure.outputs.include) }}
 
@@ -84,7 +79,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.15"
           allow-prereleases: true
@@ -111,7 +106,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.15"
           allow-prereleases: true
@@ -153,7 +148,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: wheelhouse/
           verbose: true
@@ -174,6 +169,6 @@ jobs:
           path: dist/
 
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           verbose: true

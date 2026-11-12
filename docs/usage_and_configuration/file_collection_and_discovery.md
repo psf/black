@@ -13,14 +13,12 @@ location of the file depends on the _Black_ version and the system on which _Bla
 run. The file is non-portable. The standard location on common operating systems is:
 
 - Windows:
-  `C:\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<line-length>.<file-mode>.pickle`
-- macOS:
-  `/Users/<username>/Library/Caches/black/<version>/cache.<line-length>.<file-mode>.pickle`
-- Linux:
-  `/home/<username>/.cache/black/<version>/cache.<line-length>.<file-mode>.pickle`
+  `C:\Users\<username>\AppData\Local\black\black\Cache\<version>\cache.<mode-key>.pickle`
+- macOS: `/Users/<username>/Library/Caches/black/<version>/cache.<mode-key>.pickle`
+- Linux: `/home/<username>/.cache/black/<version>/cache.<mode-key>.pickle`
 
-`file-mode` is an int flag that determines whether the file was formatted as 3.6+ only,
-as .pyi, and whether string normalization was omitted.
+`mode-key` identifies the formatting options used for the cached files. Formatting with
+different options uses a different cache file.
 
 To override the location of these files on all systems, pass `--cache-dir` or set the
 environment variable `BLACK_CACHE_DIR` to the preferred location. Alternatively on macOS
@@ -41,7 +39,9 @@ created or used.
 
 Example:
 
+```console
 python -m black --no-cache .
+```
 
 ## .gitignore
 

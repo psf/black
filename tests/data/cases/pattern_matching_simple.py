@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 # Cases sampled from PEP 636 examples
 
 match command.split():

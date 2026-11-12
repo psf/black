@@ -6,8 +6,8 @@ If you are making a large change, please open an issue first to discuss it befor
 
 ## Overview
 
-Development on the latest version of Python is preferred. You can use any operating
-system.
+Development requires Python 3.13+; the latest version is preferred. You can use any
+operating system.
 
 First clone the _Black_ repository:
 
@@ -134,7 +134,7 @@ Pass arguments to pytest:
 (.venv)$ tox -e py -- --no-cov
 ```
 
-_Black_ also has two unique CLI options that serve to help depug failing test files in
+_Black_ also has two unique CLI options that serve to help debug failing test files in
 `tests/data/`. These can be passed to `pytest` through `tox` as shown above, or directly
 into pytest if not using `tox`.
 

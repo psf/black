@@ -130,6 +130,15 @@ f"""{'''
 
 f"{'\''}"
 f"{f'\''}"
+f"{'\xFF'}"
+f"{r'\xFF'}"
+f"{'\xFF'=}"
+f"outside \xAA {'\xBB'}"
+rf"outside \xAA {'\xBB'}"
+f"{f'hello \xEE'}"
+f"{'\N{ox}'}"
+f"{'\uFaCe'}"
+f"{'\U0001F60E'}"
 
 f'{1}\{{'
 f'{2} foo \{{[\}}'
@@ -269,6 +278,15 @@ f"""{'''
 
 f"{'\''}"
 f"{f'\''}"
+f"{'\xff'}"
+f"{r'\xFF'}"
+f"{'\xFF'=}"
+f"outside \xaa {'\xbb'}"
+rf"outside \xAA {'\xbb'}"
+f"{f'hello \xee'}"
+f"{'\N{OX}'}"
+f"{'\uface'}"
+f"{'\U0001f60e'}"
 
 f"{1}\{{"
 f"{2} foo \{{[\}}"

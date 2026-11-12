@@ -35,7 +35,7 @@ class Grammar:
     parsing engine implemented by parse.py.  The parsing engine
     accesses the instance variables directly.  The class here does not
     provide initialization of the tables; several subclasses exist to
-    do this (see the conv and pgen modules).
+    do this (see the pgen module).
 
     The load() method reads the tables from a pickle file, which is
     much faster than the other ways offered by subclasses.  The pickle

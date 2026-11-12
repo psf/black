@@ -27,7 +27,7 @@ if v:version < 700 || !has('python3')
             call add(messages, "vim7.0+")
         endif
         if !has('python3')
-            call add(messages, "Python 3.10 support")
+            call add(messages, "Python 3.11 support")
         endif
 
         echo "The black.vim plugin requires" join(messages, " and ")

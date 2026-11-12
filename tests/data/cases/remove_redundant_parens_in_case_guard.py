@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.10 --line-length=79
+# flags: --line-length=79
 
 match 1:
     case _ if (True):

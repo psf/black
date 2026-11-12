@@ -1,6 +1,8 @@
 import asyncio
 import gc
 import re
+import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from threading import Event
@@ -21,6 +23,27 @@ except ImportError as e:
     raise RuntimeError("Please install Black with the 'd' extra") from e
 
 import black
+from black.concurrency import cap_process_pool_workers
+
+
+@pytest.mark.parametrize("platform, expected", [("win32", 60), ("linux", 64)])
+def test_cap_process_pool_workers(platform: str, expected: int) -> None:
+    with patch("sys.platform", platform):
+        assert cap_process_pool_workers(64) == expected
+
+
+@pytest.mark.blackd
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process pool worker limit")
+def test_blackd_startup_on_windows_with_many_cpus() -> None:
+    # A fresh interpreter ensures the CPU count is patched before importing blackd.
+    script = (
+        "from unittest.mock import patch\n"
+        "with patch('os.cpu_count', return_value=64):\n"
+        "    import blackd\n"
+        "    blackd.make_app()\n"
+        "    blackd.executor().shutdown()\n"
+    )
+    subprocess.run([sys.executable, "-c", script], check=True, timeout=120)
 
 
 @pytest.mark.blackd
@@ -59,6 +82,41 @@ class BlackDTestCase(AioHTTPTestCase):
             content.startswith("cannot parse"),
             msg=f"Expected error to start with 'cannot parse', got {repr(content)}",
         )
+
+    async def test_blackd_request_invalid_encoding(self) -> None:
+        response = await self.client.post("/", data=b"name = '\xff'")
+        self.assertEqual(response.status, 400)
+        self.assertIn("decode", await response.text())
+        self.assertEqual(
+            response.headers.get(blackd.BLACK_VERSION_HEADER), black.__version__
+        )
+
+    async def test_blackd_request_unknown_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"x=1",
+            headers={"Content-Type": "text/plain; charset=unknown-charset"},
+        )
+        self.assertEqual(response.status, 400)
+        self.assertIn("unknown encoding", await response.text())
+
+    async def test_blackd_request_undecodable_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"x=1",
+            headers={"Content-Type": "text/plain; charset=undefined"},
+        )
+        self.assertEqual(response.status, 400)
+        self.assertIn("undefined", await response.text())
+
+    async def test_blackd_request_non_utf8_charset(self) -> None:
+        response = await self.client.post(
+            "/",
+            data=b"name = '\xe9'",
+            headers={"Content-Type": "text/plain; charset=iso-8859-1"},
+        )
+        self.assertEqual(response.status, 200)
+        self.assertEqual(await response.read(), b'name = "\xe9"\n')
 
     async def test_blackd_unsupported_version(self) -> None:
         response = await self.client.post(
@@ -194,6 +252,35 @@ class BlackDTestCase(AioHTTPTestCase):
         )
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.read(), expected_result)
+
+    async def test_blackd_skip_first_source_line_with_diff(self) -> None:
+        source = b"#!/usr/bin/env python\ni = [1,2,3]\n"
+        response = await self.client.post(
+            "/",
+            data=source,
+            headers={
+                blackd.SKIP_SOURCE_FIRST_LINE: "true",
+                blackd.DIFF_HEADER: "true",
+            },
+        )
+        self.assertEqual(response.status, 200)
+
+        diff_header = re.compile(
+            r"(In|Out)\t\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d\d\d\d\d\+\d\d:\d\d"
+        )
+        actual = diff_header.sub(DETERMINISTIC_HEADER, await response.text())
+
+        # The skipped line must stay inside the patch as context, so that the body is
+        # a diff of the whole source rather than a raw source line in front of it.
+        self.assertEqual(
+            actual,
+            "--- [Deterministic header]\n"
+            "+++ [Deterministic header]\n"
+            "@@ -1,2 +1,2 @@\n"
+            " #!/usr/bin/env python\n"
+            "-i = [1,2,3]\n"
+            "+i = [1, 2, 3]\n",
+        )
 
     async def test_blackd_preview(self) -> None:
         response = await self.client.post(
@@ -389,6 +476,28 @@ class BlackDClientTestCase(AioHTTPTestCase):
         formatted_code = await client.format_code(unformatted_code)
 
         self.assertEqual(formatted_code, expected)
+
+    async def test_custom_content_type_charset(self) -> None:
+        for header_name in ("Content-Type", "content-type", "CoNtEnT-TyPe"):
+            for content_type in (
+                "text/plain",
+                "text/plain; charset=utf-8",
+                "text/plain; charset=iso-8859-1",
+                "text/plain; charset=windows-1252",
+                "text/plain; charset=utf-16",
+            ):
+                for source in ("message='café'", 'message = "café"\n'):
+                    with self.subTest(
+                        header_name=header_name,
+                        content_type=content_type,
+                        source=source,
+                    ):
+                        client = blackd.client.BlackDClient(
+                            self.client.make_url("/"),
+                            headers={header_name: content_type},
+                        )
+                        formatted_code = await client.format_code(source)
+                        self.assertEqual(formatted_code, 'message = "café"\n')
 
     async def test_skip_source_first_line(self) -> None:
         client = blackd.client.BlackDClient(
