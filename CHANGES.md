@@ -16,6 +16,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
+  unformatted by `# fmt: skip` or `--line-ranges` (#5671)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
@@ -82,14 +84,16 @@
   that can't be put back as written are now left unchanged (#5630)
 - Fix crash when `# fmt: skip` is on the closing bracket of a `# fmt: off` region that
   ends in a comment (#5643)
+- Keep a line holding only a backslash after a backslash continuation as written in
+  `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
+  or t-string fields, instead of crashing or dropping it (#5681)
 - Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
   the rest of the last item (#5651)
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
   such as a cell with an unclosed bracket or a shell command like
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
-- Keep a line holding only a backslash after a backslash continuation as written in
-  `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
-  or t-string fields, instead of crashing or dropping it (#5681)
+- Fix `--line-ranges` producing invalid code when stacked decorators outside the
+  selected lines are indented with 2 spaces or tabs (#5672)
 
 ### Preview style
 
@@ -132,6 +136,8 @@
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
+- Add parentheses around one-item sequence patterns in `case` statements, such as
+  `case x,:` (#5673)
 
 ### Configuration
 
@@ -163,6 +169,9 @@
 ### Performance
 
 <!-- Changes that improve Black's performance. -->
+
+- Skip the regular expressions in string quote normalization when a string has no
+  backslash and no quote character to escape (#5680)
 
 ### Output
 
