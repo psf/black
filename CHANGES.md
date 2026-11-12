@@ -56,6 +56,8 @@
 - Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression
   continues after the closing bracket, such as `x = (  # fmt: skip` ... `) if c else d`
   (#5586)
+- Fix unstable formatting when a comment-only `# fmt: off` / `# fmt: on` block comes
+  right before an assignment to a tuple, like `a, b = c` (#5679)
 - Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
