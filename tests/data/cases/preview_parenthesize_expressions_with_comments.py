@@ -32,6 +32,21 @@ class MyClass:
             second_argument,
         )
 
+if True:
+    if True:
+        if True:
+            abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr = (
+                abcdefghijklmnopqrstuvwxyzabcd
+                | (
+                    # Blablablablablablablablablablablablablablablablablablabl
+                    # blablablablablablablablablablablablablabla - (
+                    abcdefghijk - (
+                        abcdefghijklmnopqrstuvwxyzabcd
+                        | abcdefghijklmnopqrstuvwxyza
+                    )
+                )
+            )
+
 # output
 
 # Issue 3113: Expressions with parameter comments should be parenthesized when exceeding line length
@@ -73,3 +88,17 @@ class MyClass:
                 second_argument,
             )
         )
+
+
+if True:
+    if True:
+        if True:
+            abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqr = (
+                abcdefghijklmnopqrstuvwxyzabcd
+                | (
+                    # Blablablablablablablablablablablablablablablablablablabl
+                    # blablablablablablablablablablablablablabla - (
+                    abcdefghijk
+                    - (abcdefghijklmnopqrstuvwxyzabcd | abcdefghijklmnopqrstuvwxyza)
+                )
+            )

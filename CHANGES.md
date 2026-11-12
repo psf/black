@@ -18,9 +18,6 @@
 
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
-- Keep the optional parentheses around an assignment's right-hand side when removing
-  them would produce a first line longer than the line length and the expression
-  contains standalone comments (#5638)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
@@ -85,15 +82,21 @@
   that can't be put back as written are now left unchanged (#5630)
 - Fix crash when `# fmt: skip` is on the closing bracket of a `# fmt: off` region that
   ends in a comment (#5643)
-- Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
-  the rest of the last item (#5651)
 - Fix crash on an indented `# fmt: off` in the expression of an f-string field with `=`
   or of a t-string field (#5653)
+- Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
+  the rest of the last item (#5651)
+- Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
+  such as a cell with an unclosed bracket or a shell command like
+  `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Keep the optional parentheses around an assignment's right-hand side when removing
+  them would produce a first line longer than the line length and the expression
+  contains standalone comments (#5638, #5657)
 - Retain user-written parens around `in` clauses of comprehensions if they have
   delimiters (#4881)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
@@ -115,6 +118,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Put each string literal of an implicit string concatenation on its own line inside the
+  surrounding brackets when the literal ends with a newline, instead of joining them
+  onto a single line (#5554)
 - Split long strings after overloaded binary and augmented assignment operators,
   including middle operands of operator chains, in the unstable `string_processing`
   feature (#5562)

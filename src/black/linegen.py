@@ -83,8 +83,10 @@ from black.nodes import (
 )
 from black.numerics import normalize_numeric_literal
 from black.strings import (
+    STRING_PREFIX_CHARS,
     fix_multiline_docstring,
     get_string_prefix,
+    has_triple_quotes,
     normalize_fstring_unicode_escape_sequences,
     normalize_string_prefix,
     normalize_string_quotes,
@@ -948,6 +950,10 @@ def transform_line(
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
         and not line.contains_implicit_multiline_string_with_comments()
+        and not (
+            Preview.split_implicit_string_concatenations_at_newlines in mode
+            and any(_implicit_concat_split_points(line))
+        )
     ):
         # Only apply basic string preprocessing, since lines shouldn't be split here.
         if Preview.string_processing in mode:
@@ -991,6 +997,8 @@ def transform_line(
                     standalone_comment_split,
                     right_hand_split_with_omits,
                 ]
+                if Preview.split_implicit_string_concatenations_at_newlines in mode:
+                    transformers.insert(0, string_concat_split)
             else:
                 transformers = [right_hand_split_with_omits]
 
@@ -1471,25 +1479,20 @@ def _prefer_split_rhs_oop_over_rhs(
         # Unless the split is inside the key
         return any(leaf.type == token.COLON for leaf in rhs_oop.tail.leaves)
 
-    # Keep the optional parens when omitting them would make the assignment head
-    # overlong even though keeping them fits. If the omitted-paren head contains a
-    # closing bracket, the split machinery can still try an earlier split point;
-    # if it contains comments, the overflow is not caused by the code alone. Leave
-    # both cases to the existing heuristics. Standalone comments in the body force
-    # it onto separate lines, so the head cannot be shortened afterwards (#3925).
-    if (
-        len(rhs.head.leaves) >= 2
-        and rhs.head.leaves[-2].type == token.EQUAL
-        and rhs_oop.body.contains_standalone_comments()
-        and not rhs_oop.head.comments
-        and is_line_short_enough(rhs.head, mode=mode)
-        and not is_line_short_enough(rhs_oop.head, mode=mode)
-        and not any(leaf.type in CLOSING_BRACKETS for leaf in rhs_oop.head.leaves)
-    ):
-        return False
-
     # the split is right after `=`
     if not (len(rhs.head.leaves) >= 2 and rhs.head.leaves[-2].type == token.EQUAL):
+        # Unless omitting them would make the assignment head overlong
+        if (
+            Preview.parenthesize_expressions_with_comments in mode
+            and is_line_short_enough(rhs.head, mode=mode)
+            and not is_line_short_enough(rhs_oop.head, mode=mode)
+            # Comments force-split the body, so the head cannot be shortened
+            and rhs_oop.body.contains_standalone_comments()
+            and not rhs_oop.head.comments
+            # The split machinery can still try an earlier split point
+            and not any(leaf.type in CLOSING_BRACKETS for leaf in rhs_oop.head.leaves)
+        ):
+            return False
         return True
 
     # the left side of assignment contains brackets
@@ -1936,6 +1939,125 @@ def delimiter_split(
         current_line = _safe_add_trailing_comma(
             trailing_comma_safe, delimiter_priority, current_line
         )
+        yield current_line
+
+
+def _string_literal_ends_with_newline(leaf: Leaf) -> bool:
+    """Does the string literal `leaf` end with a newline character?
+
+    Only a literal `\n` escape (or a real trailing newline in a
+    triple-quoted string) counts; raw strings cannot contain the escape,
+    and in f-strings trailing text after the last expression is literal,
+    so an escape there is genuine. A literal backslash before the `n`
+    (an even number of backslashes) does not produce a newline.
+    """
+    value = leaf.value
+    if "r" in get_string_prefix(value).lower():
+        return False
+    body = value.lstrip(STRING_PREFIX_CHARS)
+    if has_triple_quotes(body):
+        body = body[3:-3]
+        if body.endswith("\n"):
+            return True
+    else:
+        body = body[1:-1]
+    if not body.endswith("n"):
+        return False
+    backslashes = 0
+    for char in reversed(body[:-1]):
+        if char != "\\":
+            break
+        backslashes += 1
+    return backslashes % 2 == 1
+
+
+def _implicit_concat_split_points(line: Line) -> tuple[list[int], bool]:
+    """Scan `line` for implicit string concatenations whose leading literal
+    ends with a newline. Returns the indices of leaves after which the line
+    may be split (no brackets opened on the line are still open at that
+    point, so the split happens at the line's own depth), and whether any
+    such concatenation sits inside a visible bracket pair (so the line
+    should be routed through the bracket-splitting pipeline even when it
+    cannot be split at this depth)."""
+    split_points: list[int] = []
+    bracketed = False
+    depth = 0
+    openers: list[Leaf] = []
+    for idx, leaf in enumerate(line.leaves[:-1]):
+        if leaf.type in CLOSING_BRACKETS:
+            depth -= 1
+            if openers:
+                openers.pop()
+        elif leaf.type in OPENING_BRACKETS:
+            depth += 1
+            openers.append(leaf)
+        if (
+            leaf.type == token.STRING
+            and _string_literal_ends_with_newline(leaf)
+            and line.leaves[idx + 1].type == token.STRING
+        ):
+            if depth == 0:
+                split_points.append(idx)
+            elif openers and openers[-1].value:
+                bracketed = True
+    return split_points, bracketed
+
+
+@dont_increase_indentation
+def string_concat_split(
+    line: Line, features: Collection[Feature], mode: Mode
+) -> Iterator[Line]:
+    """Split implicit string concatenations onto one line per string literal.
+
+    Instead of joining implicitly concatenated strings onto a single line,
+    keep each string literal that ends with a newline on its own line
+    (#1540): a line break is only placed after a literal ending in `\\n`,
+    so concatenations without trailing newlines stay joined."""
+    if Preview.split_implicit_string_concatenations_at_newlines not in mode:
+        raise CannotSplit("Splitting implicit string concatenations is not enabled")
+    if not line.inside_brackets:
+        raise CannotSplit("Not inside brackets")
+    if line.comments:
+        raise CannotSplit("Line contains comments")
+    split_points, _ = _implicit_concat_split_points(line)
+    if not split_points:
+        raise CannotSplit("No implicit string concatenation at this depth")
+    # Break after split points, and also after element separators so a
+    # concatenation and any sibling elements each get their own line.
+    boundaries = set(split_points)
+
+    current_line = Line(
+        mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+    )
+
+    def append_to_line(leaf: Leaf) -> Iterator[Line]:
+        """Append `leaf` to current line or to new line if appending impossible."""
+        nonlocal current_line
+        try:
+            current_line.append_safe(leaf, preformatted=True)
+        except ValueError:
+            yield current_line
+
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
+            current_line.append(leaf)
+
+    depth = 0
+    for leaf_idx, leaf in enumerate(line.leaves):
+        if leaf.type in CLOSING_BRACKETS:
+            depth -= 1
+        elif leaf.type in OPENING_BRACKETS:
+            depth += 1
+        yield from append_to_line(leaf)
+
+        if leaf_idx in boundaries or (leaf.type == token.COMMA and depth == 0):
+            yield current_line
+            current_line = Line(
+                mode=line.mode, depth=line.depth, inside_brackets=line.inside_brackets
+            )
+
+    if current_line:
         yield current_line
 
 

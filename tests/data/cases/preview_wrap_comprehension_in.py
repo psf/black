@@ -109,6 +109,48 @@ filtered_trait_instructions: list[str] = [
     trait for trait in traits.instructions if trait
 ]
 
+# comments
+[
+    a
+    for a in
+    # foo0
+    (
+        # foo1
+        (b)
+        # foo2
+    )
+    # foo3
+]
+
+[
+    a
+    for a in
+    # foo4
+    ((b))
+]
+
+[
+    a
+    for a in (
+        # foo5
+        (b)
+    )
+]
+
+[
+    a
+    for a in (
+        (b)
+        # foo6
+    )
+]
+
+[
+    a
+    for a in ((b))
+    # foo7
+]
+
 # output
 [
     a
@@ -236,4 +278,46 @@ filtered_trait_instructions: list[str] = [
 ]
 filtered_trait_instructions: list[str] = [
     trait for trait in traits.instructions if trait
+]
+
+# comments
+[
+    a
+    for a in
+    # foo0
+    (
+        # foo1
+        b
+        # foo2
+    )
+    # foo3
+]
+
+[
+    a
+    for a in
+    # foo4
+    b
+]
+
+[
+    a
+    for a in (
+        # foo5
+        b
+    )
+]
+
+[
+    a
+    for a in (
+        b
+        # foo6
+    )
+]
+
+[
+    a
+    for a in b
+    # foo7
 ]
