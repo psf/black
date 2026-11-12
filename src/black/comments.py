@@ -523,6 +523,38 @@ def _needs_newline_after(hidden: Leaf, next_node: LN | None) -> bool:
     return "\n" in next_node.prefix or "#" in str(hidden).rpartition("\n")[2]
 
 
+def _is_kept_as_text(leaf: Leaf) -> bool:
+    """Is the prefix of `leaf` in code that Python also keeps as text?
+
+    Python keeps the source of the expression in a t-string field, and in an f-string
+    field with `=` like `f"{a + b = }"`, up to the `!` or `:` of the field. That text
+    includes the whitespace around comments.
+    """
+    node: LN = leaf
+    while node.parent is not None:
+        field = node.parent
+        if field.type in {
+            syms.fstring_replacement_field,
+            syms.tstring_replacement_field,
+        }:
+            # Fields in the format spec of a t-string field aren't interpolations
+            is_interpolation = (
+                field.type == syms.tstring_replacement_field
+                and field.parent is not None
+                and field.parent.type == syms.tstring
+            )
+            if is_interpolation or any(
+                child.type == token.EQUAL for child in field.children
+            ):
+                for child in field.children:
+                    if child is node:
+                        return True
+                    if child.type in {token.BANG, token.COLON}:
+                        break
+        node = field
+    return False
+
+
 def _handle_regular_fmt_block(
     ignored_nodes: list[LN],
     comment: ProtoComment,
@@ -641,7 +673,11 @@ def _handle_regular_fmt_block(
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
-        if len(lines) > 0 and not any(
+        if _is_kept_as_text(leaf):
+            # Python keeps the whitespace before the comment in the string
+            comment_start = comment.consumed - len(comment.original_line.lstrip()) - 1
+            standalone_comment_prefix = prefix[:comment_start]
+        elif len(lines) > 0 and not any(
             line[0] <= comment_lineno <= line[1] for line in lines
         ):
             # keeping indentation of comment by preserving original whitespaces.

@@ -95,6 +95,8 @@
   that can't be put back as written are now left unchanged (#5630)
 - Fix crash when `# fmt: skip` is on the closing bracket of a `# fmt: off` region that
   ends in a comment (#5643)
+- Fix crash on an indented `# fmt: off` in the expression of an f-string field with `=`
+  or of a t-string field (#5653)
 - Keep a line holding only a backslash after a backslash continuation as written in
   `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
   or t-string fields, instead of crashing or dropping it (#5681)
