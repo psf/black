@@ -20,6 +20,8 @@
   `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
 - Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
   unformatted by `# fmt: skip` or `--line-ranges` (#5671)
+- Remove the extra blank lines at the end of a file when the selected `--line-ranges`
+  reaches its last line, matching a full-file run (#5654)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
