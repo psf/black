@@ -76,9 +76,9 @@ _Black_ generally provides runtime support for all Python versions supported by 
 information). We promise to support all Python versions at least until they reach their
 end of life.
 
-While we make our best efforts to support new Python vesions as quickly as we can, we
+While we make our best efforts to support new Python versions as quickly as we can, we
 make no guarantees on when official runtime or formatting support will be added. Please
-check changelog entires and the
+check changelog entries and the
 [metadata on PyPi](https://pypi.org/project/black/#:~:text=Programming%20Language) for
 the most up-to-date information.
 
