@@ -15,9 +15,8 @@
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
-
-- Fix `async def`, `async for` and `async with` statements being dropped from the output
-  when a comment-only `# fmt: off` / `# fmt: on` block comes right before them (#5678)
+- Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
+  unformatted by `# fmt: skip` or `--line-ranges` (#5671)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
@@ -27,6 +26,8 @@
 - Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
   line endings and does not end with a newline, e.g. a notebook piped to `black -`
   (#5559)
+- Fix `async def`, `async for` and `async with` statements being dropped from the output
+  when a comment-only `# fmt: off` / `# fmt: on` block comes right before them (#5678)
 - Fix crash when `# fmt: skip` on an opening bracket is followed by more code after the
   closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
@@ -89,6 +90,8 @@
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
   such as a cell with an unclosed bracket or a shell command like
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
+- Fix `--line-ranges` producing invalid code when stacked decorators outside the
+  selected lines are indented with 2 spaces or tabs (#5672)
 
 ### Preview style
 
@@ -131,6 +134,8 @@
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
+- Add parentheses around one-item sequence patterns in `case` statements, such as
+  `case x,:` (#5673)
 
 ### Configuration
 
