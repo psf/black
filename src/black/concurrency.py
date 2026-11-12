@@ -76,6 +76,13 @@ def shutdown(loop: asyncio.AbstractEventLoop) -> None:
         loop.close()
 
 
+def cap_process_pool_workers(workers: int) -> int:
+    if sys.platform == "win32":
+        # Work around https://bugs.python.org/issue26903
+        workers = min(workers, 60)
+    return workers
+
+
 # diff-shades depends on being to monkeypatch this function to operate. I know it's
 # not ideal, but this shouldn't cause any issues ... hopefully. ~ichard26
 @mypyc_attr(patchable=True)
@@ -108,9 +115,7 @@ def reformat_many(
                 )
         else:
             workers = os.cpu_count() or 1
-    if sys.platform == "win32":
-        # Work around https://bugs.python.org/issue26903
-        workers = min(workers, 60)
+    workers = cap_process_pool_workers(workers)
     if getattr(sys, "frozen", False):
         # In frozen builds (e.g. PyInstaller), avoid spawning worker processes (i.e.
         # avoid using ProcessPoolExecutor) to prevent shutdown errors when workers
