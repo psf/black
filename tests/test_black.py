@@ -1236,6 +1236,27 @@ class BlackTestCase(BlackBaseTestCase):
             f"AST print out is different. Actual version dumped to {log_name}",
         )
 
+    @pytest.mark.incompatible_with_mypyc
+    def test_format_file_contents_skips_repeated_stability_pass(self) -> None:
+        # The second pass leaves this output unchanged, so the stability check
+        # would only repeat that pass.
+        with patch("black.assert_stable") as assert_stable:
+            black.format_file_contents("j = [1,2,3]\n", mode=DEFAULT_MODE, fast=False)
+        assert_stable.assert_not_called()
+        # Here the second pass changes the output, so the check must still run.
+        source = (
+            "class A:\n"
+            "    def foo(self):\n"
+            "        for _ in range(10):\n"
+            "            aaaaaaaaaaaaaaaaaaa = bbbbbbbbbbbbbbb.cccccccccc("
+            "  # pylint: disable=no-member\n"
+            "                xxxxxxxxxxxx\n"
+            "            )\n"
+        )
+        with patch("black.assert_stable") as assert_stable:
+            black.format_file_contents(source, mode=DEFAULT_MODE, fast=False)
+        assert_stable.assert_called_once()
+
     def test_format_file_contents(self) -> None:
         mode = DEFAULT_MODE
         empty = ""
