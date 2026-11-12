@@ -519,8 +519,9 @@ command line. If it's not there, it looks in parent directories. It stops lookin
 it finds the file, or a `.git` directory, or a `.hg` directory, or the root of the file
 system, whichever comes first.
 
-If you're formatting standard input, _Black_ will look for configuration starting from
-the current working directory.
+If you're formatting only standard input, _Black_ will look for configuration starting
+from the current working directory. If you pass `--stdin-filename`, it starts from that
+file's directory instead.
 
 You can use a "global" configuration, stored in a specific location in your home
 directory. This will be used as a fallback configuration, that is, it will be used if

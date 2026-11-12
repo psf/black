@@ -2768,6 +2768,25 @@ class BlackTestCase(BlackBaseTestCase):
             == "import os\nx = 1\ny = 2\n"
         )
 
+    def test_line_ranges_remove_selected_trailing_blank_lines(self) -> None:
+        # Selecting up to the last line lets Black drop the extra trailing blank
+        # lines there, the same way a full-file run does. Blank lines past the
+        # requested range are left alone.
+        source = "x  =  1\n\n"
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 2)]) == "x = 1\n"
+        )
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 1)])
+            == "x = 1\n\n"
+        )
+
+        source_multiple = "x  =  1\n\n\n"
+        assert (
+            black.format_str(source_multiple, mode=black.FileMode(), lines=[(1, 3)])
+            == "x = 1\n"
+        )
+
     def test_line_ranges_with_multiple_sources(self) -> None:
         with TemporaryDirectory() as workspace:
             test1_file = Path(workspace) / "test1.py"
