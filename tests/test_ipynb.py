@@ -361,6 +361,22 @@ def test_cell_magic_with_invalid_body() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.parametrize(
+    "src",
+    (
+        pytest.param("x = (1,", id="Unclosed bracket"),
+        pytest.param('x = """abc', id="Unterminated triple-quoted string"),
+        pytest.param("if x:\n    a = 1\n  b = 2", id="Inconsistent dedent"),
+        pytest.param('!find . -name "*.pyc" -exec rm {} \\;', id="Backslash in shell"),
+        pytest.param("%cd C:\\Users\\me", id="Windows path in magic"),
+        pytest.param("!echo don't panic", id="Apostrophe in shell"),
+    ),
+)
+def test_cell_that_cant_be_tokenized_noop(src: str) -> None:
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
 def test_empty_cell() -> None:
     src = ""
     with pytest.raises(NothingChanged):

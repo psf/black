@@ -16,13 +16,12 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
+  unformatted by `# fmt: skip` or `--line-ranges` (#5671)
 - Remove the extra blank lines at the end of a file when the selected `--line-ranges`
   reaches its last line, matching a full-file run (#5654)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
-- Keep the optional parentheses around an assignment's right-hand side when removing
-  them would produce a first line longer than the line length and the expression
-  contains standalone comments (#5638)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
@@ -89,11 +88,19 @@
   ends in a comment (#5643)
 - Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
   the rest of the last item (#5651)
+- Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
+  such as a cell with an unclosed bracket or a shell command like
+  `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
+- Fix `--line-ranges` producing invalid code when stacked decorators outside the
+  selected lines are indented with 2 spaces or tabs (#5672)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Keep the optional parentheses around an assignment's right-hand side when removing
+  them would produce a first line longer than the line length and the expression
+  contains standalone comments (#5638, #5657)
 - Retain user-written parens around `in` clauses of comprehensions if they have
   delimiters (#4881)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
@@ -115,6 +122,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Put each string literal of an implicit string concatenation on its own line inside the
+  surrounding brackets when the literal ends with a newline, instead of joining them
+  onto a single line (#5554)
 - Split long strings after overloaded binary and augmented assignment operators,
   including middle operands of operator chains, in the unstable `string_processing`
   feature (#5562)
@@ -125,6 +135,8 @@
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
+- Add parentheses around one-item sequence patterns in `case` statements, such as
+  `case x,:` (#5673)
 
 ### Configuration
 
