@@ -120,6 +120,11 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
     for index, full_line in enumerate(lines):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
         line = full_line.lstrip()
+        if index and line == "\\":
+            # A backslash on a line by itself, continuing the escaped newline on
+            # the line above. It only stays in the prefix so code written back as
+            # is keeps it; for comments it counts as an empty line.
+            full_line = line = ""
         if not line:
             nlines += 1
             if "\f" in full_line:
@@ -340,13 +345,25 @@ def _handle_comment_only_fmt_block(
     # Update leaf prefix
     leaf.prefix = original_prefix[fmt_on_comment.consumed :]
 
-    # Insert the STANDALONE_COMMENT
-    parent = leaf.parent
+    # Insert the STANDALONE_COMMENT. If `leaf` starts the target of an assignment,
+    # insert it before the whole target. Inside the target it would end up within
+    # the invisible parentheses added around it (e.g. `a, b = c`), and every pass
+    # would add blank lines before the comment.
+    node: LN = leaf
+    while (
+        node.parent is not None
+        and node.parent.children[0] is node
+        and node.parent.type not in {syms.expr_stmt, syms.simple_stmt}
+    ):
+        node = node.parent
+    if node.parent is None or node.parent.type != syms.expr_stmt:
+        node = leaf
+    parent = node.parent
     assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (prefix only)"
 
     leaf_idx = None
     for idx, child in enumerate(parent.children):
-        if child is leaf:
+        if child is node:
             leaf_idx = idx
             break
 
@@ -839,17 +856,17 @@ def generate_ignored_nodes(
 
 
 def _find_compound_statement_context(parent: Node) -> Node | None:
-    """Return the body node of a compound statement if we should respect fmt: skip.
+    """Return the body node of a one-line compound statement with `# fmt: skip`.
 
     This handles one-line compound statements like:
         if condition: body  # fmt: skip
 
-    When Black expands such statements, they temporarily look like:
+    where the body is a simple_stmt that is a direct child of the compound
+    statement. A body on its own line sits in a suite instead:
         if condition:
             body  # fmt: skip
 
-    In both cases, we want to return the body node (either the simple_stmt directly
-    or the suite containing it).
+    and only that line is skipped, so the header is formatted as usual.
     """
     if parent.type != syms.simple_stmt:
         return None
@@ -857,21 +874,6 @@ def _find_compound_statement_context(parent: Node) -> Node | None:
     if not isinstance(parent.parent, Node):
         return None
 
-    # Case 1: Expanded form after Black's initial formatting pass.
-    # The one-liner has been split across multiple lines:
-    #     if True:
-    #         print("a"); print("b")  # fmt: skip
-    # Structure: compound_stmt -> suite -> simple_stmt
-    if (
-        parent.parent.type == syms.suite
-        and isinstance(parent.parent.parent, Node)
-        and parent.parent.parent.type in _COMPOUND_STATEMENTS
-    ):
-        return parent.parent
-
-    # Case 2: Original one-line form from the input source.
-    # The statement is still on a single line:
-    #     if True: print("a"); print("b")  # fmt: skip
     # Structure: compound_stmt -> simple_stmt
     if parent.parent.type in _COMPOUND_STATEMENTS:
         return parent
@@ -887,28 +889,10 @@ def _should_keep_compound_statement_inline(
     Returns True only for compound statements with semicolon-separated bodies,
     like: if True: print("a"); print("b")  # fmt: skip
     """
-    # Narrow down to the single simple_stmt that may carry the semicolons before
-    # scanning any leaves. A compound statement's suite holds one child per body
-    # statement, so walking the whole suite here is O(n) and, called once per
-    # `# fmt: skip` line in the block, makes the pass O(n^2).
-    if body_node.type == syms.suite:
-        # After formatting: the suite must hold exactly one simple_stmt and it
-        # must be the one carrying the directive. Stop at the second simple_stmt.
-        target: LN | None = None
-        for child in body_node.children:
-            if child.type == syms.simple_stmt:
-                if target is not None:
-                    return False
-                target = child
-        if target is None or target is not simple_stmt_parent:
-            return False
-    else:
-        # Original form: body_node IS the simple_stmt
-        if body_node is not simple_stmt_parent:
-            return False
-        target = body_node
+    if body_node is not simple_stmt_parent:
+        return False
 
-    return any(leaf.type == token.SEMI for leaf in target.leaves())
+    return any(leaf.type == token.SEMI for leaf in body_node.leaves())
 
 
 def _get_compound_statement_header(
@@ -945,7 +929,14 @@ def _get_compound_statement_header(
     for child in compound_stmt.children:
         if child is body_node:
             break
-        if isinstance(child, Leaf):
+        if child.type == STANDALONE_COMMENT or (
+            child.type in (syms.suite, syms.simple_stmt) and not str(child).strip()
+        ):
+            # An earlier one-line clause that its own `# fmt: skip` already hid,
+            # like the `if` line before `else: a; b  # fmt: skip`, or what is left
+            # of its body. This clause's header starts after them.
+            header_leaves = []
+        elif isinstance(child, Leaf):
             if child.type not in (token.NEWLINE, token.INDENT) and (
                 id(child) not in covered
             ):
