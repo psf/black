@@ -16,8 +16,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Fix unstable formatting when a comment-only `# fmt: off` / `# fmt: on` block comes
-  right before an assignment to a tuple, like `a, b = c` (#5679)
+- Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
+  unformatted by `# fmt: skip` or `--line-ranges` (#5671)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
@@ -47,6 +47,8 @@
 - Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression
   continues after the closing bracket, such as `x = (  # fmt: skip` ... `) if c else d`
   (#5586)
+- Fix unstable formatting when a comment-only `# fmt: off` / `# fmt: on` block comes
+  right before an assignment to a tuple, like `a, b = c` (#5679)
 - Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
@@ -89,6 +91,8 @@
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
   such as a cell with an unclosed bracket or a shell command like
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
+- Fix `--line-ranges` producing invalid code when stacked decorators outside the
+  selected lines are indented with 2 spaces or tabs (#5672)
 
 ### Preview style
 
@@ -131,6 +135,8 @@
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
+- Add parentheses around one-item sequence patterns in `case` statements, such as
+  `case x,:` (#5673)
 
 ### Configuration
 

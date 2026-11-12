@@ -110,7 +110,8 @@
           "split_implicit_string_concatenations_at_newlines",
           "remove_redundant_comparison_parentheses",
           "remove_redundant_top_level_parentheses",
-          "end_fmt_off_at_closing_bracket"
+          "end_fmt_off_at_closing_bracket",
+          "parenthesize_one_item_sequence_patterns"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
