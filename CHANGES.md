@@ -18,6 +18,8 @@
 
 - Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
   `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
+- Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
+  unformatted by `# fmt: skip` or `--line-ranges` (#5671)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
@@ -89,6 +91,8 @@
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
   such as a cell with an unclosed bracket or a shell command like
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
+- Fix `--line-ranges` producing invalid code when stacked decorators outside the
+  selected lines are indented with 2 spaces or tabs (#5672)
 
 ### Preview style
 
