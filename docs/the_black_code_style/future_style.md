@@ -24,6 +24,11 @@ Currently, the following features are included in the preview style:
   "hugging" logic (removing whitespace around `**` in simple expressions), which applies
   also in the rare case the exponentiation is split into separate lines.
   ([see below](labels/simplify-power-operator))
+- `split_implicit_string_concatenations_at_newlines`: Put each string literal of an
+  implicit string concatenation on its own line inside the surrounding brackets when the
+  literal ends with a newline, instead of joining them onto a single line. Note that the
+  unstable `string_processing` style merges implicitly concatenated strings and takes
+  precedence, so this feature has no effect while it is also enabled.
 - `wrap_long_dict_values_in_parens`: Add parentheses around long values in dictionaries.
   ([see below](labels/wrap-long-dict-values))
 - `fix_if_guard_explosion_in_case_statement`: fixed exploding of the if guard in case
@@ -46,7 +51,8 @@ Currently, the following features are included in the preview style:
   left operand when the right operand is a bracketed expression that has to break
   anyway; let the bracket explode instead. ([see below](labels/hug-comparator))
 - `parenthesize_tuple_in_yield`: Add parentheses around tuple expressions in `yield`
-  statements.
+  statements, and remove redundant parentheses around such `yield` expressions.
+  ([see below](labels/parenthesize-tuple-in-yield))
 - `fmt_off_class_blank_lines`: Preserve two blank lines before a top-level class whose
   definition starts inside a `# fmt: off` block after an import.
 - `remove_redundant_generator_parentheses`: Remove redundant parentheses around
@@ -88,6 +94,11 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_comparison_parentheses`: Remove redundant parentheses around
   operands in comparison expressions.
   ([see below](labels/remove-redundant-comparison-parentheses))
+- `end_fmt_off_at_closing_bracket`: Correctly indent `# fmt: off` comments inside
+  brackets, such as function calls, and fix a crash when one comes right before a lone
+  name, number or string.
+- `parenthesize_one_item_sequence_patterns`: Add parentheses around one-item sequence
+  patterns in `case` statements, such as `case x,:`.
 
 (labels/remove-redundant-top-level-parentheses)=
 
@@ -735,6 +746,39 @@ assert (
         attr.fields(C).x.converter.__call__
     ).get_return_type()
 )
+```
+
+(labels/parenthesize-tuple-in-yield)=
+
+### Parentheses around tuples in `yield`
+
+Tuples in `yield` statements get parentheses the same way as in `return` statements:
+always for a one-element tuple, and when a longer tuple has to be split, so a split
+tuple no longer looks as if only its first element is yielded. Redundant parentheses
+around the `yield` itself are removed as well:
+
+```python
+# Before
+def f():
+    yield x,
+    x = (yield a, b)
+    (
+        yield long_variable_name_one,
+        long_variable_name_two,
+        long_variable_name_three,
+        long_variable_name_four,
+    )
+
+# After (with --preview)
+def f():
+    yield (x,)
+    x = yield a, b
+    yield (
+        long_variable_name_one,
+        long_variable_name_two,
+        long_variable_name_three,
+        long_variable_name_four,
+    )
 ```
 
 ## Unstable style

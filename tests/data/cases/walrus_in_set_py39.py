@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.9 --target-version=py39
+# flags: --target-version=py39
 # Python 3.9.0 can't parse a named expression in a set literal without
 # parentheses, so they're kept for 3.9 targets.
 x = {(y := 1)}

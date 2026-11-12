@@ -1170,9 +1170,9 @@ class BaseStringSplitter(StringTransformer, CustomSplitMapMixin):
             previous_was_unescaped_backslash = False
 
             begin = idx - 1  # the position of backslash before \N{...}
-            for idx, c in it:
-                if c == "}":
-                    end = idx
+            for end_idx, end_char in it:
+                if end_char == "}":
+                    end = end_idx
                     break
             else:
                 # malformed nameescape expression?

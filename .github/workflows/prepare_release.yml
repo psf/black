@@ -65,7 +65,7 @@ jobs:
         run: |
           gh pr create \
             -t "Prepare release $VERSION" -b "" \
-            -l "ci: skip news" -l "C: maintenance" \
+            -l "ci: skip news" -l "ci: build all wheels" -l "C: maintenance" \
             -a "$USER"
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}

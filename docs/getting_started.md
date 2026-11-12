@@ -20,7 +20,7 @@ black --code "x =   {  'a':1,'b':2 }"
 
 ## Installation
 
-_Black_ can be installed by running `pip install black`. It requires Python 3.10+ to
+_Black_ can be installed by running `pip install black`. It requires Python 3.11+ to
 run.
 
 If you use pipx, you can install Black with `pipx install black`.

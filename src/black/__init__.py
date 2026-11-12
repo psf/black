@@ -44,6 +44,7 @@ from black.files import (
     find_user_pyproject_toml,
     gen_python_files,
     get_gitignore,
+    is_filesystem_root,
     parse_pyproject_toml,
     path_is_excluded,
     resolves_outside_root_or_cannot_stat,
@@ -282,7 +283,7 @@ def validate_regex(
 @click.option(
     "-l",
     "--line-length",
-    type=int,
+    type=click.IntRange(min=1),
     default=DEFAULT_LINE_LENGTH,
     help="How many characters per line to allow.",
     show_default=True,
@@ -595,7 +596,7 @@ def main(
     """The uncompromising code formatter."""
     ctx.ensure_object(dict)
 
-    assert sys.version_info >= (3, 10), "Black requires Python 3.10+"
+    assert sys.version_info >= (3, 11), "Black requires Python 3.11+"
     if sys.version_info[:3] == (3, 12, 5):
         out(
             "Python 3.12.5 has a memory safety issue that can cause Black's "
@@ -626,6 +627,15 @@ def main(
         find_project_root(src, stdin_filename) if code is None else (None, None)
     )
     ctx.obj["root"] = root
+
+    if code is None:
+        for source in src:
+            if source != "-" and is_filesystem_root(Path(source)):
+                err(
+                    "Warning: formatting the filesystem root can affect files "
+                    "outside your project."
+                )
+                break
 
     if (
         code is None
@@ -1288,20 +1298,24 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
     are currently not supported.
     """
     validate_cell(src, mode)
-    src_without_trailing_semicolon, has_trailing_semicolon = remove_trailing_semicolon(
-        src
-    )
     try:
+        src_without_trailing_semicolon, has_trailing_semicolon = (
+            remove_trailing_semicolon(src)
+        )
         masked_src, replacements = mask_cell(src_without_trailing_semicolon)
-    except SyntaxError:
+    except (SyntaxError, tokenize.TokenError):
         raise NothingChanged from None
     masked_dst = format_str(masked_src, mode=mode)
     if not fast:
         check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
     dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
-    dst = put_trailing_semicolon_back(
-        dst_without_trailing_semicolon, has_trailing_semicolon
-    )
+    try:
+        dst = put_trailing_semicolon_back(
+            dst_without_trailing_semicolon, has_trailing_semicolon
+        )
+    except tokenize.TokenError:
+        # Python 3.11 sees the `;` in `!find . -exec rm {} \;` as a trailing semicolon
+        raise NothingChanged from None
     dst = dst.rstrip("\n")
     if dst == src:
         raise NothingChanged from None
@@ -1384,10 +1398,16 @@ def format_str(
         hey
 
     """
+    requested_lines: Collection[tuple[int, int]] = ()
     if lines:
         lines = sanitized_lines(lines, src_contents)
         if not lines:
             return src_contents  # Nothing to format
+        # Keep the ranges exactly as the caller asked for them. `lines` is
+        # narrowed below to follow the code through the first pass, but deciding
+        # whether a dropped trailing blank line was selected has to be done
+        # against the original request.
+        requested_lines = lines
     dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
@@ -1399,6 +1419,9 @@ def format_str(
                 # None of the requested lines survived the first pass, so there is
                 # nothing left to format. Passing the empty `lines` to the second
                 # pass would format the whole file instead.
+                dst_contents = _restore_unselected_trailing_blank_lines(
+                    src_contents, dst_contents, requested_lines
+                )
                 return dst_contents
         try:
             dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
@@ -1425,9 +1448,9 @@ def format_str(
                 exc.details,
             )
             raise
-    if lines:
+    if requested_lines:
         dst_contents = _restore_unselected_trailing_blank_lines(
-            src_contents, dst_contents, lines
+            src_contents, dst_contents, requested_lines
         )
     return dst_contents
 
@@ -1463,9 +1486,7 @@ def _format_str_once(
         src_contents.encode("utf-8"), mode, encoding_overwrite="utf-8"
     )
 
-    src_node = lib2to3_parse(
-        normalized_contents.lstrip(), target_versions=mode.target_versions
-    )
+    src_node = lib2to3_parse(normalized_contents, target_versions=mode.target_versions)
 
     dst_blocks: list[LinesBlock] = []
     if mode.target_versions:

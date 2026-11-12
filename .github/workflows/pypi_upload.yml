@@ -33,39 +33,33 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --group cibw
 
-      - name: generate matrix
+      - name: generate full matrix
         if: |
-          github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+          github.event_name == 'release' || contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           {
-            cibuildwheel --print-build-identifiers --platform linux \
+            cibuildwheel --print-build-identifiers --platform linux --archs x86_64 \
               | jq -Rn '[{"only": inputs, "os": "ubuntu-latest"}]'
-            cibuildwheel --print-build-identifiers --platform macos \
+            cibuildwheel --print-build-identifiers --platform macos --archs x86_64,ARM64 \
               | jq -Rn '[{"only": inputs, "os": "macos-latest"}]'
-            cibuildwheel --print-build-identifiers --platform windows \
+            cibuildwheel --print-build-identifiers --platform windows --archs AMD64 \
               | jq -Rn '[{"only": inputs, "os": "windows-latest"}]'
             cibuildwheel --print-build-identifiers --platform windows --archs ARM64 \
               | jq -Rn '[{"only": inputs, "os": "windows-11-arm"}]'
           } | jq -cs 'add' > /tmp/matrix
-        env:
-          CIBW_ARCHS_LINUX: x86_64
-          CIBW_ARCHS_MACOS: x86_64 arm64
-          CIBW_ARCHS_WINDOWS: AMD64
 
-      - name: generate matrix (PR)
+      - name: generate partial matrix
         if: |
-          github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
+          github.event_name != 'release' && !contains(github.event.pull_request.labels.*.name, 'ci: build all wheels')
         run: |
           {
-            CIBW_BUILD="cp310-*" cibuildwheel --print-build-identifiers --platform linux \
+            CIBW_BUILD="cp311-*" cibuildwheel --print-build-identifiers --platform linux --archs x86_64 \
               | jq -Rn '[{"only": inputs, "os": "ubuntu-latest"}]'
-            CIBW_BUILD="cp312-*" cibuildwheel --print-build-identifiers --platform macos \
+            CIBW_BUILD="cp313-*" cibuildwheel --print-build-identifiers --platform macos --archs x86_64 \
               | jq -Rn '[{"only": inputs, "os": "macos-latest"}]'
-            CIBW_BUILD="cp314-*" cibuildwheel --print-build-identifiers --platform windows \
+            CIBW_BUILD="cp315-*" cibuildwheel --print-build-identifiers --platform windows --archs AMD64 \
               | jq -Rn '[{"only": inputs, "os": "windows-latest"}]'
           } | jq -cs 'add' > /tmp/matrix
-        env:
-          CIBW_ARCHS_LINUX: x86_64
 
       - id: set-matrix
         run: echo "include=$(cat /tmp/matrix)" | tee -a $GITHUB_OUTPUT

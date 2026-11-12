@@ -219,6 +219,34 @@ def test_invalid_input_error_includes_path_location(tmp_path: Path) -> None:
     assert f"error: cannot parse: {second_source}:1:6\n" in result.stderr
 
 
+def test_invalid_input_error_line_number_with_leading_blank_lines(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "leading_blank.py"
+    source.write_text("\n\n\ndef f(:\n    pass\n", encoding="utf8")
+
+    result = BlackRunner().invoke(
+        black.main, ["--config", str(THIS_DIR / "empty.toml"), str(source)]
+    )
+
+    assert result.exit_code == 123
+    assert (
+        f"error: cannot parse: {source}:4:6\n"
+        "    def f(:\n"
+        "         ^\n"
+        "ParseError: bad input\n"
+        in result.stderr
+    )
+
+
+def test_form_feed_on_first_line_is_retained() -> None:
+    # The parse tree keeps line 1, so a standalone form feed there survives (#4021).
+    source = "\f\n\nprint ( 'a' )\n"
+    expected = '\f\nprint("a")\n'
+
+    assert_format(source, expected)
+
+
 class BlackTestCase(BlackBaseTestCase):
     invokeBlack = staticmethod(invokeBlack)
 
@@ -2156,6 +2184,58 @@ class BlackTestCase(BlackBaseTestCase):
                 (None, None),
             )
 
+    def test_is_filesystem_root(self) -> None:
+        root = Path("/").resolve()
+        self.assertTrue(black.files.is_filesystem_root(root))
+        self.assertTrue(black.files.is_filesystem_root(Path("/")))
+        with TemporaryDirectory() as workspace:
+            self.assertFalse(black.files.is_filesystem_root(Path(workspace)))
+            self.assertFalse(
+                black.files.is_filesystem_root(Path(workspace) / "file.py")
+            )
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_is_filesystem_root_error_handling(self) -> None:
+        with patch.object(Path, "resolve", side_effect=OSError("permission denied")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+        with patch.object(Path, "resolve", side_effect=RuntimeError("symlink loop")):
+            self.assertFalse(black.files.is_filesystem_root(Path("/")))
+
+    @pytest.mark.incompatible_with_mypyc
+    def test_warn_on_reformatting_root(self) -> None:
+        runner = BlackRunner()
+        root_path = str(Path("/").resolve())
+        with patch("black.get_sources", return_value=set()):
+            result = runner.invoke(black.main, [root_path])
+            self.assertIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+            result_multi = runner.invoke(black.main, [root_path, root_path])
+            self.assertEqual(
+                result_multi.stderr.count(
+                    "Warning: formatting the filesystem root can affect files outside"
+                    " your project."
+                ),
+                1,
+            )
+
+        with TemporaryDirectory() as workspace:
+            result = runner.invoke(black.main, [workspace])
+            self.assertNotIn(
+                "Warning: formatting the filesystem root can affect files outside your"
+                " project.",
+                result.stderr,
+            )
+
+        result = runner.invoke(black.main, ["-"], input=b"x = 1\n")
+        self.assertNotIn(
+            "Warning: formatting the filesystem root can affect files outside your"
+            " project.",
+            result.stderr,
+        )
+
     @pytest.mark.incompatible_with_mypyc
     @patch("black.files.find_user_pyproject_toml")
     def test_find_pyproject_toml_no_common_parent(
@@ -2589,6 +2669,34 @@ class BlackTestCase(BlackBaseTestCase):
             black.format_str(source, mode=black.FileMode(), lines=[(2, 2)]) == expected
         )
 
+    def test_line_ranges_after_leading_blank_lines_target_the_right_lines(self) -> None:
+        # The parse tree must carry the file's real line numbers, so a range
+        # selects the same line it would select without the leading blank
+        # lines. It used to be off by the number of stripped leading lines,
+        # silently reformatting an unrelated line further down the file.
+        source = (
+            "\n\n\n"
+            'print ( "a" )\n'
+            'print ( "b" )\n'
+            'print ( "c" )\n'
+            'print ( "d" )\n'
+            'print ( "e" )\n'
+            'print ( "f" )\n'
+        )
+
+        expected = (
+            'print ( "a" )\n'
+            'print("b")\n'
+            'print ( "c" )\n'
+            'print ( "d" )\n'
+            'print ( "e" )\n'
+            'print ( "f" )\n'
+        )
+
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(5, 5)]) == expected
+        )
+
     def test_line_ranges_fmt_off_prefix_comment_indentation_is_stable(self) -> None:
         expected = textwrap.dedent("""\
             def f():
@@ -2630,6 +2738,53 @@ class BlackTestCase(BlackBaseTestCase):
 
         assert (
             black.format_str(source, mode=black.FileMode(), lines=[(1, 3)]) == expected
+        )
+
+    def test_line_ranges_blank_lines_after_imports(self) -> None:
+        source = "import os\n\n\nx = 1\n"
+        assert black.format_str(source, mode=black.FileMode(), lines=[(1, 1)]) == source
+
+        source_class = "import os\n\n\n\nclass Foo:\n    pass\n"
+        assert (
+            black.format_str(
+                source_class, mode=black.FileMode(preview=True), lines=[(1, 1)]
+            )
+            == source_class
+        )
+
+        source_unselected_import = "import os\nx =  1\n"
+        assert (
+            black.format_str(
+                source_unselected_import, mode=black.FileMode(), lines=[(2, 2)]
+            )
+            == "import os\n\nx = 1\n"
+        )
+
+        source_two_unselected = "import os\nx = 1\ny =  2\n"
+        assert (
+            black.format_str(
+                source_two_unselected, mode=black.FileMode(), lines=[(3, 3)]
+            )
+            == "import os\nx = 1\ny = 2\n"
+        )
+
+    def test_line_ranges_remove_selected_trailing_blank_lines(self) -> None:
+        # Selecting up to the last line lets Black drop the extra trailing blank
+        # lines there, the same way a full-file run does. Blank lines past the
+        # requested range are left alone.
+        source = "x  =  1\n\n"
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 2)]) == "x = 1\n"
+        )
+        assert (
+            black.format_str(source, mode=black.FileMode(), lines=[(1, 1)])
+            == "x = 1\n\n"
+        )
+
+        source_multiple = "x  =  1\n\n\n"
+        assert (
+            black.format_str(source_multiple, mode=black.FileMode(), lines=[(1, 3)])
+            == "x = 1\n"
         )
 
     def test_line_ranges_with_multiple_sources(self) -> None:
@@ -2845,6 +3000,70 @@ class BlackTestCase(BlackBaseTestCase):
                 expected,
             )
 
+    def test_fmt_off_unclosed_trailing_blank_lines(self) -> None:
+        cases = [
+            '# fmt: off\n\nprint("hello")\n\n',
+            "# fmt: off\nx = 1\n# tail comment\n\n",
+            "# fmt: off\nx = 1\n\n\n\n",
+            "def f():\n    # fmt: off\n    x = 1\n\n",
+            "def f():\n    # fmt: off\n    x = 1\n    # tail comment\n\n",
+            "def f():\n    if condition:\n        # fmt: off\n        x = 1\n\n\n",
+            (
+                "def f():\n"
+                "    if condition:\n"
+                "        # fmt: off\n"
+                "        x = 1\n"
+                "        # inner tail\n"
+                "    # outer tail\n\n\n"
+            ),
+        ]
+        for src in cases:
+            for nl in ("\n", "\r\n"):
+                source = src.replace("\n", nl)
+                with self.subTest(source=source):
+                    with TemporaryDirectory() as workspace:
+                        path = Path(workspace) / "test.py"
+                        path.write_bytes(source.encode("utf-8"))
+                        changed = black.format_file_in_place(
+                            path,
+                            fast=False,
+                            mode=DEFAULT_MODE,
+                            write_back=black.WriteBack.YES,
+                        )
+                        self.assertFalse(changed)
+                        self.assertEqual(path.read_bytes(), source.encode("utf-8"))
+
+    def test_fmt_off_closed_trailing_blank_lines_are_normalized(self) -> None:
+        cases = [
+            (
+                "# fmt: off\nx = 1\n# fmt: on\n\n\n",
+                "# fmt: off\nx = 1\n# fmt: on\n",
+            ),
+            (
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n\n\n",
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n",
+            ),
+            (
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n    y = 2\n\n\n",
+                "def f():\n    # fmt: off\n    x = 1\n    # fmt: on\n    y = 2\n",
+            ),
+        ]
+        for src, expected in cases:
+            self.assertEqual(
+                black.format_file_contents(src, fast=False, mode=DEFAULT_MODE),
+                expected,
+            )
+
+    def test_fmt_off_unclosed_formats_preceding_code_and_preserves_trailing(
+        self,
+    ) -> None:
+        source = "def f(  a,  b  ):\n    # fmt: off\n    x =    1   + 2\n\n\n"
+        expected = "def f(a, b):\n    # fmt: off\n    x =    1   + 2\n\n\n"
+        self.assertEqual(
+            black.format_file_contents(source, fast=False, mode=DEFAULT_MODE),
+            expected,
+        )
+
 
 class TestCaching:
     def test_get_cache_dir(
@@ -3050,6 +3269,21 @@ class TestCaching:
             cache_file = get_cache_file(mode, workspace)
             cache_file.touch()
             assert black.Cache.read(mode, workspace).file_data == {}
+
+    def test_cache_unreadable_file_is_a_miss(self) -> None:
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            cache_file = get_cache_file(mode, workspace)
+            # A cache file that cannot be opened must be a cache miss, not a
+            # formatting failure: the cache is only an optimization. On Windows
+            # this happens when another Black process rewrites the file at the
+            # same moment, and the open() then fails with a sharing violation.
+            cache_file.mkdir()
+            src = (workspace / "test.py").resolve()
+            src.write_text("print('hello')", encoding="utf-8")
+            assert black.Cache.read(mode, workspace).file_data == {}
+            invokeBlack([str(src)])
+            assert src.read_text(encoding="utf-8") == 'print("hello")\n'
 
     def test_cache_single_file_already_cached(self) -> None:
         mode = DEFAULT_MODE

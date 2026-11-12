@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 # Compound statement headers with `# fmt: skip` right after a `# fmt: off` /
 # `# fmt: on` block that only holds comments. They are kept as they are.
 

@@ -2,7 +2,7 @@ name: diff-shades
 
 on:
   push:
-    branches: [main]
+    branches: main
     paths:
       - src/**
       - pyproject.toml
@@ -27,7 +27,7 @@ env:
   PIP_UPLOADED_PRIOR_TO: P2D
   # Clang is less picky with the C code it's given than gcc (and may generate faster
   # binaries too).
-  CC: clang-18
+  CC: clang
 
 permissions: {}
 
@@ -186,7 +186,7 @@ jobs:
 
   compare:
     name: compare / ${{ matrix.mode }}
-    needs: ["configure", "analysis-base", "analysis-target"]
+    needs: [configure, analysis-base, analysis-target]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     strategy:

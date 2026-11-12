@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 match something:
     case b(): print(1+1)
     case c(

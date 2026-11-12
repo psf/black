@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.10 --line-length=10
+# flags: --line-length=10
 
 match test:
     case case if True:

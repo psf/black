@@ -180,10 +180,14 @@ def mask_cell(src: str) -> tuple[str, list[Replacement]]:
     replacements += cell_magic_replacements
     transformed = transformer_manager.transform_cell(transformed)
     transformed, magic_replacements = replace_magics(transformed)
-    if len(transformed.strip().splitlines()) != len(src.strip().splitlines()):
-        # Multi-line magic, not supported.
-        raise NothingChanged
     replacements += magic_replacements
+    restored = transformed
+    for replacement in replacements:
+        restored = restored.replace(replacement.mask, replacement.src)
+    if _stripped_lines(restored) != _stripped_lines(src):
+        # Multi-line magic, or IPython syntax that wouldn't be put back as written,
+        # e.g. `obj?` would become `?obj` and `>>>` prompts would be removed.
+        raise NothingChanged
     return transformed, replacements
 
 
@@ -348,6 +352,11 @@ def _get_code_start(src: str) -> str:
         if line and not line.startswith("#"):
             return line
     return ""
+
+
+def _stripped_lines(src: str) -> list[str]:
+    """Return the lines of `src`, ignoring indentation and surrounding whitespace."""
+    return [line.strip() for line in src.strip().splitlines()]
 
 
 def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:

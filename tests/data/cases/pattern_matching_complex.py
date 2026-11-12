@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 # Cases sampled from Lib/test/test_patma.py
 
 # case black_test_patma_098

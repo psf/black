@@ -9,16 +9,33 @@
 
 <!-- Include any especially major or disruptive changes here -->
 
+- Drop runtime support for Python 3.10 (#5616)
+- Build Python 3.15 wheels (#5616)
+
 ### Stable style
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
+  `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
+- Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
+  unformatted by `# fmt: skip` or `--line-ranges` (#5671)
+- Remove the extra blank lines at the end of a file when the selected `--line-ranges`
+  reaches its last line, matching a full-file run (#5654)
+- Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
+  collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
+- Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
 - Normalize hex codes in unicode escape sequences in f-strings (#5526)
+- Fix crash when `# fmt: skip` is on several one-line clauses of a statement with
+  semicolon-separated bodies, like `if x: a; b  # fmt: skip` ...
+  `else: a; b  # fmt: skip` (#5675)
 - Fix `--stdin` output ending in `\r\r\n` instead of `\r\n` when the input uses CRLF
   line endings and does not end with a newline, e.g. a notebook piped to `black -`
   (#5559)
+- Fix `async def`, `async for` and `async with` statements being dropped from the output
+  when a comment-only `# fmt: off` / `# fmt: on` block comes right before them (#5678)
 - Fix crash when `# fmt: skip` on an opening bracket is followed by more code after the
   closing bracket, such as `x = [  # fmt: skip` ... `] + [3]` (#5538)
 - Fix a parenthesized lambda being turned into a tuple when a standalone comment sits in
@@ -39,6 +56,8 @@
 - Fix crash when `# fmt: skip` is on an opening bracket and a conditional expression
   continues after the closing bracket, such as `x = (  # fmt: skip` ... `) if c else d`
   (#5586)
+- Fix unstable formatting when a comment-only `# fmt: off` / `# fmt: on` block comes
+  right before an assignment to a tuple, like `a, b = c` (#5679)
 - Fix a compound statement header right after a comment-only `# fmt: off` / `# fmt: on`
   block being merged into the `# fmt: on` comment when the header has `# fmt: skip` or
   is outside the selected `--line-ranges` (#5549)
@@ -61,14 +80,41 @@
   line, where it no longer applies (#5618)
 - Fix crash when a comment and a `# type: ignore` from the next line are joined onto one
   line and ensure the `# type: ignore` comes first (#5625)
+- Fix crash on consecutive statements that each have `# fmt: skip` on an opening bracket
+  (#5626)
 - Fix a Jupyter notebook magic in an annotated assignment (for example
   `files: list[str] = !ls`) being replaced with the `get_ipython()` call that IPython
   runs it as (#5628)
+- Fix crash when a class header with `# fmt: skip` also has a `# fmt: skip` after its
+  last base or keyword argument, such as `B,  # fmt: skip` ... `):  # fmt: skip` (#5633)
+- Fix `--line-ranges` crashing with an internal error, or changing lines outside the
+  ranges, when an `if`, `for`, `while` or `try` statement has a clause with its body on
+  the same line, such as `else: return` (#5635)
+- Fix IPython help syntax after an object (`obj?`), wildcard searches (`np.*load*?`) and
+  pasted `>>>` prompts being rewritten in Jupyter notebooks. Cells with IPython syntax
+  that can't be put back as written are now left unchanged (#5630)
+- Fix crash when `# fmt: skip` is on the closing bracket of a `# fmt: off` region that
+  ends in a comment (#5643)
+- Keep a line holding only a backslash after a backslash continuation as written in
+  `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
+  or t-string fields, instead of crashing or dropping it (#5681)
+- Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
+  the rest of the last item (#5651)
+- Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
+  such as a cell with an unclosed bracket or a shell command like
+  `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
+- Fix `--line-ranges` producing invalid code when stacked decorators outside the
+  selected lines are indented with 2 spaces or tabs (#5672)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Keep the optional parentheses around an assignment's right-hand side when removing
+  them would produce a first line longer than the line length and the expression
+  contains standalone comments (#5638, #5657)
+- Retain user-written parens around `in` clauses of comprehensions if they have
+  delimiters (#4881)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
   binary operand and the expression is split at a short line length (#5609)
 - Remove redundant parentheses around simple top-level expressions (#5516)
@@ -88,6 +134,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Put each string literal of an implicit string concatenation on its own line inside the
+  surrounding brackets when the literal ends with a newline, instead of joining them
+  onto a single line (#5554)
 - Split long strings after overloaded binary and augmented assignment operators,
   including middle operands of operator chains, in the unstable `string_processing`
   feature (#5562)
@@ -95,17 +144,31 @@
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
 - Don't add or remove parens around long dict values unless they have delimiters (#5627)
+- Correctly indent `# fmt: off` comments inside brackets, such as function calls, and
+  fix a crash when one comes right before a lone name, number or string (#5643)
+- Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
+  (#5646)
+- Add parentheses around one-item sequence patterns in `case` statements, such as
+  `case x,:` (#5673)
 
 ### Configuration
 
 <!-- Changes to how Black can be configured -->
 
+- Stop disregarding leading blank lines, which shifted the lines selected by
+  `--line-ranges`, reported the wrong line number in parse errors, and removed form
+  feeds on the first line (#5650)
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 - Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
 - Emit a clear error instead of a confusing `OSError: AF_UNIX path too long` traceback
   when running `--diff` in environments where the temporary directory path is too long
   (#5513)
+- Treat an unreadable cache file as a cache miss instead of failing the formatting run
+  with a "cannot format" error (#5641)
+
+- Reject non-positive `--line-length` values on the command line and in `pyproject.toml`
+  instead of silently formatting with them (#5664)
 
 ### Packaging
 
@@ -122,9 +185,15 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Skip the regular expressions in string quote normalization when a string has no
+  backslash and no quote character to escape (#5680)
+
 ### Output
 
 <!-- Changes to Black's terminal output and error messages -->
+
+- Emit a warning when an explicitly supplied source directory is the filesystem root
+  (#5637)
 
 - Write the content of a file passed through stdin that is excluded with
   `--force-exclude` back unchanged, retaining line endings and non-UTF-8 files (#5530)
@@ -135,11 +204,14 @@
 
 <!-- Changes to Blackd -->
 
+- Preserve non-ASCII source in the Python client when a custom `Content-Type` declares a
+  non-UTF-8 charset (#5645)
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using
   the requested charset, instead of HTTP 500 (#5519)
 - Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
   for a `X-Diff` request, instead of prepending it as raw text in front of the diff
   (#5573)
+- Fix blackd startup on Windows with more than 61 logical CPUs (#5667)
 
 ### Integrations
 
@@ -151,6 +223,9 @@
 
 <!-- Major changes to documentation and policies.
      Small docs changes don't need a changelog entry. -->
+
+- Expand the guide for introducing Black to an existing project with rollout and
+  active-branch guidance (#5472)
 
 ## Version 26.10.1
 
@@ -180,6 +255,9 @@ has been registered as `GHSA-cg8m-r9f2-5wm2`; a CVE identifier is pending.
   the first two lines of a file (#5487)
 - Fix adding an extra trailing blank line inside a multi-line module docstring when its
   last line is near the line length limit (#5494)
+- Preserve blank lines between imports and unselected statements when using
+  `--line-ranges`, and ensure a blank line is added between an unselected import and a
+  newly formatted statement (#5493, #5649)
 - Keep the parentheses around a walrus that is the only item in a set (for example
   `{(x := f())}`) when targeting Python 3.9 or older, since Python 3.8 and 3.9.0 can't
   parse it without them (#5502)

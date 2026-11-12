@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: main
     types: closed
-    paths: docs/integrations/source_version_control.md
+    paths: docs/integrations/pre-commit.md
   workflow_dispatch:
 
 permissions: {}
