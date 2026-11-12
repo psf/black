@@ -876,7 +876,14 @@ def _get_compound_statement_header(
     for child in compound_stmt.children:
         if child is body_node:
             break
-        if isinstance(child, Leaf):
+        if child.type == STANDALONE_COMMENT or (
+            child.type in (syms.suite, syms.simple_stmt) and not str(child).strip()
+        ):
+            # An earlier one-line clause that its own `# fmt: skip` already hid,
+            # like the `if` line before `else: a; b  # fmt: skip`, or what is left
+            # of its body. This clause's header starts after them.
+            header_leaves = []
+        elif isinstance(child, Leaf):
             if child.type not in (token.NEWLINE, token.INDENT) and (
                 id(child) not in covered
             ):
