@@ -32,6 +32,7 @@ from _black_version import version as __version__
 from black.cache import Cache, get_cache_dir
 from black.comments import normalize_fmt_off
 from black.const import (
+    CYTHON_SUFFIXES,
     DEFAULT_EXCLUDES,
     DEFAULT_INCLUDES,
     DEFAULT_LINE_LENGTH,
@@ -1012,6 +1013,8 @@ def reformat_one(
                 mode = replace(mode, is_pyi=True)
             elif src.suffix == ".ipynb":
                 mode = replace(mode, is_ipynb=True)
+            elif src.suffix in CYTHON_SUFFIXES and Preview.cython_support in mode:
+                mode = replace(mode, is_pyx=True)
             if format_stdin_to_stdout(
                 fast=fast, write_back=write_back, mode=mode, lines=lines
             ):
@@ -1071,6 +1074,8 @@ def format_file_in_place(
         mode = replace(mode, is_pyi=True)
     elif src.suffix == ".ipynb":
         mode = replace(mode, is_ipynb=True)
+    elif src.suffix in CYTHON_SUFFIXES and Preview.cython_support in mode:
+        mode = replace(mode, is_pyx=True)
 
     then = datetime.fromtimestamp(src.stat().st_mtime, timezone.utc)
     header = b""
@@ -1240,7 +1245,9 @@ def check_stability_and_equivalence(
     content differently.
     """
     try:
-        assert_equivalent(src_contents, dst_contents)
+        # Python's ast cannot parse Cython, so only the stability check applies.
+        if not mode.is_pyx:
+            assert_equivalent(src_contents, dst_contents)
     except SourceASTParseError:
         raise
     except ASTSafetyError:
@@ -1477,7 +1484,11 @@ def _format_str_once(
         src_contents.encode("utf-8"), mode, encoding_overwrite="utf-8"
     )
 
-    src_node = lib2to3_parse(normalized_contents, target_versions=mode.target_versions)
+    src_node = lib2to3_parse(
+        normalized_contents,
+        target_versions=mode.target_versions,
+        cython=mode.is_pyx,
+    )
 
     dst_blocks: list[LinesBlock] = []
     if mode.target_versions:

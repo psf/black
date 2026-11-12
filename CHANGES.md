@@ -129,6 +129,9 @@
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
+- Add `cython_support`: format Cython files (`.pyx`, `.pxd` and `.pxi`), with support
+  for `cimport`, `include`, `cdef`, `cpdef` and `ctypedef` declarations, typed function
+  arguments, function pointers, C names, casts and `cdef extern from` blocks (#5569)
 
 ### Configuration
 

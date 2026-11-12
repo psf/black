@@ -18,6 +18,7 @@ from black.nodes import (
     ASSIGNMENTS,
     CLOSING_BRACKETS,
     COMPARATORS,
+    CYTHON_POINTER_PARENTS,
     MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
@@ -116,6 +117,8 @@ def hug_power_op(
         should_hug = (
             (0 < idx < len(line.leaves) - 1)
             and leaf.type == token.DOUBLESTAR
+            # `char **argv` in Cython is not a power
+            and not (leaf.parent and leaf.parent.type in CYTHON_POINTER_PARENTS)
             and is_simple_operand(idx - 1, kind=-1)
             and line.leaves[idx - 1].value != "lambda"
             and is_simple_operand(idx + 1, kind=1)

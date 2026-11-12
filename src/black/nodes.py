@@ -15,7 +15,8 @@ from blib2to3.pytree import NL, Leaf, Node, type_repr
 
 # The CLI cache directory is not known until Click parses the command line.
 pygram.initialize(save=False)
-syms: Final = pygram.python_symbols
+# Numbered as in the Python grammar, so it serves Cython trees too.
+syms: Final = pygram.cython_symbols
 
 
 # types
@@ -35,6 +36,7 @@ STATEMENT: Final = {
     syms.with_stmt,
     syms.funcdef,
     syms.classdef,
+    syms.cdef_tail,
     syms.match_stmt,
     syms.case_block,
 }
@@ -177,6 +179,58 @@ class Visitor(Generic[T]):
                 yield from self.visit(child)
 
 
+CYTHON_TYPE_PARENTS: Final = {
+    syms.cast,
+    syms.cdecl_atoms,
+    syms.cdecl_declarator,
+    syms.cdecl_item,
+    syms.cdecl_trailer,
+    syms.sizeof_expr,
+}
+CYTHON_POINTER_PARENTS: Final = {syms.cdecl_atoms, syms.cdecl_declarator}
+POINTER_OPERATORS: Final = {token.STAR, token.DOUBLESTAR, token.AMPER}
+
+
+def _cython_type_whitespace(t: int, p: Node, prev: NL | None) -> str | None:
+    """Whitespace for a leaf in a Cython C type, or None to use the general rules.
+
+    Pointer operators hug the name that follows (`char *p`), but not in a cast
+    (`<char*>p`). Brackets and dots hug what precedes them (`np.ndarray[double]`).
+    """
+    if p.type in {syms.cast, syms.sizeof_expr}:
+        return "" if prev else None
+    if p.type == syms.cdecl_trailer:
+        return "" if t in {token.LSQB, token.DOT} or prev_is(prev, token.DOT) else None
+    if p.type == syms.cdecl_item:
+        # Buffer arguments: `ndim=2`
+        return "" if t == token.EQUAL or prev_is(prev, token.EQUAL) else None
+    if prev is None:
+        return "" if parent_type(p) in {syms.cast, syms.sizeof_expr} else None
+    if prev.type in POINTER_OPERATORS:
+        return ""
+    if t in POINTER_OPERATORS:
+        return "" if parent_type(p) in {syms.cast, syms.sizeof_expr} else " "
+    return None
+
+
+def is_function_pointer_declarator(node: NL) -> bool:
+    """Is this the `(*name)` of a Cython function pointer declaration?
+
+    It is parsed as a first `parameters` node, followed by the arguments.
+    """
+    return (
+        node.type == syms.parameters
+        and node.parent is not None
+        and node.parent.type in {syms.cdef_tail, syms.tname}
+        and node.next_sibling is not None
+        and node.next_sibling.type == syms.parameters
+    )
+
+
+def prev_is(prev: NL | None, type: int) -> bool:
+    return prev is not None and prev.type == type
+
+
 def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
     """Return whitespace prefix if needed for the given `leaf`.
 
@@ -209,7 +263,16 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
     ):
         return NO
 
+    if t == token.LPAR and is_function_pointer_declarator(p):
+        # `ctypedef int (*name)(int)`
+        return SPACE
+
     prev = leaf.prev_sibling
+    if p.type in CYTHON_TYPE_PARENTS:
+        cython_whitespace = _cython_type_whitespace(t, p, prev)
+        if cython_whitespace is not None:
+            return cython_whitespace
+
     if not prev:
         prevp = preceding_leaf(p)
         if not prevp or prevp.type in OPENING_BRACKETS:
@@ -224,6 +287,14 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
 
             return SPACE
 
+        if (
+            prevp.type == token.GREATER
+            and prevp.parent
+            and prevp.parent.type == syms.cast
+        ):
+            # <type>operand
+            return NO
+
         if prevp.type == token.EQUAL:
             if prevp.parent:
                 if prevp.parent.type in {
@@ -231,6 +302,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
                     syms.argument,
                     syms.parameters,
                     syms.varargslist,
+                    syms.cdecl_item,
                 }:
                     return NO
 
@@ -403,7 +475,7 @@ def whitespace(leaf: Leaf, *, complex_subscript: bool, mode: Mode) -> str:
                 return NO
 
         elif t == token.NAME:
-            if v == "import":
+            if v in {"import", "cimport"}:
                 return SPACE
 
             if prev and prev.type == token.DOT:
@@ -967,7 +1039,11 @@ def is_import(leaf: Leaf) -> bool:
         or (
             t == token.NAME
             and (
-                (v == "import" and p and p.type == syms.import_name)
+                (
+                    v in {"import", "cimport", "include"}
+                    and p
+                    and p.type == syms.import_name
+                )
                 or (v == "from" and p and p.type == syms.import_from)
             )
         )

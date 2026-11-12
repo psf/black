@@ -288,6 +288,7 @@ class Preview(Enum):
     remove_redundant_comparison_parentheses = auto()
     remove_redundant_top_level_parentheses = auto()
     end_fmt_off_at_closing_bracket = auto()
+    cython_support = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
@@ -308,6 +309,7 @@ class Mode:
     string_normalization: bool = True
     is_pyi: bool = False
     is_ipynb: bool = False
+    is_pyx: bool = False
     skip_source_first_line: bool = False
     magic_trailing_comma: bool = True
     python_cell_magics: set[str] = field(default_factory=set)
@@ -355,6 +357,7 @@ class Mode:
             str(int(self.string_normalization)),
             str(int(self.is_pyi)),
             str(int(self.is_ipynb)),
+            str(int(self.is_pyx)),
             str(int(self.skip_source_first_line)),
             str(int(self.magic_trailing_comma)),
             str(int(self.preview)),
@@ -370,6 +373,7 @@ class Mode:
             self.string_normalization,
             self.is_pyi,
             self.is_ipynb,
+            self.is_pyx,
             self.skip_source_first_line,
             self.magic_trailing_comma,
             frozenset(self.python_cell_magics),

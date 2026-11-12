@@ -35,10 +35,15 @@ class ParserGenerator:
         self.first = {}  # map from symbol name to set of tokens
         self.addfirstsets()
 
-    def make_grammar(self) -> PgenGrammar:
+    def make_grammar(self, symbol_order: Sequence[str] = ()) -> PgenGrammar:
+        """Build the tables.
+
+        Symbols in `symbol_order` are numbered first, in that order, so a grammar that
+        extends another one keeps the base grammar's symbol numbers.
+        """
         c = PgenGrammar()
-        names = list(self.dfas.keys())
-        names.sort()
+        names = sorted(n for n in self.dfas if n not in symbol_order)
+        names[:0] = symbol_order
         names.remove(self.startsymbol)
         names.insert(0, self.startsymbol)
         for name in names:
