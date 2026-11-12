@@ -74,7 +74,15 @@ def lines_with_leading_tabs_expanded(s: str) -> list[str]:
 def fix_multiline_docstring(docstring: str, prefix: str) -> str:
     # https://peps.python.org/pep-0257/#handling-docstring-indentation
     assert docstring, "INTERNAL ERROR: Multiline docstrings cannot be empty"
+    # Whitespace can be significant in both expected output and example source
+    # (for instance, inside a triple-quoted string literal).
+    has_doctest = ">>>" in docstring
+    if has_doctest and "\t" in docstring:
+        # Reindentation changes doctest's eight-column tab stops, even when
+        # the tab characters themselves are left untouched.
+        return docstring
     lines = lines_with_leading_tabs_expanded(docstring)
+
     # Determine minimum indentation (first line doesn't count):
     indent = sys.maxsize
     for line in lines[1:]:
@@ -82,11 +90,13 @@ def fix_multiline_docstring(docstring: str, prefix: str) -> str:
         if stripped:
             indent = min(indent, len(line) - len(stripped))
     # Remove indentation (first line is special):
-    trimmed = [lines[0].strip()]
+    trimmed = [lines[0].lstrip() if has_doctest else lines[0].strip()]
     if indent < sys.maxsize:
         last_line_idx = len(lines) - 2
         for i, line in enumerate(lines[1:]):
-            stripped_line = line[indent:].rstrip()
+            stripped_line = line[indent:]
+            if not has_doctest:
+                stripped_line = stripped_line.rstrip()
             if stripped_line or i == last_line_idx:
                 trimmed.append(prefix + stripped_line)
             else:

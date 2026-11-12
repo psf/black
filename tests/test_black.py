@@ -2,6 +2,7 @@
 
 import ast
 import asyncio
+import doctest
 import inspect
 import io
 import itertools
@@ -146,6 +147,130 @@ def docstring_value(source: str) -> str:
     assert isinstance(expr, ast.Expr)
     assert isinstance(expr.value, ast.Constant)
     return str(expr.value.value)
+
+
+@pytest.mark.parametrize("prefix", ["", "r"])
+@pytest.mark.parametrize("preview", [False, True])
+@pytest.mark.parametrize(
+    "example",
+    [
+        '>>> print("value" + chr(32))\nvalue \n',
+        (
+            '>>> for value in ("first", "second"):\n'
+            "...     print(value + chr(32))\nfirst \nsecond \n"
+        ),
+        (
+            ">>> print([line.endswith(chr(32)) for line in '''first \n"
+            "... second \n... '''.splitlines()])\n[True, True]\n"
+        ),
+    ],
+)
+def test_docstring_preserves_doctest_output_whitespace(
+    prefix: str, preview: bool, example: str
+) -> None:
+    source = (
+        f'def f():\n    {prefix}"""Summary.  \n\n'
+        + textwrap.indent(example, "    ")
+        + '\n    More prose.  \n    """\n'
+    )
+    mode = Mode(preview=preview)
+    formatted = black.format_str(source, mode=mode)
+
+    for code in (source, formatted):
+        test = doctest.DocTestParser().get_doctest(
+            docstring_value(code), {}, "f", "example.py", 0
+        )
+        output = io.StringIO()
+        result = doctest.DocTestRunner().run(test, out=output.write)
+        assert result.attempted == 1
+        assert result.failed == 0, output.getvalue()
+
+    assert "Summary.  \n" in formatted
+    assert "More prose.  \n" in formatted
+    assert black.format_str(formatted, mode=mode) == formatted
+
+
+def test_docstring_with_malformed_doctest() -> None:
+    source = 'def f():\n    """Summary.  \n\n    >>>print("value")  \n    """\n'
+    assert_format(source, source)
+
+
+@pytest.mark.parametrize("indent", ["    ", "\t", "   "])
+@pytest.mark.parametrize("prefix", ["", "r"])
+@pytest.mark.parametrize("preview", [False, True])
+@pytest.mark.parametrize("tab_in_source", [False, True])
+def test_docstring_preserves_doctest_tabs(
+    indent: str, prefix: str, preview: bool, tab_in_source: bool
+) -> None:
+    doc_indent = indent * 2
+    if tab_in_source:
+        spaces = 8 - (len(doc_indent.expandtabs(8)) + 4) % 8
+        example = (
+            ">>> text = '''first\n... \tsecond'''\n"
+            f">>> print(text.splitlines()[1] == chr(32) * {spaces} + 'second')\n"
+            "True\n"
+        )
+    else:
+        spaces = 8 - len(doc_indent.expandtabs(8)) % 8
+        example = f'>>> print(chr(32) * {spaces} + "value")\n\tvalue\n'
+    source = (
+        f'class C:\n{indent}def f(self):\n{doc_indent}{prefix}"""Examples.\n\n'
+        + textwrap.indent(example, doc_indent)
+        + f'{doc_indent}"""\n'
+    )
+    mode = Mode(preview=preview)
+    formatted = black.format_str(source, mode=mode)
+
+    for code in (source, formatted):
+        namespace: dict[str, Any] = {}
+        exec(code, namespace)
+        test = doctest.DocTestParser().get_doctest(
+            namespace["C"].f.__doc__, {}, "C.f", "example.py", 0
+        )
+        output = io.StringIO()
+        result = doctest.DocTestRunner().run(test, out=output.write)
+        assert result.attempted == (2 if tab_in_source else 1)
+        assert result.failed == 0, output.getvalue()
+
+    assert black.format_str(formatted, mode=mode) == formatted
+
+
+def test_docstring_with_custom_doctest_option(monkeypatch: pytest.MonkeyPatch) -> None:
+    source = (
+        'def f():\n    """\n'
+        '    >>> print("value" + chr(32))  # doctest: +BLACK_TEST_OPTION\n'
+        '    value \n    """\n'
+    )
+    process = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "black",
+            "--config",
+            str(EMPTY_CONFIG),
+            "--code",
+            source,
+        ],
+        capture_output=True,
+        encoding="utf-8",
+        check=True,
+    )
+    formatted = process.stdout
+    assert "# doctest: +BLACK_TEST_OPTION" in formatted
+
+    # An external runner can register options that the Black subprocess did not know.
+    monkeypatch.setattr(
+        doctest, "OPTIONFLAGS_BY_NAME", doctest.OPTIONFLAGS_BY_NAME.copy()
+    )
+    doctest.register_optionflag("BLACK_TEST_OPTION")
+    for code in (source, formatted):
+        test = doctest.DocTestParser().get_doctest(
+            docstring_value(code), {}, "f", "example.py", 0
+        )
+        output = io.StringIO()
+        result = doctest.DocTestRunner().run(test, out=output.write)
+        assert result.attempted == 1
+        assert result.failed == 0, output.getvalue()
 
 
 def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
