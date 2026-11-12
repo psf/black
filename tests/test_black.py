@@ -2,6 +2,7 @@
 
 import ast
 import asyncio
+import doctest
 import inspect
 import io
 import itertools
@@ -146,6 +147,71 @@ def docstring_value(source: str) -> str:
     assert isinstance(expr, ast.Expr)
     assert isinstance(expr.value, ast.Constant)
     return str(expr.value.value)
+
+
+@pytest.mark.parametrize("preview", [False, True])
+@pytest.mark.parametrize(
+    ("filename", "attempted"),
+    [("docstring_doctest_whitespace", 6), ("docstring_doctest_tabs", 18)],
+)
+def test_docstring_doctests_remain_executable(
+    preview: bool, filename: str, attempted: int
+) -> None:
+    source, _ = read_data("cases", filename)
+    formatted = black.format_str(source, mode=Mode(preview=preview))
+
+    for code in (source, formatted):
+        runner = doctest.DocTestRunner()
+        output = io.StringIO()
+        for node in ast.walk(ast.parse(code)):
+            if isinstance(node, ast.FunctionDef):
+                # clean=False preserves the whitespace being tested.
+                docstring = ast.get_docstring(node, clean=False)
+                assert docstring is not None
+                test = doctest.DocTestParser().get_doctest(
+                    docstring, {}, node.name, "example.py", 0
+                )
+                runner.run(test, out=output.write)
+        assert runner.tries == attempted
+        assert runner.failures == 0, output.getvalue()
+
+
+def test_docstring_with_custom_doctest_option(monkeypatch: pytest.MonkeyPatch) -> None:
+    source, expected = read_data("cases", "docstring_doctest_custom_option")
+    process = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "black",
+            "--config",
+            str(EMPTY_CONFIG),
+            "--code",
+            source,
+        ],
+        capture_output=True,
+        encoding="utf-8",
+        check=True,
+    )
+    formatted = process.stdout
+    assert formatted == expected
+
+    # An external runner can register options that the Black subprocess did not know.
+    monkeypatch.setattr(
+        doctest, "OPTIONFLAGS_BY_NAME", doctest.OPTIONFLAGS_BY_NAME.copy()
+    )
+    doctest.register_optionflag("BLACK_TEST_OPTION")
+    for code in (source, formatted):
+        test = doctest.DocTestParser().get_doctest(
+            docstring_value(code),
+            {},
+            "f",
+            "example.py",
+            0,
+        )
+        output = io.StringIO()
+        result = doctest.DocTestRunner().run(test, out=output.write)
+        assert result.attempted == 1
+        assert result.failed == 0, output.getvalue()
 
 
 def test_fmt_off_reindent_reports_black_not_the_user(tmp_path: Path) -> None:
