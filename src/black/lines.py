@@ -1710,6 +1710,22 @@ def can_omit_invisible_parens(
             ):
                 return False
 
+    # Two `# type: ignore` comments on the same physical line are not allowed:
+    # Python only reads the first one, so the AST would lose a TypeIgnore node
+    # and Black's equivalence check would fail. Keep the optional parens when
+    # the body and the closing-bracket line each carry one.
+    body_has_type_ignore = any(
+        is_type_ignore_comment(comment, mode=rhs.body.mode)
+        for leaf in rhs.body.leaves
+        for comment in rhs.body.comments.get(id(leaf), [])
+    )
+    if body_has_type_ignore and any(
+        is_type_ignore_comment(comment, mode=rhs.tail.mode)
+        for leaf in rhs.tail.leaves
+        for comment in rhs.tail.comments.get(id(leaf), [])
+    ):
+        return False
+
     # We need optional parens in order to split standalone comments to their own lines
     # if there are no nested parens around the standalone comments
     closing_bracket: Leaf | None = None

@@ -16,6 +16,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix an `INTERNAL ERROR` when an optional pair of parentheses would put two
+  `# type: ignore` comments on the same physical line (one in the body, one after the
+  closing bracket), which made Black's equivalence check see a missing `TypeIgnore`
+  node, by keeping the parentheses and the comments on separate lines (#5688)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
