@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 # normal, short, function definition
 def foo(a, b) -> tuple[int, float]: ...
 

@@ -34,7 +34,7 @@ name = "black"
 description = "The uncompromising code formatter."
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ name = "Łukasz Langa", email = "lukasz@langa.pl" }]
 keywords = ["automation", "autopep8", "formatter", "gofmt", "pyfmt", "rustfmt", "yapf"]
 classifiers = [
@@ -44,7 +44,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -60,8 +59,6 @@ dependencies = [
     "pathspec>=1.0.0",
     "platformdirs>=2",
     "pytokens~=0.4.0",
-    "tomli>=1.1.0; python_version<'3.11'",
-    "typing-extensions>=4.0.1; python_version<'3.11'",
 ]
 dynamic = ["readme", "version"]
 
@@ -75,8 +72,8 @@ d = ["aiohttp>=3.10"]
 jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 
 [dependency-groups]
-hatch = ["hatch==1.15.1", "hatch-fancy-pypi-readme", "hatch-vcs", "virtualenv<21.0.0"]
-cibw = ["cibuildwheel==4.1.0"]
+hatch = ["hatch==1.18.2", "hatch-fancy-pypi-readme", "hatch-vcs>=0.3.0"]
+cibw = ["cibuildwheel==4.3.5"]
 pyinstaller = ["pyinstaller"]
 
 dev = [{ include-group = "cov-tests" }, { include-group = "tox" }, "pre-commit"]
@@ -86,11 +83,10 @@ cov-tests = [
     "pytest-cov>=4.1.0",
 ]
 docs = [
-    "docutils==0.22.4",
     "furo==2025.12.19",
     "myst-parser==5.1.0",
     "sphinx-copybutton==0.5.2",
-    "sphinx==9.1.0",
+    "sphinx==9.2.0",
     "sphinxcontrib-programoutput==0.20",
 ]
 
@@ -106,6 +102,10 @@ diff-shades-comment = ["click>=8.1.7", "packaging>=22.0", "urllib3"]
 release = ["packaging>=22.0"]
 
 width-table = ["wcwidth==0.2.14"]
+
+[tool.uv.dependency-groups]
+cibw = {requires-python = ">=3.13"}
+docs = {requires-python = ">=3.13"}
 
 [project.scripts]
 black = "black:patched_main"
@@ -144,7 +144,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = ["hatch-mypyc>=0.16.0", "mypy==2.3.1"]
+dependencies = ["hatch-mypyc>=0.16.0", "mypy==2.4.1"]
 require-runtime-dependencies = true
 exclude = [
     # There's no good reason for blackd to be compiled.
@@ -168,7 +168,7 @@ options = { debug_level = "0" }
 build-verbosity = 1
 
 # So these are the environments we target:
-# - Python: CPython 3.10+ only
+# - Python: CPython 3.11+ only
 # - Architecture (64-bit only): amd64 / x86_64, universal2, and arm64
 # - OS: Linux (no musl), Windows, and macOS
 build = "cp31*"
@@ -225,7 +225,7 @@ branch = true
 # Specify the target platform details in config, so your developers are
 # free to run mypy on Windows, Linux, or macOS and get consistent
 # results.
-python_version = "3.10"
+python_version = "3.11"
 mypy_path = "src"
 strict = true
 # Unreachable blocks have been an issue when compiling mypyc, let's try to avoid 'em in the first place.

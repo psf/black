@@ -22,7 +22,7 @@ import click
 
 import black
 from _black_version import version as __version__
-from black.concurrency import maybe_use_uvloop
+from black.concurrency import cap_process_pool_workers, maybe_use_uvloop
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
@@ -57,7 +57,7 @@ BLACK_HEADERS = [
 # Response headers
 BLACK_VERSION_HEADER = "X-Black-Version"
 DEFAULT_MAX_BODY_SIZE = 5 * 1024 * 1024
-DEFAULT_WORKERS = os.cpu_count() or 1
+DEFAULT_WORKERS = cap_process_pool_workers(os.cpu_count() or 1)
 
 
 class HeaderError(Exception):

@@ -3,23 +3,17 @@
 import hashlib
 import os
 import pickle
-import sys
 import tempfile
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Self
 
 from platformdirs import user_cache_dir
 
 from _black_version import version as __version__
 from black.mode import Mode
 from black.output import err
-
-if sys.version_info >= (3, 11):
-    from typing import Self
-else:
-    from typing_extensions import Self
 
 
 class FileData(NamedTuple):

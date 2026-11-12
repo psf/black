@@ -1,4 +1,4 @@
-# flags: --minimum-version=3.10 --line-ranges=51-51
+# flags: --line-ranges=51-51
 # NOTE: If you need to modify this file, pay special attention to the --line-ranges=
 # flag above as it's formatting specifically these lines.
 
@@ -52,7 +52,7 @@ x  =  1
 
 # output
 
-# flags: --minimum-version=3.10 --line-ranges=51-51
+# flags: --line-ranges=51-51
 # NOTE: If you need to modify this file, pay special attention to the --line-ranges=
 # flag above as it's formatting specifically these lines.
 

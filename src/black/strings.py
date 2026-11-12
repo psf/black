@@ -213,10 +213,17 @@ def normalize_string_quotes(s: str) -> str:
     assert first_quote_pos != -1, f"INTERNAL ERROR: Malformed string {s!r}"
 
     prefix = s[:first_quote_pos]
+    body = s[first_quote_pos + len(orig_quote) : -len(orig_quote)]
+    if "\\" not in body and new_quote[0] not in body:
+        # Nothing to escape or unescape, so the only change is the quotes.
+        if orig_quote == '"':
+            return s  # Prefer double quotes
+
+        return f"{prefix}{new_quote}{body}{new_quote}"
+
     unescaped_new_quote = _cached_compile(rf"(([^\\]|^)(\\\\)*){new_quote}")
     escaped_new_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){new_quote}")
     escaped_orig_quote = _cached_compile(rf"([^\\]|^)\\((?:\\\\)*){orig_quote}")
-    body = s[first_quote_pos + len(orig_quote) : -len(orig_quote)]
     if "r" in prefix.casefold():
         if unescaped_new_quote.search(body):
             # There's at least one unescaped new_quote in this raw string

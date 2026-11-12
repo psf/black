@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.11
 # SEE PEP 758 FOR MORE DETAILS
 # remains unchanged
 try:

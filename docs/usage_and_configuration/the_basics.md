@@ -28,13 +28,22 @@ python -m black {source_file_or_directory}
 ### Ignoring sections
 
 Black will not reformat lines that contain `# fmt: skip` or blocks that start with
-`# fmt: off` and end with `# fmt: on`. `# fmt: skip` can be mixed with other
-pragmas/comments either with multiple comments (e.g. `# fmt: skip # pylint # noqa`) or
-as a semicolon separated list (e.g. `# fmt: skip; pylint; noqa`). `# fmt: on/off` must
-be on the same level of indentation and in the same block, meaning no unindents beyond
-the initial indentation level between them. Black also recognizes
-[YAPF](https://github.com/google/yapf)'s block comments to the same effect, as a
-courtesy for straddling code.
+`# fmt: off` and end with `# fmt: on`.
+
+`# fmt: skip` can be mixed with other pragmas/comments either with multiple comments
+(e.g. `# fmt: skip # pylint # noqa`) or as a semicolon separated list (e.g.
+`# fmt: skip; pylint; noqa`).
+
+`# fmt: on/off` must be on the same level of indentation and in the same block, meaning
+no unindents beyond the initial indentation level between them. A `# fmt: off` without a
+matching `# fmt: on` ends implicitly:
+
+- inside brackets, at the closing bracket
+- inside an indented block, at the first unindent beyond its indentation level
+- at the top level, at the end of the file
+
+Black also recognizes [YAPF](https://github.com/google/yapf)'s block comments to the
+same effect, as a courtesy for straddling code.
 
 ### Command line options
 
@@ -510,8 +519,9 @@ command line. If it's not there, it looks in parent directories. It stops lookin
 it finds the file, or a `.git` directory, or a `.hg` directory, or the root of the file
 system, whichever comes first.
 
-If you're formatting standard input, _Black_ will look for configuration starting from
-the current working directory.
+If you're formatting only standard input, _Black_ will look for configuration starting
+from the current working directory. If you pass `--stdin-filename`, it starts from that
+file's directory instead.
 
 You can use a "global" configuration, stored in a specific location in your home
 directory. This will be used as a fallback configuration, that is, it will be used if

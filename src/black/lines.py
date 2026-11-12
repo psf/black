@@ -1183,6 +1183,7 @@ class EmptyLineTracker:
             and current_line.is_fmt_pass_converted(
                 first_leaf_matches=lambda leaf: leaf.value == "class"
             )
+            and current_line.leaves[0].line_ranges_selected is None
         ):
             return 2, 0
 
@@ -1191,12 +1192,21 @@ class EmptyLineTracker:
             and self.previous_line.depth == 0
             and current_line.depth == 0
             and not current_line.is_import
-            and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
+            and not current_line.is_fmt_pass_converted()
         ):
             return 1, 0
 
         if (
-            self.previous_line.is_import
+            (
+                self.previous_line.is_import
+                or (
+                    self.previous_line.is_fmt_pass_converted(
+                        first_leaf_matches=is_import
+                    )
+                    and self.previous_line.leaves[0].line_ranges_selected is not None
+                    and not current_line.is_comment
+                )
+            )
             and not current_line.is_import
             and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and depth == self.previous_line.depth

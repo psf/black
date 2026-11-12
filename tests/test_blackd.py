@@ -1,6 +1,8 @@
 import asyncio
 import gc
 import re
+import subprocess
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from threading import Event
@@ -21,6 +23,27 @@ except ImportError as e:
     raise RuntimeError("Please install Black with the 'd' extra") from e
 
 import black
+from black.concurrency import cap_process_pool_workers
+
+
+@pytest.mark.parametrize("platform, expected", [("win32", 60), ("linux", 64)])
+def test_cap_process_pool_workers(platform: str, expected: int) -> None:
+    with patch("sys.platform", platform):
+        assert cap_process_pool_workers(64) == expected
+
+
+@pytest.mark.blackd
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows process pool worker limit")
+def test_blackd_startup_on_windows_with_many_cpus() -> None:
+    # A fresh interpreter ensures the CPU count is patched before importing blackd.
+    script = (
+        "from unittest.mock import patch\n"
+        "with patch('os.cpu_count', return_value=64):\n"
+        "    import blackd\n"
+        "    blackd.make_app()\n"
+        "    blackd.executor().shutdown()\n"
+    )
+    subprocess.run([sys.executable, "-c", script], check=True, timeout=120)
 
 
 @pytest.mark.blackd
@@ -453,6 +476,28 @@ class BlackDClientTestCase(AioHTTPTestCase):
         formatted_code = await client.format_code(unformatted_code)
 
         self.assertEqual(formatted_code, expected)
+
+    async def test_custom_content_type_charset(self) -> None:
+        for header_name in ("Content-Type", "content-type", "CoNtEnT-TyPe"):
+            for content_type in (
+                "text/plain",
+                "text/plain; charset=utf-8",
+                "text/plain; charset=iso-8859-1",
+                "text/plain; charset=windows-1252",
+                "text/plain; charset=utf-16",
+            ):
+                for source in ("message='café'", 'message = "café"\n'):
+                    with self.subTest(
+                        header_name=header_name,
+                        content_type=content_type,
+                        source=source,
+                    ):
+                        client = blackd.client.BlackDClient(
+                            self.client.make_url("/"),
+                            headers={header_name: content_type},
+                        )
+                        formatted_code = await client.format_code(source)
+                        self.assertEqual(formatted_code, 'message = "café"\n')
 
     async def test_skip_source_first_line(self) -> None:
         client = blackd.client.BlackDClient(

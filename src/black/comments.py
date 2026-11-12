@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Final, Union
 
-from black.mode import Mode
+from black.mode import Mode, Preview
 from black.nodes import (
     CLOSING_BRACKETS,
     OPENING_BRACKETS,
@@ -120,6 +120,11 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
     for index, full_line in enumerate(lines):
         consumed += len(full_line) + 1  # adding the length of the split '\n'
         line = full_line.lstrip()
+        if index and line == "\\":
+            # A backslash on a line by itself, continuing the escaped newline on
+            # the line above. It only stays in the prefix so code written back as
+            # is keeps it; for comments it counts as an empty line.
+            full_line = line = ""
         if not line:
             nlines += 1
             if "\f" in full_line:
@@ -340,13 +345,25 @@ def _handle_comment_only_fmt_block(
     # Update leaf prefix
     leaf.prefix = original_prefix[fmt_on_comment.consumed :]
 
-    # Insert the STANDALONE_COMMENT
-    parent = leaf.parent
+    # Insert the STANDALONE_COMMENT. If `leaf` starts the target of an assignment,
+    # insert it before the whole target. Inside the target it would end up within
+    # the invisible parentheses added around it (e.g. `a, b = c`), and every pass
+    # would add blank lines before the comment.
+    node: LN = leaf
+    while (
+        node.parent is not None
+        and node.parent.children[0] is node
+        and node.parent.type not in {syms.expr_stmt, syms.simple_stmt}
+    ):
+        node = node.parent
+    if node.parent is None or node.parent.type != syms.expr_stmt:
+        node = leaf
+    parent = node.parent
     assert parent is not None, "INTERNAL ERROR: fmt: on/off handling (prefix only)"
 
     leaf_idx = None
     for idx, child in enumerate(parent.children):
-        if child is leaf:
+        if child is node:
             leaf_idx = idx
             break
 
@@ -462,6 +479,82 @@ def _remove_preceding_newline_for_comment(result: str) -> str:
     return result
 
 
+def _is_fmt_off_region_before_newline(leaf: Leaf) -> bool:
+    """Return whether `leaf` holds code hidden by `# fmt: off` that ends its line.
+
+    Unlike code hidden by `# fmt: skip` or a comment-only `# fmt: off` block, which
+    take the newline after their last comment, a `# fmt: off` region leaves the
+    newline after it in the prefix of the next leaf, even when it ends with the
+    comments that end the region.
+    """
+    if leaf.fmt_pass_converted_first_leaf is None:
+        return False
+    if not contains_fmt_directive(leaf.value.partition("\n")[0], FMT_OFF):
+        return False
+
+    node: LN | None = leaf
+    while node is not None and node.next_sibling is None:
+        node = node.parent
+    if node is None or node.next_sibling is None:
+        return False
+
+    next_leaf = first_leaf_of(node.next_sibling)
+    return next_leaf is not None and next_leaf.prefix.startswith("\n")
+
+
+def _needs_newline_after(hidden: Leaf, next_node: LN | None) -> bool:
+    """Return whether the code in `hidden` must end its line before `next_node`.
+
+    This is checked when both are hidden again by an outer `# fmt: skip` or
+    `# fmt: off`.
+    """
+    if next_node is None:
+        return True
+    if hidden.fmt_pass_converted_first_leaf is None:
+        # A comment-only fmt:off/on block ends with the `# fmt: on` comment
+        return True
+    if isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT:
+        return True
+    if _is_fmt_off_region_before_newline(hidden):
+        # The newline is already in the prefix of the next leaf
+        return False
+    # The newline ends a trailing comment, like `B,  # fmt: skip` in a class header:
+    # it was taken along with the comment from the prefix of `)`
+    return "\n" in next_node.prefix or "#" in str(hidden).rpartition("\n")[2]
+
+
+def _is_kept_as_text(leaf: Leaf) -> bool:
+    """Is the prefix of `leaf` in code that Python also keeps as text?
+
+    Python keeps the source of the expression in a t-string field, and in an f-string
+    field with `=` like `f"{a + b = }"`, up to the `!` or `:` of the field. That text
+    includes the whitespace around comments.
+    """
+    node: LN = leaf
+    while node.parent is not None:
+        field = node.parent
+        if field.type in {
+            syms.fstring_replacement_field,
+            syms.tstring_replacement_field,
+        }:
+            # Fields in the format spec of a t-string field aren't interpolations
+            is_interpolation = (
+                field.type == syms.tstring_replacement_field
+                and field.parent is not None
+                and field.parent.type == syms.tstring
+            )
+            if is_interpolation or any(
+                child.type == token.EQUAL for child in field.children
+            ):
+                for child in field.children:
+                    if child is node:
+                        return True
+                    if child.type in {token.BANG, token.COLON}:
+                        break
+        node = field
+    return False
+
+
 def _handle_regular_fmt_block(
     ignored_nodes: list[LN],
     comment: ProtoComment,
@@ -492,16 +585,7 @@ def _handle_regular_fmt_block(
     # This prevents multiple fmt: skip comments from being concatenated on one line
     def stringify_standalone_comment(node: Leaf, next_node: LN | None) -> str:
         node_str = str(node)
-        if not node_str.endswith("\n") and (
-            next_node is None
-            # A comment-only fmt:off/on block ends with the `# fmt: on` comment
-            or node.fmt_pass_converted_first_leaf is None
-            or (isinstance(next_node, Leaf) and next_node.type == STANDALONE_COMMENT)
-            or "\n" in next_node.prefix
-            # The newline ends a trailing comment, like `B,  # fmt: skip` in a class
-            # header: it was taken along with the comment from the prefix of `)`
-            or "#" in node_str.rpartition("\n")[2]
-        ):
+        if not node_str.endswith("\n") and _needs_newline_after(node, next_node):
             node_str += "\n"
         return node_str
 
@@ -526,6 +610,9 @@ def _handle_regular_fmt_block(
                     if isinstance(n, Leaf):
                         if n.type == STANDALONE_COMMENT:
                             result = n.prefix + n.value
+                            if _is_fmt_off_region_before_newline(n):
+                                # The newline is in the prefix of the next leaf
+                                return result
                             if (
                                 isinstance(next_node, Leaf)
                                 and next_node.type in CLOSING_BRACKETS
@@ -586,7 +673,11 @@ def _handle_regular_fmt_block(
 
     if contains_fmt_directive(comment.value, FMT_OFF):
         fmt_off_prefix = ""
-        if len(lines) > 0 and not any(
+        if _is_kept_as_text(leaf):
+            # Python keeps the whitespace before the comment in the string
+            comment_start = comment.consumed - len(comment.original_line.lstrip()) - 1
+            standalone_comment_prefix = prefix[:comment_start]
+        elif len(lines) > 0 and not any(
             line[0] <= comment_lineno <= line[1] for line in lines
         ):
             # keeping indentation of comment by preserving original whitespaces.
@@ -717,6 +808,7 @@ def generate_ignored_nodes(
         yield from _generate_ignored_nodes_from_fmt_skip(leaf, comment, mode)
         return
     container: LN | None = container_of(leaf)
+    open_brackets = 0
     while container is not None and container.type != token.ENDMARKER:
         if is_fmt_on(container, mode=mode):
             return
@@ -750,22 +842,31 @@ def generate_ignored_nodes(
                 # This can happen when there is no matching `# fmt: on` comment at the
                 # same level as `# fmt: on`. We need to keep this DEDENT.
                 return
+            if Preview.end_fmt_off_at_closing_bracket in mode:
+                if container.type in CLOSING_BRACKETS:
+                    if not open_brackets:
+                        # This closes the brackets that `# fmt: off` is in. Without a
+                        # `# fmt: on`, the region ends at the end of the brackets.
+                        return
+                    open_brackets -= 1
+                elif container.type in OPENING_BRACKETS:
+                    open_brackets += 1
             yield container
             container = container.next_sibling
 
 
 def _find_compound_statement_context(parent: Node) -> Node | None:
-    """Return the body node of a compound statement if we should respect fmt: skip.
+    """Return the body node of a one-line compound statement with `# fmt: skip`.
 
     This handles one-line compound statements like:
         if condition: body  # fmt: skip
 
-    When Black expands such statements, they temporarily look like:
+    where the body is a simple_stmt that is a direct child of the compound
+    statement. A body on its own line sits in a suite instead:
         if condition:
             body  # fmt: skip
 
-    In both cases, we want to return the body node (either the simple_stmt directly
-    or the suite containing it).
+    and only that line is skipped, so the header is formatted as usual.
     """
     if parent.type != syms.simple_stmt:
         return None
@@ -773,21 +874,6 @@ def _find_compound_statement_context(parent: Node) -> Node | None:
     if not isinstance(parent.parent, Node):
         return None
 
-    # Case 1: Expanded form after Black's initial formatting pass.
-    # The one-liner has been split across multiple lines:
-    #     if True:
-    #         print("a"); print("b")  # fmt: skip
-    # Structure: compound_stmt -> suite -> simple_stmt
-    if (
-        parent.parent.type == syms.suite
-        and isinstance(parent.parent.parent, Node)
-        and parent.parent.parent.type in _COMPOUND_STATEMENTS
-    ):
-        return parent.parent
-
-    # Case 2: Original one-line form from the input source.
-    # The statement is still on a single line:
-    #     if True: print("a"); print("b")  # fmt: skip
     # Structure: compound_stmt -> simple_stmt
     if parent.parent.type in _COMPOUND_STATEMENTS:
         return parent
@@ -803,28 +889,10 @@ def _should_keep_compound_statement_inline(
     Returns True only for compound statements with semicolon-separated bodies,
     like: if True: print("a"); print("b")  # fmt: skip
     """
-    # Narrow down to the single simple_stmt that may carry the semicolons before
-    # scanning any leaves. A compound statement's suite holds one child per body
-    # statement, so walking the whole suite here is O(n) and, called once per
-    # `# fmt: skip` line in the block, makes the pass O(n^2).
-    if body_node.type == syms.suite:
-        # After formatting: the suite must hold exactly one simple_stmt and it
-        # must be the one carrying the directive. Stop at the second simple_stmt.
-        target: LN | None = None
-        for child in body_node.children:
-            if child.type == syms.simple_stmt:
-                if target is not None:
-                    return False
-                target = child
-        if target is None or target is not simple_stmt_parent:
-            return False
-    else:
-        # Original form: body_node IS the simple_stmt
-        if body_node is not simple_stmt_parent:
-            return False
-        target = body_node
+    if body_node is not simple_stmt_parent:
+        return False
 
-    return any(leaf.type == token.SEMI for leaf in target.leaves())
+    return any(leaf.type == token.SEMI for leaf in body_node.leaves())
 
 
 def _get_compound_statement_header(
@@ -861,7 +929,14 @@ def _get_compound_statement_header(
     for child in compound_stmt.children:
         if child is body_node:
             break
-        if isinstance(child, Leaf):
+        if child.type == STANDALONE_COMMENT or (
+            child.type in (syms.suite, syms.simple_stmt) and not str(child).strip()
+        ):
+            # An earlier one-line clause that its own `# fmt: skip` already hid,
+            # like the `if` line before `else: a; b  # fmt: skip`, or what is left
+            # of its body. This clause's header starts after them.
+            header_leaves = []
+        elif isinstance(child, Leaf):
             if child.type not in (token.NEWLINE, token.INDENT) and (
                 id(child) not in covered
             ):
