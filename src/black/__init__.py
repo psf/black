@@ -75,6 +75,7 @@ from black.parsing import (  # noqa F401
     stringify_ast,
 )
 from black.ranges import (
+    adjust_lines_for_skipped_first_line,
     adjusted_lines,
     convert_unchanged_lines,
     parse_line_ranges,
@@ -1078,6 +1079,8 @@ def format_file_in_place(
         if mode.skip_source_first_line:
             header = buf.readline()
         src_contents, encoding, newline = decode_bytes(buf.read(), mode)
+    if mode.skip_source_first_line and lines and header:
+        lines = adjust_lines_for_skipped_first_line(lines)
     try:
         dst_contents = format_file_contents(
             src_contents, fast=fast, mode=mode, lines=lines
@@ -1152,6 +1155,9 @@ def format_stdin_to_stdout(
             header_str = header_str[: -len(newline)] + "\n"
     else:
         src, encoding, newline = content, "utf-8", "\n"
+
+    if mode.skip_source_first_line and lines and header_str:
+        lines = adjust_lines_for_skipped_first_line(lines)
 
     dst = src
     try:
