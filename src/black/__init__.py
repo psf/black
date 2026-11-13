@@ -1506,8 +1506,7 @@ def _format_str_once(
             Feature.PARENTHESIZED_CONTEXT_MANAGERS,
             Feature.UNPARENTHESIZED_EXCEPT_TYPES,
             Feature.T_STRINGS,
-            Feature.UNPARENTHESIZED_WALRUS_IN_SETS,
-            Feature.UNPARENTHESIZED_WALRUS_IN_SUBSCRIPTS,
+            Feature.BARE_SET_SUBSCRIPT_WALRUSES,
         }
         if supports_feature(versions, feature)
     }
@@ -1627,22 +1626,7 @@ def get_features_used(
 ) -> set[Feature]:
     """Return a set of (relatively) new Python features used in this file.
 
-    Currently looking for:
-    - f-strings;
-    - self-documenting expressions in f-strings (f"{x=}");
-    - underscores in numeric literals;
-    - trailing commas after * or ** in function signatures and calls;
-    - positional only arguments in function signatures and lambdas;
-    - assignment expression;
-    - relaxed decorator syntax;
-    - usage of __future__ flags (annotations);
-    - print / exec statements;
-    - parenthesized context managers;
-    - match statements;
-    - except* clause;
-    - variadic generics;
-    - lazy imports;
-    - starred or double-starred comprehensions.
+    Should check for as many features in the `Feature` enum as possible.
     """
     features: set[Feature] = set()
     if future_imports:
@@ -1678,6 +1662,8 @@ def get_features_used(
 
         elif n.type == token.COLONEQUAL:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
+            if n.parent.type in {syms.dictsetmaker, syms.subscript}:
+                features.add(Feature.BARE_SET_SUBSCRIPT_WALRUSES)
 
         elif n.type == token.LAZY:
             features.add(Feature.LAZY_IMPORTS)
