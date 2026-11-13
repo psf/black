@@ -575,6 +575,68 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertNotIn(b"\r\r\n", result.stdout_bytes)
 
+    def test_skip_source_first_line_with_line_ranges(self) -> None:
+        content = "not a Python header\nx=1\ny=2\n"
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+            # Selecting line 2-2 formats only x=1 -> x = 1 (1-based index in original file)
+            test_file.write_text(content, encoding="utf-8")
+            result = BlackRunner().invoke(
+                black.main,
+                [str(test_file), "-x", "--line-ranges=2-2", f"--config={EMPTY_CONFIG}"],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(
+                test_file.read_text(encoding="utf-8"),
+                "not a Python header\nx = 1\ny=2\n",
+            )
+
+            # Selecting line 3-3 formats only y=2 -> y = 2
+            test_file.write_text(content, encoding="utf-8")
+            result = BlackRunner().invoke(
+                black.main,
+                [str(test_file), "-x", "--line-ranges=3-3", f"--config={EMPTY_CONFIG}"],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(
+                test_file.read_text(encoding="utf-8"),
+                "not a Python header\nx=1\ny = 2\n",
+            )
+
+            # Selecting line 1-1 (only the skipped header) leaves file unchanged
+            test_file.write_text(content, encoding="utf-8")
+            result = BlackRunner().invoke(
+                black.main,
+                [str(test_file), "-x", "--line-ranges=1-1", f"--config={EMPTY_CONFIG}"],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(test_file.read_text(encoding="utf-8"), content)
+
+            # With CRLF newlines
+            crlf_content = b"not a Python header\r\nx=1\r\ny=2\r\n"
+            test_file.write_bytes(crlf_content)
+            result = BlackRunner().invoke(
+                black.main,
+                [str(test_file), "-x", "--line-ranges=2-2", f"--config={EMPTY_CONFIG}"],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(
+                test_file.read_bytes(),
+                b"not a Python header\r\nx = 1\r\ny=2\r\n",
+            )
+
+            # Via stdin
+            for nl in ["\n", "\r\n"]:
+                code = nl.join(["not a Python header", "x=1", "y=2", ""])
+                expected = nl.join(["not a Python header", "x = 1", "y=2", ""])
+                result = BlackRunner().invoke(
+                    black.main,
+                    ["-", "-x", "--line-ranges=2-2", f"--config={EMPTY_CONFIG}"],
+                    input=BytesIO(code.encode()),
+                )
+                self.assertEqual(result.exit_code, 0)
+                self.assertEqual(result.stdout_bytes, expected.encode())
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
