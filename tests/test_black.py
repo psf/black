@@ -575,6 +575,56 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertNotIn(b"\r\r\n", result.stdout_bytes)
 
+    def test_skip_source_first_line_with_line_ranges(self) -> None:
+        source = "Header line\nx=1\ny=2\n"
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+
+            # Formatting line 2 (x=1) should reformat x without touching y
+            test_file.write_text(source, encoding="utf-8")
+            result = BlackRunner().invoke(
+                black.main,
+                [str(test_file), "-x", "--line-ranges=2-2", f"--config={EMPTY_CONFIG}"],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(
+                test_file.read_text(encoding="utf-8"),
+                "Header line\nx = 1\ny=2\n",
+            )
+
+            # Formatting line 3 (y=2) should reformat y without touching x
+            test_file.write_text(source, encoding="utf-8")
+            result = BlackRunner().invoke(
+                black.main,
+                [str(test_file), "-x", "--line-ranges=3-3", f"--config={EMPTY_CONFIG}"],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(
+                test_file.read_text(encoding="utf-8"),
+                "Header line\nx=1\ny = 2\n",
+            )
+
+            # Selecting only line 1 (the skipped header) leaves the file unchanged
+            test_file.write_text(source, encoding="utf-8")
+            result = BlackRunner().invoke(
+                black.main,
+                [str(test_file), "-x", "--line-ranges=1-1", f"--config={EMPTY_CONFIG}"],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertEqual(test_file.read_text(encoding="utf-8"), source)
+
+        # Also test via stdin
+        result = BlackRunner().invoke(
+            black.main,
+            ["-", "-x", "--line-ranges=2-2", f"--config={EMPTY_CONFIG}"],
+            input=BytesIO(source.encode("utf-8")),
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(
+            result.stdout_bytes,
+            "Header line\nx = 1\ny=2\n".encode("utf-8"),
+        )
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
