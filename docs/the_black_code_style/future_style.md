@@ -70,7 +70,7 @@ Currently, the following features are included in the preview style:
   one line when the value can be wrapped onto a new line.
   ([see below](labels/keep-dict-keys-with-operators))
 - `keep_commented_expressions_together`: Do not split expressions on delimiters (such as
-  binary operators, comparisons, or comprehensions) inside brackets when preceded by a
+  binary operators, comparisons, or comprehensions) inside brackets that contain a
   standalone comment if the expression fits within the line length limit.
   ([see below](labels/keep-commented-expressions-together))
 - `avoid_parens_for_unbreakable_rhs_in_assignments`: Avoid adding unnecessary
@@ -306,9 +306,9 @@ self.message_user(
 ### Keep commented expressions together
 
 Black previously split expressions containing delimiters (such as binary operators,
-comparisons, or comprehensions) across multiple lines when placed after a standalone
-comment inside brackets (such as lists or function calls), even if the expression was
-well within the line length limit:
+comparisons, or comprehensions) across multiple lines when a standalone comment sat
+inside the brackets around them (such as lists or function calls), even if the
+expression was well within the line length limit:
 
 ```python
 # Before

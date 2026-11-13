@@ -13,6 +13,7 @@ from typing import Final, Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
+    COMPREHENSION_PRIORITY,
     DOT_PRIORITY,
     LOGIC_PRIORITY,
     STRING_PRIORITY,
@@ -1833,15 +1834,29 @@ def delimiter_split(
         and line.contains_standalone_comments()
         and delimiter_priority != COMMA_PRIORITY
     ):
-        first_comment_idx = next(
+        comment_indices = [
             i for i, leaf in enumerate(line.leaves) if leaf.type == STANDALONE_COMMENT
-        )
-        first_delimiter_idx = next(
+        ]
+        delimiter_indices = [
             i
             for i, leaf in enumerate(line.leaves)
             if bt.delimiters.get(id(leaf)) == delimiter_priority
-        )
-        if first_comment_idx < first_delimiter_idx:
+        ]
+        # A standalone comment at either end of the bracketed expression
+        # forces a line break there anyway. Split at the comment first and
+        # let each resulting segment be formatted on its own, instead of
+        # fragmenting an expression that fits on one line (#638). The
+        # trailing comment must sit at the same bracket depth as the last
+        # delimiter: a comment inside a nested bracket is in the middle of
+        # the expression, not at its end. Comments interleaved between
+        # delimiters (such as between comprehension clauses) also keep the
+        # delimiter split, as does a trailing comment after a comprehension.
+        if comment_indices[0] < delimiter_indices[0] or (
+            delimiter_priority != COMPREHENSION_PRIORITY
+            and comment_indices[-1] > delimiter_indices[-1]
+            and line.leaves[comment_indices[-1]].bracket_depth
+            == line.leaves[delimiter_indices[-1]].bracket_depth
+        ):
             raise CannotSplit("Standalone comments should be split first")
 
     if (
