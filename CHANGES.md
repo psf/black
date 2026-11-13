@@ -159,9 +159,8 @@
   (#5646)
 - Add parentheses around one-item sequence patterns in `case` statements, such as
   `case x,:` (#5673)
-- Keep the parentheses around a walrus that is the whole subscript (for example
-  `x[(y := f())]`) when targeting Python 3.9 or older, since Python 3.8 and 3.9 can't
-  parse it without them (#5619)
+- Keep parentheses around a walrus in a subscript (for example `x[(y := f())]`) when
+  targeting Python 3.9 or older (#5619)
 
 ### Configuration
 
