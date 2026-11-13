@@ -167,12 +167,14 @@ list_comprehension_equality = (
 )
 
 # Parenthesized scalars and generator expressions are not collection displays.
-parenthesized_scalars = (first_function_with_a_really_long_name(first_argument)) + (
-    second_function_with_a_really_long_name(second_argument)
+parenthesized_scalars = (
+    (first_function_with_a_really_long_name(first_argument))
+    + (second_function_with_a_really_long_name(second_argument))
 )
 generator_operands = (
-    first_item for first_item in first_collection_with_a_really_long_name
-) + (second_item for second_item in second_collection_with_a_really_long_name)
+    (first_item for first_item in first_collection_with_a_really_long_name)
+    + (second_item for second_item in second_collection_with_a_really_long_name)
+)
 
 # Comments on an operand stay attached and formatting remains stable.
 commented = (
@@ -203,16 +205,14 @@ chained = (
 )
 
 # Mixed operands are not symmetric list concatenations.
-mixed_left = [
-    "first_long_value",
-    "second_long_value",
-    "third_long_value",
-] + tuple_with_a_very_long_name
-mixed_right = list_with_a_very_long_name + [
-    "first_long_value",
-    "second_long_value",
-    "third_long_value",
-]
+mixed_left = (
+    ["first_long_value", "second_long_value", "third_long_value"]
+    + tuple_with_a_very_long_name
+)
+mixed_right = (
+    list_with_a_very_long_name
+    + ["first_long_value", "second_long_value", "third_long_value"]
+)
 
 # Short concatenations stay on one line.
 small = [1, 2] + [3, 4]
