@@ -738,7 +738,14 @@ class LineGenerator(Visitor[Line]):
         if (
             Preview.parenthesize_unsplittable_keyword_arguments in self.mode
             and isinstance(name, Leaf)
-            and _kwarg_value_wants_parentheses(name, value, self.mode)
+            and _kwarg_value_wants_parentheses(
+                name,
+                value,
+                self.mode,
+                # The argument would start one bracket level below the current
+                # line if the call were split at its commas.
+                4 * (self.current_line.depth + self.current_line.bracket_tracker.depth),
+            )
         ):
             normalize_invisible_parens(
                 node, parens_after={"="}, mode=self.mode, features=self.features
@@ -2378,7 +2385,9 @@ def _is_parenthesized_atom(node: LN) -> bool:
     )
 
 
-def _kwarg_value_wants_parentheses(name: Leaf, value: LN, mode: Mode) -> bool:
+def _kwarg_value_wants_parentheses(
+    name: Leaf, value: LN, mode: Mode, indent: int
+) -> bool:
     """Should the value of a ``name=value`` argument get invisible parentheses?"""
     line_length = mode.line_length
     leaves = list(value.leaves())
@@ -2389,9 +2398,9 @@ def _kwarg_value_wants_parentheses(name: Leaf, value: LN, mode: Mode) -> bool:
     # Wrap simply when the argument is over line length unwrapped and fits
     # wrapped: the head line holds ``name=(`` and the value lands on indented
     # lines, split at its delimiters.
-    if 4 + len(name.value) + 1 + _minimal_render_length(leaves) <= line_length:
+    if indent + len(name.value) + 1 + _minimal_render_length(leaves) <= line_length:
         return False
-    if 4 + len(name.value) + 2 > line_length:
+    if indent + len(name.value) + 2 > line_length:
         return False
     parts: list[list[Leaf]] = []
     part: list[Leaf] = []
@@ -2411,7 +2420,9 @@ def _kwarg_value_wants_parentheses(name: Leaf, value: LN, mode: Mode) -> bool:
         part.append(leaf)
         previous = leaf
     parts.append(part)
-    return all(8 + _minimal_render_length(part) <= line_length for part in parts)
+    return all(
+        indent + 4 + _minimal_render_length(part) <= line_length for part in parts
+    )
 
 
 def _minimal_render_length(leaves: Sequence[Leaf]) -> int:

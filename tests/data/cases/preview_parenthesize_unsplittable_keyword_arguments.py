@@ -47,6 +47,14 @@ long_tail(
     longer_longer_longer_longer_longer_longer_longer_longer_string_name="one string literal "
     "and another string literal right after it",
 )
+
+# The wrap decision uses the argument's own indentation.
+def nested_argument():
+    if first:
+        if second:
+            return some_function(
+                long_arg_name=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+            )
 # output
 # Regression test for https://github.com/psf/black/issues/2893
 
@@ -105,3 +113,14 @@ long_tail(
         "one string literal " "and another string literal right after it"
     ),
 )
+
+
+# The wrap decision uses the argument's own indentation.
+def nested_argument():
+    if first:
+        if second:
+            return some_function(
+                long_arg_name=(
+                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+                )
+            )
