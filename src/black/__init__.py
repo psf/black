@@ -1662,7 +1662,7 @@ def get_features_used(
 
         elif n.type == token.COLONEQUAL:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
-            if n.parent.type in {syms.dictsetmaker, syms.subscript}:
+            if n.parent and n.parent.type in {syms.dictsetmaker, syms.subscript}:
                 features.add(Feature.BARE_SET_SUBSCRIPT_WALRUSES)
 
         elif n.type == token.LAZY:
