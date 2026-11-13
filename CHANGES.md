@@ -117,6 +117,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long method chains consistently when a standalone comment separates two calls
+  (#5518)
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638, #5657)
