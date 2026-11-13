@@ -53,7 +53,7 @@ jobs:
           VERSION: ${{ inputs.Version_Override }}
 
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
+        uses: stefanzweifel/git-auto-commit-action@d0b01107b5db882071f96de5dd4b54961ea93f4c # v7.2.1
         with:
           commit_message: "Prepare release ${{ steps.version.outputs.version }}"
           branch: "ci/prepare-release/${{ steps.version.outputs.version }}"
@@ -65,7 +65,7 @@ jobs:
         run: |
           gh pr create \
             -t "Prepare release $VERSION" -b "" \
-            -l "ci: skip news" -l "C: maintenance" \
+            -l "ci: skip news" -l "ci: build all wheels" -l "C: maintenance" \
             -a "$USER"
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}

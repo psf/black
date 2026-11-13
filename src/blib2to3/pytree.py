@@ -423,15 +423,20 @@ class Leaf(Base):
     lineno: int = 0  # Line where this token starts in the input
     column: int = 0  # Column where this token starts in the input
 
+    # clone() shares the below fields verbatim
+    # These fields must either be immutable or not mutated, so as to prevent
+    # leaves from spookily affecting each other
+
     # If not None, this Leaf is created by converting a block of fmt off/skip code.
     # The first Leaf in the converted code
+    # Use read-only
     fmt_pass_converted_first_leaf: Optional["Leaf"] = None
 
     # Metadata for STANDALONE_COMMENT leaves converted from unchanged code for --line-ranges.
     # The converted block's first physical line
     line_ranges_first_lineno: int = 0
     # The requested physical source lines; can be before `first_lineno`
-    line_ranges_selected: Optional[set[int]] = None
+    line_ranges_selected: Optional[frozenset[int]] = None
 
     def __init__(
         self,
@@ -443,7 +448,7 @@ class Leaf(Base):
         fmt_pass_converted_first_leaf: Optional["Leaf"] = None,
         bracket_depth: int = 0,
         line_ranges_first_lineno: int = 0,
-        line_ranges_selected: Optional[set[int]] = None,
+        line_ranges_selected: Optional[frozenset[int]] = None,
     ) -> None:
         """
         Initializer.
@@ -491,24 +496,14 @@ class Leaf(Base):
     def clone(self) -> "Leaf":
         assert self.type is not None
         """Return a cloned (deep) copy of self."""
-        if self.fmt_pass_converted_first_leaf:
-            converted_first_leaf = self.fmt_pass_converted_first_leaf.clone()
-            converted_first_leaf.parent = (
-                self.fmt_pass_converted_first_leaf.parent
-                and self.fmt_pass_converted_first_leaf.parent.clone()
-            )
-        else:
-            converted_first_leaf = None
         return Leaf(
             self.type,
             self.value,
             (self.prefix, (self.lineno, self.column)),
-            fmt_pass_converted_first_leaf=converted_first_leaf,
+            fmt_pass_converted_first_leaf=self.fmt_pass_converted_first_leaf,
             bracket_depth=self.bracket_depth,
             line_ranges_first_lineno=self.line_ranges_first_lineno,
-            line_ranges_selected=(
-                self.line_ranges_selected and self.line_ranges_selected.copy()
-            ),
+            line_ranges_selected=self.line_ranges_selected,
         )
 
     def leaves(self) -> Iterator["Leaf"]:

@@ -83,6 +83,19 @@ def test_empty() -> None:
     assert_format(source, expected)
 
 
+def test_fmt_off_without_fmt_on_before_single_item() -> None:
+    # The stable style still crashes on these, and the cases in tests/data/cases are
+    # also checked in the other style. They can move there once
+    # `end_fmt_off_at_closing_bracket` is stable.
+    args, source, expected = read_data_with_mode(
+        "miscellaneous", "fmtonoff_without_fmt_on_before_single_item"
+    )
+    actual = black.format_str(source, mode=args.mode)
+    assert actual == expected
+    black.assert_equivalent(source, actual)
+    black.assert_stable(source, actual, mode=args.mode)
+
+
 def test_patma_invalid() -> None:
     source, expected = read_data("miscellaneous", "pattern_matching_invalid")
     mode = black.Mode(target_versions={black.TargetVersion.PY310})

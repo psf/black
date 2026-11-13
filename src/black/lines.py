@@ -521,9 +521,14 @@ class Line:
         first = next(leaves)
         res = f"{first.prefix}{indent}{first.value}"
         res += "".join(str(leaf) for leaf in leaves)
-        comments_iter = itertools.chain.from_iterable(self.comments.values())
-        comments = [str(comment) for comment in comments_iter]
-        res += "".join(comments)
+        comments = list(itertools.chain.from_iterable(self.comments.values()))
+        if len(comments) > 1:
+            # Python only recognizes a `# type: ignore` at the start of a comment, so
+            # it has to come first when comments from several lines end up on one.
+            comments.sort(
+                key=lambda comment: not is_type_ignore_comment(comment, mode=self.mode)
+            )
+        res += "".join(str(comment) for comment in comments)
 
         return res + "\n"
 
@@ -1178,6 +1183,7 @@ class EmptyLineTracker:
             and current_line.is_fmt_pass_converted(
                 first_leaf_matches=lambda leaf: leaf.value == "class"
             )
+            and current_line.leaves[0].line_ranges_selected is None
         ):
             return 2, 0
 
@@ -1186,12 +1192,21 @@ class EmptyLineTracker:
             and self.previous_line.depth == 0
             and current_line.depth == 0
             and not current_line.is_import
-            and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
+            and not current_line.is_fmt_pass_converted()
         ):
             return 1, 0
 
         if (
-            self.previous_line.is_import
+            (
+                self.previous_line.is_import
+                or (
+                    self.previous_line.is_fmt_pass_converted(
+                        first_leaf_matches=is_import
+                    )
+                    and self.previous_line.leaves[0].line_ranges_selected is not None
+                    and not current_line.is_comment
+                )
+            )
             and not current_line.is_import
             and not current_line.is_fmt_pass_converted(first_leaf_matches=is_import)
             and depth == self.previous_line.depth
@@ -1638,6 +1653,16 @@ def can_omit_invisible_parens(
     are too long.
     """
     line = rhs.body
+
+    # Keep type ignores on the body and closing paren on separate physical lines.
+    if any(
+        is_type_ignore_comment(comment, mode=mode)
+        for comment in line.comments_after(line.leaves[-1])
+    ) and any(
+        is_type_ignore_comment(comment, mode=mode)
+        for comment in rhs.tail.comments_after(rhs.closing_bracket)
+    ):
+        return False
 
     # Multiple type ignores must stay on separate physical lines. Keeping the
     # optional parens gives the line transformer a safe place to split them.

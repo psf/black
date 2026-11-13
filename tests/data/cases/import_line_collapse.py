@@ -89,6 +89,20 @@ def func():
     a = 1
     print()
 
+
+# case 7 comment after import in a block
+def func():
+    import os
+    # comment
+    a = 1
+
+
+try:
+    import os
+    # comment
+except ImportError:
+    pass
+
 # output
 
 
@@ -177,3 +191,19 @@ def func():
 
     a = 1
     print()
+
+
+# case 7 comment after import in a block
+def func():
+    import os
+
+    # comment
+    a = 1
+
+
+try:
+    import os
+
+    # comment
+except ImportError:
+    pass

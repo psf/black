@@ -1,7 +1,9 @@
-# Version control integration
+# Pre-commit integration
 
-Use [pre-commit](https://pre-commit.com/). Once you
-[have it installed](https://pre-commit.com/#install), add this to the
+Pre-commit can run Black as a hook before every commit, ensuring formatting is never
+forgotten.
+
+[Install pre-commit](https://pre-commit.com/#install) and add this to the
 `.pre-commit-config.yaml` in your repository:
 
 ```yaml
@@ -89,13 +91,12 @@ force-exclude = '''
 '''
 ```
 
-Black automatically reads this configuration—no additional CLI arguments are needed in
-your `.pre-commit-config.yaml`.
+Both pre-commit and the Black CLI automatically read this configuration. No additional
+config is needed in `.pre-commit-config.yaml` or on the CLI.
 
 ```{note}
-The `force-exclude` option was added in version 20.8b0 specifically to support
-workflows where files are passed directly via CLI, such as pre-commit hooks and
-editor plugins.
+The `force-exclude` option was added in version 20.8b0 specifically to support workflows
+where files are passed directly via CLI, such as pre-commit hooks and editor plugins.
 ```
 
 [pre-commit-mutable-rev]:

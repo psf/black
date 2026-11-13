@@ -1,4 +1,3 @@
-# flags: --minimum-version=3.10
 def http_status(status):
 
     match status:

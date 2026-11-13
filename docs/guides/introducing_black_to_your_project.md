@@ -1,8 +1,47 @@
 # Introducing _Black_ to your project
 
-```{note}
-This guide is incomplete. Contributions are welcomed and would be deeply appreciated!
-```
+## Tips for existing projects
+
+There is no single way to introduce _Black_ to an existing project. The right approach
+depends on the size of the codebase, active development, and the team's review workflow.
+The following tips can help keep the change manageable.
+
+Agreeing on which files to format and recording options (such as target Python versions
+and line length) in `pyproject.toml` can make the initial reformat easier to review.
+Pinning the same _Black_ version in local development and CI also helps contributors
+produce consistent results.
+
+If the project already has established string conventions, using
+`--skip-string-normalization` can reduce churn during the initial adoption. Treat this
+as an adoption aid rather than a recommended default for new projects, where _Black_'s
+standard string normalization keeps formatting consistent.
+
+Running the project's tests before and after formatting helps check for unexpected
+changes. Keeping the formatting in its own commit, without refactors or behavior
+changes, makes review and future history easier to follow. A single reformat may suit a
+small project; for a larger one, formatting one directory or package at a time may be
+easier to coordinate.
+
+To keep new changes formatted, consider adding `black --check .` to CI and using the
+{doc}`pre-commit integration </integrations/pre-commit>` for local feedback.
+Configuration, formatting, and enforcement can be reviewed together or in separate pull
+requests. If you want to ignore the formatting commit in `git blame`, choose a merge
+method that preserves that commit separately from other changes. Separate pull requests
+are one option for projects that use squash merges.
+
+### Coordinating active branches
+
+A repository-wide formatting commit can conflict with long-running branches that edit
+the same lines. Announcing the planned merge time can help contributors coordinate
+changes around it. Once the formatting commit is on the target branch, contributors can
+update their branch, resolve any semantic conflicts, and run _Black_ over the result.
+The final diff against the newly formatted target branch will then mostly contain the
+intended code changes.
+
+Avoid combining the reformat with automatic conflict strategies that always choose one
+side: they can silently discard real changes. For especially busy repositories, merging
+small or nearly complete branches before the rollout can reduce the number of conflicts
+considerably.
 
 ## Avoiding ruining git blame
 

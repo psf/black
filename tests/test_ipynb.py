@@ -1,9 +1,9 @@
-import contextlib
 import pathlib
 import re
 from contextlib import AbstractContextManager
 from contextlib import ExitStack as does_not_raise
 from dataclasses import replace
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -12,6 +12,7 @@ from pytest import MonkeyPatch
 from black import (
     Mode,
     NothingChanged,
+    _format_str_once,
     format_cell,
     format_file_contents,
     format_file_in_place,
@@ -25,8 +26,6 @@ from black.handle_ipynb_magics import (
 )
 from tests.util import DATA_DIR, get_case_path, read_jupyter_notebook
 
-with contextlib.suppress(ModuleNotFoundError):
-    import IPython
 pytestmark = pytest.mark.jupyter
 pytest.importorskip("IPython", reason="IPython is an optional dependency")
 pytest.importorskip("tokenize_rt", reason="tokenize-rt is an optional dependency")
@@ -88,6 +87,23 @@ def test_trailing_semicolon_noop() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.incompatible_with_mypyc
+def test_format_cell_formats_formatted_cell_once() -> None:
+    # A formatted cell is formatted once and needs no checks.
+    with (
+        patch("black._format_str_once", wraps=_format_str_once) as format_once,
+        patch("black.check_stability_and_equivalence") as check,
+    ):
+        with pytest.raises(NothingChanged):
+            format_cell('foo = "a";', fast=False, mode=JUPYTER_MODE)
+    assert format_once.call_count == 1
+    check.assert_not_called()
+    # A cell that changes is still checked.
+    with patch("black.check_stability_and_equivalence") as check:
+        assert format_cell('foo ="a";', fast=False, mode=JUPYTER_MODE) == 'foo = "a";'
+    check.assert_called_once()
+
+
 @pytest.mark.parametrize(
     "mode",
     [
@@ -144,6 +160,16 @@ def test_cell_magic_noop() -> None:
             id="Assignment after non-ASCII characters",
         ),
         pytest.param("env =  %env", "env = %env", id="Assignment to magic"),
+        pytest.param(
+            "files: list[str] =!ls",
+            "files: list[str] = !ls",
+            id="Annotated system assignment",
+        ),
+        pytest.param(
+            "home: str =  %env HOME",
+            "home: str = %env HOME",
+            id="Annotated assignment to environment variable",
+        ),
     ),
 )
 def test_magic(src: str, expected: str, mode: Mode) -> None:
@@ -164,15 +190,29 @@ def test_non_python_magics(src: str) -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
-@pytest.mark.skipif(
-    IPython.version_info < (8, 3),
-    reason="Change in how TransformerManager transforms this input",
-)
 def test_set_input() -> None:
     src = "a = b??"
-    expected = "??b"
-    result = format_cell(src, fast=True, mode=JUPYTER_MODE)
-    assert result == expected
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
+@pytest.mark.parametrize(
+    "src",
+    (
+        pytest.param("str.split?\nx=1", id="Help after the object"),
+        pytest.param("str.split??\nx=1", id="Source after the object"),
+        pytest.param("str.*find*?\nx=1", id="Wildcard search"),
+        pytest.param(">>> x=1\n>>> print(x)", id="Python prompts"),
+        pytest.param("In [1]: x=1\n   ...: print(x)", id="IPython prompts"),
+        pytest.param(",print a b\nx=1", id="Auto-quoted call"),
+        pytest.param("/print 1\nx=1", id="Auto-parenthesized call"),
+    ),
+)
+def test_rewritten_ipython_syntax_noop(src: str) -> None:
+    # Black can only put back what IPython turns these into (`?str.split`,
+    # `%psearch str.*find*`, the code without prompts, `print("a", "b")`, ...).
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
 def test_input_already_contains_transformed_magic() -> None:
@@ -205,6 +245,11 @@ def test_magic_noop() -> None:
             "if True:\n    installed_packages_in_this_environment = !pip list"
             " --format=freeze --disable-pip-version-check",
             id="Indented system assignment",
+        ),
+        pytest.param(
+            "installed_packages_in_this_environment: list[str] = !pip list"
+            " --format=freeze --disable-pip-version-check",
+            id="Annotated system assignment",
         ),
     ),
 )
@@ -331,6 +376,22 @@ def test_multiline_no_magic() -> None:
 
 def test_cell_magic_with_invalid_body() -> None:
     src = "%%time\nif True"
+    with pytest.raises(NothingChanged):
+        format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
+@pytest.mark.parametrize(
+    "src",
+    (
+        pytest.param("x = (1,", id="Unclosed bracket"),
+        pytest.param('x = """abc', id="Unterminated triple-quoted string"),
+        pytest.param("if x:\n    a = 1\n  b = 2", id="Inconsistent dedent"),
+        pytest.param('!find . -name "*.pyc" -exec rm {} \\;', id="Backslash in shell"),
+        pytest.param("%cd C:\\Users\\me", id="Windows path in magic"),
+        pytest.param("!echo don't panic", id="Apostrophe in shell"),
+    ),
+)
+def test_cell_that_cant_be_tokenized_noop(src: str) -> None:
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
