@@ -336,9 +336,25 @@ def _path_is_ignored(
                 relative_path = relative_path + "/"
         except ValueError:
             break
-        if pattern.match_file(relative_path):
+        if path.is_dir():
+            if _dir_is_ignored(pattern, relative_path):
+                return True
+        elif pattern.match_file(relative_path):
             return True
     return False
+
+
+def _dir_is_ignored(spec: GitIgnoreSpec, relative_path: str) -> bool:
+    """Like git, the last pattern matching the directory itself wins.
+
+    GitIgnoreSpec.match_file lets `*` beat a later `!*/` on "dir/", so a
+    re-included directory would never be walked (#3694).
+    """
+    ignored = False
+    for pattern in spec.patterns:
+        if pattern.include is not None and pattern.match_file(relative_path):
+            ignored = pattern.include
+    return ignored
 
 
 def path_is_excluded(

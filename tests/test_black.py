@@ -3971,6 +3971,39 @@ class TestFileCollection:
         expected = [root / "z.py"]
         assert_collected_sources([root], expected, root=root)
 
+    def test_gitignore_star_with_directory_and_py_negations(self) -> None:
+        # `!*/` re-includes directories, so git sees nested *.py files (#3694)
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve()
+            (root / ".gitignore").write_text(
+                "*\n!*/\n!*.py\n!.gitignore\n",
+                encoding="utf-8",
+            )
+            (root / "file1.py").write_text("x = 1\n", encoding="utf-8")
+            nested = root / "pkg"
+            nested.mkdir()
+            (nested / "file2.py").write_text("x = 1\n", encoding="utf-8")
+            deeper = nested / "sub"
+            deeper.mkdir()
+            (deeper / "file3.py").write_text("x = 1\n", encoding="utf-8")
+            expected = [
+                root / "file1.py",
+                nested / "file2.py",
+                deeper / "file3.py",
+            ]
+            assert_collected_sources([root], expected, root=root)
+
+    def test_gitignore_star_with_py_negation_skips_directories(self) -> None:
+        # Without `!*/`, git cannot re-include files under an excluded directory
+        with TemporaryDirectory() as tempdir:
+            root = Path(tempdir).resolve()
+            (root / ".gitignore").write_text("*\n!*.py\n", encoding="utf-8")
+            (root / "file1.py").write_text("x = 1\n", encoding="utf-8")
+            ignored = root / "lib"
+            ignored.mkdir()
+            (ignored / "foo.py").write_text("x = 1\n", encoding="utf-8")
+            assert_collected_sources([root], [root / "file1.py"], root=root)
+
     def test_gitignore_with_utf8_bom(self) -> None:
         # Git skips a UTF-8 byte order mark at the start of a .gitignore, so the first
         # pattern still applies. Some Windows tools save files with one.
