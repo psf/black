@@ -2392,11 +2392,13 @@ def _kwarg_value_wants_parentheses(
         return False
     # Wrap simply when the argument is over line length unwrapped and fits
     # wrapped: the head line holds ``name=(`` and the value lands on indented
-    # lines, split at its delimiters.
-    if indent + len(name.value) + 1 + _minimal_render_length(leaves) <= line_length:
+    # lines, split at the delimiters ``delimiter_split`` would choose.
+    unwrapped = indent + len(name.value) + 1 + _minimal_render_length(leaves)
+    if unwrapped <= line_length or indent + len(name.value) + 2 > line_length:
         return False
-    if indent + len(name.value) + 2 > line_length:
-        return False
+    # Only the highest-priority delimiters are split points, matching
+    # ``delimiter_split``.
+    delimiter_priority = max_delimiter_priority(leaves)
     parts: list[list[Leaf]] = []
     part: list[Leaf] = []
     previous: Leaf | None = None
@@ -2407,8 +2409,9 @@ def _kwarg_value_wants_parentheses(
         if (
             part
             and previous is not None
+            and delimiter_priority
             and not (leaf.type == token.STRING and previous.type == token.STRING)
-            and is_split_before_delimiter(leaf, previous)
+            and is_split_before_delimiter(leaf, previous) == delimiter_priority
         ):
             parts.append(part)
             part = []
