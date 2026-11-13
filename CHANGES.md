@@ -114,6 +114,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Wrap long assigned lambdas in preview mode when splitting the body call would leave an
+  overlong first line (#5661)
+
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638, #5657)

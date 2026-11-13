@@ -106,6 +106,7 @@
           "keep_commented_expressions_together",
           "avoid_parens_for_unbreakable_rhs_in_assignments",
           "parenthesize_expressions_with_comments",
+          "wrap_long_lambda_assignments",
           "keep_trailers_on_bracket_comment_overflow",
           "split_implicit_string_concatenations_at_newlines",
           "remove_redundant_comparison_parentheses",
