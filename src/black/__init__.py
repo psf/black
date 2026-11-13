@@ -283,7 +283,7 @@ def validate_regex(
 @click.option(
     "-l",
     "--line-length",
-    type=int,
+    type=click.IntRange(min=1),
     default=DEFAULT_LINE_LENGTH,
     help="How many characters per line to allow.",
     show_default=True,
@@ -1305,8 +1305,13 @@ def format_cell(src: str, *, fast: bool, mode: Mode) -> str:
         masked_src, replacements = mask_cell(src_without_trailing_semicolon)
     except (SyntaxError, tokenize.TokenError):
         raise NothingChanged from None
+    # Format the cell like a file, which ends with a newline. Otherwise the first
+    # pass always changes the cell, so formatted cells are formatted twice.
+    if not masked_src.endswith("\n"):
+        masked_src += "\n"
     masked_dst = format_str(masked_src, mode=mode)
-    if not fast:
+    # An unchanged cell needs no checks, as in format_file_contents().
+    if not fast and masked_dst != masked_src:
         check_stability_and_equivalence(masked_src, masked_dst, mode=mode)
     dst_without_trailing_semicolon = unmask_cell(masked_dst, replacements)
     try:
@@ -1398,10 +1403,16 @@ def format_str(
         hey
 
     """
+    requested_lines: Collection[tuple[int, int]] = ()
     if lines:
         lines = sanitized_lines(lines, src_contents)
         if not lines:
             return src_contents  # Nothing to format
+        # Keep the ranges exactly as the caller asked for them. `lines` is
+        # narrowed below to follow the code through the first pass, but deciding
+        # whether a dropped trailing blank line was selected has to be done
+        # against the original request.
+        requested_lines = lines
     dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
@@ -1413,6 +1424,9 @@ def format_str(
                 # None of the requested lines survived the first pass, so there is
                 # nothing left to format. Passing the empty `lines` to the second
                 # pass would format the whole file instead.
+                dst_contents = _restore_unselected_trailing_blank_lines(
+                    src_contents, dst_contents, requested_lines
+                )
                 return dst_contents
         try:
             dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
@@ -1439,9 +1453,9 @@ def format_str(
                 exc.details,
             )
             raise
-    if lines:
+    if requested_lines:
         dst_contents = _restore_unselected_trailing_blank_lines(
-            src_contents, dst_contents, lines
+            src_contents, dst_contents, requested_lines
         )
     return dst_contents
 

@@ -889,8 +889,14 @@ def is_parent_function_or_class(node: Node) -> bool:
 
 def is_stub_suite(node: Node) -> bool:
     """Return True if `node` is a suite with a stub body."""
-    if node.parent is not None and not is_parent_function_or_class(node):
-        return False
+    if node.parent is not None:
+        if not is_parent_function_or_class(node):
+            return False
+        # A header left as is (`# fmt: skip`, or outside `--line-ranges`) has become
+        # a STANDALONE_COMMENT, so the suite no longer follows the colon and the
+        # body can't be joined onto the header line.
+        if node.prev_sibling is None or node.prev_sibling.type != token.COLON:
+            return False
 
     # If there is a comment, we want to keep it.
     if node.prefix.strip():

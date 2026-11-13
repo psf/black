@@ -3,6 +3,7 @@ import re
 from contextlib import AbstractContextManager
 from contextlib import ExitStack as does_not_raise
 from dataclasses import replace
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -11,6 +12,7 @@ from pytest import MonkeyPatch
 from black import (
     Mode,
     NothingChanged,
+    _format_str_once,
     format_cell,
     format_file_contents,
     format_file_in_place,
@@ -83,6 +85,23 @@ def test_trailing_semicolon_noop() -> None:
     src = 'foo = "a";'
     with pytest.raises(NothingChanged):
         format_cell(src, fast=True, mode=JUPYTER_MODE)
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_format_cell_formats_formatted_cell_once() -> None:
+    # A formatted cell is formatted once and needs no checks.
+    with (
+        patch("black._format_str_once", wraps=_format_str_once) as format_once,
+        patch("black.check_stability_and_equivalence") as check,
+    ):
+        with pytest.raises(NothingChanged):
+            format_cell('foo = "a";', fast=False, mode=JUPYTER_MODE)
+    assert format_once.call_count == 1
+    check.assert_not_called()
+    # A cell that changes is still checked.
+    with patch("black.check_stability_and_equivalence") as check:
+        assert format_cell('foo ="a";', fast=False, mode=JUPYTER_MODE) == 'foo = "a";'
+    check.assert_called_once()
 
 
 @pytest.mark.parametrize(

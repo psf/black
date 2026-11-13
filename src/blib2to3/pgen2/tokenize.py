@@ -110,13 +110,21 @@ def transform_whitespace(
     r"""
     Black treats `\\\n` at the end of a line as a 'NL' token, while it
     is ignored as whitespace in the regular Python parser.
-    But, only the first one. If there's a `\\\n` following it
-    (as in, a \ just by itself on a line), that is not made into NL.
+    But, only the first one, unless it continues a backslash continuation. A
+    `\\\n` by itself on a line right after a NEWLINE or a regular NL is not made
+    into NL. One continuing another `\\\n` is, so it stays in the prefix of code
+    that is written back as is, like a `# fmt: off` region.
     """
     if (
         token.type == TokenType.whitespace
         and prev_token is not None
-        and prev_token.type not in (TokenType.nl, TokenType.newline)
+        and (
+            prev_token.type not in (TokenType.nl, TokenType.newline)
+            or (
+                prev_token.type == TokenType.nl
+                and source[prev_token.start_index] == "\\"
+            )
+        )
     ):
         token_str = source[token.start_index : token.end_index]
         if token_str.startswith("\\\r\n"):

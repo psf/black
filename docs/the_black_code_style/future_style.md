@@ -100,6 +100,8 @@ Currently, the following features are included in the preview style:
 - `parenthesize_unsplittable_keyword_arguments`: Parenthesize the value of a keyword
   argument when it would otherwise make the line exceed the line length.
   ([see below](labels/parenthesize-unsplittable-keyword-arguments))
+- `parenthesize_one_item_sequence_patterns`: Add parentheses around one-item sequence
+  patterns in `case` statements, such as `case x,:`.
 
 (labels/remove-redundant-top-level-parentheses)=
 
