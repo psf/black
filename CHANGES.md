@@ -16,6 +16,10 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Do not let standalone comments break fluent method chaining formatting (#5644)
+- Keep the optional parentheses around an assignment's right-hand side when removing
+  them would produce a first line longer than the line length and the expression
+  contains standalone comments (#5638)
 - Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
   `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
 - Fix crash for a `...` body under a `def`, `async def` or `class` header that is left

@@ -11,6 +11,7 @@ from black.nodes import (
     LOGIC_OPERATORS,
     MATH_OPERATORS,
     OPENING_BRACKETS,
+    STANDALONE_COMMENT,
     UNPACKING_PARENTS,
     VARARGS_PARENTS,
     is_vararg,
@@ -124,7 +125,8 @@ class BracketTracker:
             self.depth += 1
             if not leaf.value:
                 self.invisible.append(leaf)
-        self.previous = leaf
+        if leaf.type != STANDALONE_COMMENT:
+            self.previous = leaf
         self.maybe_increment_lambda_arguments(leaf)
         self.maybe_increment_for_loop_variable(leaf)
 
