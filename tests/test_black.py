@@ -3263,6 +3263,25 @@ class TestCaching:
             cache = black.Cache.read(mode, workspace)
             assert not cache.is_changed(src)
 
+    def test_cache_malicious_pickle_is_a_miss(self) -> None:
+        # A crafted cache file (e.g. via a project-relative cache-dir in a
+        # shared checkout) must not execute code (see #5546).
+        import pickle
+
+        mode = DEFAULT_MODE
+        with cache_dir() as workspace:
+            marker = workspace / "pwned"
+            cache_file = get_cache_file(mode, workspace)
+
+            class Evil:
+                def __reduce__(self) -> tuple[Callable[[], None], tuple[()]]:
+                    return (marker.touch, ())
+
+            with cache_file.open("wb") as fobj:
+                pickle.dump({"x.py": Evil()}, fobj)
+            assert black.Cache.read(mode, workspace).file_data == {}
+            assert not marker.exists()
+
     def test_cache_empty_file(self) -> None:
         mode = DEFAULT_MODE
         with cache_dir() as workspace:

@@ -14,6 +14,7 @@ from platformdirs import user_cache_dir
 from _black_version import version as __version__
 from black.mode import Mode
 from black.output import err
+from blib2to3.pgen2.safe_pickle import safe_load
 
 
 class FileData(NamedTuple):
@@ -72,7 +73,9 @@ class Cache:
 
         try:
             with cache_file.open("rb") as fobj:
-                data: dict[str, tuple[float, int, str]] = pickle.load(fobj)
+                # Restricted unpickling: a crafted cache file in a shared
+                # checkout must not be able to execute code (see #5546).
+                data: dict[str, tuple[float, int, str]] = safe_load(fobj)
                 file_data = {k: FileData(*v) for k, v in data.items()}
         except (
             pickle.UnpicklingError,

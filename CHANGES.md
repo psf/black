@@ -175,6 +175,8 @@
   (#5513)
 - Treat an unreadable cache file as a cache miss instead of failing the formatting run
   with a "cannot format" error (#5641)
+- Reject crafted cache and grammar pickle files instead of unpickling them, so a
+  project-relative cache directory in a shared checkout cannot execute code (#5648)
 
 - Reject non-positive `--line-length` values on the command line and in `pyproject.toml`
   instead of silently formatting with them (#5664)
