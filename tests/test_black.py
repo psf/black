@@ -575,6 +575,76 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertNotIn(b"\r\r\n", result.stdout_bytes)
 
+    def test_skip_source_first_line_with_line_ranges(self) -> None:
+        """Line ranges refer to the original source, not the body."""
+        code = "not a Python header\nx=1\ny=2\n"
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "skip_header.py"
+            test_file.write_text(code)
+            # Selecting the second original line formats only x=1.
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    str(test_file),
+                    "-x",
+                    "--line-ranges=2-2",
+                    f"--config={EMPTY_CONFIG}",
+                    "--diff",
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("-x=1\n+x = 1\n", result.stdout)
+            # y=2 is a context line, not a changed line.
+            self.assertNotIn("-y=2\n", result.stdout)
+            self.assertNotIn("+y = 2\n", result.stdout)
+
+            # Selecting the third original line formats only y=2.
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    str(test_file),
+                    "-x",
+                    "--line-ranges=3-3",
+                    f"--config={EMPTY_CONFIG}",
+                    "--diff",
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn("-y=2\n+y = 2\n", result.stdout)
+            self.assertNotIn("-x=1\n", result.stdout)
+            self.assertNotIn("+x = 1\n", result.stdout)
+
+            # Selecting only the skipped header leaves the file unchanged.
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    str(test_file),
+                    "-x",
+                    "--line-ranges=1-1",
+                    f"--config={EMPTY_CONFIG}",
+                    "--diff",
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertNotIn("-x=1\n", result.stdout)
+            self.assertNotIn("+x = 1\n", result.stdout)
+            self.assertNotIn("-y=2\n", result.stdout)
+            self.assertNotIn("+y = 2\n", result.stdout)
+
+    def test_skip_source_first_line_with_line_ranges_via_stdin(self) -> None:
+        """Line ranges on stdin also refer to the original source."""
+        for nl in ["\n", "\r\n"]:
+            code = nl.join(["not a Python header", "x=1", "y=2", ""])
+            result = BlackRunner().invoke(
+                black.main,
+                ["-", "-x", "--line-ranges=2-2", f"--config={EMPTY_CONFIG}", "--diff"],
+                input=BytesIO(code.encode()),
+            )
+            self.assertEqual(result.exit_code, 0)
+            self.assertIn(f"-x=1{nl}+x = 1{nl}".encode(), result.stdout_bytes)
+            self.assertNotIn(f"-y=2{nl}".encode(), result.stdout_bytes)
+            self.assertNotIn(f"+y = 2{nl}".encode(), result.stdout_bytes)
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
