@@ -2919,13 +2919,12 @@ def maybe_make_parens_invisible_in_atom(
             syms.simple_stmt,
         ]:
             return False
+
         if (
-            parent.type == syms.atom
-            and parent.children[0].type == token.LBRACE
-            and Feature.UNPARENTHESIZED_WALRUS_IN_SETS not in features
-        ):
-            # A named expression in a set literal needs its parentheses before
-            # Python 3.10 (3.9.1 accepts it, but 3.9.0 doesn't).
+            is_subscript
+            or (parent.type == syms.atom and parent.children[0].type == token.LBRACE)
+        ) and Feature.BARE_SET_SUBSCRIPT_WALRUSES not in features:
+            # A walrus in a subscript or set literal needs its parentheses before 3.10
             return False
 
     first = node.children[0]
