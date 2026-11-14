@@ -25,6 +25,9 @@
 - Fix `# fmt: skip` being ignored, or the comment being duplicated on every run, when
   the same comment also contains `# fmt: off` or `# yapf: disable`, like
   `# yapf: disable  # fmt: skip` (#5665)
+- Preserve trailing whitespace and tab expansion in multiline docstrings containing
+  doctests so formatting no longer breaks their source or expected output (#5687)
+
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
