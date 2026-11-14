@@ -226,6 +226,8 @@
   for a `X-Diff` request, instead of prepending it as raw text in front of the diff
   (#5573)
 - Fix blackd startup on Windows with more than 61 logical CPUs (#5667)
+- Add `blackd-client`, a command-line client for blackd that only uses the standard
+  library and formats several files in parallel (#5690)
 
 ### Integrations
 
