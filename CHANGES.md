@@ -153,6 +153,7 @@
 - Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
+- Don't add or remove parens around long dict values unless they have delimiters (#5627)
 - Correctly indent `# fmt: off` comments inside brackets, such as function calls, and
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
