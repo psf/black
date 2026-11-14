@@ -1052,6 +1052,31 @@ def reformat_one(
         report.failed(src, exc)
 
 
+def _shift_lines_for_skipped_header(
+    lines: Collection[tuple[int, int]],
+) -> list[tuple[int, int]]:
+    """Shift line ranges to account for a skipped source header.
+
+    When ``skip_source_first_line`` is enabled, the first line of the original
+    source is removed before formatting. Line ranges provided by the user are
+    1-based and refer to the original source, so they are shifted down by one to
+    match the body that is actually formatted. Ranges that fall entirely on the
+    skipped header are dropped, and any range that begins on the header is
+    clamped to start at the first body line.
+    """
+    adjusted: list[tuple[int, int]] = []
+    for start, end in lines:
+        new_start = start - 1
+        new_end = end - 1
+        if new_end < 1:
+            # The range falls entirely on the skipped header line.
+            continue
+        if new_start < 1:
+            new_start = 1
+        adjusted.append((new_start, new_end))
+    return adjusted
+
+
 def format_file_in_place(
     src: Path,
     fast: bool,
@@ -1079,8 +1104,21 @@ def format_file_in_place(
             header = buf.readline()
         src_contents, encoding, newline = decode_bytes(buf.read(), mode)
     try:
+        # Line ranges are 1-based and refer to the original source, but when the
+        # first line is skipped the body that is actually formatted starts one
+        # line later, so the ranges need to be shifted accordingly.
+        adjusted_lines = (
+            _shift_lines_for_skipped_header(lines)
+            if mode.skip_source_first_line
+            else lines
+        )
+        # An empty `lines` collection means "format everything", but if the
+        # user specified ranges and every one of them fell on the skipped
+        # header, there is nothing to format.
+        if lines and not adjusted_lines:
+            return False
         dst_contents = format_file_contents(
-            src_contents, fast=fast, mode=mode, lines=lines
+            src_contents, fast=fast, mode=mode, lines=adjusted_lines
         )
     except NothingChanged:
         return False
@@ -1153,9 +1191,21 @@ def format_stdin_to_stdout(
     else:
         src, encoding, newline = content, "utf-8", "\n"
 
+    # Line ranges are 1-based and refer to the original source, but when the
+    # first line is skipped the body that is actually formatted starts one
+    # line later, so the ranges need to be shifted accordingly.
+    adjusted_lines = (
+        _shift_lines_for_skipped_header(lines) if mode.skip_source_first_line else lines
+    )
+
     dst = src
     try:
-        dst = format_file_contents(src, fast=fast, mode=mode, lines=lines)
+        # An empty `lines` collection means "format everything", but if the
+        # user specified ranges and every one of them fell on the skipped
+        # header, there is nothing to format.
+        if lines and not adjusted_lines:
+            return False
+        dst = format_file_contents(src, fast=fast, mode=mode, lines=adjusted_lines)
         return True
 
     except NothingChanged:
