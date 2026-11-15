@@ -165,6 +165,9 @@
 
 ### Configuration
 
+- Add `--respect-gitignore` / `--no-respect-gitignore` to keep or disable `.gitignore`
+  handling independently of `--exclude` (#5699).
+
 <!-- Changes to how Black can be configured -->
 
 - Stop disregarding leading blank lines, which shifted the lines selected by

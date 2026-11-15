@@ -876,7 +876,9 @@ def get_sources(
     if respect_gitignore is None:
         respect_gitignore = using_default_exclude
     gitignore: dict[Path, GitIgnoreSpec] | None = None
-    root_gitignore = get_gitignore(root) if respect_gitignore else None
+    root_gitignore = (
+        get_gitignore(root) if respect_gitignore else GitIgnoreSpec.from_lines([])
+    )
 
     for s in src:
         if s == "-" and stdin_filename:
