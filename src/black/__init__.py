@@ -437,9 +437,21 @@ def validate_regex(
         " excluded on recursive searches. An empty value means no paths are excluded."
         " Use forward slashes for directories on all platforms (Windows, too)."
         " By default, Black also ignores all paths listed in .gitignore. Changing this"
-        f" value will override all default exclusions. [default: {DEFAULT_EXCLUDES}]"
+        " value will override all default exclusions; use --respect-gitignore to keep"
+        f" using .gitignore with a custom exclude. [default: {DEFAULT_EXCLUDES}]"
     ),
     show_default=False,
+)
+@click.option(
+    "--respect-gitignore/--no-respect-gitignore",
+    is_flag=True,
+    default=None,
+    help=(
+        "Respect .gitignore files even when an explicit --exclude or"
+        " --extend-exclude is set. With --no-respect-gitignore, Black ignores"
+        " .gitignore files entirely. By default, .gitignore is used only when"
+        " --exclude is not set."
+    ),
 )
 @click.option(
     "--extend-exclude",
@@ -584,6 +596,7 @@ def main(
     required_version: str | None,
     include: Pattern[str],
     exclude: Pattern[str] | None,
+    respect_gitignore: bool | None,
     extend_exclude: Pattern[str] | None,
     force_exclude: Pattern[str] | None,
     stdin_filename: str | None,
@@ -781,6 +794,7 @@ def main(
                 verbose=verbose,
                 include=include,
                 exclude=exclude,
+                respect_gitignore=respect_gitignore,
                 extend_exclude=extend_exclude,
                 force_exclude=force_exclude,
                 report=report,
@@ -849,6 +863,7 @@ def get_sources(
     force_exclude: Pattern[str] | None,
     report: "Report",
     stdin_filename: str | None,
+    respect_gitignore: bool | None = None,
 ) -> set[Path]:
     """Compute the set of files to be formatted."""
     sources: set[Path] = set()
@@ -858,8 +873,10 @@ def get_sources(
     ), f"INTERNAL ERROR: `root` must be absolute but is {root}"
     using_default_exclude = exclude is None
     exclude = re_compile_maybe_verbose(DEFAULT_EXCLUDES) if exclude is None else exclude
+    if respect_gitignore is None:
+        respect_gitignore = using_default_exclude
     gitignore: dict[Path, GitIgnoreSpec] | None = None
-    root_gitignore = get_gitignore(root)
+    root_gitignore = get_gitignore(root) if respect_gitignore else None
 
     for s in src:
         if s == "-" and stdin_filename:
@@ -916,7 +933,7 @@ def get_sources(
             if verbose:
                 out(f'Found input source directory: "{path}"', fg="blue")
 
-            if using_default_exclude:
+            if respect_gitignore:
                 gitignore = {
                     src_root: root_gitignore,
                     path: get_gitignore(path),
