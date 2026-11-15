@@ -192,7 +192,6 @@
 
 - Fix parsing of unpacking in a generator expression passed as the only argument to a
   call, such as `sum(*x for x in y)` (PEP 798) (#5568)
-- Fix `copy.deepcopy()` on `blib2to3` nodes raising `TypeError` (#5697)
 
 ### Performance
 
