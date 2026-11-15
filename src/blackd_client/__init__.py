@@ -7,6 +7,7 @@ from a small thread pool, one request per file.
 
 import argparse
 import difflib
+import http.client
 import io
 import os
 import re
@@ -24,6 +25,7 @@ DEFAULT_URL = "http://localhost:45484"
 DEFAULT_WORKERS = 10
 DEFAULT_TIMEOUT = 60.0
 TARGET_VERSION_RE = re.compile(r"py3\d{1,2}")
+LINE_RE = re.compile(r"(.*?(?:\r\n|\n|\r|$))")
 
 
 class Changed(Enum):
@@ -86,7 +88,8 @@ def request_format(
             formatted: bytes = response.read()
             return formatted
     except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", "replace").strip()
+        with e:
+            body = e.read().decode("utf-8", "replace").strip()
         if e.code == 400:
             raise BlackdError(body) from None
         raise BlackdError(f"blackd returned HTTP {e.code}: {body}") from None
@@ -94,15 +97,33 @@ def request_format(
         raise BlackdError(f"cannot reach blackd at {url}: {e.reason}") from None
     except TimeoutError:
         raise BlackdError(f"blackd at {url} timed out after {timeout}s") from None
+    except (http.client.HTTPException, OSError) as e:
+        # For example a truncated response or a connection reset mid-read.
+        raise BlackdError(f"error talking to blackd at {url}: {e!r}") from None
+
+
+def splitlines_no_ff(source: str) -> list[str]:
+    """Split like the Python parser does: only on \\r\\n, \\n and \\r.
+
+    A copy of black.output._splitlines_no_ff, which this module can't import.
+    """
+    result = [match[0] for match in LINE_RE.finditer(source)]
+    if result[-1] == "":
+        result.pop(-1)
+    return result
 
 
 def diff(a: str, b: str, a_name: str, b_name: str) -> str:
-    a_lines = a.splitlines(keepends=True)
-    b_lines = b.splitlines(keepends=True)
+    """Return a unified diff in the same format as black.output.diff."""
     lines = []
-    for line in difflib.unified_diff(a_lines, b_lines, a_name, b_name, n=5):
-        # Like black's own --diff, end the last line even if the file doesn't.
-        lines.append(line if line.endswith("\n") else line + "\n")
+    for line in difflib.unified_diff(
+        splitlines_no_ff(a), splitlines_no_ff(b), a_name, b_name, n=5
+    ):
+        if line[-1] == "\n":
+            lines.append(line)
+        else:
+            lines.append(line + "\n")
+            lines.append("\\ No newline at end of file\n")
     return "".join(lines)
 
 
@@ -115,7 +136,13 @@ def format_one(src: str, args: argparse.Namespace, headers: dict[str, str]) -> R
         else:
             with open(src, "rb") as f:
                 data = f.read()
-        encoding = tokenize.detect_encoding(io.BytesIO(data).readline)[0]
+        body = data
+        if args.skip_source_first_line:
+            # Like black, look for the encoding cookie after the skipped line.
+            _, newline, body = data.partition(b"\n")
+            if not newline:
+                body = b""
+        encoding = tokenize.detect_encoding(io.BytesIO(body).readline)[0]
         then = datetime.now(timezone.utc)
         formatted = request_format(args.url, data, encoding, headers, args.timeout)
     except (OSError, SyntaxError, BlackdError) as e:

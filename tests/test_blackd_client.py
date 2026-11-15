@@ -1,5 +1,7 @@
 import asyncio
+import http.client
 import io
+import os
 import socket
 import subprocess
 import sys
@@ -25,10 +27,10 @@ def test_imports_only_stdlib() -> None:
     result = subprocess.run(
         [sys.executable, "-c", code],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         check=True,
         cwd=PROJECT_ROOT,
-        env={"PYTHONPATH": str(PROJECT_ROOT / "src")},
+        env={**os.environ, "PYTHONPATH": str(PROJECT_ROOT / "src")},
     )
     assert result.stdout.strip() == "[]"
 
@@ -96,13 +98,49 @@ def test_unreachable_server(tmp_path: Path, capsys: pytest.CaptureFixture[str]) 
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
     src = tmp_path / "a.py"
-    src.write_text(UNFORMATTED, encoding="utf-8")
+    src.write_bytes(UNFORMATTED.encode())
 
     code = blackd_client.main([f"--url=http://127.0.0.1:{port}", str(src)])
 
     assert code == 123
     assert "cannot reach blackd" in capsys.readouterr().err
-    assert src.read_text(encoding="utf-8") == UNFORMATTED
+    assert src.read_bytes().decode() == UNFORMATTED
+
+
+@pytest.mark.parametrize(
+    "a, b",
+    [
+        ("print('hello')\n", 'print("hello")\n'),
+        ("x=1", "x = 1\n"),
+        ("\fx=1\n\fy=2\n", "\fx = 1\n\fy = 2\n"),
+        ("a=1\r\nb=2\r\n", "a = 1\r\nb = 2\r\n"),
+        ("", "x = 1\n"),
+    ],
+)
+def test_diff_matches_black(a: str, b: str) -> None:
+    from black.output import diff
+
+    assert blackd_client.diff(a, b, "In", "Out") == diff(a, b, "In", "Out")
+
+
+def test_incomplete_response(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def urlopen(*args: object, **kwargs: object) -> None:
+        raise http.client.IncompleteRead(b"x = ", 10)
+
+    monkeypatch.setattr(blackd_client.urllib.request, "urlopen", urlopen)
+    bad = tmp_path / "a.py"
+    bad.write_bytes(UNFORMATTED.encode())
+    other = tmp_path / "b.py"
+    other.write_bytes(UNFORMATTED.encode())
+
+    code = blackd_client.main(["--url=http://127.0.0.1:1", str(bad), str(other)])
+
+    assert code == 123
+    err = capsys.readouterr().err
+    assert f"error: cannot format {bad}: error talking to blackd" in err
+    assert "2 files failed to reformat." in err
 
 
 def test_directory_is_rejected(
@@ -146,15 +184,15 @@ def test_formats_files_in_place(
     blackd_url: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     changed = tmp_path / "changed.py"
-    changed.write_text(UNFORMATTED, encoding="utf-8")
+    changed.write_bytes(UNFORMATTED.encode())
     unchanged = tmp_path / "unchanged.py"
-    unchanged.write_text(FORMATTED, encoding="utf-8")
+    unchanged.write_bytes(FORMATTED.encode())
 
     code = blackd_client.main([f"--url={blackd_url}", str(changed), str(unchanged)])
 
     assert code == 0
-    assert changed.read_text(encoding="utf-8") == FORMATTED
-    assert unchanged.read_text(encoding="utf-8") == FORMATTED
+    assert changed.read_bytes().decode() == FORMATTED
+    assert unchanged.read_bytes().decode() == FORMATTED
     err = capsys.readouterr().err
     assert f"reformatted {changed}" in err
     assert "1 file reformatted, 1 file left unchanged." in err
@@ -165,12 +203,12 @@ def test_check(
     blackd_url: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     src = tmp_path / "a.py"
-    src.write_text(UNFORMATTED, encoding="utf-8")
+    src.write_bytes(UNFORMATTED.encode())
 
     code = blackd_client.main([f"--url={blackd_url}", "--check", str(src)])
 
     assert code == 1
-    assert src.read_text(encoding="utf-8") == UNFORMATTED
+    assert src.read_bytes().decode() == UNFORMATTED
     captured = capsys.readouterr()
     assert captured.out == ""
     assert f"would reformat {src}" in captured.err
@@ -180,7 +218,7 @@ def test_check(
 @pytest.mark.blackd
 def test_check_unchanged(blackd_url: str, tmp_path: Path) -> None:
     src = tmp_path / "a.py"
-    src.write_text(FORMATTED, encoding="utf-8")
+    src.write_bytes(FORMATTED.encode())
     assert blackd_client.main([f"--url={blackd_url}", "--check", str(src)]) == 0
 
 
@@ -189,12 +227,12 @@ def test_diff(
     blackd_url: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     src = tmp_path / "a.py"
-    src.write_text(UNFORMATTED, encoding="utf-8")
+    src.write_bytes(UNFORMATTED.encode())
 
     code = blackd_client.main([f"--url={blackd_url}", "--diff", str(src)])
 
     assert code == 0
-    assert src.read_text(encoding="utf-8") == UNFORMATTED
+    assert src.read_bytes().decode() == UNFORMATTED
     out = capsys.readouterr().out
     assert out.startswith(f"--- {src}\t")
     assert f"\n+++ {src}\t" in out
@@ -219,17 +257,17 @@ def test_stdin(
 @pytest.mark.blackd
 def test_options_reach_blackd(blackd_url: str, tmp_path: Path) -> None:
     src = tmp_path / "a.py"
-    src.write_text("x = [1, 2, 3]\n", encoding="utf-8")
+    src.write_bytes("x = [1, 2, 3]\n".encode())
     quotes = tmp_path / "b.py"
-    quotes.write_text("y = 'a'\n", encoding="utf-8")
+    quotes.write_bytes("y = 'a'\n".encode())
 
     code = blackd_client.main(
         [f"--url={blackd_url}", "-l", "10", "-S", str(src), str(quotes)]
     )
 
     assert code == 0
-    assert src.read_text(encoding="utf-8") == "x = [\n    1,\n    2,\n    3,\n]\n"
-    assert quotes.read_text(encoding="utf-8") == "y = 'a'\n"
+    assert src.read_bytes().decode() == "x = [\n    1,\n    2,\n    3,\n]\n"
+    assert quotes.read_bytes().decode() == "y = 'a'\n"
 
 
 @pytest.mark.blackd
@@ -237,14 +275,14 @@ def test_syntax_error_does_not_stop_other_files(
     blackd_url: str, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     bad = tmp_path / "bad.py"
-    bad.write_text("def f(:\n", encoding="utf-8")
+    bad.write_bytes("def f(:\n".encode())
     good = tmp_path / "good.py"
-    good.write_text(UNFORMATTED, encoding="utf-8")
+    good.write_bytes(UNFORMATTED.encode())
 
     code = blackd_client.main([f"--url={blackd_url}", str(bad), str(good)])
 
     assert code == 123
-    assert good.read_text(encoding="utf-8") == FORMATTED
+    assert good.read_bytes().decode() == FORMATTED
     err = capsys.readouterr().err
     assert f"error: cannot format {bad}: cannot parse: 1:6" in err
     assert "1 file reformatted, 1 file failed to reformat." in err
@@ -255,14 +293,14 @@ def test_many_files(blackd_url: str, tmp_path: Path) -> None:
     srcs = []
     for i in range(25):
         src = tmp_path / f"f{i}.py"
-        src.write_text(f"x = {{  'a':{i}  }}\n", encoding="utf-8")
+        src.write_bytes(f"x = {{  'a':{i}  }}\n".encode())
         srcs.append(src)
 
     code = blackd_client.main([f"--url={blackd_url}", "-q", "-W", "4", *map(str, srcs)])
 
     assert code == 0
     for i, src in enumerate(srcs):
-        assert src.read_text(encoding="utf-8") == f'x = {{"a": {i}}}\n'
+        assert src.read_bytes().decode() == f'x = {{"a": {i}}}\n'
 
 
 @pytest.mark.blackd
@@ -272,3 +310,20 @@ def test_keeps_source_encoding(blackd_url: str, tmp_path: Path) -> None:
 
     assert blackd_client.main([f"--url={blackd_url}", "-q", str(src)]) == 0
     assert src.read_bytes() == '# -*- coding: latin-1 -*-\nx = "é"\n'.encode("latin-1")
+
+
+@pytest.mark.blackd
+def test_skip_source_first_line_reads_encoding_after_it(
+    blackd_url: str, tmp_path: Path
+) -> None:
+    src = tmp_path / "a.py"
+    src.write_bytes("header line\n# coding: latin-1\nx = 'é'\n".encode("latin-1"))
+
+    code = blackd_client.main(
+        [f"--url={blackd_url}", "-q", "--skip-source-first-line", str(src)]
+    )
+
+    assert code == 0
+    assert src.read_bytes() == 'header line\n# coding: latin-1\nx = "é"\n'.encode(
+        "latin-1"
+    )
