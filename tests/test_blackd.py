@@ -5,11 +5,13 @@ import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from pathlib import Path
 from threading import Event
+from typing import Any
 from unittest.mock import patch
 
 import pytest
-from click.testing import CliRunner
+from click.testing import CliRunner, Result
 
 from tests.util import DETERMINISTIC_HEADER, read_data
 
@@ -44,6 +46,108 @@ def test_blackd_startup_on_windows_with_many_cpus() -> None:
         "    blackd.executor().shutdown()\n"
     )
     subprocess.run([sys.executable, "-c", script], check=True, timeout=120)
+
+
+BLACKD_CONFIG = """\
+[tool.black]
+line-length = 100
+
+[tool.blackd]
+bind-host = "0.0.0.0"
+bind-port = 9090
+cors-allow-origin = ["https://example.com", "https://example.org"]
+max-body-size = 1024
+"""
+
+
+def invoke_blackd_main(
+    args: list[str],
+) -> tuple[Result, dict[str, Any], dict[str, Any]]:
+    """Run blackd's CLI without starting the server.
+
+    Returns the result and the keyword arguments of the `run_app` and `make_app`
+    calls.
+    """
+    with (
+        patch("blackd.web.run_app") as run_app,
+        patch("blackd.make_app", wraps=blackd.make_app) as make_app,
+    ):
+        result = CliRunner().invoke(blackd.main, args)
+    run_kwargs = dict(run_app.call_args.kwargs) if run_app.called else {}
+    app_kwargs = dict(make_app.call_args.kwargs) if make_app.called else {}
+    return result, run_kwargs, app_kwargs
+
+
+@pytest.mark.blackd
+def test_blackd_main_reads_config_file(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text(BLACKD_CONFIG, encoding="utf-8")
+    result, run_kwargs, app_kwargs = invoke_blackd_main(["--config", str(config)])
+    assert result.exit_code == 0, result.output
+    assert (run_kwargs["host"], run_kwargs["port"]) == ("0.0.0.0", 9090)
+    assert app_kwargs == {
+        "cors_allow_origins": ("https://example.com", "https://example.org"),
+        "max_body_size": 1024,
+    }
+
+
+@pytest.mark.blackd
+def test_blackd_main_command_line_overrides_config(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text(BLACKD_CONFIG, encoding="utf-8")
+    result, run_kwargs, app_kwargs = invoke_blackd_main(
+        ["--config", str(config), "--bind-port", "1234", "--max-body-size", "2048"]
+    )
+    assert result.exit_code == 0, result.output
+    assert (run_kwargs["host"], run_kwargs["port"]) == ("0.0.0.0", 1234)
+    assert app_kwargs["max_body_size"] == 2048
+
+
+@pytest.mark.blackd
+def test_blackd_main_finds_pyproject_toml(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "pyproject.toml").write_text(BLACKD_CONFIG, encoding="utf-8")
+    subdirectory = tmp_path / "src"
+    subdirectory.mkdir()
+    monkeypatch.chdir(subdirectory)
+    result, run_kwargs, _ = invoke_blackd_main([])
+    assert result.exit_code == 0, result.output
+    assert run_kwargs["port"] == 9090
+
+
+@pytest.mark.blackd
+def test_blackd_main_config_key_spelling(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    config.write_text(
+        "[tool.blackd]\nbind_port = 9091\nlinelength = 100\n", encoding="utf-8"
+    )
+    result, run_kwargs, _ = invoke_blackd_main(["--config", str(config)])
+    assert result.exit_code == 0, result.output
+    assert run_kwargs["port"] == 9091
+    assert "Invalid config keys detected: 'linelength'" in result.output
+
+
+@pytest.mark.blackd
+@pytest.mark.parametrize(
+    "config, message",
+    [
+        (
+            '[tool.blackd]\ncors-allow-origin = "https://example.com"\n',
+            "Config key cors-allow-origin must be a list",
+        ),
+        ("[tool]\nblackd = 1\n", "Config key tool.blackd must be a table"),
+        ("[tool.blackd\n", "Error reading configuration file"),
+    ],
+)
+def test_blackd_main_invalid_config(tmp_path: Path, config: str, message: str) -> None:
+    config_file = tmp_path / "config.toml"
+    config_file.write_text(config, encoding="utf-8")
+    result, run_kwargs, _ = invoke_blackd_main(["--config", str(config_file)])
+    assert result.exit_code != 0
+    assert message in result.output
+    assert not run_kwargs
 
 
 @pytest.mark.blackd
