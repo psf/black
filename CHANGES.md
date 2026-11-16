@@ -228,7 +228,7 @@
   (#5573)
 - Fix blackd startup on Windows with more than 61 logical CPUs (#5667)
 - Read options from a `[tool.blackd]` table in `pyproject.toml`, or from the file given
-  with the new `--config` option (#XXXX)
+  with the new `--config` option (#5700)
 
 ### Integrations
 
