@@ -56,6 +56,27 @@ def is_valid_line_range(lines: tuple[int, int]) -> bool:
     return lines[0] <= lines[1]
 
 
+def adjust_lines_for_skipped_first_line(
+    lines: Collection[tuple[int, int]],
+) -> Collection[tuple[int, int]]:
+    """Adjust line ranges when the first line of the source was skipped.
+
+    Line ranges are 1-based and refer to the original source. When the first line
+    is skipped, each line number L >= 2 in the original source corresponds to
+    line L - 1 in the remaining source. Ranges that only covered line 1 do not
+    intersect the remaining source.
+    """
+    if not lines:
+        return lines
+
+    new_ranges: list[tuple[int, int]] = []
+    for start, end in lines:
+        if end >= 2:
+            new_ranges.append((max(start - 1, 1), end - 1))
+
+    return new_ranges if new_ranges else [(0, 0)]
+
+
 def sanitized_lines(
     lines: Collection[tuple[int, int]], src_contents: str
 ) -> Collection[tuple[int, int]]:
