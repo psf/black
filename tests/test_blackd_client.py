@@ -163,7 +163,10 @@ def blackd_url() -> Iterator[str]:
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
     port = sock.getsockname()[1]
-    loop = asyncio.new_event_loop()
+    # Not the default ProactorEventLoop on Windows: it pre-creates a socket for a
+    # pending AcceptEx that isn't closed on shutdown, which PyPy then reports as an
+    # unraisable ResourceWarning in whichever later test triggers garbage collection.
+    loop = asyncio.SelectorEventLoop()
     runner = web.AppRunner(blackd.make_app())
     loop.run_until_complete(runner.setup())
     loop.run_until_complete(web.SockSite(runner, sock).start())
