@@ -276,23 +276,33 @@ class LineGenerator(Visitor[Line]):
     def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_long_dict_values_in_parens in self.mode:
             for i, child in enumerate(node.children):
-                if i == 0:
+                if not child.prev_sibling or child.prev_sibling.type != token.COLON:
                     continue
-                if node.children[i - 1].type == token.COLON:
-                    if (
-                        child.type == syms.atom
-                        and child.children[0].type in OPENING_BRACKETS
-                        and not is_walrus_assignment(child)
+
+                if not is_walrus_assignment(child):
+                    maybe_make_parens_invisible_in_atom(
+                        child,
+                        parent=node,
+                        mode=self.mode,
+                        features=self.features,
+                        remove_brackets_around_comma=False,
+                    )
+
+                key = node.children[i - 2]
+                if max_delimiter_priority(child.children) > 0 or (
+                    # Allow parens around the value if otherwise the key would split
+                    key and max_delimiter_priority(key.children) > 0
+                ):
+                    while (
+                        child
+                        and len(child.children) == 3
+                        and is_lpar_token(child.children[0])
+                        and is_rpar_token(child.children[-1])
                     ):
-                        maybe_make_parens_invisible_in_atom(
-                            child,
-                            parent=node,
-                            mode=self.mode,
-                            features=self.features,
-                            remove_brackets_around_comma=False,
-                        )
-                    else:
-                        wrap_in_parentheses(node, child, visible=False, index=i)
+                        child = child.children[1]
+
+                    wrap_in_parentheses(node, child, visible=False, index=i)
+
         yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
@@ -2919,13 +2929,12 @@ def maybe_make_parens_invisible_in_atom(
             syms.simple_stmt,
         ]:
             return False
+
         if (
-            parent.type == syms.atom
-            and parent.children[0].type == token.LBRACE
-            and Feature.UNPARENTHESIZED_WALRUS_IN_SETS not in features
-        ):
-            # A named expression in a set literal needs its parentheses before
-            # Python 3.10 (3.9.1 accepts it, but 3.9.0 doesn't).
+            is_subscript
+            or (parent.type == syms.atom and parent.children[0].type == token.LBRACE)
+        ) and Feature.BARE_SET_SUBSCRIPT_WALRUSES not in features:
+            # A walrus in a subscript or set literal needs its parentheses before 3.10
             return False
 
     first = node.children[0]

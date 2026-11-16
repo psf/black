@@ -22,6 +22,9 @@
   unformatted by `# fmt: skip` or `--line-ranges` (#5671)
 - Remove the extra blank lines at the end of a file when the selected `--line-ranges`
   reaches its last line, matching a full-file run (#5654)
+- Fix `# fmt: skip` being ignored, or the comment being duplicated on every run, when
+  the same comment also contains `# fmt: off` or `# yapf: disable`, like
+  `# yapf: disable  # fmt: skip` (#5665)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
@@ -138,6 +141,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Don't remove the parentheses around an implicitly concatenated string with a trailer
+  such as `.format(...)` used as a comparison operand when they are needed to keep the
+  line within the line length limit in the unstable `string_processing` feature (#5666)
 - Put each string literal of an implicit string concatenation on its own line inside the
   surrounding brackets when the literal ends with a newline, instead of joining them
   onto a single line (#5554)
@@ -147,12 +153,15 @@
 - Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
+- Don't add or remove parens around long dict values unless they have delimiters (#5627)
 - Correctly indent `# fmt: off` comments inside brackets, such as function calls, and
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
 - Add parentheses around one-item sequence patterns in `case` statements, such as
   `case x,:` (#5673)
+- Keep parentheses around a walrus in a subscript (for example `x[(y := f())]`) when
+  targeting Python 3.9 or older (#5619)
 
 ### Configuration
 

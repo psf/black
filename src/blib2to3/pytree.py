@@ -92,7 +92,7 @@ class Base:
         """
         raise NotImplementedError
 
-    def __deepcopy__(self: _P) -> _P:
+    def __deepcopy__(self: _P, memo: Any) -> _P:
         return self.clone()
 
     def clone(self: _P) -> _P:
