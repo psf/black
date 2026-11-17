@@ -51,12 +51,17 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
+Cross-origin browser requests are rejected by default. If you need to access `blackd`
+from a browser-based client, pass one or more `--cors-allow-origin` options to allow
+specific origins.
+
 ### Command-line client
 
 `blackd-client` formats files through a running `blackd` from the command line. It only
 uses the Python standard library, so it is installed with plain `pip install black` and
 starts faster than `black` itself, which makes it a good fit for editor integrations and
-hooks that format one file at a time.
+hooks that format one file at a time. It is separate from `BlackDClient` above, which is
+an asyncio library for Python programs and needs the `[d]` extra.
 
 ```sh
 blackd &
@@ -75,10 +80,6 @@ when any file could not be formatted.
 ```{program-output} blackd-client --help
 
 ```
-
-Cross-origin browser requests are rejected by default. If you need to access `blackd`
-from a browser-based client, pass one or more `--cors-allow-origin` options to allow
-specific origins.
 
 ## Protocol
 
