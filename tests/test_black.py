@@ -679,7 +679,6 @@ class BlackTestCase(BlackBaseTestCase):
         )
         self.assertEqual(result.exit_code, 0)
 
-
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
