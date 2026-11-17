@@ -166,7 +166,7 @@
   targeting Python 3.9 or older (#5619)
 - Keep a trailing comment, such as `# pyright: ignore[...]`, on the same line as its
   string in the unstable `string_processing` feature when only the comment makes the
-  line too long, instead of wrapping the string in parentheses (#5698)
+  line too long, instead of wrapping the string in parentheses (#5705)
 
 ### Configuration
 
