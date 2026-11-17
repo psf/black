@@ -92,13 +92,10 @@
 
 <!-- Changes that affect Black's preview style -->
 
-- The `keep_commented_expressions_together` preview feature now keeps an expression
-  together wherever a standalone comment sits inside the surrounding brackets, not just
-  when the comment precedes the expression; a comment after a comparison in parentheses
-  no longer fragments it across lines (#5660)
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638, #5657)
+- Keep an expression together wherever a standalone comment sits inside the surrounding brackets (#5660)
 - Retain user-written parens around `in` clauses of comprehensions if they have
   delimiters (#4881)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a

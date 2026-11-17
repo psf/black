@@ -1847,15 +1847,9 @@ def delimiter_split(
             for i, leaf in enumerate(line.leaves)
             if bt.delimiters.get(id(leaf)) == delimiter_priority
         ]
+
         # A standalone comment at either end of the bracketed expression
-        # forces a line break there anyway. Split at the comment first and
-        # let each resulting segment be formatted on its own, instead of
-        # fragmenting an expression that fits on one line (#638). The
-        # trailing comment must sit at the same bracket depth as the last
-        # delimiter: a comment inside a nested bracket is in the middle of
-        # the expression, not at its end. Comments interleaved between
-        # delimiters (such as between comprehension clauses) also keep the
-        # delimiter split, as does a trailing comment after a comprehension.
+        # forces a line break there anyway.
         if comment_indices[0] < delimiter_indices[0] or (
             delimiter_priority != COMPREHENSION_PRIORITY
             and comment_indices[-1] > delimiter_indices[-1]
