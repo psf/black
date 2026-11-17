@@ -114,6 +114,8 @@
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
 - Fix `--line-ranges` producing invalid code when stacked decorators outside the
   selected lines are indented with 2 spaces or tabs (#5672)
+- Fix crash on a `# fmt: off` / `# fmt: on` block with only comments in an f-string or
+  t-string field (#5701)
 
 ### Preview style
 
