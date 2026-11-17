@@ -16,6 +16,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--line-ranges` selecting the wrong source line when `--skip-source-first-line` is enabled (#5691)
+
 - Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
   `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
 - Fix crash for a `...` body under a `def`, `async def` or `class` header that is left

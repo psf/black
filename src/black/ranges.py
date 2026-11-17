@@ -84,6 +84,33 @@ def sanitized_lines(
     return good_lines
 
 
+def adjust_lines_for_skipped_first_line(
+    lines: Collection[tuple[int, int]],
+) -> Collection[tuple[int, int]]:
+    """Adjust line ranges when the first source line was skipped.
+
+    The ranges in ``lines`` are 1-based and refer to the original source. When
+    ``--skip-source-first-line`` is enabled, the first line is removed before
+    formatting, so the ranges must be shifted down by one to refer to the
+    shortened source.
+
+    Ranges that select only the skipped header are dropped. If all requested
+    ranges fall entirely on the skipped header, return ``[(0, 0)]`` so that
+    formatting treats this as "specific line ranges were requested but none
+    matched" instead of formatting the whole file.
+    """
+    if not lines:
+        return lines
+    adjusted: list[tuple[int, int]] = []
+    for start, end in lines:
+        if end < 2:
+            continue
+        adjusted.append((max(1, start - 1), end - 1))
+    if not adjusted:
+        return [(0, 0)]
+    return adjusted
+
+
 def adjusted_lines(
     lines: Collection[tuple[int, int]],
     original_source: str,

@@ -641,6 +641,45 @@ class BlackTestCase(BlackBaseTestCase):
             )
             self.assertNotIn(b"\r\r\n", result.stdout_bytes)
 
+    def test_skip_source_first_line_with_line_ranges_file(self) -> None:
+        source = "not a Python header\nx=1\ny=2\n"
+        expected = "not a Python header\nx = 1\ny=2\n"
+        with TemporaryDirectory() as workspace:
+            test_file = Path(workspace) / "test.py"
+            test_file.write_text(source, encoding="utf-8")
+            result = BlackRunner().invoke(
+                black.main,
+                [
+                    "-x",
+                    "--line-ranges=2-2",
+                    str(test_file),
+                    f"--config={EMPTY_CONFIG}",
+                ],
+            )
+            assert result.exit_code == 0
+            assert test_file.read_text(encoding="utf-8") == expected
+
+    def test_skip_source_first_line_with_line_ranges_stdin(self) -> None:
+        source = b"not a Python header\nx=1\ny=2\n"
+        expected = "not a Python header\nx = 1\ny=2\n"
+        result = BlackRunner().invoke(
+            black.main,
+            ["-x", "--line-ranges=2-2", "-", f"--config={EMPTY_CONFIG}"],
+            input=BytesIO(source),
+        )
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(result.stdout, expected)
+
+    def test_skip_source_first_line_with_line_ranges_header_only(self) -> None:
+        source = b"not a Python header\nx=1\ny=2\n"
+        result = BlackRunner().invoke(
+            black.main,
+            ["-x", "--line-ranges=1-1", "--check", "-", f"--config={EMPTY_CONFIG}"],
+            input=BytesIO(source),
+        )
+        self.assertEqual(result.exit_code, 0)
+
+
     def test_skip_magic_trailing_comma(self) -> None:
         source, _ = read_data("cases", "expression")
         expected, _ = read_data(
