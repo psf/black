@@ -3,8 +3,8 @@
 import pytest
 
 from black.ranges import (
-    adjusted_lines,
     adjust_lines_for_skipped_first_line,
+    adjusted_lines,
     parse_line_ranges,
     sanitized_lines,
 )

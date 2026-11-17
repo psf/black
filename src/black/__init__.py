@@ -75,8 +75,8 @@ from black.parsing import (  # noqa F401
     stringify_ast,
 )
 from black.ranges import (
-    adjusted_lines,
     adjust_lines_for_skipped_first_line,
+    adjusted_lines,
     convert_unchanged_lines,
     parse_line_ranges,
     sanitized_lines,
