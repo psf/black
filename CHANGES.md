@@ -16,6 +16,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
+  `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
+
 - Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
   `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
 - Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
