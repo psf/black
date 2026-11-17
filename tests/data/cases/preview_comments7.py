@@ -304,9 +304,7 @@ square = Square(4)  # type: Optional[Square]
 
 # Regression test for https://github.com/psf/black/issues/3756.
 [
-    (  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    ),
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ]
 [
     (  # aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa

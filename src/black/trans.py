@@ -2159,6 +2159,21 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
                             " resultant line would still be over the specified line"
                             " length and can't be split further by StringSplitter."
                         )
+
+            # If only the trailing comments make this line too long, wrapping the
+            # string would just move them (e.g. pragmas) away from it.
+            if line.comments:
+                first, *rest = LL
+                line_without_comments = (
+                    f"{first.prefix}{'    ' * line.depth}{first.value}"
+                    + "".join(str(leaf) for leaf in rest)
+                )
+                if str_width(line_without_comments) <= self.line_length:
+                    return TErr(
+                        "Line is only too long because of its comments, which"
+                        " would be moved away from the string by wrapping it."
+                    )
+
             return Ok([string_idx])
 
         return TErr("This line does not contain any non-atomic strings.")
