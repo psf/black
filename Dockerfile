@@ -11,8 +11,7 @@ WORKDIR /src
 COPY . .
 RUN python -m venv --without-pip $VIRTUAL_ENV
 
-# virtualenv 20.39 uses pip 26.0 - use `ENV ...=P2D` once we bump virtualenv/hatch
-RUN export PIP_UPLOADED_PRIOR_TO=$(date -u -d "2 days ago" +%Y-%m-%dT%H:%M:%SZ) \
+RUN export PIP_UPLOADED_PRIOR_TO=P2D \
     && pip install --upgrade pip \
     && pip install --group hatch \
     && hatch build -t wheel
