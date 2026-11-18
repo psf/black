@@ -200,7 +200,7 @@ def report(results: Sequence[Result], check: bool) -> str:
 
 def parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="blackd-client",
+        prog="blackd-format",
         description=(
             "Format files with a running blackd server. Options map to blackd's"
             " request headers; unlike black, pyproject.toml is not read."
