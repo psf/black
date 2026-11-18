@@ -16,6 +16,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--line-ranges` producing invalid code for `match` statements whose `case` blocks
+  outside the selected lines are indented with 2 spaces or tabs (#5712)
 - Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
   `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
 

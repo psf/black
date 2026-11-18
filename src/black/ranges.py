@@ -365,6 +365,23 @@ class _TopLevelStatementsVisitor(Visitor[None]):
                 ancestor, self._replacements, self._lines_set
             )
 
+    def visit_match_stmt(self, node: Node) -> Iterator[None]:
+        yield from []
+        # A `match_stmt` holds its `case_block+` directly rather than in a `suite`:
+        #   match_stmt: "match" subject_expr ':' NEWLINE INDENT case_block+ DEDENT
+        # Without this method, `visit_default` would descend into the case blocks and
+        # `visit_suite` would convert a whole one at a time. Their text is emitted
+        # verbatim, so only its first line would be reindented, which produces invalid
+        # code whenever the source is not already indented in multiples of four.
+        # Convert the statement as a whole when none of it is selected, and otherwise
+        # leave it to `_convert_unchanged_line_by_line`, which reindents every line.
+        if _contains_standalone_comment(node):
+            return
+        if not _get_line_range(node).intersection(self._lines_set):
+            _convert_node_to_standalone_comment(
+                node, self._replacements, self._lines_set
+            )
+
     def visit_suite(self, node: Node) -> Iterator[None]:
         yield from []
         # If there is a STANDALONE_COMMENT node, it means parts of the node tree
