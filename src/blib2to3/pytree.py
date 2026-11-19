@@ -57,9 +57,11 @@ class Base:
     A node may be a subnode of at most one parent.
     """
 
-    # Default values for instance variables
+    __slots__ = ("children", "parent", "type")
+
+    # Instance variables
     type: int  # int: token number (< 256) or symbol number (>= 256)
-    parent: Optional["Node"] = None  # Parent node pointer, or None
+    parent: Optional["Node"]  # Parent node pointer, or None
     children: list[NL]  # List of subnodes
 
     def __new__(cls, *args, **kwds):
@@ -215,6 +217,11 @@ class Base:
 class Node(Base):
     """Concrete implementation for interior nodes."""
 
+    __slots__ = ("next_sibling_map", "prev_sibling_map")
+
+    prev_sibling_map: dict[int, NL | None] | None
+    next_sibling_map: dict[int, NL | None] | None
+
     def __init__(
         self,
         type: int,
@@ -231,6 +238,7 @@ class Node(Base):
         """
         assert type >= 256, type
         self.type = type
+        self.parent = None
         self.children = list(children)
         for ch in self.children:
             assert ch.parent is None, repr(ch)
@@ -413,15 +421,27 @@ class Node(Base):
 class Leaf(Base):
     """Concrete implementation for leaf nodes."""
 
+    __slots__ = (
+        "_prefix",
+        "bracket_depth",
+        "column",
+        "fmt_pass_converted_first_leaf",
+        "line_ranges_first_lineno",
+        "line_ranges_selected",
+        "lineno",
+        "opening_bracket",
+        "value",
+    )
+
     value: str
-    bracket_depth: int = 0
+    bracket_depth: int
 
     # Changed later in brackets.py
-    opening_bracket: Optional["Leaf"] = None
+    opening_bracket: Optional["Leaf"]
 
-    _prefix = ""  # Whitespace and comments preceding this token in the input
-    lineno: int = 0  # Line where this token starts in the input
-    column: int = 0  # Column where this token starts in the input
+    _prefix: str  # Whitespace and comments preceding this token in the input
+    lineno: int  # Line where this token starts in the input
+    column: int  # Column where this token starts in the input
 
     # clone() shares the below fields verbatim
     # These fields must either be immutable or not mutated, so as to prevent
@@ -430,13 +450,13 @@ class Leaf(Base):
     # If not None, this Leaf is created by converting a block of fmt off/skip code.
     # The first Leaf in the converted code
     # Use read-only
-    fmt_pass_converted_first_leaf: Optional["Leaf"] = None
+    fmt_pass_converted_first_leaf: Optional["Leaf"]
 
     # Metadata for STANDALONE_COMMENT leaves converted from unchanged code for --line-ranges.
     # The converted block's first physical line
-    line_ranges_first_lineno: int = 0
+    line_ranges_first_lineno: int
     # The requested physical source lines; can be before `first_lineno`
-    line_ranges_selected: Optional[frozenset[int]] = None
+    line_ranges_selected: Optional[frozenset[int]]
 
     def __init__(
         self,
@@ -458,8 +478,13 @@ class Leaf(Base):
         """
 
         assert 0 <= type < 256, type
+        self.parent = None
         if context is not None:
             self._prefix, (self.lineno, self.column) = context
+        else:
+            self._prefix = ""
+            self.lineno = 0
+            self.column = 0
         self.type = type
         self.value = value
         if prefix is not None:
