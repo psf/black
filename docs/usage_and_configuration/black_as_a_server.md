@@ -55,6 +55,18 @@ Cross-origin browser requests are rejected by default. If you need to access `bl
 from a browser-based client, pass one or more `--cors-allow-origin` options to allow
 specific origins.
 
+`blackd` can also read its options from a `[tool.blackd]` table in a `pyproject.toml`
+file, which it finds the same way _Black_ finds its
+[configuration file](the_basics.md#configuration-via-a-file), starting from the current
+directory. Pass `--config` to read a different file instead. The keys are the names of
+the command line options, and options given on the command line take precedence:
+
+```toml
+[tool.blackd]
+bind-port = 9090
+cors-allow-origin = ["https://example.com"]
+```
+
 ## Protocol
 
 `blackd` only accepts `POST` requests at the `/` path. The body of the request should
