@@ -25,6 +25,19 @@ class Flag(collections.namedtuple("FlagBase", "name, cast")):
             name = name.replace("_", "")
         return "g:black_" + name
 
+    @property
+    def scoped_expr(self):
+        # Reuse vim_rc_name so the line_length -> black_linelength remapping is
+        # preserved in every scope. Lowest scope wins: b: > w: > t: > g:, with
+        # g: always defined in plugin/black.vim as the final fallback.
+        var = self.vim_rc_name.removeprefix("g:")
+        return (
+            f"exists('b:{var}') ? b:{var} : "
+            f"exists('w:{var}') ? w:{var} : "
+            f"exists('t:{var}') ? t:{var} : "
+            f"g:{var}"
+        )
+
 
 FLAGS = [
     Flag(name="line_length", cast=int),
