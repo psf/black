@@ -280,7 +280,7 @@ def get_configs():
         toml_config = {}
 
     return {
-        flag.var_name: toml_config.get(flag.name, flag.cast(vim.eval(flag.vim_rc_name)))
+        flag.var_name: toml_config.get(flag.name, flag.cast(vim.eval(flag.scoped_expr)))
         for flag in FLAGS
     }
 
