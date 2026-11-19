@@ -17,7 +17,7 @@
 <!-- Changes that affect Black's stable style -->
 
 - Fix `--line-ranges` over-indenting comments outside the selected ranges when their
-  block is reindented and the file uses 2-space or tab indentation (#XXXX)
+  block is reindented and the file uses 2-space or tab indentation (#5716)
 
 - Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
   `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
