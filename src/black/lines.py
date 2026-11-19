@@ -1473,7 +1473,11 @@ def is_line_short_enough(line: Line, *, mode: Mode, line_str: str = "") -> bool:
 
         if is_multiline_string(leaf):
             if leaf.parent and (
-                leaf.parent.type == syms.test
+                (
+                    leaf.parent.type in {syms.test, syms.dictsetmaker}
+                    if Preview.wrap_long_dict_values_in_parens in mode
+                    else leaf.parent.type == syms.test
+                )
                 or (leaf.parent.parent and leaf.parent.parent.type == syms.dictsetmaker)
             ):
                 # Keep ternary and dictionary values parenthesized
@@ -1653,6 +1657,16 @@ def can_omit_invisible_parens(
     are too long.
     """
     line = rhs.body
+
+    # Keep type ignores on the body and closing paren on separate physical lines.
+    if any(
+        is_type_ignore_comment(comment, mode=mode)
+        for comment in line.comments_after(line.leaves[-1])
+    ) and any(
+        is_type_ignore_comment(comment, mode=mode)
+        for comment in rhs.tail.comments_after(rhs.closing_bracket)
+    ):
+        return False
 
     # Multiple type ignores must stay on separate physical lines. Keeping the
     # optional parens gives the line transformer a safe place to split them.

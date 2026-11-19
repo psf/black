@@ -375,14 +375,15 @@ class _TopLevelStatementsVisitor(Visitor[None]):
             return
         # Find the semantic parent of this suite. For `async_stmt` and
         # `async_funcdef`, the ASYNC token is defined on a separate level by the
-        # grammar.
+        # grammar (and `# fmt: skip` on the header folds `async` into a preceding
+        # STANDALONE_COMMENT under that parent).
         semantic_parent = node.parent
-        if semantic_parent is not None:
-            if (
-                semantic_parent.prev_sibling is not None
-                and semantic_parent.prev_sibling.type == ASYNC
-            ):
-                semantic_parent = semantic_parent.parent
+        if (
+            semantic_parent is not None
+            and semantic_parent.parent is not None
+            and semantic_parent.parent.type in {syms.async_stmt, syms.async_funcdef}
+        ):
+            semantic_parent = semantic_parent.parent
         if semantic_parent is not None and not _get_line_range(
             semantic_parent
         ).intersection(self._lines_set):

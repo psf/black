@@ -16,6 +16,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
+  `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
 - Do not let standalone comments break fluent method chaining formatting (#5644)
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
@@ -26,9 +28,16 @@
   unformatted by `# fmt: skip` or `--line-ranges` (#5671)
 - Remove the extra blank lines at the end of a file when the selected `--line-ranges`
   reaches its last line, matching a full-file run (#5654)
+- Fix `# fmt: skip` being ignored, or the comment being duplicated on every run, when
+  the same comment also contains `# fmt: off` or `# yapf: disable`, like
+  `# yapf: disable  # fmt: skip` (#5665)
+- Preserve trailing whitespace and tab expansion in multiline docstrings containing
+  doctests so formatting no longer breaks their source or expected output (#5687)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
+- Fix crash when removing parentheses would combine two `# type: ignore` comments onto
+  one line (#5686)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
 - Normalize hex codes in unicode escape sequences in f-strings (#5526)
@@ -76,7 +85,7 @@
   different code on the second pass" (#5615)
 - Fix crash on an assignment whose target is split over lines inside redundant
   parentheses and doesn't fit on one line with the value, such as `(a.b(c)` ...
-  `.d[e]) = f` (#5606, #5621)
+  `.d[e]) = f` (#5606, #5621, #5662)
 - Fix crash when `# fmt: skip` is on an opening bracket that starts an operand of a
   longer expression after `with` or `yield` (#5620)
 - Fix crash on a method chain with multiple `# type: ignore` comments when another
@@ -140,6 +149,9 @@
 - Don't remove the parentheses around an implicitly concatenated string in a function
   argument default value when they are needed to keep the line within the line length
   limit (#5558)
+- Don't remove the parentheses around an implicitly concatenated string with a trailer
+  such as `.format(...)` used as a comparison operand when they are needed to keep the
+  line within the line length limit in the unstable `string_processing` feature (#5666)
 - Put each string literal of an implicit string concatenation on its own line inside the
   surrounding brackets when the literal ends with a newline, instead of joining them
   onto a single line (#5554)
@@ -149,12 +161,15 @@
 - Fix the unstable `string_processing` feature crashing on strings in lists, tuples and
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
+- Don't add or remove parens around long dict values unless they have delimiters (#5627)
 - Correctly indent `# fmt: off` comments inside brackets, such as function calls, and
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
   (#5646)
 - Add parentheses around one-item sequence patterns in `case` statements, such as
   `case x,:` (#5673)
+- Keep parentheses around a walrus in a subscript (for example `x[(y := f())]`) when
+  targeting Python 3.9 or older (#5619)
 
 ### Configuration
 
@@ -190,6 +205,9 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Format each Jupyter notebook cell once instead of twice, and skip the safety checks
+  for cells that are already formatted, making `--check` on formatted notebooks about 3x
+  faster (#5683)
 - Skip the regular expressions in string quote normalization when a string has no
   backslash and no quote character to escape (#5680)
 
@@ -223,6 +241,7 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the GitHub Action picking up `venv.py` from the local repository (#5611)
+- Stop including pip & build dependencies in Docker images (#5707)
 
 ### Documentation
 

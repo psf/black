@@ -1,2 +1,0 @@
-[tool.pylint.format]
-max-line-length = "88"

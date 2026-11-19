@@ -602,6 +602,39 @@ def open_file_from_long_file_path(
 ):
     pass
 
+# Regression test for https://github.com/psf/black/issues/3409.
+# Keep the parens around a long implicit concatenation used as a comparison
+# operand so it stays splittable, but strip them when the result fits.
+def assert_on_error_message():
+    assert remove_color_code(output) == (
+        "error: not checking stubs due to mypy build errors:\n{}.pyi:2: "
+        'error: Name "f" already defined'.format(TEST_MODULE_NAME)
+    )
+    assert remove_color_code(output) != (
+        "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "f" already defined and more: {}'.format(TEST_MODULE_NAME)
+    )
+    assert remove_color_code(output) == (
+        "short "
+        "string".format(TEST_MODULE_NAME)
+    )
+    assert get_the_current_value() == (
+        "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "f" already defined and more: {}'.format(TEST_MODULE_NAME)
+    )
+    assert get_the_current_value() == (
+        "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "%s" already defined and more: %s' % (first, second)
+    )
+    assert get_the_current_value() == (
+        "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "f" already defined and more'.upper()
+    )
+    assert get_the_current_value() == (
+        "hello "
+        "world {}".format(compute_text(first_argument, second_argument))
+    )
+
 
 # output
 
@@ -1355,3 +1388,34 @@ def open_file_from_long_file_path(
     ),
 ):
     pass
+
+
+# Regression test for https://github.com/psf/black/issues/3409.
+# Keep the parens around a long implicit concatenation used as a comparison
+# operand so it stays splittable, but strip them when the result fits.
+def assert_on_error_message():
+    assert remove_color_code(output) == (
+        "error: not checking stubs due to mypy build errors:\n{}.pyi:2: "
+        'error: Name "f" already defined'.format(TEST_MODULE_NAME)
+    )
+    assert remove_color_code(output) != (
+        "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "f" already defined and more: {}'.format(TEST_MODULE_NAME)
+    )
+    assert remove_color_code(output) == "short string".format(TEST_MODULE_NAME)
+    assert get_the_current_value() == (
+        "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "f" already defined and more: {}'.format(TEST_MODULE_NAME)
+    )
+    assert get_the_current_value() == (
+        "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "%s" already defined and more: %s' % (first, second)
+    )
+    assert (
+        get_the_current_value()
+        == "error: not checking stubs due to mypy build errors in this module: "
+        'error: Name "f" already defined and more'.upper()
+    )
+    assert get_the_current_value() == "hello world {}".format(
+        compute_text(first_argument, second_argument)
+    )

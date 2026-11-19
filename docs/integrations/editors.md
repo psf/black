@@ -465,15 +465,11 @@ close and reopen your File, _Black_ will be done with its job.
 
 ## Visual Studio Code
 
-- Use the
-  [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-  ([instructions](https://code.visualstudio.com/docs/python/formatting)).
-
-- Alternatively the pre-release
-  [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter)
-  extension can be used which runs a [Language Server Protocol](https://langserver.org/)
-  server for Black. Formatting is much more responsive using this extension, **but the
-  minimum supported version of Black is 22.3.0**.
+Use the
+[Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter)
+extension. It runs a [Language Server Protocol](https://langserver.org/) server for
+Black. Note that the extension tends to only support the latest version of Black. Check
+the extention's documentation for the latest information.
 
 ## SublimeText
 
