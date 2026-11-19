@@ -289,9 +289,9 @@ class LineGenerator(Visitor[Line]):
                     )
 
                 key = node.children[i - 2]
-                if max_delimiter_priority(child.children) > 0 or (
+                if max_delimiter_priority(child.children, self.mode) > 0 or (
                     # Allow parens around the value if otherwise the key would split
-                    key and max_delimiter_priority(key.children) > 0
+                    key and max_delimiter_priority(key.children, self.mode) > 0
                 ):
                     while (
                         child
@@ -841,7 +841,7 @@ class LineGenerator(Visitor[Line]):
                     unwrapped = True
                     child = child.children[1]
 
-                max_delimiter = max_delimiter_priority(child.children)
+                max_delimiter = max_delimiter_priority(child.children, self.mode)
 
                 # Keep 1 level of invisible parens so it can be wrapped if too long
                 wrap_in_parentheses(
@@ -2877,7 +2877,7 @@ def maybe_make_parens_invisible_in_atom(
             # around a tuple, however, can be a bit overzealous so we provide
             # and option to skip this check for `for` and `with` statements.
             not remove_brackets_around_comma
-            and max_delimiter_priority_in_atom(node) >= COMMA_PRIORITY
+            and max_delimiter_priority_in_atom(node, mode) >= COMMA_PRIORITY
             and not can_remove_generator_parens
             # The comma is in a yielded tuple, which gets its own parentheses
             and not (Preview.parenthesize_tuple_in_yield in mode and is_yield(node))

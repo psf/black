@@ -4,6 +4,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Final, Union
 
+from black.mode import Mode, Preview
 from black.nodes import (
     BRACKET,
     CLOSING_BRACKETS,
@@ -69,7 +70,7 @@ class BracketTracker:
     _lambda_argument_depths: list[int] = field(default_factory=list)
     invisible: list[Leaf] = field(default_factory=list)
 
-    def mark(self, leaf: Leaf) -> None:
+    def mark(self, leaf: Leaf, mode: Mode) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
 
         All leaves receive an int `bracket_depth` field that stores how deep
@@ -125,7 +126,10 @@ class BracketTracker:
             self.depth += 1
             if not leaf.value:
                 self.invisible.append(leaf)
-        if leaf.type != STANDALONE_COMMENT:
+        if (
+            Preview.split_commented_method_chains not in mode
+            or leaf.type != STANDALONE_COMMENT
+        ):
             self.previous = leaf
         self.maybe_increment_lambda_arguments(leaf)
         self.maybe_increment_for_loop_variable(leaf)
@@ -348,7 +352,7 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf | None = None) -> Prior
     return 0
 
 
-def max_delimiter_priority_in_atom(node: LN) -> Priority:
+def max_delimiter_priority_in_atom(node: LN, mode: Mode) -> Priority:
     """Return maximum delimiter priority inside `node`.
 
     This is specific to atoms with contents contained in a pair of parentheses.
@@ -362,14 +366,14 @@ def max_delimiter_priority_in_atom(node: LN) -> Priority:
     if not (first.type == token.LPAR and last.type == token.RPAR):
         return 0
 
-    return max_delimiter_priority(node.children[1:-1])
+    return max_delimiter_priority(node.children[1:-1], mode)
 
 
-def max_delimiter_priority(children: list[LN]) -> Priority:
+def max_delimiter_priority(children: list[LN], mode: Mode) -> Priority:
     """Return maximum delimiter priority in a list of leaves and nodes."""
     bt = BracketTracker()
     for leaf in _top_level_leaves(children):
-        bt.mark(leaf)
+        bt.mark(leaf, mode)
     try:
         return bt.max_delimiter_priority()
 
