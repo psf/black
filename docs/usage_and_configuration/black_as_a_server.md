@@ -55,6 +55,32 @@ Cross-origin browser requests are rejected by default. If you need to access `bl
 from a browser-based client, pass one or more `--cors-allow-origin` options to allow
 specific origins.
 
+### Command-line client
+
+`blackd-format` formats files through a running `blackd` from the command line. It only
+uses the Python standard library, so it is installed with plain `pip install black` and
+starts faster than `black` itself, which makes it a good fit for editor integrations and
+hooks that format one file at a time. It is separate from `BlackDClient` above, which is
+an asyncio library for Python programs and needs the `[d]` extra.
+
+```sh
+blackd &
+blackd-format src/app.py src/models.py
+blackd-format --check --diff -l 100 src/app.py
+cat src/app.py | blackd-format -   # formatted code is written to standard output
+```
+
+Files are sent to `blackd` in parallel, one request each, with at most `--workers`
+(default 10) requests at a time. The formatting options match _Black_'s and are sent as
+the request headers described below. Unlike _Black_, `blackd-format` does not read
+`pyproject.toml` and does not search directories, so pass the options and files you want
+explicitly. It exits with 1 when `--check` finds files that would change, and with 123
+when any file could not be formatted.
+
+```{program-output} blackd-format --help
+
+```
+
 ## Protocol
 
 `blackd` only accepts `POST` requests at the `/` path. The body of the request should
