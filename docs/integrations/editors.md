@@ -230,8 +230,8 @@ Configuration:
 - `g:black_quiet` (defaults to `0`)
 - `g:black_preview` (defaults to `0`)
 
-These configuration variables can also be set at buffer, window, or tabpage scope
-using `b:`, `w:`, or `t:`; the most local value wins (`b:` > `w:` > `t:` > `g:`). The global
+These configuration variables can also be set at buffer, window, or tabpage scope using
+`b:`, `w:`, or `t:`; the most local value wins (`b:` > `w:` > `t:` > `g:`). The global
 `g:` defaults still apply when no local value is set.
 
 #### Installation
