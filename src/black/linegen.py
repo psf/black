@@ -13,6 +13,7 @@ from typing import Final, Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
+    COMPREHENSION_PRIORITY,
     DOT_PRIORITY,
     LOGIC_PRIORITY,
     STRING_PRIORITY,
@@ -56,6 +57,7 @@ from black.nodes import (
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
     is_docstring,
+    is_empty_rpar,
     is_empty_tuple,
     is_generator,
     is_list,
@@ -922,6 +924,17 @@ def transform_line(
     `features` are syntactical features that may be used in the output.
     """
     if line.is_comment:
+        yield line
+        return
+
+    if (
+        Preview.keep_long_single_imports in mode
+        and line.is_import
+        and is_empty_rpar(line.leaves[-1])
+        and not any(line.comments.values())
+        and not line.contains_standalone_comments()
+        and not any(leaf.type == token.COMMA for leaf in line.leaves)
+    ):
         yield line
         return
 
@@ -1843,15 +1856,23 @@ def delimiter_split(
         and line.contains_standalone_comments()
         and delimiter_priority != COMMA_PRIORITY
     ):
-        first_comment_idx = next(
+        comment_indices = [
             i for i, leaf in enumerate(line.leaves) if leaf.type == STANDALONE_COMMENT
-        )
-        first_delimiter_idx = next(
+        ]
+        delimiter_indices = [
             i
             for i, leaf in enumerate(line.leaves)
             if bt.delimiters.get(id(leaf)) == delimiter_priority
-        )
-        if first_comment_idx < first_delimiter_idx:
+        ]
+
+        # A standalone comment at either end of the bracketed expression
+        # forces a line break there anyway.
+        if comment_indices[0] < delimiter_indices[0] or (
+            delimiter_priority != COMPREHENSION_PRIORITY
+            and comment_indices[-1] > delimiter_indices[-1]
+            and line.leaves[comment_indices[-1]].bracket_depth
+            == line.leaves[delimiter_indices[-1]].bracket_depth
+        ):
             raise CannotSplit("Standalone comments should be split first")
 
     if (

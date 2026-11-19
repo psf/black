@@ -121,9 +121,13 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Keep long single-name `from` imports on one line unless they contain comments or a
+  magic trailing comma (#5669)
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638, #5657)
+- Keep an expression together wherever a standalone comment sits inside the surrounding
+  brackets (#5660)
 - Retain user-written parens around `in` clauses of comprehensions if they have
   delimiters (#4881)
 - Do not let standalone comments break fluent method chaining formatting (#5644)
