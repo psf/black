@@ -8,8 +8,7 @@ environment. Great for enforcing that your code matches the _Black_ code style.
 This action is known to support all GitHub-hosted runner OSes. In addition, only
 published versions of _Black_ are supported (i.e. whatever is available on PyPI).
 
-Finally, this action installs _Black_ with the `colorama` extra so the `--color` flag
-should work fine.
+This action installs _Black_ with the `colorama` extra to support the `--color` flag.
 
 ## Usage
 
@@ -28,9 +27,12 @@ jobs:
       - uses: psf/black@stable
 ```
 
-We recommend the use of the `@stable` tag, but per version tags also exist if you prefer
+We recommend the use of the `@stable` tag, but per-version tags also exist if you prefer
 that. Note that the action's version you select is independent of the version of _Black_
 the action will use.
+
+As of 26.10.0, every GitHub release is immutable, meaning they cannot be changed after
+publication. This improves the security of using per-version tags.
 
 ### Versions
 
@@ -72,9 +74,9 @@ the setup-python action may be required, for example:
 
 ```{note}
 This action only reads version specifiers from standard `pyproject.toml` locations.
-Poetry-specific dependency tables such as `tool.poetry.dependencies` are not parsed.
-If you manage `black` with Poetry, set `tool.black.required-version` or use the
-`version` input.
+Poetry-specific dependency tables such as `tool.poetry.dependencies` are not parsed. If
+you manage `black` with Poetry, set `tool.black.required-version` or use the `version`
+input.
 ```
 
 **Security note:** `use_pyproject` only accepts standard version specifiers for `black`
@@ -100,9 +102,10 @@ more details.
 ### CLI Options
 
 You can also configure the arguments passed to _Black_ via `options` (defaults to
-`'--check --diff'`) and `src` (default is `'.'`). Please note that the
-[`--check` flag](labels/exit-code) is required so that the workflow fails if _Black_
-finds files that need to be formatted.
+`'--check --diff'`) and `src` (default is `'.'`).
+
+If you pass the `--check` flag, the [workflow will fail](labels/exit-code) if _Black_
+finds files that need to be formatted. Otherwise, Black will reformat discovered files.
 
 Here's an example configuration:
 
