@@ -92,4 +92,6 @@ def test_node_hierarchy_and_slots() -> None:
     assert not hasattr(unpickled.children[0], "__dict__")
     assert unpickled.type == node.type
     assert len(unpickled.children) == 3
-    assert unpickled.children[0].value == "a"
+    first_child = unpickled.children[0]
+    assert isinstance(first_child, Leaf)
+    assert first_child.value == "a"
