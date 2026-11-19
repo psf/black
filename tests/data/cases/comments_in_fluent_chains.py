@@ -1,3 +1,5 @@
+# flags: --preview
+
 def f():
     return (
         df_day.assign(date=date, fund_ticker=ticker).pipe(lambda x: x.loc[x["Shares"].notnull()])
