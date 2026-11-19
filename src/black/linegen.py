@@ -13,6 +13,7 @@ from typing import Final, Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
+    COMPREHENSION_PRIORITY,
     DOT_PRIORITY,
     LOGIC_PRIORITY,
     STRING_PRIORITY,
@@ -56,6 +57,7 @@ from black.nodes import (
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
     is_docstring,
+    is_empty_rpar,
     is_empty_tuple,
     is_generator,
     is_list,
@@ -276,23 +278,33 @@ class LineGenerator(Visitor[Line]):
     def visit_dictsetmaker(self, node: Node) -> Iterator[Line]:
         if Preview.wrap_long_dict_values_in_parens in self.mode:
             for i, child in enumerate(node.children):
-                if i == 0:
+                if not child.prev_sibling or child.prev_sibling.type != token.COLON:
                     continue
-                if node.children[i - 1].type == token.COLON:
-                    if (
-                        child.type == syms.atom
-                        and child.children[0].type in OPENING_BRACKETS
-                        and not is_walrus_assignment(child)
+
+                if not is_walrus_assignment(child):
+                    maybe_make_parens_invisible_in_atom(
+                        child,
+                        parent=node,
+                        mode=self.mode,
+                        features=self.features,
+                        remove_brackets_around_comma=False,
+                    )
+
+                key = node.children[i - 2]
+                if max_delimiter_priority(child.children) > 0 or (
+                    # Allow parens around the value if otherwise the key would split
+                    key and max_delimiter_priority(key.children) > 0
+                ):
+                    while (
+                        child
+                        and len(child.children) == 3
+                        and is_lpar_token(child.children[0])
+                        and is_rpar_token(child.children[-1])
                     ):
-                        maybe_make_parens_invisible_in_atom(
-                            child,
-                            parent=node,
-                            mode=self.mode,
-                            features=self.features,
-                            remove_brackets_around_comma=False,
-                        )
-                    else:
-                        wrap_in_parentheses(node, child, visible=False, index=i)
+                        child = child.children[1]
+
+                    wrap_in_parentheses(node, child, visible=False, index=i)
+
         yield from self.visit_default(node)
 
     def visit_funcdef(self, node: Node) -> Iterator[Line]:
@@ -912,6 +924,17 @@ def transform_line(
     `features` are syntactical features that may be used in the output.
     """
     if line.is_comment:
+        yield line
+        return
+
+    if (
+        Preview.keep_long_single_imports in mode
+        and line.is_import
+        and is_empty_rpar(line.leaves[-1])
+        and not any(line.comments.values())
+        and not line.contains_standalone_comments()
+        and not any(leaf.type == token.COMMA for leaf in line.leaves)
+    ):
         yield line
         return
 
@@ -1865,15 +1888,23 @@ def delimiter_split(
         and line.contains_standalone_comments()
         and delimiter_priority != COMMA_PRIORITY
     ):
-        first_comment_idx = next(
+        comment_indices = [
             i for i, leaf in enumerate(line.leaves) if leaf.type == STANDALONE_COMMENT
-        )
-        first_delimiter_idx = next(
+        ]
+        delimiter_indices = [
             i
             for i, leaf in enumerate(line.leaves)
             if bt.delimiters.get(id(leaf)) == delimiter_priority
-        )
-        if first_comment_idx < first_delimiter_idx:
+        ]
+
+        # A standalone comment at either end of the bracketed expression
+        # forces a line break there anyway.
+        if comment_indices[0] < delimiter_indices[0] or (
+            delimiter_priority != COMPREHENSION_PRIORITY
+            and comment_indices[-1] > delimiter_indices[-1]
+            and line.leaves[comment_indices[-1]].bracket_depth
+            == line.leaves[delimiter_indices[-1]].bracket_depth
+        ):
             raise CannotSplit("Standalone comments should be split first")
 
     if (
@@ -2534,13 +2565,15 @@ def normalize_invisible_parens(
             elif (
                 is_atom_with_invisible_parens(child)
                 and not is_tuple(child)
-                and not any("#" in leaf.prefix for leaf in child.leaves())
+                and not _atom_has_inner_comments(child)
             ):
                 # Drop the now invisible parens so the target splits the same
                 # way as one written without parentheses. Otherwise the next
                 # pass, which no longer sees them, can split it differently.
                 # A tuple target keeps them, since one written without
-                # parentheses gets invisible parens too.
+                # parentheses gets invisible parens too. Comments before the
+                # opening paren do not block the drop: that prefix is moved
+                # onto the middle node below, so they are kept.
                 middle = child.children[1]
                 middle.prefix = child.prefix
                 child.replace(middle)
@@ -2949,13 +2982,12 @@ def maybe_make_parens_invisible_in_atom(
             syms.simple_stmt,
         ]:
             return False
+
         if (
-            parent.type == syms.atom
-            and parent.children[0].type == token.LBRACE
-            and Feature.UNPARENTHESIZED_WALRUS_IN_SETS not in features
-        ):
-            # A named expression in a set literal needs its parentheses before
-            # Python 3.10 (3.9.1 accepts it, but 3.9.0 doesn't).
+            is_subscript
+            or (parent.type == syms.atom and parent.children[0].type == token.LBRACE)
+        ) and Feature.BARE_SET_SUBSCRIPT_WALRUSES not in features:
+            # A walrus in a subscript or set literal needs its parentheses before 3.10
             return False
 
     first = node.children[0]

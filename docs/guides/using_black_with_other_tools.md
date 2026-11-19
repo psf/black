@@ -12,9 +12,6 @@ tools out there.
 (e.g. `pyproject.toml`). The provided examples are to only configure their corresponding
 tools, using **their** supported file formats.
 
-Compatible configuration files can be
-[found here](https://github.com/psf/black/blob/main/docs/compatible_configs/).
-
 ### isort
 
 [isort](https://isort.readthedocs.io/) helps to sort and format imports in your Python
@@ -103,6 +100,16 @@ does not break older versions so you can keep it if you are running previous ver
 profile = black
 ```
 
+```ini
+[settings]
+multi_line_output = 3
+include_trailing_comma = True
+force_grid_wrap = 0
+use_parentheses = True
+ensure_newline_before_comments = True
+line_length = 88
+```
+
 </details>
 
 <details>
@@ -111,6 +118,16 @@ profile = black
 ```ini
 [isort]
 profile = black
+```
+
+```ini
+[isort]
+multi_line_output = 3
+include_trailing_comma = True
+force_grid_wrap = 0
+use_parentheses = True
+ensure_newline_before_comments = True
+line_length = 88
 ```
 
 </details>
@@ -123,6 +140,16 @@ profile = black
 profile = 'black'
 ```
 
+```toml
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+```
+
 </details>
 
 <details>
@@ -131,6 +158,16 @@ profile = 'black'
 ```ini
 [*.py]
 profile = black
+```
+
+```ini
+[*.py]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
 ```
 
 </details>
@@ -246,6 +283,13 @@ See [the pycodestyle section](labels/why-pycodestyle-warnings) above.
 [flake8]
 max-line-length = 88
 extend-ignore = E203,E701
+```
+
+```ini
+[flake8]
+max-line-length = 80
+extend-select = B950
+extend-ignore = E203,E501,E701
 ```
 
 </details>

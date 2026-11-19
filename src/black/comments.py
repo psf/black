@@ -239,8 +239,10 @@ def _should_process_fmt_comment(
 
     Returns (should_process, is_fmt_off, is_fmt_skip).
     """
-    is_fmt_off = contains_fmt_directive(comment.value, FMT_OFF)
     is_fmt_skip = contains_fmt_directive(comment.value, FMT_SKIP)
+    # `# fmt: skip` wins over `# fmt: off` / `# yapf: disable` in the same comment,
+    # like it does in `generate_ignored_nodes()`.
+    is_fmt_off = not is_fmt_skip and contains_fmt_directive(comment.value, FMT_OFF)
 
     if not is_fmt_off and not is_fmt_skip:
         return False, False, False
@@ -573,12 +575,11 @@ def _handle_regular_fmt_block(
         "" if is_fmt_skip else _take_comments_ending_fmt_off(ignored_nodes[-1], mode)
     )
 
-    if contains_fmt_directive(comment.value, FMT_OFF):
-        first.prefix = prefix[comment.consumed :]
     if is_fmt_skip:
         first.prefix = ""
         standalone_comment_prefix = prefix
     else:
+        first.prefix = prefix[comment.consumed :]
         standalone_comment_prefix = prefix[:previous_consumed] + "\n" * comment.newlines
 
     # Ensure STANDALONE_COMMENT nodes have trailing newlines when stringified
@@ -671,7 +672,7 @@ def _handle_regular_fmt_block(
         for ignored in ignored_nodes
     )
 
-    if contains_fmt_directive(comment.value, FMT_OFF):
+    if not is_fmt_skip:
         fmt_off_prefix = ""
         if _is_kept_as_text(leaf):
             # Python keeps the whitespace before the comment in the string

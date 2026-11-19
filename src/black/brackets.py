@@ -282,9 +282,9 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf | None = None) -> Prior
         return COMPARATOR_PRIORITY
 
     if (
-        leaf.type == token.STRING
+        leaf.type in {token.STRING, token.FSTRING_START, token.TSTRING_START}
         and previous is not None
-        and previous.type == token.STRING
+        and previous.type in {token.STRING, token.FSTRING_END, token.TSTRING_END}
     ):
         return STRING_PRIORITY
 
