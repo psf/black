@@ -94,9 +94,16 @@ def generate_comments(
             and selected is not None
             and leaf.line_ranges_first_lineno - pc.lines_before_leaf not in selected
         ):
+            line = pc.original_line
+            # The line renderer adds the new block indentation itself. Strip up to
+            # that much of the original indentation, which may be narrower (2-space
+            # or tab-indented source).
+            remove = 0
+            while remove < 4 * block_depth and line[remove : remove + 1] in {" ", "\t"}:
+                remove += 1
             yield Leaf(
                 pc.type,
-                pc.original_line.removeprefix("    " * block_depth),
+                line[remove:],
                 prefix=prefix,
                 line_ranges_selected=selected,
             )
