@@ -486,6 +486,14 @@ def validate_regex(
     show_default=True,
 )
 @click.option(
+    "--show-files",
+    is_flag=True,
+    help=(
+        "Don't format anything, just print the files Black would format, one per"
+        " line, after applying the inclusion and exclusion rules."
+    ),
+)
+@click.option(
     "-W",
     "--workers",
     type=click.IntRange(min=1),
@@ -587,6 +595,7 @@ def main(
     extend_exclude: Pattern[str] | None,
     force_exclude: Pattern[str] | None,
     stdin_filename: str | None,
+    show_files: bool,
     workers: int | None,
     src: tuple[str, ...],
     config: str | None,
@@ -613,6 +622,9 @@ def main(
         ctx.exit(1)
     if not src and code is None:
         out(main.get_usage(ctx) + "\n\nOne of 'SRC' or 'code' is required.")
+        ctx.exit(1)
+    if show_files and code is not None:
+        out(main.get_usage(ctx) + "\n\n'--show-files' cannot be used with 'code'.")
         ctx.exit(1)
 
     # It doesn't do anything if --unstable is also passed, so just allow it.
@@ -788,6 +800,11 @@ def main(
             )
         except GitIgnorePatternError:
             ctx.exit(1)
+
+        if show_files:
+            for path in sorted(sources):
+                click.echo(str(path).removeprefix(STDIN_PLACEHOLDER))
+            ctx.exit(0)
 
         if not sources:
             if verbose or not quiet:

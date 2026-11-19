@@ -4406,6 +4406,58 @@ class TestFileCollection:
                     stdin_filename=stdin_filename,
                 )
 
+    @pytest.mark.parametrize("verbose", [False, True])
+    def test_show_files(self, verbose: bool) -> None:
+        # --show-files prints only the files Black would format, one per line on
+        # stdout, after the exclusion rules and .gitignore, and formats nothing.
+        with TemporaryDirectory() as tempdir:
+            tmp = Path(tempdir).resolve()
+            (tmp / ".git").mkdir()
+            (tmp / ".gitignore").write_text("ignored.py\n", encoding="utf-8")
+            (tmp / "excluded").mkdir()
+            for name in ["b.py", "a.pyi", "ignored.py", "notes.txt", "excluded/c.py"]:
+                (tmp / name).write_text("x  =  1\n", encoding="utf-8")
+
+            args = [
+                "--config",
+                str(THIS_DIR / "empty.toml"),
+                "--show-files",
+                "--extend-exclude",
+                "/excluded/",
+                str(tmp),
+            ]
+            if verbose:
+                args.insert(0, "--verbose")
+            result = BlackRunner().invoke(black.main, args)
+
+            assert result.exit_code == 0, result.stderr
+            assert result.stdout.splitlines() == [
+                str(tmp / "a.pyi"),
+                str(tmp / "b.py"),
+            ]
+            assert (tmp / "b.py").read_text(encoding="utf-8") == "x  =  1\n"
+
+    def test_show_files_with_stdin(self) -> None:
+        # Stdin is listed as "-", or as --stdin-filename unless that is
+        # force-excluded, and the input is neither formatted nor echoed.
+        args = ["--config", str(THIS_DIR / "empty.toml"), "--show-files"]
+        for options, expected in [
+            ([], "-\n"),
+            (["--stdin-filename", "show.py"], "show.py\n"),
+            (["--stdin-filename", "show.py", "--force-exclude", r"show\.py"], ""),
+        ]:
+            result = BlackRunner().invoke(
+                black.main, [*args, *options, "-"], input=BytesIO(b"x  =  1\n")
+            )
+            assert result.exit_code == 0, result.stderr
+            assert result.stdout == expected
+
+    def test_show_files_with_code(self) -> None:
+        result = BlackRunner().invoke(black.main, ["--show-files", "-c", "x  =  1"])
+        assert result.exit_code == 1
+        assert "'--show-files' cannot be used with 'code'." in result.stderr
+        assert result.stdout == ""
+
 
 class TestDeFactoAPI:
     """Test that certain symbols that are commonly used externally keep working.
