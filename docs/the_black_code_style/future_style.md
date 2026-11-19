@@ -69,6 +69,9 @@ Currently, the following features are included in the preview style:
 - `keep_dict_keys_with_operators`: Keep dictionary keys containing operators together on
   one line when the value can be wrapped onto a new line.
   ([see below](labels/keep-dict-keys-with-operators))
+- `keep_long_single_imports`: Keep `from` imports with one imported name on a single
+  line even when they exceed the line length, unless they have comments or a magic
+  trailing comma.
 - `keep_commented_expressions_together`: Do not split expressions on delimiters (such as
   binary operators, comparisons, or comprehensions) inside brackets when preceded by a
   standalone comment if the expression fits within the line length limit.
