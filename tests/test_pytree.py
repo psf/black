@@ -1,6 +1,7 @@
 """Tests for blib2to3 pytree nodes and leaves."""
 
 import pickle
+
 import pytest
 
 from blib2to3.pgen2 import token
