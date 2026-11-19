@@ -81,6 +81,8 @@ Currently, the following features are included in the preview style:
 - `parenthesize_expressions_with_comments`: Parenthesize expressions (such as function
   calls) that exceed the line length when their parameters contain comments.
   ([see below](labels/parenthesize-expressions-with-comments))
+- `wrap_long_lambda_assignments`: Wrap a long assigned lambda in parentheses if
+  splitting at the parentheses in its body would leave an overlong first line.
 - `keep_trailers_on_bracket_comment_overflow`: Avoid splitting trailers (such as
   indexing or subscripts) onto multiple lines when an earlier bracket split exceeds the
   line length limit only due to a trailing comment.
