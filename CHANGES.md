@@ -202,9 +202,6 @@
 
 <!-- Changes that improve Black's performance. -->
 
-- Optimize memory usage by adding `__slots__` to `blib2to3` AST nodes, reducing `Node`
-  and `Leaf` instance memory by up to 79% and eliminating instance `__dict__` overhead
-  (#5715)
 - Format each Jupyter notebook cell once instead of twice, and skip the safety checks
   for cells that are already formatted, making `--check` on formatted notebooks about 3x
   faster (#5683)
