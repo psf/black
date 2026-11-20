@@ -882,6 +882,15 @@ foo(
 )
 ```
 
+Brackets are also paired when the collection's contents fit on one line but the complete
+expression does not:
+
+```python
+self._edits.append({
+    "operation": "update", "id": index, "fields": list(fields), "region_fields": []
+})
+```
+
 (labels/string-processing)=
 
 ### Improved string processing

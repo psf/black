@@ -34,9 +34,9 @@ func(  # a
 
 # A `type: ignore` is recorded per line by the AST, so hugging must not join two
 # of them onto one line.
-foo(  # type: ignore
-    [a]  # type: ignore
-)
+foo([  # type: ignore
+    a
+])  # type: ignore
 
 items = [  # type: ignore
     (  # type: ignore
