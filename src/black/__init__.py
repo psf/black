@@ -799,8 +799,14 @@ def main(
             ctx.exit(0)
 
         if len(sources) == 1:
+            src_path = sources.pop()
+            # Notebooks can also be picked by their extension (incl. through
+            # --stdin-filename), not only by the --ipynb flag checked above.
+            if lines and src_path.suffix == ".ipynb":
+                err("Cannot use --line-ranges with ipynb files.")
+                ctx.exit(1)
             reformat_one(
-                src=sources.pop(),
+                src=src_path,
                 fast=fast,
                 write_back=write_back,
                 mode=mode,

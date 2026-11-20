@@ -179,6 +179,8 @@
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)
+- Reject `--line-ranges` for a Jupyter notebook recognized by its `.ipynb` extension, as
+  with `--ipynb`, instead of formatting the whole notebook (#5711)
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 - Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
