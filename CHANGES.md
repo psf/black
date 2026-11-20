@@ -124,6 +124,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long method chains consistently when a standalone comment separates two calls
+  (#5518)
 - Keep long single-name `from` imports on one line unless they contain comments or a
   magic trailing comma (#5669)
 - Keep the optional parentheses around an assignment's right-hand side when removing

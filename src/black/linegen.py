@@ -1755,6 +1755,26 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
     return line
 
 
+def _has_comment_between_trailers(line: Line) -> bool:
+    """
+    Return whether a standalone comment separates a trailer from the rest of the line.
+    """
+    post_comment: Leaf | None = None
+
+    for leaf in line.leaves[::-1]:
+        if leaf.type == STANDALONE_COMMENT:
+            if (
+                post_comment
+                and post_comment.parent is not None
+                and post_comment.parent.type == syms.trailer
+            ):
+                return True
+        else:
+            post_comment = leaf
+
+    return False
+
+
 MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
 
 
@@ -1847,15 +1867,20 @@ def delimiter_split(
     except ValueError:
         raise CannotSplit("No delimiters found") from None
 
+    comment_before_trailer = _has_comment_between_trailers(line)
     if (
         delimiter_priority == DOT_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and not (
+            Preview.split_commented_method_chains in mode and comment_before_trailer
+        )
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     rhs: RHSResult | None = None
     if (
         Preview.keep_commented_expressions_together in mode
+        and not comment_before_trailer
         and line.contains_standalone_comments()
         and delimiter_priority != COMMA_PRIORITY
     ):
