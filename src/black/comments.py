@@ -1183,7 +1183,10 @@ def _generate_ignored_nodes_from_fmt_skip(
             for ignored in ignored_nodes
         )
         if not leaf_is_ignored:
-            leaf.prefix = leaf.prefix[comment.consumed :]
+            if _is_in_fstring(leaf) and leaf.prefix[: comment.consumed].endswith("\n"):
+                leaf.prefix = leaf.prefix[comment.consumed - 1 :]
+            else:
+                leaf.prefix = leaf.prefix[comment.consumed :]
 
         yield from ignored_nodes
 
