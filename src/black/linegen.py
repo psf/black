@@ -300,6 +300,9 @@ class LineGenerator(Visitor[Line]):
                         and len(child.children) == 3
                         and is_lpar_token(child.children[0])
                         and is_rpar_token(child.children[-1])
+                        # Only look through invisible parens; visible ones here
+                        # are required (e.g. around a tuple, walrus or `yield`)
+                        and not child.children[0].value
                     ):
                         child = child.children[1]
 
