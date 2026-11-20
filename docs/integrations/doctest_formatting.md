@@ -17,60 +17,62 @@ documentation files.
 [`blacken-docs`](https://github.com/adamchainz/blacken-docs) is primarily used to apply
 _Black_ formatting to code in documentation files (e.g. `.rst`, `.md`, `.tex`).
 
-`blacken-docs` supports the following:
+`blacken-docs` supports Python code blocks and Pycon doctests in Markdown,
+reStructuredText, and LaTeX files, as well as Python docstrings containing Markdown code
+blocks and Pycon doctests. It will not format any file contents that _Black_ will
+already format.
 
-- Python code blocks in Markdown, reStructuredText, and LaTeX files. Similar to
-  `blackdoc`, normal _Black_ formatting is applied, so doctests inside Python code
-  blocks will not be formatted.
+````md
+```python
+print("Hello world!")
+```
 
-  ````md
-  ```python
-  print("Hello world!")
-  ```
-  ````
+```pycon
+>>> print("Hello world!")
+```
+````
 
-  ```rst
-  .. code-block:: python
-      print("Hello world!")
-  ```
+```rst
+.. code-block:: python
+    print("Hello world!")
 
-  ```latex
-  \begin{minted}{python}
-  print("Hello world!")
-  \end{minted}
-  ```
+.. code-block:: pycon
+    >>> print("Hello world!")
+```
 
-- Doctests inside Pycon code blocks in Markdown and reStructuredText. The code blocks
-  may be included in a `.md` or `.rst` file, or inside a docstring in a Python file.
+```latex
+\begin{pycode}
+print("hello world")
+\end{pycode}
 
-  ````md
-  ```python
-  >>> print("Hello world!")
-  ```
-  ````
+\begin{minted}{pycon}
+>>> print("hello world")
+\end{minted}
+```
 
-  ```rst
-  .. code-block:: pycon
-      >>> print("Hello world!")
-  ```
+````python
+"""
+```python
+print("Hello world!")
+```
+"""
 
-  ````python
-  def add_one(n: int) -> int:
-      """
-      Examples
-      --------
-      ```pycon
-      >>> add_one(1) == 2
-      ```
-      """
-      return n + 1
-  ````
+def add_one(n: int) -> int:
+    """
+    Examples
+    --------
+    ```pycon
+    >>> add_one(1) == 2
+    ```
+    """
+    return n + 1
+````
 
 ## blackdoc
 
 [`blackdoc`](https://blackdoc.readthedocs.io/en/stable) is primarily used to apply
 _Black_ formatting to doctests in Python files. It will not format any file contents
-that are otherwise covered by _Black_.
+that _Black_ will already format.
 
 `blackdoc` supports the following:
 
@@ -86,17 +88,11 @@ that are otherwise covered by _Black_.
       return n + 1
   ```
 
-- Python code blocks in Markdown or reStructuredText files. In these cases, normal
-  _Black_ formatting is applied, i.e., doctests inside Python code blocks will not be
-  formatted.
-
-  ````md
-  ```python
-  print("Hello world!")
-  ```
-  ````
+- Python code blocks and doctests in reStructuredText files.
 
   ```rst
   .. code-block:: python
-      print("Hello world!")
+     print("Hello world!")
+
+  >>> print("Hello world!")
   ```

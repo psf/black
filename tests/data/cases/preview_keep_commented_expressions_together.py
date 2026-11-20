@@ -63,6 +63,47 @@ long_expr = [
     pathlib.Path("foo_very_long_path_name_that_exceeds_the_line_length_limit_and_needs_to_be_split") / "bar" / "baz",
 ]
 
+# Regression test for https://github.com/psf/black/issues/638
+# A standalone comment inside parentheses around a comparison must not
+# fragment the comparison, wherever the comment sits.
+paren_comparison = (
+    # comment
+    1 == 2
+)
+
+trailing_comment = (
+    1 == 2
+    # comment
+)
+
+if (
+    # comment
+    1 == 2
+):
+    pass
+
+if (
+    1 == 2
+    # comment
+):
+    pass
+
+comment_between_operands = (
+    1 ==
+    # comment
+    2
+)
+
+long_trailing_comment = (
+    pathlib.Path("foo_very_long_path_name_that_exceeds_the_line_length_limit_and_needs") == "bar"
+    # comment
+)
+
+list_trailing_comment = [
+    1 == 2,
+    # comment
+]
+
 # output
 
 # Regression test for https://github.com/psf/black/issues/4026
@@ -132,4 +173,46 @@ long_expr = [
     )
     / "bar"
     / "baz",
+]
+
+# Regression test for https://github.com/psf/black/issues/638
+# A standalone comment inside parentheses around a comparison must not
+# fragment the comparison, wherever the comment sits.
+paren_comparison = (
+    # comment
+    1 == 2
+)
+
+trailing_comment = (
+    1 == 2
+    # comment
+)
+
+if (
+    # comment
+    1 == 2
+):
+    pass
+
+if (
+    1 == 2
+    # comment
+):
+    pass
+
+comment_between_operands = (
+    1 ==
+    # comment
+    2
+)
+
+long_trailing_comment = (
+    pathlib.Path("foo_very_long_path_name_that_exceeds_the_line_length_limit_and_needs")
+    == "bar"
+    # comment
+)
+
+list_trailing_comment = [
+    1 == 2,
+    # comment
 ]
