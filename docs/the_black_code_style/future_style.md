@@ -898,8 +898,8 @@ parentheses are stripped. The stability and status of this feature is tracked in
 [this issue](https://github.com/psf/black/issues/2188).
 
 When a long positional string argument is split across lines, _Black_ wraps it in
-parentheses if a neighboring argument starts with a string literal. The parentheses
-make the argument boundary visible.
+parentheses if a neighboring argument starts with a string literal. The parentheses make
+the argument boundary visible.
 
 Long strings on the right-hand side of binary and augmented assignment operators are
 also split, including operators overloaded by objects such as `pathlib.Path`. Middle
