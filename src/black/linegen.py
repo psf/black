@@ -1869,8 +1869,7 @@ def delimiter_split(
         delimiter_priority == DOT_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
         and not (
-            Preview.split_commented_method_chains in mode
-            and comment_before_trailer
+            Preview.split_commented_method_chains in mode and comment_before_trailer
         )
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
