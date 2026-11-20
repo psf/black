@@ -250,6 +250,7 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the GitHub Action picking up `venv.py` from the local repository (#5611)
+- Support buffer-, window-, and tabpage-scoped variables in the Vim plugin (#5713)
 - Stop including pip & build dependencies in Docker images (#5707)
 
 ### Documentation
