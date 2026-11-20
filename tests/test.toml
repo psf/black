@@ -6,6 +6,7 @@ color = true
 line-length = 79
 target-version = ["py36", "py37", "py38"]
 exclude='\.pyi?$'
+respect-gitignore = true
 include='\.py?$'
 python-cell-magics = ["custom1", "custom2"]
 

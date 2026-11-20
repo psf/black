@@ -49,4 +49,6 @@ If `--exclude` is not set, _Black_ will automatically ignore files and directori
 `.gitignore` file(s), if present.
 
 If you want _Black_ to continue using `.gitignore` while also configuring the exclusion
-rules, please use `--extend-exclude`.
+rules, please use `--extend-exclude`. If you set a custom `--exclude`, use
+`--respect-gitignore` to keep `.gitignore` in effect. `--no-respect-gitignore` disables
+`.gitignore` handling entirely.

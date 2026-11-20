@@ -1938,6 +1938,7 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["target_version"], ["py36", "py37", "py38"])
         self.assertEqual(config["python_cell_magics"], ["custom1", "custom2"])
         self.assertEqual(config["exclude"], r"\.pyi?$")
+        self.assertEqual(config["respect_gitignore"], "True")
         self.assertEqual(config["include"], r"\.py?$")
 
     def test_cli_rejects_non_table_black_config(self) -> None:
@@ -3782,6 +3783,7 @@ def assert_collected_sources(
     extend_exclude: str | None = None,
     force_exclude: str | None = None,
     stdin_filename: str | None = None,
+    respect_gitignore: bool | None = None,
 ) -> None:
     gs_src = tuple(str(Path(s)) for s in src)
     gs_expected = [Path(s) for s in expected]
@@ -3802,6 +3804,7 @@ def assert_collected_sources(
         force_exclude=gs_force_exclude,
         report=black.Report(),
         stdin_filename=stdin_filename,
+        respect_gitignore=respect_gitignore,
     )
     assert sorted(collected) == sorted(gs_expected)
 
@@ -3829,6 +3832,82 @@ class TestFileCollection:
         ]
         src = [base / "b/"]
         assert_collected_sources(src, expected, root=base, extend_exclude=r"/exclude/")
+
+    def test_gitignore_used_with_custom_exclude_when_respected(self) -> None:
+        base = Path(DATA_DIR / "include_exclude_tests")
+        expected = [
+            base / "b/.definitely_exclude/a.py",
+            base / "b/.definitely_exclude/a.pyi",
+        ]
+        src = [base / "b/"]
+        assert_collected_sources(
+            src,
+            expected,
+            root=base,
+            exclude=r"/exclude/",
+            respect_gitignore=True,
+        )
+
+    def test_gitignore_can_be_disabled(self) -> None:
+        base = Path(DATA_DIR / "include_exclude_tests")
+        expected = [
+            base / "b/.definitely_exclude/a.py",
+            base / "b/.definitely_exclude/a.pyi",
+            base / "b/dont_exclude/a.py",
+            base / "b/dont_exclude/a.pyi",
+            base / "b/exclude/a.py",
+            base / "b/exclude/a.pyi",
+            base / "b/exclude/still_exclude/a.py",
+            base / "b/exclude/still_exclude/a.pyi",
+        ]
+        src = [base / "b/"]
+        assert_collected_sources(
+            src,
+            expected,
+            root=base,
+            respect_gitignore=False,
+        )
+
+    def test_respect_gitignore_cli(self) -> None:
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            (root / ".gitignore").write_text("ignored/\n", encoding="utf-8")
+            (root / "a.py").write_text("x = 1\n", encoding="utf-8")
+            (root / "ignored").mkdir()
+            (root / "ignored" / "b.py").write_text("y=2\n", encoding="utf-8")
+
+            respect = BlackRunner().invoke(
+                black.main,
+                ["--check", "--respect-gitignore", "--exclude", "nomatch", str(root)],
+                catch_exceptions=False,
+            )
+            assert respect.exit_code == 0, respect.stderr
+
+            disabled = BlackRunner().invoke(
+                black.main,
+                ["--check", "--no-respect-gitignore", str(root)],
+                catch_exceptions=False,
+            )
+            assert disabled.exit_code == 1, disabled.stderr
+
+    def test_respect_gitignore_config(self) -> None:
+        with TemporaryDirectory() as workspace:
+            root = Path(workspace)
+            (root / ".gitignore").write_text("ignored/\n", encoding="utf-8")
+            (root / "a.py").write_text("x = 1\n", encoding="utf-8")
+            (root / "ignored").mkdir()
+            (root / "ignored" / "b.py").write_text("y=2\n", encoding="utf-8")
+            (root / "pyproject.toml").write_text(
+                '[tool.black]\nexclude = "nomatch"\nrespect-gitignore = true\n',
+                encoding="utf-8",
+            )
+
+            result = BlackRunner().invoke(
+                black.main,
+                ["--check", "--config", str(root / "pyproject.toml"), str(root)],
+                catch_exceptions=False,
+            )
+            assert result.exit_code == 0, result.stderr
 
     def test_gitignore_used_on_multiple_sources(self) -> None:
         root = Path(DATA_DIR / "gitignore_used_on_multiple_sources")
