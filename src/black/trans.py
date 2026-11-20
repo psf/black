@@ -21,6 +21,7 @@ from black.nodes import (
     MATH_OPERATORS,
     OPENING_BRACKETS,
     STANDALONE_COMMENT,
+    first_leaf_of,
     is_empty_lpar,
     is_empty_par,
     is_empty_rpar,
@@ -1456,40 +1457,39 @@ class BaseStringSplitter(StringTransformer, CustomSplitMapMixin):
         # Atom strings prefer to be wrapped in parens only if they will actually
         # be split by StringSplitter, or if the line has comments that will be
         # moved to the LPAR.
-        if (
-            not self.can_be_split(LL[0].value)
-            and not self.has_custom_splits(LL[0].value)
-            and not line.comments
+        string = LL[0]
+        can_split = self.can_be_split(string.value) or self.has_custom_splits(
+            string.value
+        )
+        if not can_split and not line.comments:
+            return None
+
+        item: LN = string
+        atom = string.parent
+        if atom is not None and atom.type == syms.atom and len(atom.children) == 1:
+            # StringParenStripper can leave the string in a one-child atom.
+            item = atom
+
+        before = item.prev_sibling
+        after = item.next_sibling
+        if (before is not None and before.type != token.COMMA) or (
+            after is not None and after.type != token.COMMA
         ):
             return None
 
-        matching_nodes = [
-            syms.listmaker,
-            syms.dictsetmaker,
-            syms.testlist_gexp,
-        ]
-        # If the string is an immediate child of a list/set/tuple literal...
-        if (
-            parent_type(LL[0]) in matching_nodes
-            or parent_type(LL[0].parent) in matching_nodes
-        ):
-            # And the string is surrounded by commas (or is the first/last child)...
-            prev_sibling = LL[0].prev_sibling
-            next_sibling = LL[0].next_sibling
-            if (
-                not prev_sibling
-                and not next_sibling
-                and parent_type(LL[0]) == syms.atom
-            ):
-                # If it's an atom string, we need to check the parent atom's siblings.
-                parent = LL[0].parent
-                assert parent is not None  # For type checkers.
-                prev_sibling = parent.prev_sibling
-                next_sibling = parent.next_sibling
-            if (not prev_sibling or prev_sibling.type == token.COMMA) and (
-                not next_sibling or next_sibling.type == token.COMMA
-            ):
-                return 0
+        if parent_type(item) in (syms.listmaker, syms.dictsetmaker, syms.testlist_gexp):
+            return 0
+
+        if can_split and parent_type(item) == syms.arglist:
+            # A neighboring argument that also starts with a string can look
+            # like part of this argument's implicit concatenation.
+            previous_arg = before.prev_sibling if before is not None else None
+            next_arg = after.next_sibling if after is not None else None
+            for arg in (previous_arg, next_arg):
+                if arg is not None:
+                    first = first_leaf_of(arg)
+                    if first is not None and first.type == token.STRING:
+                        return 0
 
         return None
 
@@ -2047,10 +2047,10 @@ class StringParenWrapper(BaseStringSplitter, CustomSplitMapMixin):
           OR
         * The line is a lambda expression and the value is a string.
           OR
-        * The line starts with an "atom" string that prefers to be wrapped in
-          parens. It's preferred to be wrapped when it's is an immediate child of
-          a list/set/tuple literal, AND the string is surrounded by commas (or is
-          the first/last child).
+        * The line starts with a string that prefers to be wrapped in parens.
+          This includes a direct list/set/tuple item surrounded by commas (or
+          at the beginning or end), or a splittable positional argument next to
+          another argument that starts with a string literal.
 
     Transformations:
         The chosen string is wrapped in parentheses and then split at the LPAR.
