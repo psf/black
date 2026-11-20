@@ -366,6 +366,20 @@ exclusions, including from `.gitignore` and command line options.
 
 Default Inclusions: `['.py', '.pyi', '.ipynb']`
 
+#### `--show-files`
+
+Don't format anything, just print the files _Black_ would format, one per line, after
+applying `--include`, `--exclude`, `--extend-exclude`, `--force-exclude` and
+`.gitignore`. Excluded files are left out, which makes it easy to check your patterns or
+pass the list to another tool. The files are printed to stdout, so they don't mix with
+the messages from `--verbose`.
+
+```console
+$ black --show-files --extend-exclude '/migrations/' .
+/home/user/project/app/__init__.py
+/home/user/project/app/models.py
+```
+
 #### `-W`, `--workers`
 
 When _Black_ formats multiple files, it may use a process pool to speed up formatting.
