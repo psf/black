@@ -488,6 +488,28 @@ def _remove_preceding_newline_for_comment(result: str) -> str:
     return result
 
 
+def _next_leaf_starts_with_newline(leaf: Leaf) -> bool:
+    """Return whether the leaf following `leaf` in the tree begins with a newline."""
+    node: LN | None = leaf
+    while node is not None and node.next_sibling is None:
+        node = node.parent
+    if node is None or node.next_sibling is None:
+        return False
+
+    next_leaf = first_leaf_of(node.next_sibling)
+    return next_leaf is not None and next_leaf.prefix.startswith(("\n", "\r\n"))
+
+
+def _is_in_fstring(node: LN) -> bool:
+    """Return whether `node` is inside an f-string or t-string node."""
+    current: LN | None = node.parent
+    while current is not None:
+        if current.type in {syms.fstring, syms.tstring}:
+            return True
+        current = current.parent
+    return False
+
+
 def _is_fmt_off_region_before_newline(leaf: Leaf) -> bool:
     """Return whether `leaf` holds code hidden by `# fmt: off` that ends its line.
 
@@ -503,14 +525,7 @@ def _is_fmt_off_region_before_newline(leaf: Leaf) -> bool:
     elif not contains_fmt_directive(leaf.value.partition("\n")[0], FMT_OFF):
         return False
 
-    node: LN | None = leaf
-    while node is not None and node.next_sibling is None:
-        node = node.parent
-    if node is None or node.next_sibling is None:
-        return False
-
-    next_leaf = first_leaf_of(node.next_sibling)
-    return next_leaf is not None and next_leaf.prefix.startswith("\n")
+    return _next_leaf_starts_with_newline(leaf)
 
 
 def _needs_newline_after(hidden: Leaf, next_node: LN | None) -> bool:
@@ -528,6 +543,13 @@ def _needs_newline_after(hidden: Leaf, next_node: LN | None) -> bool:
         return True
     if _is_fmt_off_region_before_newline(hidden):
         # The newline is already in the prefix of the next leaf
+        return False
+    if (
+        _is_in_fstring(hidden)
+        and hidden.fmt_pass_converted_first_leaf is not None
+        and _next_leaf_starts_with_newline(hidden)
+    ):
+        # `# fmt: skip` inside f-strings/t-strings leaves its newline on the next leaf
         return False
     # The newline ends a trailing comment, like `B,  # fmt: skip` in a class header:
     # it was taken along with the comment from the prefix of `)`
@@ -637,8 +659,17 @@ def _handle_regular_fmt_block(
                                 isinstance(next_node, Leaf)
                                 and next_node.type in CLOSING_BRACKETS
                                 and "\n" in n.value
+                                and not _is_in_fstring(n)
                             ):
                                 result = _remove_preceding_newline_for_comment(result)
+                            if (
+                                _is_in_fstring(n)
+                                and n.fmt_pass_converted_first_leaf is not None
+                                and _next_leaf_starts_with_newline(n)
+                            ):
+                                # `# fmt: skip` inside f-strings/t-strings leaves its
+                                # trailing newline on the next leaf.
+                                return result
                             # The newline ends a trailing comment. A skipped block
                             # that ends in code, like the `)` of an inner
                             # `(  # fmt: skip` block, is followed by its own source.
@@ -709,6 +740,8 @@ def _handle_regular_fmt_block(
 
     if is_fmt_skip and not leaf_is_ignored:
         whitespace = comment.original_line.partition("#")[0]
+        if comment.type == STANDALONE_COMMENT and _is_in_fstring(leaf):
+            hidden_value += "\n" * comment.newlines
         hidden_value += whitespace + comment.value
 
     if hidden_value.endswith("\n"):
@@ -1183,7 +1216,18 @@ def _generate_ignored_nodes_from_fmt_skip(
             for ignored in ignored_nodes
         )
         if not leaf_is_ignored:
-            leaf.prefix = leaf.prefix[comment.consumed :]
+            consumed = comment.consumed
+            if (
+                _is_in_fstring(leaf)
+                and 0 < consumed <= len(leaf.prefix)
+                and leaf.prefix[consumed - 1] in "\r\n"
+            ):
+                # Inside f-strings/t-strings, CST nodes are serialized verbatim via
+                # str(node) rather than LineGenerator, so preserve the newline after
+                # `# fmt: skip` on the next leaf instead of concatenating the
+                # following token onto the comment line.
+                consumed -= 1
+            leaf.prefix = leaf.prefix[consumed:]
 
         yield from ignored_nodes
 
