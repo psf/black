@@ -1752,30 +1752,22 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
     return line
 
 
-def _has_comment_between_method_calls(line: Line) -> bool:
-    """Return whether a standalone comment separates a call from a method call."""
-    previous: Leaf | None = None
-    comment_follows_call = False
-    for leaf in line.leaves:
+def _has_comment_between_trailers(line: Line) -> bool:
+    """
+    Return whether a standalone comment separates a trailer from the rest of the line.
+    """
+    post_comment: Leaf | None = None
+
+    for leaf in line.leaves[::-1]:
         if leaf.type == STANDALONE_COMMENT:
             if (
-                previous is not None
-                and previous.type == token.RPAR
-                and previous.parent is not None
-                and previous.parent.type == syms.trailer
-            ):
-                comment_follows_call = True
-            continue
-
-        if comment_follows_call:
-            if (
-                leaf.type == token.DOT
-                and leaf.parent is not None
-                and leaf.parent.type == syms.trailer
+                post_comment
+                and post_comment.parent is not None
+                and post_comment.parent.type == syms.trailer
             ):
                 return True
-            comment_follows_call = False
-        previous = leaf
+        else:
+            post_comment = leaf
 
     return False
 
@@ -1872,12 +1864,13 @@ def delimiter_split(
     except ValueError:
         raise CannotSplit("No delimiters found") from None
 
+    comment_before_trailer = _has_comment_between_trailers(line)
     if (
         delimiter_priority == DOT_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
         and not (
             Preview.split_commented_method_chains in mode
-            and _has_comment_between_method_calls(line)
+            and comment_before_trailer
         )
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
@@ -1885,6 +1878,7 @@ def delimiter_split(
     rhs: RHSResult | None = None
     if (
         Preview.keep_commented_expressions_together in mode
+        and not comment_before_trailer
         and line.contains_standalone_comments()
         and delimiter_priority != COMMA_PRIORITY
     ):
