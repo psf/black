@@ -1339,35 +1339,19 @@ def _first_right_hand_split(
                 hugged_opening_leaves[-1],
                 component=_BracketSplitComponent.body,
             )
-            if (
+            if not (
                 line.mode.magic_trailing_comma
                 and inner_body_leaves[-1].type == token.COMMA
-            ):
-                should_hug = True
-            else:
-                line_length = line.mode.line_length - sum(
-                    len(str(leaf))
-                    for leaf in hugged_opening_leaves + hugged_closing_leaves
-                )
-                if is_line_short_enough(
-                    inner_body, mode=replace(line.mode, line_length=line_length)
-                ):
-                    # Do not hug if it fits on a single line.
-                    should_hug = False
-                else:
-                    should_hug = True
-            if should_hug and (
+            ) and is_line_short_enough(inner_body, mode=line.mode):
+                inner_body.should_split_rhs = False
+            # Hugging joins trailing comments onto one physical line. Two
+            # `type: ignore`s on that line would make the output non-equivalent.
+            if not (
                 _hugging_merges_type_ignores(line, head_leaves, hugged_opening_leaves)
                 or _hugging_merges_type_ignores(
                     line, hugged_closing_leaves, tail_leaves
                 )
             ):
-                # Hugging joins these leaves onto one physical line, and their
-                # trailing comments come along. `type: ignore` is recorded per
-                # line by the AST, so two of them landing on the same line would
-                # drop one and make the output non-equivalent.
-                should_hug = False
-            if should_hug:
                 body_leaves = inner_body_leaves
                 head_leaves.extend(hugged_opening_leaves)
                 tail_leaves = hugged_closing_leaves + tail_leaves

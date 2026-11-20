@@ -166,6 +166,7 @@ for foo in ["a", "b"]:
     ])
 
 # output
+
 def foo_brackets(request):
     return JsonResponse({
         "var_1": foo,
@@ -279,9 +280,9 @@ func(
 )
 
 func([x for x in "short line"])
-func(
-    [x for x in "long line long line long line long line long line long line long line"]
-)
+func([
+    x for x in "long line long line long line long line long line long line long line"
+])
 func([
     x
     for x in [

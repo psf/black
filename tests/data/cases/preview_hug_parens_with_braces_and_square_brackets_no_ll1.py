@@ -11,7 +11,7 @@ func((("long line", "long long line", "long long long line", "long long long lon
 func([["long line", "long long line", "long long long line", "long long long long line", "long long long long long line"]])
 
 
-# Do not hug if the argument fits on a single line.
+# Hug even if the inner argument fits on a single line.
 func({"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"})
 func(("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"))
 func(["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"])
@@ -71,31 +71,31 @@ func([[
 ]])
 
 
-# Do not hug if the argument fits on a single line.
-func(
-    {"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"}
-)
-func(
-    ("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line")
-)
-func(
-    ["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"]
-)
-func(
-    **{"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit---"}
-)
-func(
-    *("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit----")
-)
-array = [
-    {"fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"}
-]
-array = [
-    ("fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line")
-]
-array = [
-    ["fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"]
-]
+# Hug even if the inner argument fits on a single line.
+func({
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"
+})
+func((
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"
+))
+func([
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"
+])
+func(**{
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit---"
+})
+func(*(
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit----"
+))
+array = [{
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"
+}]
+array = [(
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"
+)]
+array = [[
+    "fit line", "fit line", "fit line", "fit line", "fit line", "fit line", "fit line"
+]]
 
 nested_array = [[[
     "long line",

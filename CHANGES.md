@@ -124,6 +124,9 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- In the unstable bracket-hugging style, pair nested brackets even when the inner
+  contents fit on one line but the complete expression does not (#5718)
+
 - Split long method chains consistently when a standalone comment separates two calls
   (#5518)
 - Keep long single-name `from` imports on one line unless they contain comments or a

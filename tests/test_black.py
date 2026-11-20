@@ -2318,9 +2318,9 @@ class BlackTestCase(BlackBaseTestCase):
             # Sources on different drives share no project root, so the
             # project-level config is skipped and the user-level config
             # applies, same as when the project root has no pyproject.toml.
-            result = black.files.find_pyproject_toml(
-                (r"C:\work\app\a.py", r"D:\tmp\b.py")
-            )
+            result = black.files.find_pyproject_toml((
+                r"C:\work\app\a.py", r"D:\tmp\b.py"
+            ))
             self.assertEqual(result, str(user_config))
 
     @pytest.mark.incompatible_with_mypyc
@@ -3854,9 +3854,9 @@ class TestFileCollection:
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
         report = black.Report()
-        gitignore = GitIgnoreSpec.from_lines(
-            ["exclude/", ".definitely_exclude", "!exclude/still_exclude/"]
-        )
+        gitignore = GitIgnoreSpec.from_lines([
+            "exclude/", ".definitely_exclude", "!exclude/still_exclude/"
+        ])
         sources: list[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
@@ -3884,9 +3884,9 @@ class TestFileCollection:
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
         report = black.Report()
-        gitignore = GitIgnoreSpec.from_lines(
-            ["*/exclude/*", ".definitely_exclude", "!*/exclude/still_exclude/"]
-        )
+        gitignore = GitIgnoreSpec.from_lines([
+            "*/exclude/*", ".definitely_exclude", "!*/exclude/still_exclude/"
+        ])
         sources: list[Path] = []
         expected = [
             Path(path / "b/dont_exclude/a.py"),
@@ -3916,9 +3916,9 @@ class TestFileCollection:
         include = re.compile(r"\.pyi?$")
         exclude = re.compile(r"")
         report = black.Report()
-        gitignore = GitIgnoreSpec.from_lines(
-            ["exclude/*", ".definitely_exclude", "!exclude/still_exclude/"]
-        )
+        gitignore = GitIgnoreSpec.from_lines([
+            "exclude/*", ".definitely_exclude", "!exclude/still_exclude/"
+        ])
         sources: list[Path] = []
         expected = [
             Path(path / "dont_exclude/a.py"),
