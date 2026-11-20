@@ -214,6 +214,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Start formatting larger files first when processing multiple files, so long-running
+  files are less likely to leave other workers idle at the end. (#5720)
 - Format each Jupyter notebook cell once instead of twice, and skip the safety checks
   for cells that are already formatted, making `--check` on formatted notebooks about 3x
   faster (#5683)

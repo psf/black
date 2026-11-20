@@ -176,6 +176,14 @@ def _is_tempdir_too_long_for_unix_sockets() -> bool:
         return len(tempfile.gettempdir()) + 35 >= max_socket_path_length
 
 
+def _source_sort_key(source: Path) -> tuple[int, Path]:
+    try:
+        return -source.stat().st_size, source
+    except OSError:
+        # Leave inaccessible files to the worker's per-file error reporting.
+        return 0, source
+
+
 async def schedule_formatting(
     sources: set[Path],
     fast: bool,
@@ -239,7 +247,7 @@ async def schedule_formatting(
                     executor, format_file_in_place, src, fast, mode, write_back, lock
                 )
             ): src
-            for src in sorted(sources)
+            for src in sorted(sources, key=_source_sort_key)
         }
         pending = set(tasks)
         try:
