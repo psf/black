@@ -347,6 +347,13 @@ def _handle_comment_only_fmt_block(
     # Update leaf prefix
     leaf.prefix = original_prefix[fmt_on_comment.consumed :]
 
+    if _is_in_fstring(leaf):
+        # The f-string is written out as it is in the tree, so keep the whitespace
+        # around the block as written, including the newline after `# fmt: on`
+        comment_start = comment.consumed - len(comment.original_line.lstrip()) - 1
+        standalone_comment_prefix = original_prefix[:comment_start]
+        leaf.prefix = original_prefix[fmt_on_comment.consumed - 1 :]
+
     # Insert the STANDALONE_COMMENT. If `leaf` starts the target of an assignment,
     # insert it before the whole target. Inside the target it would end up within
     # the invisible parentheses added around it (e.g. `a, b = c`), and every pass
@@ -487,11 +494,13 @@ def _is_fmt_off_region_before_newline(leaf: Leaf) -> bool:
     Unlike code hidden by `# fmt: skip` or a comment-only `# fmt: off` block, which
     take the newline after their last comment, a `# fmt: off` region leaves the
     newline after it in the prefix of the next leaf, even when it ends with the
-    comments that end the region.
+    comments that end the region. In an f-string, a comment-only block leaves it
+    there too.
     """
     if leaf.fmt_pass_converted_first_leaf is None:
-        return False
-    if not contains_fmt_directive(leaf.value.partition("\n")[0], FMT_OFF):
+        if not _is_in_fstring(leaf):
+            return False
+    elif not contains_fmt_directive(leaf.value.partition("\n")[0], FMT_OFF):
         return False
 
     node: LN | None = leaf
@@ -523,6 +532,16 @@ def _needs_newline_after(hidden: Leaf, next_node: LN | None) -> bool:
     # The newline ends a trailing comment, like `B,  # fmt: skip` in a class header:
     # it was taken along with the comment from the prefix of `)`
     return "\n" in next_node.prefix or "#" in str(hidden).rpartition("\n")[2]
+
+
+def _is_in_fstring(leaf: Leaf) -> bool:
+    """Is `leaf` in an f-string or t-string field?"""
+    node: LN | None = leaf.parent
+    while node is not None:
+        if node.type in {syms.fstring, syms.tstring}:
+            return True
+        node = node.parent
+    return False
 
 
 def _is_kept_as_text(leaf: Leaf) -> bool:
