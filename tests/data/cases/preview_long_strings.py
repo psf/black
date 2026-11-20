@@ -348,7 +348,6 @@ x = {
 
 # output
 
-
 x = (
     "This is a really long string that can't possibly be expected to fit all together"
     " on one line. In fact it may even take up three or more lines... like four or"
@@ -655,9 +654,11 @@ comment_string = (  # This comment gets thrown to the top.
 )
 
 arg_comment_string = print(
-    "Long lines with inline comments which are apart of (and not the only member of) an"
-    " argument list should have their comments appended to the reformatted string's"
-    " enclosing left parentheses.",  # This comment gets thrown to the top.
+    (  # This comment gets thrown to the top.
+        "Long lines with inline comments which are apart of (and not the only member"
+        " of) an argument list should have their comments appended to the reformatted"
+        " string's enclosing left parentheses."
+    ),
     "Arg #2",
     "Arg #3",
     "Arg #4",

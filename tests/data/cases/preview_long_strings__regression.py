@@ -638,7 +638,6 @@ def assert_on_error_message():
 
 # output
 
-
 class A:
     def foo():
         result = type(message)("")
@@ -789,9 +788,11 @@ class A:
     def foo():
         some_func_call(
             "xxxxxxxxxx",
-            "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
-            '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
-            "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" ",
+            (
+                "xx {xxxxxxxxxxx}/xxxxxxxxxxx.xxx xxxx.xxx && xxxxxx -x "
+                '"xxxx xxxxxxx xxxxxx xxxx; xxxx xxxxxx_xxxxx xxxxxx xxxx; '
+                "xxxx.xxxx_xxxxxx(['xxxx.xxx'], xxxx.xxxxxxx().xxxxxxxxxx)\" "
+            ),
             None,
             ("xxxxxxxxxxx",),
         ),
