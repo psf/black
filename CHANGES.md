@@ -219,6 +219,8 @@
   faster (#5683)
 - Skip the regular expressions in string quote normalization when a string has no
   backslash and no quote character to escape (#5680)
+- Check whether each path is a directory once during file discovery, instead of once for
+  every directory level above it (#5724)
 
 ### Output
 
