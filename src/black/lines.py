@@ -588,6 +588,23 @@ class _DecoratedFuncInfo(NamedTuple):
     is_multi: bool
 
 
+def _is_line_ranges_converted_class_or_def_header(line: Line) -> bool:
+    """Whether `line` is a `class`/`def` suite header converted by --line-ranges.
+
+    When only lines in the body of a class or function are selected, the
+    unselected header is converted to a STANDALONE_COMMENT, so it no longer
+    reads as a class/def line. Recognizing it keeps the empty line logic from
+    inserting a blank line between the header and the first line of its body,
+    which full formatting does not do.
+    """
+    if not line.is_comment:
+        return False
+    leaf = line.leaves[0]
+    if leaf.line_ranges_selected is None:
+        return False
+    return leaf.value.startswith(("class ", "def ", "async def "))
+
+
 @dataclass
 class EmptyLineTracker:
     """Provides a stateful method that returns the number of potential extra
@@ -1230,7 +1247,9 @@ class EmptyLineTracker:
             return 0, 0
 
         if self.previous_line.depth < current_line.depth and (
-            self.previous_line.is_class or self.previous_line.is_def
+            self.previous_line.is_class
+            or self.previous_line.is_def
+            or _is_line_ranges_converted_class_or_def_header(self.previous_line)
         ):
             if self.mode.is_pyi:
                 return 0, 0
