@@ -179,6 +179,9 @@
   targeting Python 3.9 or older (#5619)
 - Fix crash when a dict value is a walrus wrapped in redundant parentheses, such as
   `{1: ((a := 1))}` (#5727)
+- Fix crash when the `in` clause of a comprehension is a parenthesized walrus or a bare
+  `yield`, such as `[a for a in (b := c)]`, or a parenthesized walrus, `lambda` or
+  conditional expression containing a comment (#5724)
 
 ### Configuration
 

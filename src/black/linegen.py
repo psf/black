@@ -828,6 +828,12 @@ class LineGenerator(Visitor[Line]):
                 ):
                     continue
 
+                # Don't touch parentheses that are required if there are comments
+                if _comprehension_iterable_needs_parens(child) and any(
+                    "#" in leaf.prefix for leaf in child.leaves()
+                ):
+                    continue
+
                 # Always try to remove all levels of parens
                 maybe_make_parens_invisible_in_atom(
                     child, parent=node, mode=self.mode, features=self.features
@@ -854,7 +860,7 @@ class LineGenerator(Visitor[Line]):
                     child,
                     visible=(
                         # Keep one level to avoid syntax errors
-                        child.type in {syms.test, syms.lambdef, syms.yield_expr}
+                        _is_required_comprehension_iterable(child)
                         # Keep as-written if it's a non-simple name (has delimiters)
                         or (unwrapped and max_delimiter > DOT_PRIORITY)
                     ),
@@ -2290,6 +2296,31 @@ def _is_parenthesized_lambda_or_ternary(node: LN) -> bool:
         if middle.type in {syms.test, syms.lambdef}:
             return True
         node = middle
+    return False
+
+
+def _is_required_comprehension_iterable(node: LN) -> bool:
+    """Whether `node` can't be the iterable of a comprehension without parentheses."""
+    return node.type in {
+        syms.test,
+        syms.lambdef,
+        syms.yield_expr,
+        syms.namedexpr_test,
+    } or is_yield(node)
+
+
+def _comprehension_iterable_needs_parens(node: LN) -> bool:
+    """Whether `node` is an atom wrapping an expression that must stay parenthesized
+    as the iterable of a comprehension, looking through redundant parentheses."""
+    while (
+        node.type == syms.atom
+        and len(node.children) == 3
+        and is_lpar_token(node.children[0])
+        and is_rpar_token(node.children[-1])
+    ):
+        node = node.children[1]
+        if _is_required_comprehension_iterable(node):
+            return True
     return False
 
 
