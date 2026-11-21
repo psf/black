@@ -2892,6 +2892,15 @@ class BlackTestCase(BlackBaseTestCase):
             b"Cannot use line-ranges in the pyproject.toml file." in result.stderr_bytes
         )
 
+    def test_code_in_pyproject_toml(self) -> None:
+        with TemporaryDirectory() as workspace:
+            config = Path(workspace) / "pyproject.toml"
+            config.write_text('[tool.black]\ncode = "print()"\n', encoding="utf-8")
+            result = BlackRunner().invoke(black.main, ["--config", str(config)])
+            assert result.exit_code == 2
+            assert result.stderr_bytes is not None
+            assert b"Cannot use code in the pyproject.toml file." in result.stderr_bytes
+
     def test_lines_with_leading_tabs_expanded(self) -> None:
         # See CVE-2024-21503. Mostly test that this completes in a reasonable
         # time.
