@@ -569,6 +569,18 @@ class BlackDClientTestCase(AioHTTPTestCase):
 
         self.assertEqual(diff, expected)
 
+    async def test_diff_formatted_code(self) -> None:
+        for client in (
+            blackd.client.BlackDClient(self.client.make_url("/"), diff=True),
+            blackd.client.BlackDClient(
+                self.client.make_url("/"), headers={"x-diff": "yes"}
+            ),
+        ):
+            with self.subTest(headers=client.headers):
+                # Already formatted, so there is nothing to change: an empty diff.
+                diff = await client.format_code('print("hello world")\n')
+                self.assertEqual(diff, "")
+
     async def test_syntax_error(self) -> None:
         client = blackd.client.BlackDClient(self.client.make_url("/"))
         with_syntax_error = "def hello(): a 'Hello, World!'"
