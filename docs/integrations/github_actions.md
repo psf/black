@@ -28,8 +28,9 @@ jobs:
 ```
 
 We recommend the use of the `@stable` tag, but per-version tags also exist if you prefer
-that. Note that the action's version you select is independent of the version of _Black_
-the action will use.
+that. Unless you choose a version of _Black_ yourself (see [Versions](#versions)), the
+action installs the _Black_ release matching the action's tag: `@stable` installs the
+latest release and `@24.1.0` installs _Black_ 24.1.0.
 
 As of 26.10.0, every GitHub release is immutable, meaning they cannot be changed after
 publication. This improves the security of using per-version tags.
@@ -37,7 +38,9 @@ publication. This improves the security of using per-version tags.
 ### Versions
 
 The version of _Black_ the action will use can be configured via `version` or read from
-the `pyproject.toml` file. The action defaults to the latest release available on PyPI.
+the `pyproject.toml` file. Otherwise the action installs the release matching its own
+tag. If the action's ref is not a release tag (for example a branch or a commit SHA),
+_Black_ is installed from the action's own source instead.
 
 `version` can be any
 [valid version specifier](https://packaging.python.org/en/latest/glossary/#term-Version-Specifier)
