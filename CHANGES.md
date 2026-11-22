@@ -236,6 +236,8 @@
 
 <!-- Changes to Blackd -->
 
+- Leave a single unterminated source line unchanged when
+  `X-Skip-Source-First-Line` is enabled, matching the command-line behavior.
 - Preserve non-ASCII source in the Python client when a custom `Content-Type` declares a
   non-UTF-8 charset (#5645)
 - Return HTTP 400 for an unknown request charset or input that cannot be decoded using

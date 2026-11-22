@@ -253,6 +253,17 @@ class BlackDTestCase(AioHTTPTestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(await response.read(), expected_result)
 
+    async def test_blackd_skip_first_source_line_without_newline(self) -> None:
+        for source in (b"Header will be skipped", b"x=1", b""):
+            with self.subTest(source=source):
+                response = await self.client.post(
+                    "/",
+                    data=source,
+                    headers={blackd.SKIP_SOURCE_FIRST_LINE: "true"},
+                )
+                self.assertEqual(response.status, 204)
+                self.assertEqual(await response.read(), b"")
+
     async def test_blackd_skip_first_source_line_with_diff(self) -> None:
         source = b"#!/usr/bin/env python\ni = [1,2,3]\n"
         response = await self.client.post(

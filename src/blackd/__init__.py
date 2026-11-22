@@ -180,9 +180,8 @@ async def handle(
 
         header = ""
         if mode.skip_source_first_line:
-            first_newline_position: int = req_str.find("\n") + 1
-            header = req_str[:first_newline_position]
-            req_str = req_str[first_newline_position:]
+            first_line, newline, req_str = req_str.partition("\n")
+            header = first_line + newline
 
         only_diff = bool(request.headers.get(DIFF_HEADER, False))
         formatted_str = await format_code(
