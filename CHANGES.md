@@ -244,6 +244,8 @@
   for a `X-Diff` request, instead of prepending it as raw text in front of the diff
   (#5573)
 - Fix blackd startup on Windows with more than 61 logical CPUs (#5667)
+- Return an empty diff from `BlackDClient.format_code` with `diff=True` when the code is
+  already formatted, instead of the unchanged source code (#5730)
 
 ### Integrations
 
