@@ -286,6 +286,7 @@ class Preview(Enum):
     parenthesize_expressions_with_comments = auto()
     keep_trailers_on_bracket_comment_overflow = auto()
     split_commented_method_chains = auto()
+    align_multiline_method_chains = auto()
     split_implicit_string_concatenations_at_newlines = auto()
     remove_redundant_comparison_parentheses = auto()
     remove_redundant_top_level_parentheses = auto()

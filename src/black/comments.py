@@ -1248,8 +1248,8 @@ def contains_fmt_directive(
         ],
         *[
             _COMMENT_PREFIX + comment.strip()
-            for comment in comment_line.strip(_COMMENT_PREFIX).split(
-                _COMMENT_LIST_SEPARATOR
+            for comment in (
+                comment_line.strip(_COMMENT_PREFIX).split(_COMMENT_LIST_SEPARATOR)
             )
         ],
     ]

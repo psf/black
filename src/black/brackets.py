@@ -4,6 +4,7 @@ from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Final, Union
 
+from black.mode import Mode, Preview
 from black.nodes import (
     BRACKET,
     CLOSING_BRACKETS,
@@ -11,6 +12,7 @@ from black.nodes import (
     LOGIC_OPERATORS,
     MATH_OPERATORS,
     OPENING_BRACKETS,
+    STANDALONE_COMMENT,
     UNPACKING_PARENTS,
     VARARGS_PARENTS,
     is_vararg,
@@ -68,7 +70,7 @@ class BracketTracker:
     _lambda_argument_depths: list[int] = field(default_factory=list)
     invisible: list[Leaf] = field(default_factory=list)
 
-    def mark(self, leaf: Leaf) -> None:
+    def mark(self, leaf: Leaf, *, mode: Mode | None = None) -> None:
         """Mark `leaf` with bracket-related metadata. Keep track of delimiters.
 
         All leaves receive an int `bracket_depth` field that stores how deep
@@ -112,7 +114,7 @@ class BracketTracker:
                 self.invisible.append(leaf)
         leaf.bracket_depth = self.depth
         if self.depth == 0:
-            delim = is_split_before_delimiter(leaf, self.previous)
+            delim = is_split_before_delimiter(leaf, self.previous, mode=mode)
             if delim and self.previous is not None:
                 self.delimiters[id(self.previous)] = delim
             else:
@@ -250,7 +252,37 @@ def is_split_after_delimiter(leaf: Leaf) -> Priority:
     return 0
 
 
-def is_split_before_delimiter(leaf: Leaf, previous: Leaf | None = None) -> Priority:
+def _is_trailer(node: LN | None, token_type: int) -> bool:
+    return (
+        node is not None
+        and node.type == syms.trailer
+        and node.children[0].type == token_type
+    )
+
+
+def _starts_method_chain(trailer: Node) -> bool:
+    first_call = trailer.next_sibling
+    if first_call is None or not _is_trailer(first_call, token.LPAR):
+        return False
+
+    receiver = trailer.prev_sibling
+    while receiver is not None and _is_trailer(receiver, token.DOT):
+        receiver = receiver.prev_sibling
+    if receiver is None or receiver.type == syms.trailer:
+        return False
+
+    attribute = first_call.next_sibling
+    while attribute is not None and _is_trailer(attribute, token.DOT):
+        following = attribute.next_sibling
+        if _is_trailer(following, token.LPAR):
+            return True
+        attribute = following
+    return False
+
+
+def is_split_before_delimiter(
+    leaf: Leaf, previous: Leaf | None = None, *, mode: Mode | None = None
+) -> Priority:
     """Return the priority of the `leaf` delimiter, given a line break before it.
 
     The delimiter priorities returned here are from those delimiters that would
@@ -267,9 +299,17 @@ def is_split_before_delimiter(leaf: Leaf, previous: Leaf | None = None) -> Prior
         leaf.type == token.DOT
         and leaf.parent
         and leaf.parent.type not in {syms.import_from, syms.dotted_name}
-        and (previous is None or previous.type in CLOSING_BRACKETS)
     ):
-        return DOT_PRIORITY
+        if previous is None or previous.type in CLOSING_BRACKETS:
+            return DOT_PRIORITY
+        if (
+            previous.type != STANDALONE_COMMENT
+            and leaf.parent.type == syms.trailer
+            and mode is not None
+            and Preview.align_multiline_method_chains in mode
+            and _starts_method_chain(leaf.parent)
+        ):
+            return DOT_PRIORITY
 
     if (
         leaf.type in MATH_OPERATORS

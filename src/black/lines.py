@@ -94,7 +94,9 @@ class Line:
                 mode=self.mode,
             )
         if self.inside_brackets or not preformatted or track_bracket:
-            self.bracket_tracker.mark(leaf)
+            self.bracket_tracker.mark(
+                leaf, mode=self.mode if self.inside_brackets else None
+            )
             if self.mode.magic_trailing_comma:
                 if self.has_magic_trailing_comma(leaf):
                     self.magic_trailing_comma = leaf

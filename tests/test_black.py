@@ -168,8 +168,10 @@ def test_docstring_doctests_remain_executable(
                 # clean=False preserves the whitespace being tested.
                 docstring = ast.get_docstring(node, clean=False)
                 assert docstring is not None
-                test = doctest.DocTestParser().get_doctest(
-                    docstring, {}, node.name, "example.py", 0
+                test = (
+                    doctest
+                    .DocTestParser()
+                    .get_doctest(docstring, {}, node.name, "example.py", 0)
                 )
                 runner.run(test, out=output.write)
         assert runner.tries == attempted
@@ -201,12 +203,16 @@ def test_docstring_with_custom_doctest_option(monkeypatch: pytest.MonkeyPatch) -
     )
     doctest.register_optionflag("BLACK_TEST_OPTION")
     for code in (source, formatted):
-        test = doctest.DocTestParser().get_doctest(
-            docstring_value(code),
-            {},
-            "f",
-            "example.py",
-            0,
+        test = (
+            doctest
+            .DocTestParser()
+            .get_doctest(
+                docstring_value(code),
+                {},
+                "f",
+                "example.py",
+                0,
+            )
         )
         output = io.StringIO()
         result = doctest.DocTestRunner().run(test, out=output.write)

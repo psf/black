@@ -164,7 +164,8 @@ def normalize_string_prefix(s: str, mode: Mode) -> str:
     assert match is not None, f"failed to match string {s!r}"
     orig_prefix = match.group(1)
     new_prefix = (
-        orig_prefix.replace("F", "f")
+        orig_prefix
+        .replace("F", "f")
         .replace("B", "b")
         .replace("U", "")
         .replace("u", "")

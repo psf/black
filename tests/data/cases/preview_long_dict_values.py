@@ -330,7 +330,8 @@ my_dict = {
 }
 my_dict = {
     "a key in my dict": (
-        MyClass.some_attribute.first_call()
+        MyClass.some_attribute
+        .first_call()
         .second_call()
         .third_call(some_args="some value")
     )

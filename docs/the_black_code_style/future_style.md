@@ -65,6 +65,8 @@ Currently, the following features are included in the preview style:
   ([see below](labels/remove-redundant-unpacking-parentheses))
 - `split_commented_method_chains`: Split long method chains consistently when a
   standalone comment separates two calls.
+- `align_multiline_method_chains`: In a multiline method chain, put the first method
+  call on its own line, aligned with subsequent calls.
 - `fix_magic_trailing_comma_trailer_split`: When a magic trailing comma forces a line to
   split, split only at the brackets holding that comma. Trailers after them, such as
   `[1,][2](3)`, stay on the closing line.
