@@ -119,6 +119,8 @@
   selected lines are indented with 2 spaces or tabs (#5672)
 - Fix crash on a `# fmt: off` / `# fmt: on` block with only comments in an f-string or
   t-string field (#5701)
+- Fix crash on a `# fmt: off` with trailing whitespace in a nested f-string, in an
+  f-string field with `=` or a t-string field (#5733)
 
 ### Preview style
 
