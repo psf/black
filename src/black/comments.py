@@ -500,16 +500,6 @@ def _next_leaf_starts_with_newline(leaf: Leaf) -> bool:
     return next_leaf is not None and next_leaf.prefix.startswith(("\n", "\r\n"))
 
 
-def _is_in_fstring(node: LN) -> bool:
-    """Return whether `node` is inside an f-string or t-string node."""
-    current: LN | None = node.parent
-    while current is not None:
-        if current.type in {syms.fstring, syms.tstring}:
-            return True
-        current = current.parent
-    return False
-
-
 def _is_fmt_off_region_before_newline(leaf: Leaf) -> bool:
     """Return whether `leaf` holds code hidden by `# fmt: off` that ends its line.
 
