@@ -124,6 +124,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long standalone boolean expressions containing `and` or `or` across multiple
+  lines.
 - Split long method chains consistently when a standalone comment separates two calls
   (#5518)
 - Keep long single-name `from` imports on one line unless they contain comments or a

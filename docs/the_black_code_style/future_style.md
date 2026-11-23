@@ -104,6 +104,8 @@ Currently, the following features are included in the preview style:
   name, number or string.
 - `parenthesize_one_item_sequence_patterns`: Add parentheses around one-item sequence
   patterns in `case` statements, such as `case x,:`.
+- `split_standalone_boolean_expressions`: Split long standalone `and` and `or`
+  expressions across multiple lines.
 
 (labels/remove-redundant-top-level-parentheses)=
 
