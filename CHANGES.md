@@ -16,6 +16,7 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--line-ranges` crash when a `# fmt: off` block with no `# fmt: on` sits before an `else` or `except` (#5738)
 - Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
   `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
 
