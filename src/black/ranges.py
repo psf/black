@@ -482,7 +482,9 @@ def _str_with_standalone_comments(*nodes: LN) -> str:
     """
     leaves = [leaf for node in nodes for leaf in node.leaves()]
     parts = []
-    for leaf, next_leaf in zip(leaves, [*leaves[1:], None], strict=True):
+    for i, (leaf, next_leaf) in enumerate(
+        zip(leaves, [*leaves[1:], None], strict=True)
+    ):
         text = str(leaf)
         if (
             leaf.type == STANDALONE_COMMENT
@@ -492,11 +494,31 @@ def _str_with_standalone_comments(*nodes: LN) -> str:
                 # A newline in the next leaf's prefix is a blank line after it.
                 leaf.fmt_pass_converted_first_leaf is None
                 or (not str(next_leaf).startswith("\n") and _ends_with_fmt_skip(text))
+                # A `# fmt: off` block with no `# fmt: on` ends at the first unindent,
+                # so the clause that follows it (`else`, `except`, ...) would be
+                # appended to its last line.
+                or (
+                    not text.endswith("\n")
+                    and _next_text_continues_line(leaves[i + 1 :])
+                )
             )
         ):
             text += "\n"
         parts.append(text)
     return "".join(parts)
+
+
+def _next_text_continues_line(following: Sequence[Leaf]) -> bool:
+    """Whether the first leaf with any text after a STANDALONE_COMMENT would be
+    joined to its last line, i.e. does not start with a newline.
+
+    Zero-width leaves (INDENT, DEDENT) are skipped.
+    """
+    for leaf in following:
+        text = str(leaf)
+        if text:
+            return not text.startswith("\n")
+    return False
 
 
 def _ends_with_fmt_skip(text: str) -> bool:
