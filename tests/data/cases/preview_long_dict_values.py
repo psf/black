@@ -189,6 +189,15 @@ class C:
         )
 
 
+# Parentheses the value needs are kept when the key has delimiters
+ranges = {name + "_range": (lo, hi)}
+result = {key + suffix: (n := compute())}
+
+
+def gen():
+    sent = {a + b: (yield)}
+
+
 # output
 x = {
     "xx_xxxxx_xxxxxxxxxx_xxxxxxxxx_xx": "xx:xxxxxxxxxxxxxxxxx_xxxxx_xxxxxxx_xxxxxxxxxxx{xx}xxx_xxxxx_xxxxxxxxx_xxxxxxxxxxxx_xxxx"
@@ -400,3 +409,12 @@ class C:
                 },
             )
         )
+
+
+# Parentheses the value needs are kept when the key has delimiters
+ranges = {name + "_range": (lo, hi)}
+result = {key + suffix: (n := compute())}
+
+
+def gen():
+    sent = {a + b: (yield)}

@@ -13,6 +13,7 @@ from typing import Final, Union, cast
 from black.brackets import (
     COMMA_PRIORITY,
     COMPARATOR_PRIORITY,
+    COMPREHENSION_PRIORITY,
     DOT_PRIORITY,
     LOGIC_PRIORITY,
     STRING_PRIORITY,
@@ -56,6 +57,7 @@ from black.nodes import (
     is_async_stmt_or_funcdef,
     is_atom_with_invisible_parens,
     is_docstring,
+    is_empty_rpar,
     is_empty_tuple,
     is_generator,
     is_list,
@@ -298,6 +300,9 @@ class LineGenerator(Visitor[Line]):
                         and len(child.children) == 3
                         and is_lpar_token(child.children[0])
                         and is_rpar_token(child.children[-1])
+                        # Only look through invisible parens; visible ones here
+                        # are required (e.g. around a tuple, walrus or `yield`)
+                        and not child.children[0].value
                     ):
                         child = child.children[1]
 
@@ -922,6 +927,17 @@ def transform_line(
     `features` are syntactical features that may be used in the output.
     """
     if line.is_comment:
+        yield line
+        return
+
+    if (
+        Preview.keep_long_single_imports in mode
+        and line.is_import
+        and is_empty_rpar(line.leaves[-1])
+        and not any(line.comments.values())
+        and not line.contains_standalone_comments()
+        and not any(leaf.type == token.COMMA for leaf in line.leaves)
+    ):
         yield line
         return
 
@@ -1739,6 +1755,26 @@ def _safe_add_trailing_comma(safe: bool, delimiter_priority: int, line: Line) ->
     return line
 
 
+def _has_comment_between_trailers(line: Line) -> bool:
+    """
+    Return whether a standalone comment separates a trailer from the rest of the line.
+    """
+    post_comment: Leaf | None = None
+
+    for leaf in line.leaves[::-1]:
+        if leaf.type == STANDALONE_COMMENT:
+            if (
+                post_comment
+                and post_comment.parent is not None
+                and post_comment.parent.type == syms.trailer
+            ):
+                return True
+        else:
+            post_comment = leaf
+
+    return False
+
+
 MIGRATE_COMMENT_DELIMITERS = {STRING_PRIORITY, COMMA_PRIORITY}
 
 
@@ -1831,27 +1867,40 @@ def delimiter_split(
     except ValueError:
         raise CannotSplit("No delimiters found") from None
 
+    comment_before_trailer = _has_comment_between_trailers(line)
     if (
         delimiter_priority == DOT_PRIORITY
         and bt.delimiter_count_with_priority(delimiter_priority) == 1
+        and not (
+            Preview.split_commented_method_chains in mode and comment_before_trailer
+        )
     ):
         raise CannotSplit("Splitting a single attribute from its owner looks wrong")
 
     rhs: RHSResult | None = None
     if (
         Preview.keep_commented_expressions_together in mode
+        and not comment_before_trailer
         and line.contains_standalone_comments()
         and delimiter_priority != COMMA_PRIORITY
     ):
-        first_comment_idx = next(
+        comment_indices = [
             i for i, leaf in enumerate(line.leaves) if leaf.type == STANDALONE_COMMENT
-        )
-        first_delimiter_idx = next(
+        ]
+        delimiter_indices = [
             i
             for i, leaf in enumerate(line.leaves)
             if bt.delimiters.get(id(leaf)) == delimiter_priority
-        )
-        if first_comment_idx < first_delimiter_idx:
+        ]
+
+        # A standalone comment at either end of the bracketed expression
+        # forces a line break there anyway.
+        if comment_indices[0] < delimiter_indices[0] or (
+            delimiter_priority != COMPREHENSION_PRIORITY
+            and comment_indices[-1] > delimiter_indices[-1]
+            and line.leaves[comment_indices[-1]].bracket_depth
+            == line.leaves[delimiter_indices[-1]].bracket_depth
+        ):
             raise CannotSplit("Standalone comments should be split first")
 
     if (

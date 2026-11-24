@@ -119,14 +119,22 @@
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
 - Fix `--line-ranges` producing invalid code when stacked decorators outside the
   selected lines are indented with 2 spaces or tabs (#5672)
+- Fix crash on a `# fmt: off` / `# fmt: on` block with only comments in an f-string or
+  t-string field (#5701)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long method chains consistently when a standalone comment separates two calls
+  (#5518)
+- Keep long single-name `from` imports on one line unless they contain comments or a
+  magic trailing comma (#5669)
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638, #5657)
+- Keep an expression together wherever a standalone comment sits inside the surrounding
+  brackets (#5660)
 - Retain user-written parens around `in` clauses of comprehensions if they have
   delimiters (#4881)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
@@ -161,6 +169,8 @@
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
 - Don't add or remove parens around long dict values unless they have delimiters (#5627)
+- Fix crash when the key of a dict has an operator and its value needs its parentheses,
+  such as a tuple, walrus or `yield` (#5710)
 - Correctly indent `# fmt: off` comments inside brackets, such as function calls, and
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
@@ -177,6 +187,8 @@
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)
+- Reject `--line-ranges` for a Jupyter notebook recognized by its `.ipynb` extension, as
+  with `--ipynb`, instead of formatting the whole notebook (#5711)
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 - Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
@@ -240,6 +252,7 @@
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the GitHub Action picking up `venv.py` from the local repository (#5611)
+- Stop including pip & build dependencies in Docker images (#5707)
 
 ### Documentation
 

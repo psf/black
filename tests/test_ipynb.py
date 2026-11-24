@@ -641,6 +641,35 @@ def test_ipynb_flag(tmp_path: pathlib.Path) -> None:
     assert expected in result.output
 
 
+def test_line_ranges_with_ipynb_file(tmp_path: pathlib.Path) -> None:
+    # Notebooks detected by their extension can't use --line-ranges either.
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
+    tmp_nb = tmp_path / "notebook.ipynb"
+    tmp_nb.write_bytes(nb.read_bytes())
+    result = runner.invoke(
+        main, [str(tmp_nb), "--line-ranges=1-1", f"--config={EMPTY_CONFIG}"]
+    )
+    assert result.exit_code == 1
+    assert "Cannot use --line-ranges with ipynb files." in result.output
+    assert tmp_nb.read_bytes() == nb.read_bytes()
+
+
+def test_line_ranges_with_ipynb_stdin_filename() -> None:
+    nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
+    result = runner.invoke(
+        main,
+        [
+            "-",
+            "--stdin-filename=notebook.ipynb",
+            "--line-ranges=1-1",
+            f"--config={EMPTY_CONFIG}",
+        ],
+        input=nb.read_bytes(),
+    )
+    assert result.exit_code == 1
+    assert "Cannot use --line-ranges with ipynb files." in result.output
+
+
 def test_ipynb_and_pyi_flags() -> None:
     nb = get_case_path("jupyter", "notebook_trailing_newline.ipynb")
     result = runner.invoke(

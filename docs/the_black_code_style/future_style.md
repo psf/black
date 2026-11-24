@@ -63,14 +63,19 @@ Currently, the following features are included in the preview style:
 - `remove_redundant_unpacking_parentheses`: Remove redundant parentheses around
   individual variables in unpacking targets.
   ([see below](labels/remove-redundant-unpacking-parentheses))
+- `split_commented_method_chains`: Split long method chains consistently when a
+  standalone comment separates two calls.
 - `fix_magic_trailing_comma_trailer_split`: When a magic trailing comma forces a line to
   split, split only at the brackets holding that comma. Trailers after them, such as
   `[1,][2](3)`, stay on the closing line.
 - `keep_dict_keys_with_operators`: Keep dictionary keys containing operators together on
   one line when the value can be wrapped onto a new line.
   ([see below](labels/keep-dict-keys-with-operators))
+- `keep_long_single_imports`: Keep `from` imports with one imported name on a single
+  line even when they exceed the line length, unless they have comments or a magic
+  trailing comma.
 - `keep_commented_expressions_together`: Do not split expressions on delimiters (such as
-  binary operators, comparisons, or comprehensions) inside brackets when preceded by a
+  binary operators, comparisons, or comprehensions) inside brackets that contain a
   standalone comment if the expression fits within the line length limit.
   ([see below](labels/keep-commented-expressions-together))
 - `avoid_parens_for_unbreakable_rhs_in_assignments`: Avoid adding unnecessary
@@ -306,9 +311,9 @@ self.message_user(
 ### Keep commented expressions together
 
 Black previously split expressions containing delimiters (such as binary operators,
-comparisons, or comprehensions) across multiple lines when placed after a standalone
-comment inside brackets (such as lists or function calls), even if the expression was
-well within the line length limit:
+comparisons, or comprehensions) across multiple lines when a standalone comment sat
+inside the brackets around them (such as lists or function calls), even if the
+expression was well within the line length limit:
 
 ```python
 # Before

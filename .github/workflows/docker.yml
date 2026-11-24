@@ -2,10 +2,9 @@ name: docker
 
 on:
   push:
-    branches:
-      - "main"
+    branches: main
   release:
-    types: [published]
+    types: published
 
 permissions:
   contents: read
@@ -17,15 +16,15 @@ env:
 jobs:
   build:
     if: github.repository == 'psf/black'
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.os }}
     name: build (${{ matrix.platform }})
     strategy:
       matrix:
         include:
           - platform: linux/amd64
-            runner: ubuntu-latest
+            os: ubuntu-latest
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
+            os: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -77,11 +76,6 @@ jobs:
     needs: build
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
       - name: Download digests
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -103,7 +97,7 @@ jobs:
           TAGS="-t $REGISTRY:latest"
 
           if [[ "$EVENT_NAME" == "release" ]]; then
-            TAGS="$TAGS -t $REGISTRY:$(git describe --candidates=0 --tags)"
+            TAGS="$TAGS -t $REGISTRY:$TAG_NAME"
 
             if [[ "$PRERELEASE" == "true" ]]; then
               TAGS="$TAGS -t $REGISTRY:latest_prerelease"
@@ -119,6 +113,7 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           PRERELEASE: ${{ github.event.release.prerelease }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Inspect image
-        run: docker buildx imagetools inspect $REGISTRY:latest
+        run: docker buildx imagetools inspect "$REGISTRY:latest"
