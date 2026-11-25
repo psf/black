@@ -178,7 +178,7 @@
 - Keep parentheses around a walrus in a subscript (for example `x[(y := f())]`) when
   targeting Python 3.9 or older (#5619)
 - Fix crash when a dict value is a walrus wrapped in redundant parentheses, such as
-  `{1: ((a := 1))}` (#5725)
+  `{1: ((a := 1))}` (#5727)
 
 ### Configuration
 
