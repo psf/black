@@ -325,6 +325,7 @@ def _path_is_ignored(
     root_relative_path: str,
     root: Path,
     gitignore_dict: dict[Path, GitIgnoreSpec],
+    is_dir: bool,
 ) -> bool:
     path = root / root_relative_path
     # Note that this logic is sensitive to the ordering of gitignore_dict. Callers must
@@ -332,7 +333,7 @@ def _path_is_ignored(
     for gitignore_path, pattern in gitignore_dict.items():
         try:
             relative_path = path.relative_to(gitignore_path).as_posix()
-            if path.is_dir():
+            if is_dir:
                 relative_path = relative_path + "/"
         except ValueError:
             break
@@ -375,17 +376,18 @@ def gen_python_files(
     for child in paths:
         assert child.is_absolute()
         root_relative_path = child.relative_to(root).as_posix()
+        is_dir = child.is_dir()
 
         # First ignore files matching .gitignore, if passed
         if gitignore_dict and _path_is_ignored(
-            root_relative_path, root, gitignore_dict
+            root_relative_path, root, gitignore_dict, is_dir
         ):
             report.path_ignored(child, "matches a .gitignore file content")
             continue
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
         root_relative_path = "/" + root_relative_path
-        if child.is_dir():
+        if is_dir:
             root_relative_path += "/"
 
         if path_is_excluded(root_relative_path, exclude):
@@ -405,7 +407,7 @@ def gen_python_files(
         if resolves_outside_root_or_cannot_stat(child, root, report):
             continue
 
-        if child.is_dir():
+        if is_dir:
             # If gitignore is None, gitignore usage is disabled, while a Falsey
             # gitignore is when the directory doesn't have a .gitignore file.
             if gitignore_dict is not None:
