@@ -50,6 +50,7 @@ def generate_schema_from_click(
 def main(schemastore: bool, outfile: IO[str]) -> None:
     properties = generate_schema_from_click(black.main)
     del properties["line-ranges"]
+    del properties["code"]
 
     schema: dict[str, Any] = {
         "$schema": "http://json-schema.org/draft-07/schema#",
