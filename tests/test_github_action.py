@@ -35,26 +35,34 @@ def action_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     ("config", "specifier"),
     [
         pytest.param(
-            '[dependency-groups]\ndev = [{include-group = "base"}, "black==26.5.1"]\n'
-            'base = ["pytest"]\n',
+            (
+                '[dependency-groups]\ndev = [{include-group = "base"},'
+                ' "black==26.5.1"]\nbase = ["pytest"]\n'
+            ),
             "==26.5.1",
             id="include-before-pin",
         ),
         pytest.param(
-            '[dependency-groups]\ndev = ["black==26.5.1", {include-group = "base"}]\n'
-            'base = ["pytest"]\n',
+            (
+                '[dependency-groups]\ndev = ["black==26.5.1", {include-group ='
+                ' "base"}]\nbase = ["pytest"]\n'
+            ),
             "==26.5.1",
             id="include-after-pin",
         ),
         pytest.param(
-            '[dependency-groups]\ndev = [{include-group = "lint"}]\n'
-            'lint = ["black==26.5.1"]\n',
+            (
+                '[dependency-groups]\ndev = [{include-group = "lint"}]\n'
+                'lint = ["black==26.5.1"]\n'
+            ),
             "==26.5.1",
             id="pin-in-included-group",
         ),
         pytest.param(
-            '[dependency-groups]\ndev = [{include-group = "base"}]\n'
-            'base = ["pytest"]\n[project]\ndependencies = ["black==26.5.1"]\n',
+            (
+                '[dependency-groups]\ndev = [{include-group = "base"}]\n'
+                'base = ["pytest"]\n[project]\ndependencies = ["black==26.5.1"]\n'
+            ),
             "==26.5.1",
             id="unrelated-include-before-project-pin",
         ),
@@ -64,8 +72,10 @@ def action_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> MagicMock:
             id="project-pin",
         ),
         pytest.param(
-            '[dependency-groups]\nlint = ["black[jupyter]>=26; python_version >= '
-            "'3.11'\"]\n",
+            (
+                '[dependency-groups]\nlint = ["black[jupyter]>=26; python_version >= '
+                "'3.11'\"]\n"
+            ),
             ">=26",
             id="extras-and-marker",
         ),
@@ -95,8 +105,10 @@ def test_action_use_pyproject(
             id="unpinned-black",
         ),
         pytest.param(
-            '[dependency-groups]\ndev = [{include-group = "base"}]\n'
-            'base = ["pytest"]\n',
+            (
+                '[dependency-groups]\ndev = [{include-group = "base"}]\n'
+                'base = ["pytest"]\n'
+            ),
             "'black' dependency missing from pyproject.toml",
             id="include-without-black",
         ),

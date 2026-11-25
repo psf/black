@@ -160,6 +160,8 @@
 - Put each string literal of an implicit string concatenation on its own line inside the
   surrounding brackets when the literal ends with a newline, instead of joining them
   onto a single line (#5554)
+- Wrap a split positional string argument in parentheses when a neighboring argument
+  starts with a string literal in the unstable `string_processing` style (#5719)
 - Split long strings after overloaded binary and augmented assignment operators,
   including middle operands of operator chains, in the unstable `string_processing`
   feature (#5562)
