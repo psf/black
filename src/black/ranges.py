@@ -462,6 +462,13 @@ def _convert_unchanged_line_by_line(node: Node, lines_set: frozenset[int]) -> No
             # first decorator would be reindented.
             if ancestor.type == syms.decorators:
                 targets = list(ancestor.children)
+            elif ancestor.type == syms.decorated:
+                # A single-line decorated item: convert each line on its own.
+                decorators, item = ancestor.children
+                if decorators.type == syms.decorators:
+                    targets = [*decorators.children, item]
+                else:
+                    targets = [decorators, item]
             else:
                 targets = [ancestor]
             for target in targets:
