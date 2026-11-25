@@ -184,6 +184,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Add `--respect-gitignore` and `--no-respect-gitignore` to control `.gitignore`
+  handling independently of `--exclude`.
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)

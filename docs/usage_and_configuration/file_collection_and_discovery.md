@@ -45,8 +45,19 @@ python -m black --no-cache .
 
 ## .gitignore
 
-If `--exclude` is not set, _Black_ will automatically ignore files and directories in
-`.gitignore` file(s), if present.
+By default, _Black_ uses `.gitignore` files during recursive discovery when `--exclude`
+is unset. Use `--extend-exclude` to add patterns to the default exclusions while still
+using `.gitignore`.
 
-If you want _Black_ to continue using `.gitignore` while also configuring the exclusion
-rules, please use `--extend-exclude`.
+To replace the default exclusions and still use `.gitignore`, combine `--exclude` with
+`--respect-gitignore`. For example, this `pyproject.toml` lets _Black_ discover Python
+files in a package named `build` while skipping `.git` and paths listed in `.gitignore`.
+
+```toml
+[tool.black]
+exclude = '/\.git/'
+respect-gitignore = true
+```
+
+Use `--no-respect-gitignore` or `respect-gitignore = false` to disable `.gitignore`
+handling independently of the exclusion regex.

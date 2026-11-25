@@ -144,11 +144,15 @@
     },
     "exclude": {
       "type": "string",
-      "description": "A regular expression that matches files and directories that should be excluded on recursive searches. An empty value means no paths are excluded. Use forward slashes for directories on all platforms (Windows, too). By default, Black also ignores all paths listed in .gitignore. Changing this value will override all default exclusions. [default: /(\\.direnv|\\.eggs|\\.git|\\.hg|\\.ipynb_checkpoints|\\.mypy_cache|\\.nox|\\.pytest_cache|\\.ruff_cache|\\.tox|\\.svn|\\.venv|\\.vscode|__pypackages__|_build|buck-out|build|dist|venv)/]"
+      "description": "A regular expression that matches files and directories that should be excluded on recursive searches. An empty value disables this regex. Use forward slashes for directories on all platforms (Windows, too). Setting this option replaces the default exclusions and disables .gitignore handling unless --respect-gitignore is enabled. [default: /(\\.direnv|\\.eggs|\\.git|\\.hg|\\.ipynb_checkpoints|\\.mypy_cache|\\.nox|\\.pytest_cache|\\.ruff_cache|\\.tox|\\.svn|\\.venv|\\.vscode|__pypackages__|_build|buck-out|build|dist|venv)/]"
     },
     "extend-exclude": {
       "type": "string",
       "description": "Like --exclude, but adds additional files and directories on top of the default values instead of overriding them."
+    },
+    "respect-gitignore": {
+      "type": "boolean",
+      "description": "Use .gitignore files to exclude paths during recursive searches. By default, .gitignore files are used only when --exclude is unset."
     },
     "force-exclude": {
       "type": "string",

@@ -3830,6 +3830,57 @@ class TestFileCollection:
         src = [base / "b/"]
         assert_collected_sources(src, expected, root=base, extend_exclude=r"/exclude/")
 
+    def test_respect_gitignore_with_custom_exclude(self, tmp_path: Path) -> None:
+        (tmp_path / "pyproject.toml").write_text(
+            '[tool.black]\nexclude = "^/excluded/"\nrespect-gitignore = true\n',
+            encoding="utf-8",
+        )
+        (tmp_path / ".gitignore").write_text("ignored.py\n", encoding="utf-8")
+        build = tmp_path / "build"
+        build.mkdir()
+        (build / ".gitignore").write_text("generated.py\n", encoding="utf-8")
+        excluded = tmp_path / "excluded"
+        excluded.mkdir()
+        source = build / "source.py"
+        ignored = tmp_path / "ignored.py"
+        generated = build / "generated.py"
+        excluded_source = excluded / "source.py"
+        for path in (source, ignored, generated, excluded_source):
+            path.write_text("x=1\n", encoding="utf-8")
+
+        result = BlackRunner().invoke(
+            black.main, ["--no-cache", "--workers", "1", str(tmp_path)]
+        )
+
+        assert result.exit_code == 0, result.output
+        assert source.read_text(encoding="utf-8") == "x = 1\n"
+        assert ignored.read_text(encoding="utf-8") == "x=1\n"
+        assert generated.read_text(encoding="utf-8") == "x=1\n"
+        assert excluded_source.read_text(encoding="utf-8") == "x=1\n"
+
+    @pytest.mark.parametrize(
+        "flag, config_value, expected",
+        [
+            ("--respect-gitignore", "false", "x=1\n"),
+            ("--no-respect-gitignore", "true", "x = 1\n"),
+        ],
+    )
+    def test_respect_gitignore_cli_override(
+        self, tmp_path: Path, flag: str, config_value: str, expected: str
+    ) -> None:
+        (tmp_path / "pyproject.toml").write_text(
+            f'[tool.black]\nexclude = ""\nrespect-gitignore = {config_value}\n',
+            encoding="utf-8",
+        )
+        (tmp_path / ".gitignore").write_text("ignored.py\n", encoding="utf-8")
+        ignored = tmp_path / "ignored.py"
+        ignored.write_text("x=1\n", encoding="utf-8")
+
+        result = BlackRunner().invoke(black.main, ["--no-cache", flag, str(tmp_path)])
+
+        assert result.exit_code == 0, result.output
+        assert ignored.read_text(encoding="utf-8") == expected
+
     def test_gitignore_used_on_multiple_sources(self) -> None:
         root = Path(DATA_DIR / "gitignore_used_on_multiple_sources")
         expected = [
