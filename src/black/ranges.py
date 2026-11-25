@@ -495,10 +495,7 @@ def _str_with_standalone_comments(*nodes: LN) -> str:
                 # A `# fmt: off` block with no `# fmt: on` ends at the first unindent,
                 # so the clause that follows it (`else`, `except`, ...) would be
                 # appended to its last line.
-                or (
-                    not text.endswith("\n")
-                    and not str(next_leaf).startswith("\n")
-                )
+                or (not text.endswith("\n") and not str(next_leaf).startswith("\n"))
             )
         ):
             text += "\n"
