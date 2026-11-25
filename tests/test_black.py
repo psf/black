@@ -3807,6 +3807,67 @@ def assert_collected_sources(
 
 
 class TestFileCollection:
+    @pytest.mark.parametrize("source_kind", ["file", "directory", "stdin", "root"])
+    def test_ancestor_config_root_for_nested_repository(
+        self, tmp_path: Path, source_kind: str
+    ) -> None:
+        root = tmp_path.resolve()
+        (root / ".git").mkdir()
+        subproject = root / "subproject"
+        subproject.mkdir()
+        (subproject / ".git").write_text(
+            "gitdir: ../.git/modules/subproject\n", "utf-8"
+        )
+        source = subproject / "file.py"
+        source.write_text("x=1\n", encoding="utf-8")
+        config = root / "pyproject.toml"
+        config.write_text("[tool.black]\nforce-exclude = '^/subproject/'\n", "utf-8")
+
+        if source_kind == "stdin":
+            sources = ["--stdin-filename", str(source), "-"]
+        elif source_kind == "directory":
+            sources = [str(subproject)]
+        elif source_kind == "root":
+            sources = [str(root)]
+        else:
+            sources = [str(source)]
+
+        with change_directory(subproject):
+            result = BlackRunner().invoke(
+                black.main,
+                ["--check", "--verbose", "--config", "../pyproject.toml", *sources],
+                input="x=1\n" if source_kind == "stdin" else None,
+            )
+        assert result.exit_code == 0, result.output
+        assert "matches the --force-exclude regular expression" in result.output
+
+    @pytest.mark.parametrize("config_location", ["inside", "unrelated", "automatic"])
+    def test_existing_config_root_for_nested_repository(
+        self, tmp_path: Path, config_location: str
+    ) -> None:
+        root = tmp_path.resolve()
+        subproject = root / "subproject"
+        (subproject / "src").mkdir(parents=True)
+        (subproject / ".git").mkdir()
+        source = subproject / "src" / "file.py"
+        source.write_text("x=1\n", encoding="utf-8")
+        config = {
+            "inside": subproject / "src" / "black.toml",
+            "unrelated": root / "configs" / "black.toml",
+            "automatic": subproject / "pyproject.toml",
+        }[config_location]
+        config.parent.mkdir(exist_ok=True)
+        config.write_text("[tool.black]\nforce-exclude = '^/src/'\n", "utf-8")
+        config_args = (
+            [] if config_location == "automatic" else ["--config", str(config)]
+        )
+
+        result = BlackRunner().invoke(
+            black.main, ["--check", "--verbose", *config_args, str(source)]
+        )
+        assert result.exit_code == 0, result.output
+        assert "matches the --force-exclude regular expression" in result.output
+
     def test_include_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         src = [path]

@@ -184,6 +184,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Respect a parent project's `--force-exclude` when its configuration is passed via
+  `--config` and a file inside a Git submodule is passed directly.
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)
