@@ -348,6 +348,9 @@ Like `--exclude`, but files and directories matching this regex will be excluded
 when they are passed explicitly as arguments. This is useful when invoking Black
 programmatically on changed files, such as in a pre-commit hook or editor plugin.
 
+During recursive file discovery, `--exclude`, `--extend-exclude`, and `--force-exclude`
+also apply to symlink destinations and their parent directories within the project root.
+
 #### `--stdin-filename`
 
 The name of the file when passing it through stdin. Useful to make sure Black will

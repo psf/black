@@ -4179,6 +4179,32 @@ class TestFileCollection:
         outside_root_symlink.resolve.assert_called_once()
         ignored_symlink.resolve.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "option", ["--exclude", "--extend-exclude", "--force-exclude"]
+    )
+    @pytest.mark.parametrize(
+        ("alias", "destination", "pattern"),
+        [
+            ("link.py", "vendor/nested/file.py", r"^/vendor/$"),
+            ("link", "vendor/nested", r"^/vendor/$"),
+            ("link", "vendor", r"^/vendor/nested/file\.py$"),
+        ],
+        ids=["file-link", "directory-link", "file-under-directory-link"],
+    )
+    def test_recursive_symlink_destination_exclusions(
+        self, tmp_path: Path, option: str, alias: str, destination: str, pattern: str
+    ) -> None:
+        (tmp_path / "pyproject.toml").write_text("[tool.black]\n", encoding="utf-8")
+        target = tmp_path / "vendor" / "nested" / "file.py"
+        target.parent.mkdir(parents=True)
+        target.write_text("value=1\n", encoding="utf-8")
+        symlink_or_skip(tmp_path / alias, tmp_path / destination)
+
+        with change_directory(tmp_path):
+            invokeBlack(["--no-cache", option, pattern, "."])
+
+        assert target.read_text(encoding="utf-8") == "value=1\n"
+
     def test_get_sources_symlink_and_force_exclude(self) -> None:
         with TemporaryDirectory() as tempdir:
             tmp = Path(tempdir).resolve()
