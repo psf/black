@@ -177,6 +177,9 @@
   `case x,:` (#5673)
 - Keep parentheses around a walrus in a subscript (for example `x[(y := f())]`) when
   targeting Python 3.9 or older (#5619)
+- Keep a trailing comment, such as `# pyright: ignore[...]`, on the same line as its
+  string in the unstable `string_processing` feature when only the comment makes the
+  line too long, instead of wrapping the string in parentheses (#5705)
 
 ### Configuration
 
