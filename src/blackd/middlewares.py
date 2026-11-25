@@ -36,9 +36,9 @@ def cors(
             resp.headers["Access-Control-Expose-Headers"] = ", ".join(expose_headers)
         if is_options:
             resp.headers["Access-Control-Allow-Headers"] = ", ".join(allow_headers)
-            resp.headers["Access-Control-Allow-Methods"] = ", ".join(
-                ("OPTIONS", "POST")
-            )
+            resp.headers["Access-Control-Allow-Methods"] = ", ".join((
+                "OPTIONS", "POST"
+            ))
 
         return resp
 
