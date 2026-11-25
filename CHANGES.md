@@ -184,6 +184,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Preserve the upper bound of compatible-release `requires-python` constraints such as
+  `~=3.11.0` when inferring target versions (#5640)
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)
