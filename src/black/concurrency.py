@@ -176,14 +176,6 @@ def _is_tempdir_too_long_for_unix_sockets() -> bool:
         return len(tempfile.gettempdir()) + 35 >= max_socket_path_length
 
 
-def _source_sort_key(source: Path) -> tuple[int, Path]:
-    try:
-        return -source.stat().st_size, source
-    except OSError:
-        # Leave inaccessible files to the worker's per-file error reporting.
-        return 0, source
-
-
 async def schedule_formatting(
     sources: set[Path],
     fast: bool,
@@ -208,8 +200,9 @@ async def schedule_formatting(
         cache = Cache.read(mode)
     else:
         cache = Cache.read(mode, cache_dir)
+    file_sizes: dict[Path, int] = {}
     if cache is not None:
-        sources, cached = cache.filtered_cached(sources)
+        sources, cached = cache.filtered_cached(sources, file_sizes)
         for src in sorted(cached):
             report.done(src, Changed.CACHED)
     if not sources:
@@ -247,7 +240,16 @@ async def schedule_formatting(
                     executor, format_file_in_place, src, fast, mode, write_back, lock
                 )
             ): src
-            for src in sorted(sources, key=_source_sort_key)
+            # Reuse sizes only when every remaining source has one, so scheduling
+            # never adds stat calls or moves sources with unknown sizes to the end.
+            for src in sorted(
+                sources,
+                key=(
+                    (lambda src: (-file_sizes[src], src))
+                    if sources.issubset(file_sizes)
+                    else None
+                ),
+            )
         }
         pending = set(tasks)
         try:

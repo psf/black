@@ -3589,6 +3589,37 @@ class TestCaching:
             assert todo == {uncached, cached_but_changed}
             assert done == {cached}
 
+    def test_filter_cached_collects_sizes_without_extra_stats(
+        self, tmp_path: Path
+    ) -> None:
+        cached = tmp_path / "cached.py"
+        changed = tmp_path / "changed.py"
+        uncached = tmp_path / "uncached.py"
+        cached.write_text("x = 1\n", encoding="utf8")
+        changed.write_text("x = 1\n", encoding="utf8")
+        uncached.write_text("x = 1\n", encoding="utf8")
+        cache = black.Cache.read(DEFAULT_MODE, tmp_path / "cache")
+        cache.write([cached, changed])
+        changed.write_text("x = 100000\n", encoding="utf8")
+        sources = {cached, changed, uncached}
+        file_sizes: dict[Path, int] = {}
+        stat_calls: list[Path] = []
+        original_stat = Path.stat
+
+        def stat(path: Path, **kwargs: Any) -> os.stat_result:
+            stat_calls.append(path)
+            return original_stat(path, **kwargs)
+
+        with patch.object(Path, "stat", new=stat):
+            expected = cache.filtered_cached(sources)
+            original_calls = stat_calls[:]
+            stat_calls.clear()
+            actual = cache.filtered_cached(sources, file_sizes)
+
+        assert actual == expected == ({changed, uncached}, {cached})
+        assert stat_calls == original_calls
+        assert file_sizes == {cached: 6, changed: 11}
+
     def test_filter_cached_hash(self) -> None:
         with TemporaryDirectory() as workspace:
             path = Path(workspace)

@@ -100,14 +100,21 @@ class Cache:
         hash = Cache.hash_digest(path)
         return FileData(stat.st_mtime, stat.st_size, hash)
 
-    def is_changed(self, source: Path) -> bool:
-        """Check if source has changed compared to cached version."""
+    def is_changed(
+        self, source: Path, file_sizes: dict[Path, int] | None = None
+    ) -> bool:
+        """Check if source has changed compared to cached version.
+
+        Optionally retain sizes obtained while checking cached files.
+        """
         res_src = source.resolve()
         old = self.file_data.get(str(res_src))
         if old is None:
             return True
 
         st = res_src.stat()
+        if file_sizes is not None:
+            file_sizes[source] = st.st_size
         if st.st_size != old.st_size:
             return True
         if st.st_mtime != old.st_mtime:
@@ -116,16 +123,20 @@ class Cache:
                 return True
         return False
 
-    def filtered_cached(self, sources: Iterable[Path]) -> tuple[set[Path], set[Path]]:
+    def filtered_cached(
+        self, sources: Iterable[Path], file_sizes: dict[Path, int] | None = None
+    ) -> tuple[set[Path], set[Path]]:
         """Split an iterable of paths in `sources` into two sets.
 
         The first contains paths of files that modified on disk or are not in the
         cache. The other contains paths to non-modified files.
+
+        If provided, file_sizes collects sizes from existing cache checks.
         """
         changed: set[Path] = set()
         done: set[Path] = set()
         for src in sources:
-            if self.is_changed(src):
+            if self.is_changed(src, file_sizes):
                 changed.add(src)
             else:
                 done.add(src)
