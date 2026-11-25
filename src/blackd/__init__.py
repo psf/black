@@ -1,10 +1,12 @@
 import asyncio
 import logging
 import os
+import tomllib
 from concurrent.futures import Executor, ProcessPoolExecutor
 from datetime import datetime, timezone
 from functools import cache, partial
 from multiprocessing import freeze_support
+from typing import Any
 
 try:
     from aiohttp import web
@@ -23,6 +25,7 @@ import click
 import black
 from _black_version import version as __version__
 from black.concurrency import cap_process_pool_workers, maybe_use_uvloop
+from black.files import find_pyproject_toml
 
 # This is used internally by tests to shut down the server prematurely
 _stop_signal = asyncio.Event()
@@ -68,6 +71,65 @@ class InvalidVariantHeader(Exception):
     pass
 
 
+def read_pyproject_toml(
+    ctx: click.Context, param: click.Parameter, value: str | None
+) -> str | None:
+    """Inject blackd configuration from "pyproject.toml" into defaults in `ctx`.
+
+    The configuration is read from the `[tool.blackd]` table, whose keys are the
+    names of the command line options. Returns the path to a successfully found and
+    read configuration file, None otherwise.
+    """
+    if not value:
+        value = find_pyproject_toml(())
+        if value is None:
+            return None
+
+    try:
+        with open(value, "rb") as f:
+            config = tomllib.load(f).get("tool", {}).get("blackd", {})
+    except (OSError, ValueError) as e:
+        raise click.FileError(
+            filename=value, hint=f"Error reading configuration file: {e}"
+        ) from None
+    if not isinstance(config, dict):
+        raise click.FileError(
+            filename=value, hint="Config key tool.blackd must be a table"
+        )
+    if not config:
+        return None
+
+    options = {
+        opt.removeprefix("--"): option
+        for option in ctx.command.params
+        if isinstance(option, click.Option)
+        and option.expose_value
+        and option is not param
+        for opt in option.opts
+        if opt.startswith("--")
+    }
+    default_map: dict[str, Any] = dict(ctx.default_map or {})
+    invalid_keys: list[str] = []
+    for key, val in config.items():
+        option = options.get(key.removeprefix("--").replace("_", "-"))
+        if option is None or option.name is None:
+            invalid_keys.append(key)
+            continue
+        if option.multiple:
+            if not isinstance(val, list):
+                raise click.BadOptionUsage(key, f"Config key {key} must be a list")
+            default_map[option.name] = [str(v) for v in val]
+        else:
+            # Sanitize the values to be Click friendly, as Black does.
+            default_map[option.name] = str(val)
+    if invalid_keys:
+        keys_str = ", ".join(map(repr, invalid_keys))
+        black.out(f"Invalid config keys detected: {keys_str} (in {value})", fg="red")
+
+    ctx.default_map = default_map
+    return value
+
+
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
     "--bind-host",
@@ -91,6 +153,25 @@ class InvalidVariantHeader(Exception):
     default=DEFAULT_MAX_BODY_SIZE,
     show_default=True,
     help="Maximum request body size in bytes.",
+)
+@click.option(
+    "--config",
+    type=click.Path(
+        exists=True,
+        file_okay=True,
+        dir_okay=False,
+        readable=True,
+        allow_dash=False,
+        path_type=str,
+    ),
+    is_eager=True,
+    expose_value=False,
+    callback=read_pyproject_toml,
+    help=(
+        "Read configuration options from a configuration file. Without it, blackd"
+        " reads the [tool.blackd] table of the pyproject.toml that Black would find"
+        " from the current directory."
+    ),
 )
 @click.version_option(version=black.__version__)
 def main(
