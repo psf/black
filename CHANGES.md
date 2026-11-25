@@ -244,7 +244,13 @@
   the requested charset, instead of HTTP 500 (#5519)
 - Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
   for a `X-Diff` request, instead of prepending it as raw text in front of the diff
-  (#5573)
+- Preserve non-ASCII source in the Python client when a custom `Content-Type` declares a
+  non-UTF-8 charset (#5645)
+- Return HTTP 400 for an unknown request charset or input that cannot be decoded using
+  the requested charset, instead of HTTP 500 (#5519)
+- Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
+  for a `X-Diff` request, instead of prepending it as raw text in front of the diff
+  (#5573, #5832)
 - Fix blackd startup on Windows with more than 61 logical CPUs (#5667)
 
 ### Integrations
