@@ -540,7 +540,11 @@ Windows, this will be something like `C:\Users\UserName` and stored in the envir
 variable `%USERPROFILE%`.
 
 You can also explicitly specify the path to a particular file that you want with
-`--config`. In this situation _Black_ will not look for any other file.
+`--config`. In this situation _Black_ will not look for any other file. When that file
+supplies settings and all source paths are within its directory, _Black_ uses that
+directory as the project root for path matching. If any source path falls outside that
+directory, _Black_ infers the project root from the sources and still uses the explicit
+configuration.
 
 If you're running with `--verbose`, you will see a message if a file was found and used.
 

@@ -184,6 +184,9 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Use the explicit `--config` file's directory as the project root when it supplies
+  settings and contains all sources, so anchored exclusions work for nested packages
+  (#XXXX)
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)
