@@ -3807,6 +3807,27 @@ def assert_collected_sources(
 
 
 class TestFileCollection:
+    def test_gitignore_when_cli_receives_a_relative_directory(self) -> None:
+        runner = BlackRunner()
+        with runner.isolated_filesystem():
+            Path(".git").mkdir()
+            Path(".gitignore").write_text("/src/package/ignored.py\n", encoding="utf-8")
+            package = Path("src/package")
+            package.mkdir(parents=True)
+            included = package / "included.py"
+            ignored = package / "ignored.py"
+            included.write_text("value=1\n", encoding="utf-8")
+            ignored.write_text("value=2\n", encoding="utf-8")
+
+            with change_directory(Path("src")):
+                result = runner.invoke(
+                    black.main, ["--no-cache", f"--config={EMPTY_CONFIG}", "./package"]
+                )
+
+            assert result.exit_code == 0, result.output
+            assert included.read_text(encoding="utf-8") == "value = 1\n"
+            assert ignored.read_text(encoding="utf-8") == "value=2\n"
+
     def test_include_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         src = [path]
