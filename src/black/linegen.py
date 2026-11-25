@@ -917,6 +917,35 @@ def _hugging_power_ops_line_to_string(
         return None
 
 
+_TRAILING_PRAGMA = re.compile(
+    r"#[ \t]*(?:noqa(?=[:\s#]|$)|(?:pylint|pyright):|type:[ \t]*ignore(?=[\s\[#]|$))"
+)
+
+
+def _over_length_only_due_to_pragma(line: Line, mode: Mode, line_str: str) -> bool:
+    if len(line.comments) != 1 or "\n" in line_str:
+        return False
+
+    # A trailing comment may be attached to an invisible closing parenthesis
+    # instead of the last visible token.
+    for leaf in reversed(line.leaves):
+        comments = line.comments_after(leaf)
+        if comments:
+            break
+        if leaf.value:
+            return False
+    else:
+        return False
+
+    if len(comments) != 1 or not _TRAILING_PRAGMA.search(comments[0].value):
+        return False
+
+    # Do not use a pragma as a reason to collapse several original lines.
+    source_lines = {leaf.lineno for leaf in line.leaves if leaf.lineno}
+    code = line_str.removesuffix(str(comments[0]))
+    return len(source_lines) == 1 and str_width(code) <= mode.line_length
+
+
 def transform_line(
     line: Line, mode: Mode, features: Collection[Feature] = ()
 ) -> Iterator[Line]:
@@ -968,6 +997,12 @@ def transform_line(
         and (
             is_line_short_enough(line, mode=mode, line_str=line_str_hugging_power_ops)
             or line.contains_unsplittable_type_ignore()
+            or (
+                Preview.keep_trailing_pragmas in mode
+                and _over_length_only_due_to_pragma(
+                    line, mode, line_str_hugging_power_ops
+                )
+            )
         )
         and not (line.inside_brackets and line.contains_standalone_comments())
         and not line.contains_implicit_multiline_string_with_comments()
