@@ -5,18 +5,21 @@ x   =   1
 if True:
     # fmt: off
     a  =  1
+
 else:
     pass
 
 for i in x:
     # fmt: off
     a  =  1
+
 else:
     pass
 
 try:
     # fmt: off
     a  =  1
+
 except E:
     pass
 finally:
@@ -25,6 +28,7 @@ finally:
 while x:
     # fmt: off
     a  =  1
+
 else:
     pass
 
@@ -36,18 +40,21 @@ x = 1
 if True:
     # fmt: off
     a  =  1
+
 else:
     pass
 
 for i in x:
     # fmt: off
     a  =  1
+
 else:
     pass
 
 try:
     # fmt: off
     a  =  1
+
 except E:
     pass
 finally:
@@ -56,5 +63,6 @@ finally:
 while x:
     # fmt: off
     a  =  1
+
 else:
     pass
