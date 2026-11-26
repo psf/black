@@ -202,7 +202,7 @@
   instead of silently formatting with them (#5664)
 - Emit a clear error instead of a `TypeError` / `AttributeError` traceback when a
   single-value option such as `line-length`, `workers` or `check` is a list or a table
-  in `pyproject.toml` (#NNNN)
+  in `pyproject.toml` (#5752)
 
 ### Packaging
 
