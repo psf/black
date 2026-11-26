@@ -134,11 +134,21 @@ class Driver:
         type = value = start = end = line_text = None
         prefix = ""
 
+        opmap = grammar.opmap
+        addtoken = p.addtoken
+        t_comment = tokenize.COMMENT
+        t_nl = tokenize.NL
+        t_op = token.OP
+        t_indent = token.INDENT
+        t_dedent = token.DEDENT
+        t_fstring_middle = token.FSTRING_MIDDLE
+        t_tstring_middle = token.TSTRING_MIDDLE
+
         for quintuple in proxy:
             type, value, start, end, line_text = quintuple
-            if start != (lineno, column):
+            s_lineno, s_column = start
+            if s_lineno != lineno or s_column != column:
                 assert (lineno, column) <= start, ((lineno, column), start)
-                s_lineno, s_column = start
                 if lineno < s_lineno:
                     prefix += "\n" * (s_lineno - lineno)
                     lineno = s_lineno
@@ -146,42 +156,43 @@ class Driver:
                 if column < s_column:
                     prefix += line_text[column:s_column]
                     column = s_column
-            if type in (tokenize.COMMENT, tokenize.NL):
+            if type == t_comment or type == t_nl:
                 prefix += value
                 lineno, column = end
                 if value.endswith("\n"):
                     lineno += 1
                     column = 0
                 continue
-            if type == token.OP:
-                type = grammar.opmap[value]
+            if type == t_op:
+                type = opmap[value]
             if debug:
                 assert type is not None
                 self.logger.debug(
                     "%s %r (prefix=%r)", token.tok_name[type], value, prefix
                 )
-            if type == token.INDENT:
+            if type == t_indent:
                 indent_columns.append(len(value))
                 _prefix = prefix + value
                 prefix = ""
                 value = ""
-            elif type == token.DEDENT:
+            elif type == t_dedent:
                 _indent_col = indent_columns.pop()
                 prefix, _prefix = self._partially_consume_prefix(prefix, _indent_col)
-            if p.addtoken(cast(int, type), value, (prefix, start)):
+            if addtoken(cast(int, type), value, (prefix, start)):
                 if debug:
                     self.logger.debug("Stop.")
                 break
             prefix = ""
-            if type in {token.INDENT, token.DEDENT}:
+            if type == t_indent or type == t_dedent:
                 prefix = _prefix
             lineno, column = end
             # FSTRING_MIDDLE and TSTRING_MIDDLE are the only token that can end with a
             # newline, and `end` will point to the next line. For that case, don't
             # increment lineno.
-            if value.endswith("\n") and type not in (
-                token.FSTRING_MIDDLE,
-                token.TSTRING_MIDDLE,
+            if (
+                value.endswith("\n")
+                and type != t_fstring_middle
+                and type != t_tstring_middle
             ):
                 lineno += 1
                 column = 0

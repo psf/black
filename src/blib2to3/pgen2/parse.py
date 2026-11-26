@@ -12,7 +12,7 @@ how this parsing engine works.
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, Final, Union, cast
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pytree import NL, Context, Leaf, Node, RawNode, convert
@@ -27,6 +27,51 @@ if TYPE_CHECKING:
 Convert = Callable[[Grammar, RawNode], Union[Node, Leaf]]
 DFA = list[list[tuple[int, int]]]
 DFAS = tuple[DFA, dict[int, int]]
+CompiledState = tuple[
+    dict[int, Union[int, tuple[int, "CompiledDFA", int]]],
+    bool,
+    bool,
+]
+CompiledDFA = list[CompiledState]
+
+_COMPILED_GRAMMARS: dict[int, tuple[Grammar, dict[int, CompiledDFA]]] = {}
+
+
+def _compile_grammar(grammar: Grammar) -> dict[int, CompiledDFA]:
+    gid = id(grammar)
+    cached = _COMPILED_GRAMMARS.get(gid)
+    if cached is not None and cached[0] is grammar:
+        return cached[1]
+
+    labels = grammar.labels
+    dfas = grammar.dfas
+    compiled: dict[int, CompiledDFA] = {sym: [] for sym in dfas}
+
+    for sym, (states, _first) in dfas.items():
+        c_states = compiled[sym]
+        for state_idx, arcs in enumerate(states):
+            trans: dict[int, Union[int, tuple[int, CompiledDFA, int]]] = {}
+            can_accept = False
+            for i, newstate in arcs:
+                t = labels[i][0]
+                if t >= 256:
+                    target_dfa = compiled[t]
+                    entry = (t, target_dfa, newstate)
+                    for first_lbl in dfas[t][1]:
+                        if first_lbl not in trans:
+                            trans[first_lbl] = entry
+                elif i == 0 and newstate == state_idx:
+                    can_accept = True
+                elif i != 0:
+                    if i not in trans:
+                        trans[i] = newstate
+            accept_only = can_accept and len(arcs) == 1
+            c_states.append((trans, can_accept, accept_only))
+
+    if len(_COMPILED_GRAMMARS) > 16:
+        _COMPILED_GRAMMARS.clear()
+    _COMPILED_GRAMMARS[gid] = (grammar, compiled)
+    return compiled
 
 
 def lam_sub(grammar: Grammar, node: RawNode) -> NL:
@@ -39,8 +84,8 @@ DUMMY_NODE = (-1, None, None, None)
 
 
 def stack_copy(
-    stack: list[tuple[DFAS, int, RawNode]],
-) -> list[tuple[DFAS, int, RawNode]]:
+    stack: list[tuple[CompiledDFA, int, RawNode]],
+) -> list[tuple[CompiledDFA, int, RawNode]]:
     """Nodeless stack copy."""
     return [(dfa, label, DUMMY_NODE) for dfa, label, _ in stack]
 
@@ -126,6 +171,16 @@ class ParseError(Exception):
         self.context = context
 
 
+_SOFT_KEYWORD_PREV_TOKENS: Final = {
+    None,
+    token.INDENT,
+    token.DEDENT,
+    token.NEWLINE,
+    token.SEMI,
+    token.COLON,
+}
+
+
 class Parser:
     """Parser engine.
 
@@ -191,6 +246,7 @@ class Parser:
 
         """
         self.grammar = grammar
+        self._compiled_dfas = _compile_grammar(grammar)
         # See note in docstring above. TL;DR this is ignored.
         self.convert = convert or lam_sub
         self.is_backtracking = False
@@ -215,8 +271,8 @@ class Parser:
         # A node is a tuple: (type, value, context, children),
         # where children is a list of nodes or None, and context may be None.
         newnode: RawNode = (start, None, None, [])
-        stackentry = (self.grammar.dfas[start], 0, newnode)
-        self.stack: list[tuple[DFAS, int, RawNode]] = [stackentry]
+        stackentry = (self._compiled_dfas[start], 0, newnode)
+        self.stack: list[tuple[CompiledDFA, int, RawNode]] = [stackentry]
         self.rootnode: NL | None = None
         self.used_names: set[str] = set()
         self.proxy = proxy
@@ -272,83 +328,115 @@ class Parser:
 
     def _addtoken(self, ilabel: int, type: int, value: str, context: Context) -> bool:
         # Loop until the token is shifted; may raise exceptions
+        stack = self.stack
+        is_backtracking = self.is_backtracking
+        stack_append = stack.append
+        stack_pop = stack.pop
+
         while True:
-            dfa, state, node = self.stack[-1]
-            states, first = dfa
-            arcs = states[state]
-            # Look for a state with this label
-            for i, newstate in arcs:
-                t = self.grammar.labels[i][0]
-                if t >= 256:
-                    # See if it's a symbol and if we're in its first set
-                    itsdfa = self.grammar.dfas[t]
-                    itsfirst = itsdfa[1]
-                    if ilabel in itsfirst:
-                        # Push a symbol
-                        self.push(t, itsdfa, newstate, context)
-                        break  # To continue the outer while loop
-
-                elif ilabel == i:
-                    # Look it up in the list of labels
-                    # Shift a token; we're done with it
-                    self.shift(type, value, newstate, context)
-                    # Pop while we are in an accept-only state
-                    state = newstate
-                    while states[state] == [(0, state)]:
-                        self.pop()
-                        if not self.stack:
-                            # Done parsing!
-                            return True
-                        dfa, state, node = self.stack[-1]
-                        states, first = dfa
-                    # Done with this token
-                    self.last_token = type
-                    return False
-
-            else:
-                if (0, state) in arcs:
+            dfa, state, node = stack[-1]
+            trans, can_accept, _ = dfa[state]
+            action = trans.get(ilabel)
+            if action is None:
+                if can_accept:
                     # An accepting state, pop it and try something else
-                    self.pop()
-                    if not self.stack:
+                    if is_backtracking:
+                        stack_pop()
+                    else:
+                        pop_type, _, _, pop_children = stack_pop()[2]
+                        assert pop_children is not None
+                        popped: NL = (
+                            pop_children[0]
+                            if len(pop_children) == 1
+                            else Node(pop_type, pop_children)
+                        )
+                        if stack:
+                            parent_children = stack[-1][2][3]
+                            assert parent_children is not None
+                            parent_children.append(popped)
+                        else:
+                            self.rootnode = popped
+                    if not stack:
                         # Done parsing, but another token is input
                         raise ParseError("too much input", type, value, context)
                 else:
                     # No success finding a transition
                     raise ParseError("bad input", type, value, context)
+            elif isinstance(action, int):
+                # Shift a token; we're done with it
+                if is_backtracking:
+                    stack[-1] = (dfa, action, DUMMY_NODE)
+                else:
+                    newnode = Leaf(type, value or "", context=context)
+                    children = node[3]
+                    assert children is not None
+                    children.append(newnode)
+                    stack[-1] = (dfa, action, node)
+                # Pop while we are in an accept-only state
+                state = action
+                while dfa[state][2]:
+                    if is_backtracking:
+                        stack_pop()
+                    else:
+                        pop_type, _, _, pop_children = stack_pop()[2]
+                        assert pop_children is not None
+                        popped = (
+                            pop_children[0]
+                            if len(pop_children) == 1
+                            else Node(pop_type, pop_children)
+                        )
+                        if stack:
+                            parent_children = stack[-1][2][3]
+                            assert parent_children is not None
+                            parent_children.append(popped)
+                        else:
+                            self.rootnode = popped
+                    if not stack:
+                        # Done parsing!
+                        return True
+                    dfa, state, node = stack[-1]
+                # Done with this token
+                self.last_token = type
+                return False
+            else:
+                # Push a nonterminal symbol
+                t, itsdfa, newstate = action
+                if is_backtracking:
+                    stack[-1] = (dfa, newstate, DUMMY_NODE)
+                    stack_append((itsdfa, 0, DUMMY_NODE))
+                else:
+                    stack[-1] = (dfa, newstate, node)
+                    stack_append((itsdfa, 0, (t, None, context, [])))
 
     def classify(self, type: int, value: str, context: Context) -> list[int]:
         """Turn a token into a label.  (Internal)
 
         Depending on whether the value is a soft-keyword or not,
         this function may return multiple labels to choose from."""
+        grammar = self.grammar
         if type == token.NAME:
             # Keep a listing of all used names
             self.used_names.add(value)
             # Check for reserved words
-            if value in self.grammar.keywords:
-                return [self.grammar.keywords[value]]
-            elif value in self.grammar.soft_keywords:
-                assert type in self.grammar.tokens
+            kw = grammar.keywords.get(value)
+            if kw is not None:
+                return [kw]
+            soft_kw = grammar.soft_keywords.get(value)
+            if soft_kw is not None:
+                assert type in grammar.tokens
                 # Current soft keywords (match, case, type) can only appear at the
                 # beginning of a statement. So as a shortcut, don't try to treat them
                 # like keywords in any other context.
                 # ('_' is also a soft keyword in the real grammar, but for our grammar
                 # it's just an expression, so we don't need to treat it specially.)
-                if self.last_token not in (
-                    None,
-                    token.INDENT,
-                    token.DEDENT,
-                    token.NEWLINE,
-                    token.SEMI,
-                    token.COLON,
-                ):
-                    return [self.grammar.tokens[type]]
+                if self.last_token not in _SOFT_KEYWORD_PREV_TOKENS:
+                    return [grammar.tokens[type]]
                 return [
-                    self.grammar.tokens[type],
-                    self.grammar.soft_keywords[value],
+                    grammar.tokens[type],
+                    soft_kw,
                 ]
 
-        ilabel = self.grammar.tokens.get(type)
+        ilabel = grammar.tokens.get(type)
         if ilabel is None:
             raise ParseError("bad token", type, value, context)
         return [ilabel]
@@ -366,7 +454,9 @@ class Parser:
             node[-1].append(newnode)
             self.stack[-1] = (dfa, newstate, node)
 
-    def push(self, type: int, newdfa: DFAS, newstate: int, context: Context) -> None:
+    def push(
+        self, type: int, newdfa: CompiledDFA, newstate: int, context: Context
+    ) -> None:
         """Push a nonterminal.  (Internal)"""
         if self.is_backtracking:
             dfa, state, _ = self.stack[-1]
