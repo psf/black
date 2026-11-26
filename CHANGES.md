@@ -211,6 +211,8 @@
 
 - Fix parsing of unpacking in a generator expression passed as the only argument to a
   call, such as `sum(*x for x in y)` (PEP 798) (#5568)
+- Fix parsing PEP 810 `lazy` imports after colons, semicolons, and backslash line
+  continuations (#5750)
 
 ### Performance
 
