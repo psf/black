@@ -8,8 +8,7 @@ environment. Great for enforcing that your code matches the _Black_ code style.
 This action is known to support all GitHub-hosted runner OSes. In addition, only
 published versions of _Black_ are supported (i.e. whatever is available on PyPI).
 
-Finally, this action installs _Black_ with the `colorama` extra so the `--color` flag
-should work fine.
+This action installs _Black_ with the `colorama` extra to support the `--color` flag.
 
 ## Usage
 
@@ -28,14 +27,20 @@ jobs:
       - uses: psf/black@stable
 ```
 
-We recommend the use of the `@stable` tag, but per version tags also exist if you prefer
-that. Note that the action's version you select is independent of the version of _Black_
-the action will use.
+We recommend the use of the `@stable` tag, but per-version tags also exist if you prefer
+that. Unless you choose a version of _Black_ yourself (see [Versions](#versions)), the
+action installs the _Black_ release matching the action's tag: `@stable` installs the
+latest release and `@24.1.0` installs _Black_ 24.1.0.
+
+As of 26.10.0, every GitHub release is immutable, meaning they cannot be changed after
+publication. This improves the security of using per-version tags.
 
 ### Versions
 
 The version of _Black_ the action will use can be configured via `version` or read from
-the `pyproject.toml` file. The action defaults to the latest release available on PyPI.
+the `pyproject.toml` file. Otherwise the action installs the release matching its own
+tag. If the action's ref is not a release tag (for example a branch or a commit SHA),
+_Black_ is installed from the action's own source instead.
 
 `version` can be any
 [valid version specifier](https://packaging.python.org/en/latest/glossary/#term-Version-Specifier)
@@ -72,9 +77,9 @@ the setup-python action may be required, for example:
 
 ```{note}
 This action only reads version specifiers from standard `pyproject.toml` locations.
-Poetry-specific dependency tables such as `tool.poetry.dependencies` are not parsed.
-If you manage `black` with Poetry, set `tool.black.required-version` or use the
-`version` input.
+Poetry-specific dependency tables such as `tool.poetry.dependencies` are not parsed. If
+you manage `black` with Poetry, set `tool.black.required-version` or use the `version`
+input.
 ```
 
 **Security note:** `use_pyproject` only accepts standard version specifiers for `black`
@@ -100,9 +105,10 @@ more details.
 ### CLI Options
 
 You can also configure the arguments passed to _Black_ via `options` (defaults to
-`'--check --diff'`) and `src` (default is `'.'`). Please note that the
-[`--check` flag](labels/exit-code) is required so that the workflow fails if _Black_
-finds files that need to be formatted.
+`'--check --diff'`) and `src` (default is `'.'`).
+
+If you pass the `--check` flag, the [workflow will fail](labels/exit-code) if _Black_
+finds files that need to be formatted. Otherwise, Black will reformat discovered files.
 
 Here's an example configuration:
 

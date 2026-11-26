@@ -69,6 +69,13 @@ class BlackDClient:
                     name = "Content-Type"
                 self.headers[name] = value
 
+    def _wants_diff(self) -> bool:
+        # blackd enables diff mode for any non-empty X-Diff header, whatever its case
+        return any(
+            name.lower() == "x-diff" and bool(value)
+            for name, value in self.headers.items()
+        )
+
     async def format_code(self, unformatted_code: str) -> str:
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -80,6 +87,9 @@ class BlackDClient:
             ) as response:
                 if response.status == 204:
                     # Input is already well-formatted
+                    if self._wants_diff():
+                        # Nothing changed, so the diff is empty
+                        return ""
                     return unformatted_code
                 elif response.status == 200:
                     # Formatting was needed

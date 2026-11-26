@@ -281,9 +281,12 @@ adoption helper, avoid using this for new projects.
 _Black_ also processes docstrings. Firstly the indentation of docstrings is corrected
 for both quotations and the text within, although relative indentation in the text is
 preserved. Superfluous trailing whitespace on each line and unnecessary new lines at the
-end of the docstring are removed. All leading tabs are converted to spaces, but tabs
-inside text are preserved. Whitespace leading and trailing one-line docstrings is
-removed.
+end of the docstring are removed. In multiline docstrings containing `>>>`, trailing
+whitespace is preserved because it can be significant in both doctest source and
+expected output. If such a docstring contains literal tabs, its indentation is also
+preserved, since reindentation changes how doctest expands tabs. Otherwise, leading tabs
+are converted to spaces, but tabs inside text are preserved. Whitespace leading and
+trailing one-line docstrings is removed.
 
 ### Numeric literals
 

@@ -16,6 +16,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
+  `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
+
 - Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
   `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
 - Fix crash for a `...` body under a `def`, `async def` or `class` header that is left
@@ -25,6 +28,8 @@
 - Fix `# fmt: skip` being ignored, or the comment being duplicated on every run, when
   the same comment also contains `# fmt: off` or `# yapf: disable`, like
   `# yapf: disable  # fmt: skip` (#5665)
+- Preserve trailing whitespace and tab expansion in multiline docstrings containing
+  doctests so formatting no longer breaks their source or expected output (#5687)
 - Fix `# fmt: skip` on the last line of a multi-line conditional expression in a
   collection, like `a` ... `if c else d,  # fmt: skip`, producing invalid code (#5647)
 - Preserve trailing blank lines at EOF in unclosed `# fmt: off` blocks (#5634)
@@ -112,14 +117,22 @@
   `!find . -exec rm {} \;`. These cells are now left unchanged (#5652)
 - Fix `--line-ranges` producing invalid code when stacked decorators outside the
   selected lines are indented with 2 spaces or tabs (#5672)
+- Fix crash on a `# fmt: off` / `# fmt: on` block with only comments in an f-string or
+  t-string field (#5701)
 
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
 
+- Split long method chains consistently when a standalone comment separates two calls
+  (#5518)
+- Keep long single-name `from` imports on one line unless they contain comments or a
+  magic trailing comma (#5669)
 - Keep the optional parentheses around an assignment's right-hand side when removing
   them would produce a first line longer than the line length and the expression
   contains standalone comments (#5638, #5657)
+- Keep an expression together wherever a standalone comment sits inside the surrounding
+  brackets (#5660)
 - Retain user-written parens around `in` clauses of comprehensions if they have
   delimiters (#4881)
 - Fix crash when `# fmt: skip` is on the opening bracket of a collection used as a
@@ -154,6 +167,8 @@
   sets when the line length is very small or the code is deeply nested, by not wrapping
   them in parentheses when the wrapped line would still be too long (#5521)
 - Don't add or remove parens around long dict values unless they have delimiters (#5627)
+- Fix crash when the key of a dict has an operator and its value needs its parentheses,
+  such as a tuple, walrus or `yield` (#5710)
 - Correctly indent `# fmt: off` comments inside brackets, such as function calls, and
   fix a crash when one comes right before a lone name, number or string (#5643)
 - Remove redundant parentheses around a `yield` of a tuple, such as `(yield a, b)`
@@ -162,6 +177,8 @@
   `case x,:` (#5673)
 - Keep parentheses around a walrus in a subscript (for example `x[(y := f())]`) when
   targeting Python 3.9 or older (#5619)
+- Fix crash when a dict value is a walrus wrapped in redundant parentheses, such as
+  `{1: ((a := 1))}` (#5727)
 
 ### Configuration
 
@@ -170,6 +187,8 @@
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)
+- Reject `--line-ranges` for a Jupyter notebook recognized by its `.ipynb` extension, as
+  with `--ipynb`, instead of formatting the whole notebook (#5711)
 - Enable the cache when using `--diff` to skip unmodified files and record unmodified
   files as well-formatted (#5499)
 - Respect `--skip-source-first-line` when formatting code passed through stdin (#5580)
@@ -225,16 +244,19 @@
   the requested charset, instead of HTTP 500 (#5519)
 - Keep the first line skipped with `X-Skip-Source-First-Line` inside the patch returned
   for a `X-Diff` request, instead of prepending it as raw text in front of the diff
-  (#5573)
+  (#5573, #5732)
 - Fix blackd startup on Windows with more than 61 logical CPUs (#5667)
 - Add `blackd-format`, a command-line client for blackd that only uses the standard
   library and formats several files in parallel (#5690)
+- Return an empty diff from `BlackDClient.format_code` with `diff=True` when the code is
+  already formatted, instead of the unchanged source code (#5730)
 
 ### Integrations
 
 <!-- For example, Docker, GitHub Actions, pre-commit, editors -->
 
 - Fix the GitHub Action picking up `venv.py` from the local repository (#5611)
+- Stop including pip & build dependencies in Docker images (#5707)
 
 ### Documentation
 
