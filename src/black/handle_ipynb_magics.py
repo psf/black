@@ -374,10 +374,13 @@ def _is_ipython_magic(node: ast.expr) -> TypeGuard[ast.Attribute]:
     )
 
 
-def _get_str_args(args: list[ast.expr]) -> list[str]:
-    str_args = []
-    for arg in args:
-        assert isinstance(arg, ast.Constant) and isinstance(arg.value, str)
+def _get_magic_str_args(call: ast.Call, expected_count: int) -> list[str] | None:
+    if call.keywords or len(call.args) != expected_count:
+        return None
+    str_args: list[str] = []
+    for arg in call.args:
+        if not (isinstance(arg, ast.Constant) and isinstance(arg.value, str)):
+            return None
         str_args.append(arg.value)
     return str_args
 
@@ -425,8 +428,9 @@ class CellMagicFinder(ast.NodeVisitor):
             and _is_ipython_magic(node.value.func)
             and node.value.func.attr == "run_cell_magic"
         ):
-            args = _get_str_args(node.value.args)
-            self.cell_magic = CellMagic(name=args[0], params=args[1], body=args[2])
+            args = _get_magic_str_args(node.value, 3)
+            if args is not None:
+                self.cell_magic = CellMagic(name=args[0], params=args[1], body=args[2])
         self.generic_visit(node)
 
 
@@ -478,21 +482,21 @@ class MagicFinder(ast.NodeVisitor):
         and we look for instances of any of the latter.
         """
         if isinstance(node.value, ast.Call) and _is_ipython_magic(node.value.func):
-            args = _get_str_args(node.value.args)
+            src: str | None = None
             if node.value.func.attr == "getoutput":
-                src = f"!{args[0]}"
+                args = _get_magic_str_args(node.value, 1)
+                if args is not None:
+                    src = f"!{args[0]}"
             elif node.value.func.attr == "run_line_magic":
-                src = f"%{args[0]}"
-                if args[1]:
-                    src += f" {args[1]}"
-            else:
-                raise AssertionError(
-                    f"Unexpected IPython magic {node.value.func.attr!r} found. "
-                    "Please report a bug on https://github.com/psf/black/issues."
-                ) from None
-            self.magics[node.value.lineno].append(
-                OffsetAndMagic(node.value.col_offset, src)
-            )
+                args = _get_magic_str_args(node.value, 2)
+                if args is not None:
+                    src = f"%{args[0]}"
+                    if args[1]:
+                        src += f" {args[1]}"
+            if src is not None:
+                self.magics[node.value.lineno].append(
+                    OffsetAndMagic(node.value.col_offset, src)
+                )
         self.generic_visit(node)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
@@ -519,23 +523,28 @@ class MagicFinder(ast.NodeVisitor):
         and we look for instances of any of the latter.
         """
         if isinstance(node.value, ast.Call) and _is_ipython_magic(node.value.func):
-            args = _get_str_args(node.value.args)
+            src: str | None = None
             if node.value.func.attr == "run_line_magic":
-                if args[0] == "pinfo":
-                    src = f"?{args[1]}"
-                elif args[0] == "pinfo2":
-                    src = f"??{args[1]}"
-                else:
-                    src = f"%{args[0]}"
-                    if args[1]:
-                        src += f" {args[1]}"
+                args = _get_magic_str_args(node.value, 2)
+                if args is not None:
+                    if args[0] == "pinfo":
+                        src = f"?{args[1]}"
+                    elif args[0] == "pinfo2":
+                        src = f"??{args[1]}"
+                    else:
+                        src = f"%{args[0]}"
+                        if args[1]:
+                            src += f" {args[1]}"
             elif node.value.func.attr == "system":
-                src = f"!{args[0]}"
+                args = _get_magic_str_args(node.value, 1)
+                if args is not None:
+                    src = f"!{args[0]}"
             elif node.value.func.attr == "getoutput":
-                src = f"!!{args[0]}"
-            else:
-                raise NothingChanged  # unsupported magic.
-            self.magics[node.value.lineno].append(
-                OffsetAndMagic(node.value.col_offset, src)
-            )
+                args = _get_magic_str_args(node.value, 1)
+                if args is not None:
+                    src = f"!!{args[0]}"
+            if src is not None:
+                self.magics[node.value.lineno].append(
+                    OffsetAndMagic(node.value.col_offset, src)
+                )
         self.generic_visit(node)

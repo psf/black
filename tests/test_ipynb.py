@@ -221,6 +221,49 @@ def test_input_already_contains_transformed_magic() -> None:
         format_cell(src, fast=True, mode=JUPYTER_MODE)
 
 
+@pytest.mark.parametrize(
+    "src, expected",
+    (
+        pytest.param(
+            "%matplotlib inline\nget_ipython().register_magics(MyMagics)\n'foo'",
+            '%matplotlib inline\nget_ipython().register_magics(MyMagics)\n"foo"',
+            id="Non-magic expression with non-string arg",
+        ),
+        pytest.param(
+            "%matplotlib inline\nget_ipython().clear_output(wait=True)\n'foo'",
+            '%matplotlib inline\nget_ipython().clear_output(wait=True)\n"foo"',
+            id="Non-magic expression with keyword arg",
+        ),
+        pytest.param(
+            "%matplotlib inline\nx = get_ipython().ev('1+1')",
+            '%matplotlib inline\nx = get_ipython().ev("1+1")',
+            id="Non-magic assignment with string arg",
+        ),
+        pytest.param(
+            "%matplotlib inline\nx:int=get_ipython().ev(expr)",
+            "%matplotlib inline\nx: int = get_ipython().ev(expr)",
+            id="Non-magic annotated assignment with non-string arg",
+        ),
+        pytest.param(
+            "%%time\nget_ipython().register_magics(MyMagics)\n"
+            "x = get_ipython().ev('1+1')",
+            "%%time\nget_ipython().register_magics(MyMagics)\n"
+            'x = get_ipython().ev("1+1")',
+            id="Cell magic with non-magic get_ipython calls",
+        ),
+    ),
+)
+def test_non_magic_get_ipython_calls(src: str, expected: str) -> None:
+    assert format_cell(src, fast=False, mode=JUPYTER_MODE) == expected
+
+
+def test_bare_question_mark_usage_noop() -> None:
+    # IPython transforms standalone `?` into `get_ipython().show_usage()`, which
+    # cannot be round-tripped back to `?` and must still be skipped safely.
+    with pytest.raises(NothingChanged):
+        format_cell("?\nx=1", fast=True, mode=JUPYTER_MODE)
+
+
 def test_magic_noop() -> None:
     src = "ls = !ls"
     with pytest.raises(NothingChanged):
