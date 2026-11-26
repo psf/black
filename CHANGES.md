@@ -36,7 +36,7 @@
 - Fix crash when removing parentheses would combine two `# type: ignore` comments onto
   one line (#5686)
 - Fix crash on a walrus wrapped in redundant parentheses as a `with` item, such as
-  `with ((a := 1)):` (#5726)
+  `with ((a := 1)):` (#5725)
 - Fix crash when `# fmt: skip` follows the closing bracket of a multi-line call or
   subscript that isn't the last element of a collection or argument list (#5522)
 - Normalize hex codes in unicode escape sequences in f-strings (#5526)
