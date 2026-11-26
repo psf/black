@@ -181,7 +181,7 @@
   `{1: ((a := 1))}` (#5727)
 - Fix crash when the `in` clause of a comprehension is a parenthesized walrus or a bare
   `yield`, such as `[a for a in (b := c)]`, or a parenthesized walrus, `lambda` or
-  conditional expression containing a comment (#5724)
+  conditional expression containing a comment (#5726)
 
 ### Configuration
 
