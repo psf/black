@@ -2145,6 +2145,71 @@ class BlackTestCase(BlackBaseTestCase):
                     assert result.exit_code == 2
                     assert f"Config key {config_key} must be a string" in result.stderr
 
+    def test_read_pyproject_toml_rejects_non_scalar_configs(self) -> None:
+        for config_key, option_name in [
+            ("line-length", "line-length"),
+            ("workers", "workers"),
+            ("check", "check"),
+            ("skip-string-normalization", "skip-string-normalization"),
+            ("no-cache", "no-cache"),
+        ]:
+            with self.subTest(config_key=config_key):
+                with TemporaryDirectory() as workspace:
+                    config = Path(workspace) / "pyproject.toml"
+                    config.write_text(
+                        f"[tool.black]\n{config_key} = [88]\n", encoding="utf-8"
+                    )
+
+                    fake_ctx = FakeContext()
+                    with pytest.raises(click.BadOptionUsage) as exc_info:
+                        black.read_pyproject_toml(fake_ctx, None, str(config))
+
+                    assert exc_info.value.option_name == option_name
+                    assert "must be a single value" in exc_info.value.message
+
+    def test_cli_rejects_non_scalar_pyproject_configs(self) -> None:
+        for config_key in [
+            "line-length",
+            "workers",
+            "check",
+            "skip-string-normalization",
+            "no-cache",
+        ]:
+            with self.subTest(config_key=config_key):
+                with TemporaryDirectory() as workspace:
+                    config = Path(workspace) / "pyproject.toml"
+                    config.write_text(
+                        f"[tool.black]\n{config_key} = [88]\n", encoding="utf-8"
+                    )
+
+                    result = BlackRunner().invoke(
+                        black.main, ["--config", str(config), "--code", "print(1)"]
+                    )
+
+                    assert result.exit_code == 2
+                    expected = f"Config key {config_key} must be a single value"
+                    assert expected in result.stderr
+
+    def test_read_pyproject_toml_scalar_configs_still_accepted(self) -> None:
+        with TemporaryDirectory() as workspace:
+            config = Path(workspace) / "pyproject.toml"
+            config.write_text(
+                "[tool.black]\n"
+                'line-length = "100"\n'
+                "workers = 2\n"
+                "check = true\n"
+                'skip-string-normalization = "no"\n',
+                encoding="utf-8",
+            )
+
+            fake_ctx = FakeContext()
+            black.read_pyproject_toml(fake_ctx, None, str(config))
+
+            assert fake_ctx.default_map["line_length"] == "100"
+            assert fake_ctx.default_map["workers"] == "2"
+            assert fake_ctx.default_map["check"] == "True"
+            assert fake_ctx.default_map["skip_string_normalization"] == "no"
+
     def test_read_pyproject_toml_from_stdin(self) -> None:
         with TemporaryDirectory() as workspace:
             root = Path(workspace)
