@@ -98,6 +98,109 @@ def test_fstring() -> None:
     )
 
 
+def test_lazy_import_after_semicolon_and_colon() -> None:
+    assert (
+        [t.type for t in get_tokens("x = 1; lazy import os\n") if t.string == "lazy"]
+        == ["LAZY"]
+    )
+    assert (
+        black.format_str("x = 1; lazy import os\n", mode=black.Mode())
+        == "x = 1\nlazy import os\n"
+    )
+
+    assert [
+        t.type
+        for t in get_tokens("lazy import a; lazy from b import c\n")
+        if t.string == "lazy"
+    ] == ["LAZY", "LAZY"]
+    assert (
+        black.format_str("lazy import a; lazy from b import c\n", mode=black.Mode())
+        == "lazy import a\nlazy from b import c\n"
+    )
+
+    assert (
+        [t.type for t in get_tokens("if True: lazy import os\n") if t.string == "lazy"]
+        == ["LAZY"]
+    )
+    assert (
+        black.format_str("if True: lazy import os\n", mode=black.Mode())
+        == "if True:\n    lazy import os\n"
+    )
+
+    assert [
+        t.type
+        for t in get_tokens("try: lazy from os import path\nexcept Exception: pass\n")
+        if t.string == "lazy"
+    ] == ["LAZY"]
+    assert (
+        black.format_str(
+            "try: lazy from os import path\nexcept Exception: pass\n",
+            mode=black.Mode(),
+        )
+        == "try:\n    lazy from os import path\nexcept Exception:\n    pass\n"
+    )
+
+    # Non-import uses of `lazy` after `:` must remain ordinary identifiers.
+    for src in (
+        "d = {1: lazy}\n",
+        "def f(x: lazy = 1): pass\n",
+        "x = a[1:lazy]\n",
+        "x: lazy\nimport os\n",
+    ):
+        assert [t.type for t in get_tokens(src) if t.string == "lazy"] == ["NAME"]
+
+
+def test_lazy_import_with_backslash_continuation() -> None:
+    assert_tokenizes(
+        "lazy \\\nimport os\n",
+        [
+            Token("LAZY", "lazy", (1, 0), (1, 4)),
+            Token("NL", "\\\n", (1, 5), (1, 7)),
+            Token("NAME", "import", (2, 0), (2, 6)),
+            Token("NAME", "os", (2, 7), (2, 9)),
+            Token("NEWLINE", "\n", (2, 9), (2, 10)),
+            Token("ENDMARKER", "", (3, 0), (3, 0)),
+        ],
+    )
+    assert (
+        black.format_str("lazy \\\nimport os\n", mode=black.Mode())
+        == "lazy import os\n"
+    )
+    assert (
+        black.format_str("lazy \\\nfrom os import path\n", mode=black.Mode())
+        == "lazy from os import path\n"
+    )
+    assert (
+        black.format_str("lazy \\\n\\\nfrom os import path\n", mode=black.Mode())
+        == "lazy from os import path\n"
+    )
+    assert (
+        black.format_str("if True: lazy \\\nimport os\n", mode=black.Mode())
+        == "if True:\n    lazy import os\n"
+    )
+
+    # Non-import uses with backslash continuation or newlines remain NAME.
+    assert_tokenizes(
+        "lazy \\\n= 1\n",
+        [
+            Token("NAME", "lazy", (1, 0), (1, 4)),
+            Token("NL", "\\\n", (1, 5), (1, 7)),
+            Token("OP", "=", (2, 0), (2, 1)),
+            Token("NUMBER", "1", (2, 2), (2, 3)),
+            Token("NEWLINE", "\n", (2, 3), (2, 4)),
+            Token("ENDMARKER", "", (3, 0), (3, 0)),
+        ],
+    )
+    assert black.format_str("lazy \\\n= 1\n", mode=black.Mode()) == "lazy = 1\n"
+    assert (
+        [t.type for t in get_tokens("lazy\nimport os\n") if t.string == "lazy"]
+        == ["NAME"]
+    )
+    assert [
+        t.type for t in get_tokens("lazy  # comment\nimport os\n") if t.string == "lazy"
+    ] == ["NAME"]
+
+
 # Run "echo some code | python tests/test_tokenize.py" to generate test cases.
 if __name__ == "__main__":
     code = sys.stdin.read()

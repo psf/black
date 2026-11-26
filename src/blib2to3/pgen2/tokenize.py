@@ -158,6 +158,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
 
     prev_token: pytokens.Token | None = None
     lazy_stashed: LazyStash | None = None
+    lazy_stashed_nls: list[TokenInfo] = []
     stmt_start = True
 
     def emit_stashed_lazy(*, as_keyword: bool) -> Iterator[TokenInfo]:
@@ -173,7 +174,9 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
             (stashed_token.end_line, stashed_token.end_col),
             stashed_line,
         )
+        yield from lazy_stashed_nls
         lazy_stashed = None
+        lazy_stashed_nls.clear()
 
     try:
         for token in pytokens.tokenize(source):
@@ -193,10 +196,22 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
 
             source_line = lines[token.start_line - 1]
 
-            if lazy_stashed is not None and not (
-                token.type == TokenType.identifier and token_str in ("import", "from")
-            ):
-                yield from emit_stashed_lazy(as_keyword=False)
+            if lazy_stashed is not None:
+                if token.type == TokenType.nl and token_str.startswith("\\"):
+                    lazy_stashed_nls.append((
+                        NL,
+                        token_str,
+                        (token.start_line, token.start_col),
+                        (token.end_line, token.end_col),
+                        source_line,
+                    ))
+                    prev_token = token
+                    continue
+                as_keyword = token.type == TokenType.identifier and token_str in (
+                    "import",
+                    "from",
+                )
+                yield from emit_stashed_lazy(as_keyword=as_keyword)
 
             if (
                 token.type == TokenType.identifier
@@ -207,9 +222,6 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 prev_token = token
                 stmt_start = False
                 continue
-
-            if lazy_stashed is not None:
-                yield from emit_stashed_lazy(as_keyword=True)
 
             if token.type == TokenType.identifier and token_str in ("async", "await"):
                 # Black uses `async` and `await` token types just for those two keywords
@@ -254,7 +266,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
                 TokenType.newline,
                 TokenType.semicolon,
                 TokenType.colon,
-            }:
+            } or (token.type == TokenType.op and token_str in (";", ":")):
                 stmt_start = True
             elif token.type not in {TokenType.comment, TokenType.nl}:
                 stmt_start = False
