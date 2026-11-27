@@ -151,6 +151,35 @@ def read_pyproject_toml(
             for k, v in config.items()
         }
 
+    # Click can only coerce these options from a single value. A list or a table
+    # would otherwise crash with a bare `TypeError` / `AttributeError` traceback
+    # instead of a usage error. Multi-value options are validated separately.
+    for scalar_key in (
+        "line_length",
+        "workers",
+        "pyi",
+        "ipynb",
+        "skip_source_first_line",
+        "skip_string_normalization",
+        "skip_magic_trailing_comma",
+        "preview",
+        "unstable",
+        "check",
+        "diff",
+        "color",
+        "fast",
+        "quiet",
+        "verbose",
+        "version",
+        "no_cache",
+    ):
+        scalar_value = config.get(scalar_key)
+        if scalar_value is not None and not isinstance(scalar_value, str):
+            option_name = scalar_key.replace("_", "-")
+            raise click.BadOptionUsage(
+                option_name, f"Config key {option_name} must be a single value"
+            )
+
     target_version = config.get("target_version")
     if target_version is not None and not isinstance(target_version, list):
         raise click.BadOptionUsage(
