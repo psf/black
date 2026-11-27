@@ -426,6 +426,11 @@ Python (CPython) 3.13.7
 Read configuration options from a configuration file. See
 [below](#configuration-via-a-file) for more details on the configuration file.
 
+If the configuration file is in an ancestor directory of the discovered project root,
+_Black_ uses that directory as the project root. For example, a parent project's
+`--force-exclude` pattern can match a Git submodule's path when you pass a file in that
+submodule directly.
+
 ### Environment variable options
 
 _Black_ supports the following configuration via environment variables.
