@@ -426,12 +426,11 @@ def normalize_fstring_unicode_escape_sequences(node: Node) -> None:
             if not is_raw_fstring:
                 assert isinstance(child, Leaf)
                 child.value = _normalize_unicode_escape_sequences_in_text(child.value)
-        elif child.type in (
-            syms.fstring_replacement_field,
-            syms.tstring_replacement_field,
-        ):
+        elif child.type == syms.fstring_replacement_field:
             # If this is a debug f-string (e.g. f"{foo=}"), do not touch the
             # expression before '=', as Python preserves the exact source expression.
+            # t-string replacement fields are skipped altogether because Python
+            # preserves every interpolation's exact source expression (PEP 750).
             if any(
                 isinstance(c, Leaf) and c.type == token.EQUAL and c.value == "="
                 for c in child.children
