@@ -13,6 +13,8 @@ experimental, feedback and issue reports are highly encouraged!
 
 Currently, the following features are included in the preview style:
 
+- `hug_parens_with_braces_and_square_brackets`: More compact formatting of nested
+  brackets. ([see below](labels/hug-parens))
 - `blank_line_after_stub_method`: Add the usual blank lines after a class whose last
   method has an ellipsis body, while keeping consecutive stub methods together.
 - `normalize_tstring_prefix`: Lowercase the `T` prefix of t-strings (for example,
@@ -786,28 +788,6 @@ def f():
     )
 ```
 
-## Unstable style
-
-(labels/unstable-style)=
-
-In the past, the preview style included some features with known bugs, so that we were
-unable to move these features to the stable style. Therefore, such features are now
-moved to the `--unstable` style. All features in the `--preview` style are expected to
-make it to next year's stable style; features in the `--unstable` style will be
-stabilized only if issues with them are fixed. If bugs are discovered in a `--preview`
-feature, it is demoted to the `--unstable` style. To avoid thrash when a feature is
-demoted from the `--preview` to the `--unstable` style, users can use the
-`--enable-unstable-feature` flag to enable specific unstable features.
-
-(labels/unstable-features)=
-
-The unstable style additionally includes the following features:
-
-- `hug_parens_with_braces_and_square_brackets`: More compact formatting of nested
-  brackets. ([see below](labels/hug-parens))
-- `string_processing`: Split long string literals and related changes.
-  ([see below](labels/string-processing))
-
 (labels/hug-parens)=
 
 ### Improved multiline dictionary and list indentation for sole function parameter
@@ -881,6 +861,26 @@ foo(
     ],
 )
 ```
+
+## Unstable style
+
+(labels/unstable-style)=
+
+In the past, the preview style included some features with known bugs, so that we were
+unable to move these features to the stable style. Therefore, such features are now
+moved to the `--unstable` style. All features in the `--preview` style are expected to
+make it to next year's stable style; features in the `--unstable` style will be
+stabilized only if issues with them are fixed. If bugs are discovered in a `--preview`
+feature, it is demoted to the `--unstable` style. To avoid thrash when a feature is
+demoted from the `--preview` to the `--unstable` style, users can use the
+`--enable-unstable-feature` flag to enable specific unstable features.
+
+(labels/unstable-features)=
+
+The unstable style additionally includes the following features:
+
+- `string_processing`: Split long string literals and related changes.
+  ([see below](labels/string-processing))
 
 (labels/string-processing)=
 

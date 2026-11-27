@@ -211,15 +211,13 @@ triple_lambda = [i for i in (lambda: 0) if i]
 
 # Nested arrays
 # First in will not be split because it would still be too long
-[
-    [
-        x
-        for x in bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
-        for y in (
-            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-        )
-    ]
-]
+[[
+    x
+    for x in bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    for y in (
+        xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    )
+]]
 
 # Multiple comprehensions, only split the second `in`
 graph_path_expressions_in_local_constraint_refinements = [

@@ -34,7 +34,7 @@ any((
 outer(inner((((item for item in items)))))
 outer(inner(((item.is_valid_and_ready(runtime_context) for item in the_collection_of_items_to_check))))
 
-# Existing comment handling may keep the generator parentheses visible.
+# Keep the inline comment when removing the generator's parentheses.
 any((
     long_expression_that_exceeds_the_configured_line_length_limit_value  # inline comment
     for item in iterable
@@ -88,12 +88,10 @@ outer(
     )
 )
 
-# Existing comment handling may keep the generator parentheses visible.
+# Keep the inline comment when removing the generator's parentheses.
 any(
-    (
-        long_expression_that_exceeds_the_configured_line_length_limit_value  # inline comment
-        for item in iterable
-    )
+    long_expression_that_exceeds_the_configured_line_length_limit_value  # inline comment
+    for item in iterable
 )
 
 # Parentheses are required when the generator is not the sole argument.
