@@ -1148,7 +1148,17 @@ class EmptyLineTracker:
                 else:
                     before = 1
             else:
-                if depth:
+                if (
+                    Preview.conditional_function_blank_lines in self.mode
+                    and previous_def.is_def
+                    and previous_def.depth == depth + 1
+                    and current_line.leaves
+                    and current_line.leaves[0].value in ("elif", "else")
+                    and current_line.leaves[0].parent is not None
+                    and current_line.leaves[0].parent.type == syms.if_stmt
+                ):
+                    before = 0
+                elif depth:
                     before = 1
                 elif (
                     not depth
@@ -1235,6 +1245,24 @@ class EmptyLineTracker:
             if self.mode.is_pyi:
                 return 0, 0
             return 1 if user_had_newline else 0, 0
+
+        if (
+            not self.mode.is_pyi
+            and Preview.conditional_function_blank_lines in self.mode
+            and self.previous_line.depth < current_line.depth
+            and self.previous_line.opens_block
+            and (current_line.is_def or self._get_decorator_target_name(current_line))
+        ):
+            # Look up from the definition, whose leaves haven't been split yet.
+            suite = current_line.leaves[0].parent
+            while suite is not None and suite.type != syms.suite:
+                suite = suite.parent
+            if (
+                suite is not None
+                and suite.parent is not None
+                and suite.parent.type == syms.if_stmt
+            ):
+                return 0, 0
 
         comment_to_add_newlines: LinesBlock | None = None
         if (
