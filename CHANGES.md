@@ -124,6 +124,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Keep single-line code together when a trailing `# noqa`, `# pylint:`, `# pyright:`, or
+  `# type: ignore` directive is responsible for exceeding the line length.
 - Split long method chains consistently when a standalone comment separates two calls
   (#5518)
 - Keep long single-name `from` imports on one line unless they contain comments or a

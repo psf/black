@@ -74,6 +74,10 @@ Currently, the following features are included in the preview style:
 - `keep_long_single_imports`: Keep `from` imports with one imported name on a single
   line even when they exceed the line length, unless they have comments or a magic
   trailing comma.
+- `keep_trailing_pragmas`: Keep code on its original single line if it fits within the
+  line length limit before its trailing comment and the comment contains a `# noqa`,
+  `# pylint:`, `# pyright:`, or `# type: ignore` directive. A directive can also follow
+  another comment segment on the same line.
 - `keep_commented_expressions_together`: Do not split expressions on delimiters (such as
   binary operators, comparisons, or comprehensions) inside brackets that contain a
   standalone comment if the expression fits within the line length limit.

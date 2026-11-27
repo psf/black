@@ -103,6 +103,7 @@
           "fix_magic_trailing_comma_trailer_split",
           "keep_dict_keys_with_operators",
           "keep_long_single_imports",
+          "keep_trailing_pragmas",
           "blank_line_after_stub_method",
           "keep_commented_expressions_together",
           "avoid_parens_for_unbreakable_rhs_in_assignments",
