@@ -124,6 +124,8 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Omit extra blank lines around function and class definitions at `if`, `elif`, and
+  `else` branch boundaries (#5758).
 - Split long method chains consistently when a standalone comment separates two calls
   (#5518)
 - Keep long single-name `from` imports on one line unless they contain comments or a
