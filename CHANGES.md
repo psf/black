@@ -184,6 +184,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Respect exclusion regexes for symlink destinations during recursive file discovery
+  (#TBD)
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)

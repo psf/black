@@ -280,19 +280,23 @@ def resolves_outside_root_or_cannot_stat(
     Returns whether the path is a symbolic link that points outside the
     root directory. Also returns True if we failed to resolve the path.
     """
+    return _resolve_within_root(path, root, report) is None
+
+
+def _resolve_within_root(path: Path, root: Path, report: Report | None) -> Path | None:
     try:
         resolved_path = _cached_resolve(path)
     except OSError as e:
         if report:
             report.path_ignored(path, f"cannot be read because {e}")
-        return True
+        return None
     try:
         resolved_path.relative_to(root)
     except ValueError:
         if report:
             report.path_ignored(path, f"is a symbolic link that points outside {root}")
-        return True
-    return False
+        return None
+    return resolved_path
 
 
 def _collapse_parent_dirs(relative_path: Path) -> Path:
@@ -349,6 +353,17 @@ def path_is_excluded(
     return bool(match and match.group(0))
 
 
+def _matching_exclude_option(
+    normalized_paths: Iterable[str],
+    exclusions: tuple[tuple[str, Pattern[str] | None], ...],
+) -> str | None:
+    for normalized_path in normalized_paths:
+        for option, pattern in exclusions:
+            if path_is_excluded(normalized_path, pattern):
+                return option
+    return None
+
+
 def gen_python_files(
     paths: Iterable[Path],
     root: Path,
@@ -366,12 +381,18 @@ def gen_python_files(
     `exclude_regex`, `extend_exclude`, or `force_exclude` regexes,
     but are included by the `include` regex.
 
-    Symbolic links pointing outside of the `root` directory are ignored.
+    Symbolic links pointing outside of the `root` directory or to excluded
+    destinations are ignored.
 
     `report` is where output about exclusions goes.
     """
 
     assert root.is_absolute(), f"INTERNAL ERROR: `root` must be absolute but is {root}"
+    exclusions = (
+        ("--exclude", exclude),
+        ("--extend-exclude", extend_exclude),
+        ("--force-exclude", force_exclude),
+    )
     for child in paths:
         assert child.is_absolute()
         root_relative_path = child.relative_to(root).as_posix()
@@ -385,27 +406,33 @@ def gen_python_files(
 
         # Then ignore with `--exclude` `--extend-exclude` and `--force-exclude` options.
         root_relative_path = "/" + root_relative_path
-        if child.is_dir():
+        is_dir = child.is_dir()
+        if is_dir:
             root_relative_path += "/"
 
-        if path_is_excluded(root_relative_path, exclude):
-            report.path_ignored(child, "matches the --exclude regular expression")
+        if option := _matching_exclude_option((root_relative_path,), exclusions):
+            report.path_ignored(child, f"matches the {option} regular expression")
             continue
 
-        if path_is_excluded(root_relative_path, extend_exclude):
-            report.path_ignored(
-                child, "matches the --extend-exclude regular expression"
-            )
+        resolved = _resolve_within_root(child, root, report)
+        if resolved is None:
             continue
 
-        if path_is_excluded(root_relative_path, force_exclude):
-            report.path_ignored(child, "matches the --force-exclude regular expression")
-            continue
+        if resolved != child:
+            relative = resolved.relative_to(root)
+            # An excluded parent would have been pruned during ordinary traversal.
+            destination_paths = [
+                f"/{parent.as_posix()}/" for parent in relative.parents if parent.parts
+            ]
+            destination_path = f"/{relative.as_posix()}" if relative.parts else ""
+            destination_paths.append(destination_path + ("/" if is_dir else ""))
+            if option := _matching_exclude_option(destination_paths, exclusions):
+                report.path_ignored(
+                    child, f"resolved path matches the {option} regular expression"
+                )
+                continue
 
-        if resolves_outside_root_or_cannot_stat(child, root, report):
-            continue
-
-        if child.is_dir():
+        if is_dir:
             # If gitignore is None, gitignore usage is disabled, while a Falsey
             # gitignore is when the directory doesn't have a .gitignore file.
             if gitignore_dict is not None:
