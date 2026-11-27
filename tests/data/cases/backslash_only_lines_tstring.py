@@ -7,3 +7,7 @@ x = t"""Value: {value =\
 y = t"""{value +\
   \
 1}"""
+z = t"""{value
+# comment
+\
+}"""

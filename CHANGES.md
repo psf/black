@@ -110,6 +110,9 @@
 - Keep a line holding only a backslash after a backslash continuation as written in
   `# fmt: off` regions, `# fmt: skip` lines, lines outside `--line-ranges` and f-string
   or t-string fields, instead of crashing or dropping it (#5681)
+- Keep a line holding only a backslash inside brackets after a blank or comment line as
+  written in `# fmt: off` regions, `# fmt: skip` lines and f-string or t-string fields,
+  instead of crashing or dropping it (#XXXX)
 - Fix crash when a `# fmt: off` inside brackets comes right before the trailing comma or
   the rest of the last item (#5651)
 - Fix a Jupyter notebook failing to format when one of its cells can't be tokenized,
