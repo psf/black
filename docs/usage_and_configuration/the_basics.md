@@ -555,7 +555,11 @@ section. The option keys are the same as long names of options on the command li
 Most command-line options can be configured in `[tool.black]` by using their long name
 without the leading `--` (for example, `--line-length` becomes `line-length`). Options
 that cannot be configured in `pyproject.toml` are called out explicitly in the option
-reference above.
+reference above. Prefer the hyphenated names shown in the option reference, even though
+_Black_ also accepts underscores in their place (for example, `line_length`). Use the
+appropriate TOML type for each value: for example, `line-length = 88` is an integer,
+`preview = true` is a boolean, and `target-version = ["py311"]` is an array of strings.
+Avoid quoting numbers or booleans, even if _Black_ currently accepts some quoted values.
 
 Note that you have to use single-quoted strings in TOML for regular expressions. It's
 the equivalent of r-strings in Python. Multiline strings are treated as verbose regular
