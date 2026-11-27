@@ -3807,6 +3807,72 @@ def assert_collected_sources(
 
 
 class TestFileCollection:
+    @pytest.mark.parametrize(
+        "src",
+        [".", "package", "package/generated.py", "-"],
+        ids=["repository", "package", "file", "stdin"],
+    )
+    def test_explicit_config_root_force_exclude(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, src: str
+    ) -> None:
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / ".git").mkdir()
+        (tmp_path / "pyproject.toml").write_text(
+            "[tool.black]\nforce-exclude = '^/package/generated[.]py$'\n",
+            encoding="utf-8",
+        )
+        package = tmp_path / "package"
+        package.mkdir()
+        (package / "pyproject.toml").write_text(
+            "[tool.black]\nline-length = 100\n", encoding="utf-8"
+        )
+        (package / "generated.py").write_text("x=1\n", encoding="utf-8")
+        (package / "regular.py").write_text("y = 2\n", encoding="utf-8")
+        args = ["--verbose", "--check", "--no-cache", "--config", "pyproject.toml"]
+        if src == "-":
+            args += ["--stdin-filename", str(package / "generated.py")]
+
+        result = BlackRunner().invoke(
+            black.main, [*args, src], input="x=1\n", catch_exceptions=False
+        )
+
+        assert result.exit_code == 0, result.stderr
+        assert "matches the --force-exclude regular expression" in result.stderr
+        if src in (".", "package"):
+            assert "1 file would be left unchanged" in result.stderr
+
+    def test_explicit_config_root_outside_sources(self, tmp_path: Path) -> None:
+        (tmp_path / ".git").mkdir()
+        project = tmp_path / "project"
+        project.mkdir()
+        (project / "generated.py").write_text("x=1\n", encoding="utf-8")
+        config = tmp_path / "config" / "black.toml"
+        config.parent.mkdir()
+        config.write_text(
+            "[tool.black]\nforce-exclude = '^/project/generated[.]py$'\n",
+            encoding="utf-8",
+        )
+        regular = config.parent / "regular.py"
+        regular.write_text("y = 2\n", encoding="utf-8")
+
+        result = BlackRunner().invoke(
+            black.main,
+            [
+                "--verbose",
+                "--check",
+                "--no-cache",
+                "--config",
+                str(config),
+                str(project),
+                str(regular),
+            ],
+            catch_exceptions=False,
+        )
+
+        assert result.exit_code == 0, result.stderr
+        assert "matches the --force-exclude regular expression" in result.stderr
+        assert "1 file would be left unchanged" in result.stderr
+
     def test_include_exclude(self) -> None:
         path = THIS_DIR / "data" / "include_exclude_tests"
         src = [path]

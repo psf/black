@@ -623,9 +623,20 @@ def main(
         )
         ctx.exit(1)
 
-    root, method = (
-        find_project_root(src, stdin_filename) if code is None else (None, None)
-    )
+    config_source = ctx.get_parameter_source("config")
+    root, method = None, None
+    if code is None:
+        if config and config_source == ParameterSource.COMMANDLINE:
+            config_root = Path(config).resolve().parent
+            if all(
+                Path(source if source != "-" else (stdin_filename or "."))
+                .resolve()
+                .is_relative_to(config_root)
+                for source in src
+            ):
+                root, method = config_root, "--config"
+        if root is None:
+            root, method = find_project_root(src, stdin_filename)
     ctx.obj["root"] = root
 
     if code is None:
@@ -641,7 +652,7 @@ def main(
         code is None
         and root is None
         and not quiet
-        and ctx.get_parameter_source("config") != ParameterSource.COMMANDLINE
+        and config_source != ParameterSource.COMMANDLINE
     ):
         err(
             "No project root could be identified: the given sources share no"
@@ -652,14 +663,15 @@ def main(
         )
 
     if verbose:
-        if root:
+        if method == "--config":
+            out(f"Identified `{root}` as project root from --config.", fg="blue")
+        elif root:
             out(
                 f"Identified `{root}` as project root containing a {method}.",
                 fg="blue",
             )
 
         if config:
-            config_source = ctx.get_parameter_source("config")
             user_level_config = str(find_user_pyproject_toml())
             if config == user_level_config:
                 out(
