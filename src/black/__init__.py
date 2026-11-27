@@ -183,6 +183,11 @@ def read_pyproject_toml(
             "line-ranges", "Cannot use line-ranges in the pyproject.toml file."
         )
 
+    if config.get("code") is not None:
+        raise click.BadOptionUsage(
+            "code", "Cannot use code in the pyproject.toml file."
+        )
+
     default_map: dict[str, Any] = {}
     if ctx.default_map:
         default_map.update(ctx.default_map)

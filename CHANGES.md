@@ -184,6 +184,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Reject the `code` key in `pyproject.toml` with a clear error instead of letting it
+  hijack the run, and drop it from the JSON schema (#5748)
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)

@@ -5,10 +5,6 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "code": {
-      "type": "string",
-      "description": "Format the code passed in as a string."
-    },
     "line-length": {
       "type": "integer",
       "description": "How many characters per line to allow.",
