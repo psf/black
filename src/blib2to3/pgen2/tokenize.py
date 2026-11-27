@@ -101,11 +101,18 @@ TOKEN_TYPE_MAP = {
 }
 
 
+OPENING_BRACKETS = {TokenType.lparen, TokenType.lbracket, TokenType.lbrace}
+CLOSING_BRACKETS = {TokenType.rparen, TokenType.rbracket, TokenType.rbrace}
+
+
 class TokenError(Exception): ...
 
 
 def transform_whitespace(
-    token: pytokens.Token, source: str, prev_token: pytokens.Token | None
+    token: pytokens.Token,
+    source: str,
+    prev_token: pytokens.Token | None,
+    in_brackets: bool = False,
 ) -> pytokens.Token:
     r"""
     Black treats `\\\n` at the end of a line as a 'NL' token, while it
@@ -113,7 +120,8 @@ def transform_whitespace(
     But, only the first one, unless it continues a backslash continuation. A
     `\\\n` by itself on a line right after a NEWLINE or a regular NL is not made
     into NL. One continuing another `\\\n` is, so it stays in the prefix of code
-    that is written back as is, like a `# fmt: off` region.
+    that is written back as is, like a `# fmt: off` region. So is one after a
+    regular NL inside brackets, like a blank or comment line in an f-string field.
     """
     if (
         token.type == TokenType.whitespace
@@ -122,7 +130,7 @@ def transform_whitespace(
             prev_token.type not in (TokenType.nl, TokenType.newline)
             or (
                 prev_token.type == TokenType.nl
-                and source[prev_token.start_index] == "\\"
+                and (in_brackets or source[prev_token.start_index] == "\\")
             )
         )
     ):
@@ -159,6 +167,7 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
     prev_token: pytokens.Token | None = None
     lazy_stashed: LazyStash | None = None
     stmt_start = True
+    bracket_depth = 0
 
     def emit_stashed_lazy(*, as_keyword: bool) -> Iterator[TokenInfo]:
         nonlocal lazy_stashed
@@ -177,7 +186,11 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
 
     try:
         for token in pytokens.tokenize(source):
-            token = transform_whitespace(token, source, prev_token)
+            token = transform_whitespace(token, source, prev_token, bracket_depth > 0)
+            if token.type in OPENING_BRACKETS:
+                bracket_depth += 1
+            elif token.type in CLOSING_BRACKETS:
+                bracket_depth -= 1
 
             line, column = token.start_line, token.start_col
             if token.type == TokenType.whitespace:
