@@ -319,9 +319,9 @@ affect formatting.
 #### `--exclude`
 
 A regular expression that matches files and directories that should be excluded on
-recursive searches. An empty value means no paths are excluded. Use forward slashes for
-directories on all platforms (Windows, too). By default, Black also ignores all paths
-listed in `.gitignore`. Changing this value will override all default exclusions.
+recursive searches. An empty value disables this regex. Use forward slashes for
+directories on all platforms (Windows, too). Setting this option replaces the default
+exclusions and disables `.gitignore` handling unless `--respect-gitignore` is enabled.
 
 Default Exclusions:
 `['.direnv', '.eggs', '.git', '.hg', '.ipynb_checkpoints',  '.mypy_cache', '.nox', '.pytest_cache', '.ruff_cache', '.tox', '.svn', '.venv', '.vscode',  '__pypackages__', '_build', 'buck-out', 'build', 'dist', 'venv'] `
@@ -341,6 +341,12 @@ For example, `^/foo\.py$` matches only `foo.py` in that root. If no `pyproject.t
 
 Like `--exclude`, but adds additional files and directories on top of the default values
 instead of overriding them.
+
+#### `--respect-gitignore` / `--no-respect-gitignore`
+
+Enable or disable `.gitignore` handling during recursive discovery. By default,
+`.gitignore` files are used only when `--exclude` is unset. In `pyproject.toml`, set
+`respect-gitignore` to `true` or `false`.
 
 #### `--force-exclude`
 
