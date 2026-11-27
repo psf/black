@@ -318,7 +318,12 @@ def _handle_comment_only_fmt_block(
     start_pos = comment.consumed
     end_pos = fmt_on_comment.consumed
     content_between_and_fmt_on = original_prefix[start_pos:end_pos]
-    hidden_value = comment.value + "\n" + content_between_and_fmt_on
+    comment_value = comment.value
+    if _is_kept_as_text(leaf):
+        # Python keeps the comments of a nested f-string in the string, along with
+        # their trailing whitespace
+        comment_value = comment.original_line.lstrip()
+    hidden_value = comment_value + "\n" + content_between_and_fmt_on
 
     if hidden_value.endswith("\n"):
         hidden_value = hidden_value[:-1]
@@ -693,9 +698,12 @@ def _handle_regular_fmt_block(
 
     if not is_fmt_skip:
         fmt_off_prefix = ""
+        comment_value = comment.value
         if _is_kept_as_text(leaf):
-            # Python keeps the whitespace before the comment in the string
-            comment_start = comment.consumed - len(comment.original_line.lstrip()) - 1
+            # Python keeps the whitespace before the comment in the string. It also
+            # keeps the comments of a nested f-string, with their trailing whitespace.
+            comment_value = comment.original_line.lstrip()
+            comment_start = comment.consumed - len(comment_value) - 1
             standalone_comment_prefix = prefix[:comment_start]
         elif len(lines) > 0 and not any(
             line[0] <= comment_lineno <= line[1] for line in lines
@@ -705,7 +713,7 @@ def _handle_regular_fmt_block(
             if "\n" in fmt_off_prefix:
                 fmt_off_prefix = fmt_off_prefix.split("\n")[-1]
         standalone_comment_prefix += fmt_off_prefix
-        hidden_value = comment.value + "\n" + hidden_value
+        hidden_value = comment_value + "\n" + hidden_value
 
     if is_fmt_skip and not leaf_is_ignored:
         whitespace = comment.original_line.partition("#")[0]
