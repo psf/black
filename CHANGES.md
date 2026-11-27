@@ -18,6 +18,8 @@
 
 - Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
   `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
+- Fix `--line-ranges` producing invalid code when a decorated one-line `def` or `class`
+  outside the selected lines is indented with 2 spaces or tabs (#5747)
 
 - Fix `# fmt: skip` on a semicolon-separated body on its own line, such as `if x:` ...
   `a; b  # fmt: skip`, joining the body to the header line or crashing (#5674)
