@@ -1940,17 +1940,18 @@ class BlackTestCase(BlackBaseTestCase):
         self.assertEqual(config["exclude"], r"\.pyi?$")
         self.assertEqual(config["include"], r"\.py?$")
 
-    def test_cli_rejects_non_table_black_config(self) -> None:
-        for value in ('["--line-length", "88"]', '"line-length = 88"', "88", "false"):
+    def test_cli_rejects_non_table_config(self) -> None:
+        values = ('["--line-length", "88"]', '"line-length = 88"', "88", "false")
+        configs = [(f"[tool]\nblack = {value}\n", "tool.black") for value in values]
+        configs.append(("tool = 42\n", "tool"))
+        for contents, key in configs:
             for explicit_config in (True, False):
-                with self.subTest(value=value, explicit_config=explicit_config):
+                with self.subTest(contents=contents, explicit_config=explicit_config):
                     with TemporaryDirectory() as workspace:
                         root = Path(workspace)
                         (root / ".git").mkdir()
                         config = root / "pyproject.toml"
-                        config.write_text(
-                            f"[tool]\nblack = {value}\n", encoding="utf-8"
-                        )
+                        config.write_text(contents, encoding="utf-8")
                         source = root / "example.py"
                         source.write_text("x=1\n", encoding="utf-8")
                         args = [str(source)]
@@ -1963,8 +1964,26 @@ class BlackTestCase(BlackBaseTestCase):
 
                         assert result.exit_code == 1
                         assert "Error reading configuration file" in result.stderr
-                        assert "Config key tool.black must be a table" in result.stderr
+                        assert f"Config key {key} must be a table" in result.stderr
                         assert source.read_text(encoding="utf-8") == "x=1\n"
+
+    def test_cli_skips_non_table_tool_during_config_discovery(self) -> None:
+        with TemporaryDirectory() as workspace, change_directory(Path(workspace)):
+            Path("pyproject.toml").write_text(
+                "[tool.black]\nskip-string-normalization = true\n", encoding="utf-8"
+            )
+            child = Path("child")
+            child.mkdir()
+            (child / "pyproject.toml").write_text('tool = "black"\n', encoding="utf-8")
+            source = child / "example.py"
+            source.write_text("value='hello'\n", encoding="utf-8")
+
+            result = BlackRunner().invoke(
+                black.main, [str(source)], catch_exceptions=False
+            )
+
+            assert result.exit_code == 0
+            assert source.read_text(encoding="utf-8") == "value = 'hello'\n"
 
     def test_spellcheck_pyproject_toml(self) -> None:
         test_toml_file = THIS_DIR / "data" / "incorrect_spelling.toml"
