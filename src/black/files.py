@@ -101,7 +101,8 @@ def _find_project_root_cached(srcs: tuple[str, ...]) -> tuple[Path | None, str |
 
         if (directory / "pyproject.toml").is_file():
             pyproject_toml = _load_toml(directory / "pyproject.toml")
-            if "black" in pyproject_toml.get("tool", {}):
+            tool = pyproject_toml.get("tool", {})
+            if isinstance(tool, dict) and "black" in tool:
                 return directory, "pyproject.toml"
 
     return directory, "file system root"
@@ -137,7 +138,10 @@ def parse_pyproject_toml(path_config: str) -> dict[str, Any]:
     If parsing fails or the Black configuration is not a table, raises ValueError.
     """
     pyproject_toml = _load_toml(path_config)
-    config: dict[str, Any] = pyproject_toml.get("tool", {}).get("black", {})
+    tool = pyproject_toml.get("tool", {})
+    if not isinstance(tool, dict):
+        raise ValueError("Config key tool must be a table")
+    config: dict[str, Any] = tool.get("black", {})
     if not isinstance(config, dict):
         raise ValueError("Config key tool.black must be a table")
     config = {k.replace("--", "").replace("-", "_"): v for k, v in config.items()}

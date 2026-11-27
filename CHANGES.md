@@ -184,6 +184,8 @@
 
 <!-- Changes to how Black can be configured -->
 
+- Report invalid non-table `tool` values in a selected `pyproject.toml`, and skip them
+  when searching for a `[tool.black]` configuration (#5757).
 - Stop disregarding leading blank lines, which shifted the lines selected by
   `--line-ranges`, reported the wrong line number in parse errors, and removed form
   feeds on the first line (#5650)
