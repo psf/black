@@ -1149,8 +1149,7 @@ class EmptyLineTracker:
                     before = 1
             else:
                 if (
-                    Preview.conditional_function_blank_lines in self.mode
-                    and previous_def.is_def
+                    Preview.conditional_definition_blank_lines in self.mode
                     and previous_def.depth == depth + 1
                     and current_line.leaves
                     and current_line.leaves[0].value in ("elif", "else")
@@ -1248,12 +1247,12 @@ class EmptyLineTracker:
 
         if (
             not self.mode.is_pyi
-            and Preview.conditional_function_blank_lines in self.mode
+            and Preview.conditional_definition_blank_lines in self.mode
             and self.previous_line.depth < current_line.depth
             and self.previous_line.opens_block
-            and (current_line.is_def or self._get_decorator_target_name(current_line))
         ):
-            # Look up from the definition, whose leaves haven't been split yet.
+            # The caller supplies a class, function, or decorator. Its leaves
+            # have not been split yet, so look up the enclosing suite.
             suite = current_line.leaves[0].parent
             while suite is not None and suite.type != syms.suite:
                 suite = suite.parent

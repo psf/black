@@ -114,7 +114,7 @@
           "remove_redundant_top_level_parentheses",
           "end_fmt_off_at_closing_bracket",
           "parenthesize_one_item_sequence_patterns",
-          "conditional_function_blank_lines"
+          "conditional_definition_blank_lines"
         ]
       },
       "description": "Enable specific features included in the `--unstable` style. Requires `--preview`. No compatibility guarantees are provided on the behavior or existence of any unstable features."
