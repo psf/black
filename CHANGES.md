@@ -124,6 +124,7 @@
 
 <!-- Changes that affect Black's preview style -->
 
+- Align the first method call with subsequent calls in multiline chains (#5729)
 - Split long method chains consistently when a standalone comment separates two calls
   (#5518)
 - Keep long single-name `from` imports on one line unless they contain comments or a
