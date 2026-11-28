@@ -328,3 +328,11 @@ def test_sanitize(
     3.   arg2, arg3):
     4.   pass"""
     assert sanitized == sanitized_lines(lines, source_no_trailing_nl)
+
+
+def test_line_ranges_with_unclosed_fmt_off_in_if_else() -> None:
+    import black
+
+    src = "x = 1\nif True:\n    # fmt: off\n    a  =  1\nelse:\n    pass\n"
+    with pytest.raises(black.NothingChanged):
+        black.format_file_contents(src, fast=False, mode=black.Mode(), lines=[(1, 1)])

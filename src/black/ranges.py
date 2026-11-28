@@ -491,7 +491,7 @@ def _str_with_standalone_comments(*nodes: LN) -> str:
                 # A comment-only fmt:off/on block ends with the `# fmt: on` comment.
                 # A newline in the next leaf's prefix is a blank line after it.
                 leaf.fmt_pass_converted_first_leaf is None
-                or (not str(next_leaf).startswith("\n") and _ends_with_fmt_skip(text))
+                or (not text.endswith("\n") and not str(next_leaf).startswith("\n"))
             )
         ):
             text += "\n"
