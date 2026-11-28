@@ -9,7 +9,7 @@ _DEFAULT_HEADERS = {"Content-Type": "text/plain; charset=utf-8"}
 class BlackDClient:
     def __init__(
         self,
-        url: StrOrURL = "http://localhost:9090",
+        url: StrOrURL = "http://localhost:45484",
         line_length: int | None = None,
         skip_source_first_line: bool = False,
         skip_string_normalization: bool = False,
