@@ -16,6 +16,8 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix `# fmt: skip` inside multiline f-string and t-string replacement fields dropping
+  the following newline and producing invalid code (#5717)
 - Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
   `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
 
