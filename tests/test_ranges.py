@@ -2,7 +2,12 @@
 
 import pytest
 
-from black.ranges import adjusted_lines, parse_line_ranges, sanitized_lines
+from black.ranges import (
+    adjust_lines_for_skipped_first_line,
+    adjusted_lines,
+    parse_line_ranges,
+    sanitized_lines,
+)
 
 
 @pytest.mark.parametrize(
@@ -328,3 +333,22 @@ def test_sanitize(
     3.   arg2, arg3):
     4.   pass"""
     assert sanitized == sanitized_lines(lines, source_no_trailing_nl)
+
+
+@pytest.mark.parametrize(
+    "lines,expected",
+    [
+        ([], []),
+        ([(2, 2)], [(1, 1)]),
+        ([(3, 3)], [(2, 2)]),
+        ([(2, 4)], [(1, 3)]),
+        ([(1, 3)], [(1, 2)]),
+        ([(1, 1)], [(0, 0)]),
+        ([(0, 1)], [(0, 0)]),
+        ([(1, 1), (3, 3)], [(2, 2)]),
+    ],
+)
+def test_adjust_lines_for_skipped_first_line(
+    lines: list[tuple[int, int]], expected: list[tuple[int, int]]
+) -> None:
+    assert adjust_lines_for_skipped_first_line(lines) == expected

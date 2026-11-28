@@ -56,6 +56,26 @@ def is_valid_line_range(lines: tuple[int, int]) -> bool:
     return lines[0] <= lines[1]
 
 
+def adjust_lines_for_skipped_first_line(
+    lines: Collection[tuple[int, int]],
+) -> Collection[tuple[int, int]]:
+    """Adjust line ranges when the first source line is skipped.
+
+    The first line of the source code was skipped, so all subsequent lines
+    are shifted down by one in the shortened source. Line ranges that fall
+    entirely on the skipped first line are dropped. If no valid ranges remain,
+    a range of (0, 0) is returned so that format_str knows ranges were requested
+    but none match the content (avoiding full-file reformatting).
+    """
+    if not lines:
+        return lines
+    adjusted: list[tuple[int, int]] = []
+    for start, end in lines:
+        if end >= 2:
+            adjusted.append((max(1, start - 1), end - 1))
+    return adjusted if adjusted else [(0, 0)]
+
+
 def sanitized_lines(
     lines: Collection[tuple[int, int]], src_contents: str
 ) -> Collection[tuple[int, int]]:
