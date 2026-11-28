@@ -492,6 +492,10 @@ def _str_with_standalone_comments(*nodes: LN) -> str:
                 # A newline in the next leaf's prefix is a blank line after it.
                 leaf.fmt_pass_converted_first_leaf is None
                 or (not str(next_leaf).startswith("\n") and _ends_with_fmt_skip(text))
+                # A `# fmt: off` block with no `# fmt: on` ends at the first unindent,
+                # so the clause that follows it (`else`, `except`, ...) would be
+                # appended to its last line.
+                or (not text.endswith("\n") and not str(next_leaf).startswith("\n"))
             )
         ):
             text += "\n"
