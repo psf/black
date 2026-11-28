@@ -2772,6 +2772,18 @@ def _maybe_wrap_cms_in_parens(
         node.insert_child(1, new_child)
 
 
+def _is_parenthesized_walrus(node: LN) -> bool:
+    """Is `node` a walrus, possibly wrapped in any number of parentheses?"""
+    while (
+        node.type == syms.atom
+        and len(node.children) == 3
+        and is_lpar_token(node.children[0])
+        and is_rpar_token(node.children[-1])
+    ):
+        node = node.children[1]
+    return node.type == syms.namedexpr_test
+
+
 def remove_with_parens(
     node: Node, parent: Node, mode: Mode, features: Collection[Feature]
 ) -> None:
@@ -2801,8 +2813,10 @@ def remove_with_parens(
             remove_brackets_around_comma=True,
         ):
             wrap_in_parentheses(parent, node, visible=False)
-        if isinstance(node.children[1], Node):
-            remove_with_parens(node.children[1], node, mode=mode, features=features)
+        inner = node.children[1]
+        # The parentheses of a walrus nested in the atom are required.
+        if isinstance(inner, Node) and not _is_parenthesized_walrus(inner):
+            remove_with_parens(inner, node, mode=mode, features=features)
     elif node.type == syms.testlist_gexp:
         for child in node.children:
             if isinstance(child, Node):
