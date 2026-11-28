@@ -500,7 +500,13 @@ def _is_fmt_off_region_before_newline(leaf: Leaf) -> bool:
     if leaf.fmt_pass_converted_first_leaf is None:
         if not _is_in_fstring(leaf):
             return False
-    elif not contains_fmt_directive(leaf.value.partition("\n")[0], FMT_OFF):
+    elif not (
+        contains_fmt_directive(leaf.value.partition("\n")[0], FMT_OFF)
+        or (
+            _is_in_fstring(leaf)
+            and contains_fmt_directive(leaf.value.rpartition("\n")[2], FMT_SKIP)
+        )
+    ):
         return False
 
     node: LN | None = leaf
@@ -709,7 +715,7 @@ def _handle_regular_fmt_block(
 
     if is_fmt_skip and not leaf_is_ignored:
         whitespace = comment.original_line.partition("#")[0]
-        hidden_value += whitespace + comment.value
+        hidden_value += "\n" * comment.newlines + whitespace + comment.value
 
     if hidden_value.endswith("\n"):
         # That happens when one of the `ignored_nodes` ended with a NEWLINE
@@ -1183,7 +1189,13 @@ def _generate_ignored_nodes_from_fmt_skip(
             for ignored in ignored_nodes
         )
         if not leaf_is_ignored:
-            leaf.prefix = leaf.prefix[comment.consumed :]
+            consumed = comment.consumed
+            if _is_in_fstring(leaf):
+                if leaf.prefix[:consumed].endswith("\r\n"):
+                    consumed -= 2
+                elif leaf.prefix[:consumed].endswith(("\n", "\r")):
+                    consumed -= 1
+            leaf.prefix = leaf.prefix[consumed:]
 
         yield from ignored_nodes
 
