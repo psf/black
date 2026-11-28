@@ -517,20 +517,27 @@ class Line:
             return "\n"
 
         indent = "    " * self.depth
-        leaves = iter(self.leaves)
-        first = next(leaves)
-        res = f"{first.prefix}{indent}{first.value}"
-        res += "".join(str(leaf) for leaf in leaves)
-        comments = list(itertools.chain.from_iterable(self.comments.values()))
-        if len(comments) > 1:
-            # Python only recognizes a `# type: ignore` at the start of a comment, so
-            # it has to come first when comments from several lines end up on one.
-            comments.sort(
-                key=lambda comment: not is_type_ignore_comment(comment, mode=self.mode)
-            )
-        res += "".join(str(comment) for comment in comments)
-
-        return res + "\n"
+        leaves = self.leaves
+        first = leaves[0]
+        parts = [first._prefix, indent, first.value]
+        for leaf in leaves[1:]:
+            parts.append(leaf._prefix)
+            parts.append(leaf.value)
+        if self.comments:
+            comments = list(itertools.chain.from_iterable(self.comments.values()))
+            if len(comments) > 1:
+                # Python only recognizes a `# type: ignore` at the start of a comment, so
+                # it has to come first when comments from several lines end up on one.
+                comments.sort(
+                    key=lambda comment: not is_type_ignore_comment(
+                        comment, mode=self.mode
+                    )
+                )
+            for comment in comments:
+                parts.append(comment._prefix)
+                parts.append(comment.value)
+        parts.append("\n")
+        return "".join(parts)
 
     def __bool__(self) -> bool:
         """Return True if the line has leaves or comments."""

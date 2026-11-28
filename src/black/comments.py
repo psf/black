@@ -106,12 +106,10 @@ def generate_comments(
 
 
 @lru_cache(maxsize=4096)
-def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoComment]:
-    """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
+def _list_comments_cached(
+    prefix: str, *, is_endmarker: bool, mode: Mode
+) -> list[ProtoComment]:
     result: list[ProtoComment] = []
-    if not prefix or "#" not in prefix:
-        return result
-
     consumed = 0
     nlines = 0
     ignored_lines = 0
@@ -156,6 +154,13 @@ def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoC
         form_feed = False
         nlines = 0
     return result
+
+
+def list_comments(prefix: str, *, is_endmarker: bool, mode: Mode) -> list[ProtoComment]:
+    """Return a list of :class:`ProtoComment` objects parsed from the given `prefix`."""
+    if not prefix or "#" not in prefix:
+        return []
+    return _list_comments_cached(prefix, is_endmarker=is_endmarker, mode=mode)
 
 
 def normalize_trailing_prefix(leaf: LN, total_consumed: int) -> None:

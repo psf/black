@@ -1627,6 +1627,53 @@ def decode_bytes(
         return tiow.read(), encoding, newline
 
 
+_POS_ONLY_PARENTS: Final = {syms.typedargslist, syms.arglist, syms.varargslist}
+_BARE_WALRUS_PARENTS: Final = {syms.dictsetmaker, syms.subscript}
+_TRAILING_COMMA_NODES: Final = {syms.typedargslist, syms.arglist}
+_UNPACKING_FLOW_NODES: Final = {syms.return_stmt, syms.yield_expr}
+_VARIADIC_GENERIC_NODES: Final = {syms.subscriptlist, syms.trailer}
+_TYPE_PARAM_NODES: Final = {syms.type_stmt, syms.typeparams}
+_TYPE_PARAM_DEFAULT_NODES: Final = {syms.typevartuple, syms.paramspec, syms.typevar}
+_UNPACKING_COMP_NODES: Final = {
+    syms.listmaker,
+    syms.testlist_gexp,
+    syms.dictsetmaker,
+    syms.argument,
+}
+_COMP_FOR_NODES: Final = {syms.comp_for, syms.old_comp_for}
+_STAR_FIRST_CHILD_NODES: Final = {syms.star_expr, token.STAR, token.DOUBLESTAR}
+_FEATURE_NODE_TYPES: Final = {
+    token.FSTRING_START,
+    token.TSTRING_START,
+    token.RBRACE,
+    token.NUMBER,
+    token.SLASH,
+    token.COLONEQUAL,
+    token.LAZY,
+    syms.decorator,
+    syms.listmaker,
+    syms.testlist_gexp,
+    syms.dictsetmaker,
+    syms.argument,
+    syms.typedargslist,
+    syms.arglist,
+    syms.return_stmt,
+    syms.yield_expr,
+    syms.annassign,
+    syms.with_stmt,
+    syms.match_stmt,
+    syms.subscriptlist,
+    syms.trailer,
+    syms.tname_star,
+    syms.type_stmt,
+    syms.typeparams,
+    syms.typevartuple,
+    syms.paramspec,
+    syms.typevar,
+    syms.except_clause,
+}
+
+
 def get_features_used(
     node: Node, *, future_imports: set[str] | None = None
 ) -> set[Feature]:
@@ -1642,13 +1689,27 @@ def get_features_used(
             if future_import in FUTURE_FLAG_TO_FEATURE
         }
 
-    for n in node.pre_order():
-        if n.type == token.FSTRING_START:
+    feature_node_types = _FEATURE_NODE_TYPES
+    stack: list[LN] = [node]
+    pop = stack.pop
+    extend = stack.extend
+
+    while stack:
+        n = pop()
+        children = n.children
+        if children:
+            extend(children)
+
+        n_type = n.type
+        if n_type not in feature_node_types:
+            continue
+
+        if n_type == token.FSTRING_START:
             features.add(Feature.F_STRINGS)
-        elif n.type == token.TSTRING_START:
+        elif n_type == token.TSTRING_START:
             features.add(Feature.T_STRINGS)
         elif (
-            n.type == token.RBRACE
+            n_type == token.RBRACE
             and n.parent is not None
             and any(child.type == token.EQUAL for child in n.parent.children)
         ):
@@ -1658,42 +1719,36 @@ def get_features_used(
             if "_" in n.value:
                 features.add(Feature.NUMERIC_UNDERSCORES)
 
-        elif n.type == token.SLASH:
-            if n.parent and n.parent.type in {
-                syms.typedargslist,
-                syms.arglist,
-                syms.varargslist,
-            }:
+        elif n_type == token.SLASH:
+            if n.parent and n.parent.type in _POS_ONLY_PARENTS:
                 features.add(Feature.POS_ONLY_ARGUMENTS)
 
-        elif n.type == token.COLONEQUAL:
+        elif n_type == token.COLONEQUAL:
             features.add(Feature.ASSIGNMENT_EXPRESSIONS)
-            if n.parent and n.parent.type in {syms.dictsetmaker, syms.subscript}:
+            if n.parent and n.parent.type in _BARE_WALRUS_PARENTS:
                 features.add(Feature.BARE_SET_SUBSCRIPT_WALRUSES)
 
-        elif n.type == token.LAZY:
+        elif n_type == token.LAZY:
             features.add(Feature.LAZY_IMPORTS)
 
-        elif n.type == syms.decorator:
-            if len(n.children) > 1 and not is_simple_decorator_expression(
-                n.children[1]
-            ):
+        elif n_type == syms.decorator:
+            if len(children) > 1 and not is_simple_decorator_expression(children[1]):
                 features.add(Feature.RELAXED_DECORATORS)
 
         elif is_unpacking_comprehension(n):
             features.add(Feature.UNPACKING_IN_COMPREHENSIONS)
 
         elif (
-            n.type in {syms.typedargslist, syms.arglist}
-            and n.children
-            and n.children[-1].type == token.COMMA
+            n_type in _TRAILING_COMMA_NODES
+            and children
+            and children[-1].type == token.COMMA
         ):
-            if n.type == syms.typedargslist:
+            if n_type == syms.typedargslist:
                 feature = Feature.TRAILING_COMMA_IN_DEF
             else:
                 feature = Feature.TRAILING_COMMA_IN_CALL
 
-            for ch in n.children:
+            for ch in children:
                 if ch.type in STARS:
                     features.add(feature)
 
@@ -1703,26 +1758,26 @@ def get_features_used(
                             features.add(feature)
 
         elif (
-            n.type in {syms.return_stmt, syms.yield_expr}
-            and len(n.children) >= 2
-            and n.children[1].type == syms.testlist_star_expr
-            and any(child.type == syms.star_expr for child in n.children[1].children)
+            n_type in _UNPACKING_FLOW_NODES
+            and len(children) >= 2
+            and children[1].type == syms.testlist_star_expr
+            and any(child.type == syms.star_expr for child in children[1].children)
         ):
             features.add(Feature.UNPACKING_ON_FLOW)
 
         elif (
-            n.type == syms.annassign
-            and len(n.children) >= 4
-            and n.children[3].type == syms.testlist_star_expr
+            n_type == syms.annassign
+            and len(children) >= 4
+            and children[3].type == syms.testlist_star_expr
         ):
             features.add(Feature.ANN_ASSIGN_EXTENDED_RHS)
 
         elif (
-            n.type == syms.with_stmt
-            and len(n.children) > 2
-            and n.children[1].type == syms.atom
+            n_type == syms.with_stmt
+            and len(children) > 2
+            and children[1].type == syms.atom
         ):
-            atom_children = n.children[1].children
+            atom_children = children[1].children
             if (
                 len(atom_children) == 3
                 and atom_children[0].type == token.LPAR
@@ -1731,53 +1786,48 @@ def get_features_used(
             ):
                 features.add(Feature.PARENTHESIZED_CONTEXT_MANAGERS)
 
-        elif n.type == syms.match_stmt:
+        elif n_type == syms.match_stmt:
             features.add(Feature.PATTERN_MATCHING)
 
-        elif n.type in {syms.subscriptlist, syms.trailer} and any(
-            child.type == syms.star_expr for child in n.children
+        elif n_type in _VARIADIC_GENERIC_NODES and any(
+            child.type == syms.star_expr for child in children
         ):
             features.add(Feature.VARIADIC_GENERICS)
 
         elif (
-            n.type == syms.tname_star
-            and len(n.children) == 3
-            and n.children[2].type == syms.star_expr
+            n_type == syms.tname_star
+            and len(children) == 3
+            and children[2].type == syms.star_expr
         ):
             features.add(Feature.VARIADIC_GENERICS)
 
-        elif n.type in (syms.type_stmt, syms.typeparams):
+        elif n_type in _TYPE_PARAM_NODES:
             features.add(Feature.TYPE_PARAMS)
 
-        elif (
-            n.type in (syms.typevartuple, syms.paramspec, syms.typevar)
-            and n.children[-2].type == token.EQUAL
-        ):
+        elif n_type in _TYPE_PARAM_DEFAULT_NODES and children[-2].type == token.EQUAL:
             features.add(Feature.TYPE_PARAM_DEFAULTS)
 
         elif (
-            n.type == syms.except_clause
-            and len(n.children) >= 2
-            and (
-                n.children[1].type == token.STAR or n.children[1].type == syms.testlist
-            )
+            n_type == syms.except_clause
+            and len(children) >= 2
+            and (children[1].type == token.STAR or children[1].type == syms.testlist)
         ):
-            is_star_except = n.children[1].type == token.STAR
+            is_star_except = children[1].type == token.STAR
 
             if is_star_except:
                 features.add(Feature.EXCEPT_STAR)
 
             # Presence of except* pushes as clause 1 index back
             has_as_clause = (
-                len(n.children) >= is_star_except + 3
-                and n.children[is_star_except + 2].type == token.NAME
-                and n.children[is_star_except + 2].value == "as"  # type: ignore
+                len(children) >= is_star_except + 3
+                and children[is_star_except + 2].type == token.NAME
+                and children[is_star_except + 2].value == "as"  # type: ignore
             )
 
             # If there's no 'as' clause and the except expression is a testlist.
             if not has_as_clause and (
-                (is_star_except and n.children[2].type == syms.testlist)
-                or (not is_star_except and n.children[1].type == syms.testlist)
+                (is_star_except and children[2].type == syms.testlist)
+                or (not is_star_except and children[1].type == syms.testlist)
             ):
                 features.add(Feature.UNPARENTHESIZED_EXCEPT_TYPES)
 
@@ -1785,21 +1835,14 @@ def get_features_used(
 
 
 def is_unpacking_comprehension(node: LN) -> bool:
-    if node.type not in {
-        syms.listmaker,
-        syms.testlist_gexp,
-        syms.dictsetmaker,
-        syms.argument,
-    }:
+    if node.type not in _UNPACKING_COMP_NODES:
         return False
 
-    if not any(
-        child.type in {syms.comp_for, syms.old_comp_for} for child in node.children
-    ):
+    if not any(child.type in _COMP_FOR_NODES for child in node.children):
         return False
 
     first_child = node.children[0]
-    return first_child.type in {syms.star_expr, token.STAR, token.DOUBLESTAR}
+    return first_child.type in _STAR_FIRST_CHILD_NODES
 
 
 def _contains_asexpr(node: Node | Leaf) -> bool:

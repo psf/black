@@ -29,6 +29,7 @@ each time a new token is found."""
 
 import sys
 from collections.abc import Iterator
+from typing import Final
 
 from blib2to3.pgen2.grammar import Grammar
 from blib2to3.pgen2.token import (
@@ -151,6 +152,18 @@ def transform_whitespace(
     return token
 
 
+_STMT_START_TOKENS: Final = {
+    TokenType.indent,
+    TokenType.dedent,
+    TokenType.newline,
+    TokenType.semicolon,
+    TokenType.colon,
+}
+_STMT_KEEP_TOKENS: Final = {TokenType.comment, TokenType.nl}
+_ASYNC_AWAIT: Final = {"async", "await"}
+_IMPORT_FROM: Final = {"import", "from"}
+
+
 def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]:
     lines = source.split("\n")
     lines += [""]  # For newline tokens in files that don't end in a newline
@@ -160,106 +173,112 @@ def tokenize(source: str, grammar: Grammar | None = None) -> Iterator[TokenInfo]
     lazy_stashed: LazyStash | None = None
     stmt_start = True
 
-    def emit_stashed_lazy(*, as_keyword: bool) -> Iterator[TokenInfo]:
-        nonlocal lazy_stashed
-        if lazy_stashed is None:
-            return
-
-        stashed_token, stashed_str, stashed_line = lazy_stashed
-        yield (
-            LAZY if as_keyword else NAME,
-            stashed_str,
-            (stashed_token.start_line, stashed_token.start_col),
-            (stashed_token.end_line, stashed_token.end_col),
-            stashed_line,
-        )
-        lazy_stashed = None
+    tt_whitespace = TokenType.whitespace
+    tt_newline = TokenType.newline
+    tt_identifier = TokenType.identifier
+    tt_op = TokenType.op
+    token_type_get = TOKEN_TYPE_MAP.get
+    stmt_start_tokens = _STMT_START_TOKENS
+    stmt_keep_tokens = _STMT_KEEP_TOKENS
+    async_await = _ASYNC_AWAIT
+    import_from = _IMPORT_FROM
 
     try:
         for token in pytokens.tokenize(source):
-            token = transform_whitespace(token, source, prev_token)
+            ttype = token.type
+            if ttype is tt_whitespace:
+                token = transform_whitespace(token, source, prev_token)
+                ttype = token.type
+                if ttype is tt_whitespace:
+                    line, column = token.start_line, token.start_col
+                    continue
 
             line, column = token.start_line, token.start_col
-            if token.type == TokenType.whitespace:
-                continue
-
             token_str = source[token.start_index : token.end_index]
 
-            if token.type == TokenType.newline and token_str == "":
+            if ttype is tt_newline and token_str == "":
                 # Black doesn't yield empty newline tokens at the end of a file
                 # if there's no newline at the end of a file.
                 prev_token = token
                 continue
 
-            source_line = lines[token.start_line - 1]
-
-            if lazy_stashed is not None and not (
-                token.type == TokenType.identifier and token_str in ("import", "from")
-            ):
-                yield from emit_stashed_lazy(as_keyword=False)
-
-            if (
-                token.type == TokenType.identifier
-                and token_str == "lazy"
-                and stmt_start
-            ):
-                lazy_stashed = (token, token_str, source_line)
-                prev_token = token
-                stmt_start = False
-                continue
+            source_line = lines[line - 1]
 
             if lazy_stashed is not None:
-                yield from emit_stashed_lazy(as_keyword=True)
-
-            if token.type == TokenType.identifier and token_str in ("async", "await"):
-                # Black uses `async` and `await` token types just for those two keywords
+                stashed_token, stashed_str, stashed_line = lazy_stashed
+                is_lazy_kw = ttype is tt_identifier and token_str in import_from
                 yield (
-                    ASYNC if token_str == "async" else AWAIT,
-                    token_str,
-                    (token.start_line, token.start_col),
-                    (token.end_line, token.end_col),
-                    source_line,
+                    LAZY if is_lazy_kw else NAME,
+                    stashed_str,
+                    (stashed_token.start_line, stashed_token.start_col),
+                    (stashed_token.end_line, stashed_token.end_col),
+                    stashed_line,
                 )
-            elif token.type == TokenType.op and token_str == "...":
-                # Black doesn't have an ellipsis token yet, yield 3 DOTs instead
-                assert token.start_line == token.end_line
-                assert token.end_col == token.start_col + 3
+                lazy_stashed = None
 
-                token_str = "."
-                for start_col in range(token.start_col, token.start_col + 3):
-                    end_col = start_col + 1
+            if ttype is tt_identifier:
+                if stmt_start and token_str == "lazy":
+                    lazy_stashed = (token, token_str, source_line)
+                    prev_token = token
+                    stmt_start = False
+                    continue
+                if token_str in async_await:
+                    # Black uses `async` and `await` token types just for those two keywords
                     yield (
-                        TOKEN_TYPE_MAP[token.type],
+                        ASYNC if token_str == "async" else AWAIT,
                         token_str,
-                        (token.start_line, start_col),
-                        (token.end_line, end_col),
+                        (line, column),
+                        (token.end_line, token.end_col),
+                        source_line,
+                    )
+                else:
+                    yield (
+                        NAME,
+                        token_str,
+                        (line, column),
+                        (token.end_line, token.end_col),
+                        source_line,
+                    )
+            elif ttype is tt_op and token_str == "...":
+                # Black doesn't have an ellipsis token yet, yield 3 DOTs instead
+                assert line == token.end_line
+                assert token.end_col == column + 3
+
+                for start_col in range(column, column + 3):
+                    yield (
+                        OP,
+                        ".",
+                        (line, start_col),
+                        (token.end_line, start_col + 1),
                         source_line,
                     )
             else:
-                token_type = TOKEN_TYPE_MAP.get(token.type)
-                if token_type is None:
-                    raise ValueError(f"Unknown token type: {token.type!r}")
+                mapped_type = token_type_get(ttype)
+                if mapped_type is None:
+                    raise ValueError(f"Unknown token type: {ttype!r}")
                 yield (
-                    TOKEN_TYPE_MAP[token.type],
+                    mapped_type,
                     token_str,
-                    (token.start_line, token.start_col),
+                    (line, column),
                     (token.end_line, token.end_col),
                     source_line,
                 )
             prev_token = token
 
-            if token.type in {
-                TokenType.indent,
-                TokenType.dedent,
-                TokenType.newline,
-                TokenType.semicolon,
-                TokenType.colon,
-            }:
+            if ttype in stmt_start_tokens:
                 stmt_start = True
-            elif token.type not in {TokenType.comment, TokenType.nl}:
+            elif ttype not in stmt_keep_tokens:
                 stmt_start = False
 
-        yield from emit_stashed_lazy(as_keyword=False)
+        if lazy_stashed is not None:
+            stashed_token, stashed_str, stashed_line = lazy_stashed
+            yield (
+                NAME,
+                stashed_str,
+                (stashed_token.start_line, stashed_token.start_col),
+                (stashed_token.end_line, stashed_token.end_col),
+                stashed_line,
+            )
 
     except pytokens.UnexpectedEOF:
         raise TokenError("Unexpected EOF in multi-line statement", (line, column))
