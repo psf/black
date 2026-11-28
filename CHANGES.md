@@ -197,7 +197,8 @@
   (#5513)
 - Treat an unreadable cache file as a cache miss instead of failing the formatting run
   with a "cannot format" error (#5641)
-
+- Add `--show-files` to print the files Black would format, after applying the inclusion
+  and exclusion rules, without formatting them (#5714)
 - Reject non-positive `--line-length` values on the command line and in `pyproject.toml`
   instead of silently formatting with them (#5664)
 

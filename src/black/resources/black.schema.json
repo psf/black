@@ -159,6 +159,11 @@
       "description": "A regular expression that matches files and directories that should be included on recursive searches. An empty value means all files are included regardless of the name. Use forward slashes for directories on all platforms (Windows, too). Overrides all exclusions, including from .gitignore and command line options.",
       "default": "(\\.pyi?|\\.ipynb)$"
     },
+    "show-files": {
+      "type": "boolean",
+      "description": "Don't format anything, just print the files Black would format, one per line, after applying the inclusion and exclusion rules.",
+      "default": false
+    },
     "workers": {
       "type": "integer",
       "description": "When Black formats multiple files, it may use a process pool to speed up formatting. This option controls the number of parallel workers. This can also be specified via the BLACK_NUM_WORKERS environment variable. Defaults to the number of CPUs in the system."
