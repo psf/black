@@ -83,6 +83,54 @@ def test_empty() -> None:
     assert_format(source, expected)
 
 
+@pytest.mark.incompatible_with_mypyc
+def test_safe_format_reuses_stability_check() -> None:
+    with patch("black._format_str_once", wraps=black._format_str_once) as format_once:
+        assert (
+            black.format_file_contents("x=1", fast=False, mode=black.Mode())
+            == "x = 1\n"
+        )
+    assert format_once.call_count == 2
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_safe_format_checks_stability_when_second_pass_changes() -> None:
+    # Both results are equivalent, but the second pass has not reached a fixed point.
+    with patch(
+        "black._format_str_once", side_effect=["x = 1\n", "x = 1\n\n", "x = 1\n\n"]
+    ) as format_once:
+        assert (
+            black.format_file_contents("x=1", fast=False, mode=black.Mode())
+            == "x = 1\n\n"
+        )
+    assert format_once.call_count == 3
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_safe_format_rejects_unstable_second_pass() -> None:
+    with patch(
+        "black._format_str_once", side_effect=["x = 1\n", "x = 1\n\n", "x = 1\n"]
+    ):
+        with pytest.raises(AssertionError, match="produced different code"):
+            black.format_file_contents("x=1", fast=False, mode=black.Mode())
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_safe_format_checks_equivalence_when_stable() -> None:
+    with patch("black._format_str_once", return_value="x = 2\n") as format_once:
+        with pytest.raises(black.ASTSafetyError, match="not equivalent"):
+            black.format_file_contents("x=1", fast=False, mode=black.Mode())
+    assert format_once.call_count == 2
+
+
+@pytest.mark.incompatible_with_mypyc
+def test_explicit_stability_check_still_formats_destination() -> None:
+    with patch("black._format_str_once", return_value="x = 1\n\n") as format_once:
+        with pytest.raises(AssertionError, match="produced different code"):
+            black.check_stability_and_equivalence("x=1", "x = 1\n", mode=black.Mode())
+    format_once.assert_called_once()
+
+
 def test_fmt_off_without_fmt_on_before_single_item() -> None:
     # The stable style still crashes on these, and the cases in tests/data/cases are
     # also checked in the other style. They can move there once

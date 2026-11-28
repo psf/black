@@ -1238,12 +1238,14 @@ def check_stability_and_equivalence(
     *,
     mode: Mode,
     lines: Collection[tuple[int, int]] = (),
+    is_stable: bool = False,
 ) -> None:
     """Perform stability and equivalence checks.
 
     Raise AssertionError if source and destination contents are not
     equivalent, or if a second pass of the formatter would format the
-    content differently.
+    content differently. `is_stable` indicates that a previous formatting pass
+    has already returned the destination unchanged; equivalence is still checked.
     """
     try:
         assert_equivalent(src_contents, dst_contents)
@@ -1256,7 +1258,8 @@ def check_stability_and_equivalence(
                 f" {_version_mismatch_message(mode.target_versions)}"
             ) from None
         raise
-    assert_stable(src_contents, dst_contents, mode=mode, lines=lines)
+    if not is_stable:
+        assert_stable(src_contents, dst_contents, mode=mode, lines=lines)
 
 
 def format_file_contents(
@@ -1268,21 +1271,24 @@ def format_file_contents(
 ) -> FileContent:
     """Reformat contents of a file and return new contents.
 
-    If `fast` is False, additionally confirm that the reformatted code is
-    valid by calling :func:`assert_equivalent` and :func:`assert_stable` on it.
+    If `fast` is False, additionally confirm equivalence and stability, reusing
+    the second formatting pass's stability check when possible.
     `mode` is passed to :func:`format_str`.
     """
+    is_stable = False
     if mode.is_ipynb:
         dst_contents = format_ipynb_string(src_contents, fast=fast, mode=mode)
     else:
-        dst_contents = format_str(src_contents, mode=mode, lines=lines)
+        dst_contents, is_stable = _format_str_with_stability(
+            src_contents, mode=mode, lines=lines
+        )
     if src_contents == dst_contents:
         raise NothingChanged
 
     if not fast and not mode.is_ipynb:
         # Jupyter notebooks will already have been checked above.
         check_stability_and_equivalence(
-            src_contents, dst_contents, mode=mode, lines=lines
+            src_contents, dst_contents, mode=mode, lines=lines, is_stable=is_stable
         )
     return dst_contents
 
@@ -1409,21 +1415,29 @@ def format_str(
         hey
 
     """
+    return _format_str_with_stability(src_contents, mode=mode, lines=lines)[0]
+
+
+def _format_str_with_stability(
+    src_contents: str, *, mode: Mode, lines: Collection[tuple[int, int]] = ()
+) -> tuple[str, bool]:
+    """Format code and report whether the final pass proved it stable."""
     requested_lines: Collection[tuple[int, int]] = ()
     if lines:
         lines = sanitized_lines(lines, src_contents)
         if not lines:
-            return src_contents  # Nothing to format
+            return src_contents, False  # Nothing to format
         # Keep the ranges exactly as the caller asked for them. `lines` is
         # narrowed below to follow the code through the first pass, but deciding
         # whether a dropped trailing blank line was selected has to be done
         # against the original request.
         requested_lines = lines
     dst_contents = _format_str_once(src_contents, mode=mode, lines=lines)
+    is_stable = src_contents == dst_contents
     # Forced second pass to work around optional trailing commas (becoming
     # forced trailing commas on pass 2) interacting differently with optional
     # parentheses.  Admittedly ugly.
-    if src_contents != dst_contents:
+    if not is_stable:
         if lines:
             lines = adjusted_lines(lines, src_contents, dst_contents)
             if not lines:
@@ -1433,9 +1447,9 @@ def format_str(
                 dst_contents = _restore_unselected_trailing_blank_lines(
                     src_contents, dst_contents, requested_lines
                 )
-                return dst_contents
+                return dst_contents, False
         try:
-            dst_contents = _format_str_once(dst_contents, mode=mode, lines=lines)
+            second_pass = _format_str_once(dst_contents, mode=mode, lines=lines)
         except InvalidInput as exc:
             # This pass parses Black's own output, so failing to parse it means
             # Black produced the invalid code, not the user. Reported as an
@@ -1459,11 +1473,15 @@ def format_str(
                 exc.details,
             )
             raise
+        is_stable = second_pass == dst_contents
+        dst_contents = second_pass
     if requested_lines:
         dst_contents = _restore_unselected_trailing_blank_lines(
             src_contents, dst_contents, requested_lines
         )
-    return dst_contents
+    # Range adjustments and trailing blank line restoration can change the input
+    # or output independently of the formatting pass, so don't reuse its evidence.
+    return dst_contents, is_stable and not requested_lines
 
 
 def _restore_unselected_trailing_blank_lines(

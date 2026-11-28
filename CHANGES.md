@@ -216,6 +216,8 @@
 
 <!-- Changes that improve Black's performance. -->
 
+- Speed up formatting changed Python files in safe mode by avoiding a redundant
+  stability check when formatting has already converged (#5753)
 - Format each Jupyter notebook cell once instead of twice, and skip the safety checks
   for cells that are already formatted, making `--check` on formatted notebooks about 3x
   faster (#5683)
