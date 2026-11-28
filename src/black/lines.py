@@ -310,15 +310,21 @@ class Line:
         return False
 
     def contains_multiple_type_ignores_at_current_depth(self) -> bool:
+        # Count real brackets instead of using `leaf.bracket_depth`, which is also
+        # raised for loop variables and lambda parameters.
         count = 0
+        depth = 0
         for leaf in self.leaves:
-            if leaf.bracket_depth != 0:
-                continue
-            for comment in self.comments_after(leaf):
-                if is_type_ignore_comment(comment, mode=self.mode):
-                    count += 1
-                    if count > 1:
-                        return True
+            if leaf.type in CLOSING_BRACKETS:
+                depth -= 1
+            if depth == 0:
+                for comment in self.comments_after(leaf):
+                    if is_type_ignore_comment(comment, mode=self.mode):
+                        count += 1
+                        if count > 1:
+                            return True
+            if leaf.type in OPENING_BRACKETS:
+                depth += 1
         return False
 
     def contains_unsplittable_type_ignore(self) -> bool:

@@ -16,6 +16,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
+- Fix crash when a comprehension, generator expression or lambda has `# type: ignore`
+  comments on more than one of its lines, like `for x in  # type: ignore` ...
+  `items  # type: ignore` (#5761)
 - Fix `--line-ranges` inserting extra blank lines into top-level `async def`,
   `async with`, and `async for` statements whose headers use `# fmt: skip` (#5703)
 
