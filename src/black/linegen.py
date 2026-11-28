@@ -358,7 +358,10 @@ class LineGenerator(Visitor[Line]):
         prev_type: int | None = None
         for i, child in enumerate(node.children):
             if prev_type is None or prev_type == token.SEMI:
-                if is_arith_like(child):
+                if is_arith_like(child) or (
+                    Preview.split_standalone_boolean_expressions in self.mode
+                    and child.type in {syms.and_test, syms.or_test}
+                ):
                     wrap_in_parentheses(node, child, visible=False, index=i)
                 elif (
                     Preview.remove_redundant_top_level_parentheses in self.mode

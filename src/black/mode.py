@@ -291,6 +291,7 @@ class Preview(Enum):
     remove_redundant_top_level_parentheses = auto()
     end_fmt_off_at_closing_bracket = auto()
     parenthesize_one_item_sequence_patterns = auto()
+    split_standalone_boolean_expressions = auto()
 
 
 UNSTABLE_FEATURES: set[Preview] = {
