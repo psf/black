@@ -2159,9 +2159,7 @@ def type_ignore_comment_split(
     Any other comment in the chain also ends its line: a type ignore that
     follows another comment on the same line is no longer a type ignore.
     """
-    if not line.contains_multiple_type_ignores_at_current_depth() or not any(
-        leaf.type == token.DOT for leaf in line.leaves
-    ):
+    if not line.contains_multiple_type_ignores_at_current_depth():
         raise CannotSplit("Line does not have multiple type ignore comments")
 
     current_line = Line(
